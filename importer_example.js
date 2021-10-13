@@ -135,11 +135,11 @@ let transformMap = df.groupBy(["layer"])  // Returns Map
 let resultAggregator = {};
 
 function getTaskDef(trfm, exec) {
-    // TODO: get inputs
+    // get inputs
     let inputAggregator = [];
     if (trfm["input"] != undefined) {
         for (let input of trfm["input"]) {
-            // Find result (if any)
+            // Find results of dependencies (if any)
             if (input in resultAggregator) {
                 inputAggregator.push(resultAggregator[input]);
             } else {

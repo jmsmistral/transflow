@@ -8,9 +8,9 @@ function sleep(ms) {
     });
   }
 
-// async function someAsyncTask(n) {
-//     await sleep(n);
-// }
+async function someAsyncTask(n) {
+    await sleep(n);
+}
 
 // task('Task 1', async () => {
 //     await someAsyncTask(1000)
@@ -38,15 +38,16 @@ function Input(transform_name) {
 }
 
 
-export function transform_test1() {
+export async function transform_test1() {
+    await someAsyncTask(2000);
     console.log("result from transform_test1:");
     return "SUP 1";
 }
 
-export function transform_test2(
+export async function transform_test2(
     test1=Input("transform_test1")
 ) {
-    // await sleep(2000);
+    await someAsyncTask(2000);
     // console.log(test1.name);
     console.log("result from transform_test2:");
     console.log(test1);
@@ -56,7 +57,7 @@ export function transform_test2(
 
 // task("transform_test1", async () => {
 //     await transform_test1();
-//     console.log(transform_test1.toString());
+//     // console.log(transform_test1.toString());
 // });
 
 // task("transform_test2", async () => {
