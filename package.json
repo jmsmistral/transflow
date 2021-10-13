@@ -1,0 +1,36 @@
+{
+  "name": "transflowjs",
+  "version": "0.1.0",
+  "description": "Javascript library to create and execute data transformation workflows.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmsmistral/transflow"
+  },
+  "homepage": "https://github.com/jmsmistral/transflow",
+  "main": "transflow.js",
+  "type": "module",
+  "dependencies": {
+    "d3-dag": "^0.8.2",
+    "lodash": "^4.17.21",
+    "lorix": "^0.2.4",
+    "tasuku": "^1.0.2"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.2.1"
+  },
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha ./test/**/*.js"
+  },
+  "keywords": [
+    "data",
+    "dataset",
+    "transform",
+    "transformation",
+    "workflow",
+    "datascience",
+    "dataengineering"
+  ],
+  "author": "Jonathan Sacramento",
+  "license": "GPLv3"
+}
