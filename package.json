@@ -27,9 +27,13 @@
     "dataset",
     "transform",
     "transformation",
+    "dag",
+    "directed acyclic graph",
+    "graph",
+    "graphs",
     "workflow",
-    "datascience",
-    "dataengineering"
+    "data science",
+    "data engineering"
   ],
   "author": "Jonathan Sacramento",
   "license": "GPLv3"
