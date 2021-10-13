@@ -184,3 +184,36 @@ for (let level of transformMap) {
 //     console.log();
 //     eval(evalStr);
 // }
+
+
+// Questions:
+// - Can a Workflow have multiple DAGs? Yes
+// - Can two DAGs within a Workflow, depend on each other (one Transform depending on another)? No - they should probably be part of the same DAG.
+// - Can two DAGs in different Workflows depend on each other? Yes - but only one Workflow can be built at any given time.
+
+// Global
+// ------
+// + createWorkflow(workflowName: string): returns an instance of a Workflow
+
+// Workflow
+// --------
+// + AddDagFromModule(, filepath: string): returns an instance of a DAG from a Javascript module file
+// + AddDagFromFolder(folderpath: string, recursive: boolean): returns an instance of a DAG from all Javascript modules found in the
+// + AddDagFromFunctionArray(dagName: string, [functions]: array): returns an instance of a DAG from an array of functions
+
+
+
+
+
+
+/* API Design */
+import tf from 'transflow';
+
+let wf = tf.createWorkflow("workflow one");
+
+let dag1 = wf.createDag("dag one");
+let dag1 = wf.createDag("dag one");
+let dag1 = wf.createDag("dag one");
+
+dag1.addTransform(fn);
+dag1.addTransformFromFile("...");
