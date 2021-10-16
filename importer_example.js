@@ -42,7 +42,7 @@ async function walk(dir) {
 }
 
 
-let files = await walk('./src');
+let files = await walk('./transforms');
 // let files = await walk('../src');
 // let files = await walk('/home/jms/dev/src');
 
@@ -50,7 +50,6 @@ let files = await walk('./src');
 // TODO: error handling
 let transformMaster = [];
 let transformLayering = [];
-let testicle = {};
 
 
 for (let transformFile of files) {
@@ -72,7 +71,6 @@ for (let transformFile of files) {
 
         // Construct DAG node for execution
         transformMaster.push({"name": name, "fn": transformModule[name], "input": transformLayeringDef["parentIds"]});
-        testicle[name] = transformModule;
     }
 }
 
@@ -197,23 +195,35 @@ for (let level of transformMap) {
 
 // Workflow
 // --------
-// + AddDagFromModule(, filepath: string): returns an instance of a DAG from a Javascript module file
-// + AddDagFromFolder(folderpath: string, recursive: boolean): returns an instance of a DAG from all Javascript modules found in the
-// + AddDagFromFunctionArray(dagName: string, [functions]: array): returns an instance of a DAG from an array of functions
+// + addDagFromModule(dagName: string, filepath: string): returns an instance of a DAG from a Javascript module file
+// + addDagFromFolder(dagName: string, folderpath: string, recursive: boolean): returns an instance of a DAG from all Javascript modules found in the
+// + addDagFromFunctionArray(dagName: string, [functions]: array): returns an instance of a DAG from an array of functions
+
+// + run(): executes all Transforms in all DAGs in the Workflow in order
+
+// Dag
+// ----
+// + addTransformsFromModule(filepath: string): returns an instance of a DAG from a Javascript module file
+// + addTransformsFromFolder(folderpath: string, recursive: boolean): returns an instance of a DAG from all Javascript modules found in the
+// + addTransformsFromFunctionArray([functions]: array): returns an instance of a DAG from an array of functions
+
+// + run(): executes all Transforms in the DAG in order
 
 
-
+// Transform
+// ---------
+// + getInputs():
 
 
 
 /* API Design */
-import tf from 'transflow';
+// import tf from 'transflow';
 
-let wf = tf.createWorkflow("workflow one");
+// let wf = tf.createWorkflow("workflow one");
 
-let dag1 = wf.createDag("dag one");
-let dag1 = wf.createDag("dag one");
-let dag1 = wf.createDag("dag one");
+// let dag1 = wf.createDag("dag one");
+// let dag1 = wf.createDag("dag one");
+// let dag1 = wf.createDag("dag one");
 
-dag1.addTransform(fn);
-dag1.addTransformFromFile("...");
+// dag1.addTransform(fn);
+// dag1.addTransformFromFile("...");
