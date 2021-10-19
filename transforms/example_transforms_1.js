@@ -40,8 +40,8 @@ function Input(transform_name) {
 
 export async function transform_test1() {
     await someAsyncTask(2000);
-    console.log("result from transform_test1:");
-    return "SUP 1";
+    // console.log("result from transform_test1:");
+    // return "SUP 1";
 }
 
 export async function transform_test2(
@@ -49,8 +49,8 @@ export async function transform_test2(
 ) {
     await someAsyncTask(2000);
     // console.log(test1.name);
-    console.log("result from transform_test2:");
-    console.log(test1);
+    // console.log("result from transform_test2:");
+    // console.log(test1);
     return test1;
 }
 

@@ -1,6 +1,11 @@
 import fs from 'fs/promises';
-import path, { relative } from 'path';
+import path from 'path';
 import url from 'url';
+
+import lorix from 'lorix';
+import d3dag from 'd3-dag';
+// import task from 'tasuku';
+import lodash from 'lodash';
 
 
 export function _isValidString(str) {
@@ -23,7 +28,7 @@ export function _validateString(str, errorMsg) {
 }
 
 
-export function _fnSignatureMatch(fnString) {
+export function _getTransformParentsFromFuncSignature(fnString) {
     const parentTransformRegex = /Input\(\s*"(.*?)"\s*/g;
     let parentMatches = [];
     for(let match of [...fnString.matchAll(parentTransformRegex)]) {
@@ -96,35 +101,106 @@ export async function _importFilesAsModules(files) {
 // console.log(await _importFilesAsModules(files));
 
 
-export async function _getTransformFunctionsFromModules(modules) {
+export function _getTransformFunctionsFromModules(modules) {
     /*
-        Returns an array of Transform functions exported
+        Returns a mapping of function name-to-function exported
         from `modules`.
     */
-    console.log(modules);
 
-    for (let moduleDef in modules) {
-        console.log(moduleDef);
+    let transforms = {};
+    for (let moduleDef in modules)
+        for (let transformName in modules[moduleDef])
+            if (transformName.match(/transform_/g).length) {
+                if (transformName in transforms)
+                    throw Error(`Duplicate Transform name detected: ${transformName}`)
+                transforms[transformName] = modules[moduleDef][transformName];
+            }
 
-        for (let transformFunction in moduleDef) {
-           // TODO: check that transformFunction is a function starting with "transform_"
-           console.log(transformFunction);
+    return transforms;
+}
 
-           // Construct DAG node for layering / ordering
-           let transformLayeringDef = {};
-           let parents = _fnSignatureMatch(moduleDef[transformFunction].toString());
-           transformLayeringDef["id"] = transformFunction;
-           if (parents.length) {
-               transformLayeringDef["parentIds"] = [];
-               for (let match of parents) {
-                   transformLayeringDef["parentIds"].push(match);
-               }
-           }
-           transformLayering.push(transformLayeringDef);
 
-           // Construct DAG node for execution
-           transformMaster.push({"name": transformFunction, "fn": moduleDef[transformFunction], "input": transformLayeringDef["parentIds"]});
-       }
+export function _getDagFromFunctions(transforms) {
+    /*
+        Returns DAG DataFrame from Array of Transforms `transforms`.
+    */
 
+    let dag = [];
+
+    for (let transformName in transforms) {
+        let parentReferences = _getTransformParentsFromFuncSignature(transforms[transformName].toString());
+        let parents = [];
+        if (parentReferences.length)
+            for (let match of parentReferences) parents.push(match);
+
+        // Add node to DAG for execution
+        dag.push({
+            "name": transformName,
+            "fn": transforms[transformName],
+            "input": parents
+        });
     }
+
+    return lorix.DataFrame.fromArray(dag);
+}
+
+
+
+export function _getDagExecutionOrderFromFunctions(transforms) {
+    /*
+        Returns a DataFrame with an integer assigned to each
+        DAG node, representing the order of execution for that node.
+        Nodes with the same order of execution will be executed
+        in parallel.
+    */
+
+    let dag = [];
+
+    for (let transformName in transforms) {
+        let transform = {"id": transformName};
+        let parents = _getTransformParentsFromFuncSignature(transforms[transformName].toString());
+        if (parents.length) {
+            transform["parentIds"] = [];
+            for (let match of parents) transform["parentIds"].push(match);
+        }
+        dag.push(transform);
+    }
+
+    // Calculate node ordering
+    const createDagStructure = d3dag.dagStratify();
+    const generateExecutionOrder = d3dag.sugiyama();
+    let dagExecOrder = createDagStructure(dag);
+    generateExecutionOrder(dagExecOrder);
+
+    // Convert to DataFrame
+    let dfArray = [...dagExecOrder].map(node => {
+        return {
+            "name": node["data"]["id"],
+            "order": node["value"]
+        };
+    });
+
+    return lorix.DataFrame.fromArray(dfArray);
+}
+
+
+export function _getTaskDef(trfm, exec, resultAggregator) {
+    // get inputs
+    let inputAggregator = [];
+    if (trfm["input"] != undefined) {
+        for (let input of trfm["input"]) {
+            // Find results of dependencies (if any)
+            if (input in resultAggregator) {
+                inputAggregator.push(resultAggregator[input]);
+            } else {
+                inputAggregator.push(undefined);
+            }
+        }
+    }
+    return exec(trfm["name"], async () => await trfm["fn"](...inputAggregator));
+}
+
+export async function _getTaskExecFn(task, arr, resultAggregator) {
+    const result = await Promise.all(arr.map(trfm => _getTaskDef(trfm, task, resultAggregator)));
+    return lodash.zip(arr, result);
 }

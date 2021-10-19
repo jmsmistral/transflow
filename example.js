@@ -11,5 +11,6 @@ import {
 
 let wf = new Workflow("workflow 1");
 // await wf.addDagFromFilepath("dag 1", "."); // Error
-await wf.addDagFromFilepath("dag 1", "./transforms");
-console.log(wf);
+await wf.addDagFromDirectory("dag 1", "./transforms");
+await wf.run();
+// console.log(wf);
