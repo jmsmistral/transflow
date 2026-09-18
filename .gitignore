@@ -1,0 +1,20 @@
+# Build outputs; keep manifests and lockfiles tracked.
+/target/
+/web/node_modules/
+/web/dist/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+/python/**/build/
+/python/**/dist/
+
+# Runtime data and local secrets. The catalogue is deliberately trackable.
+.transflow/runtime/
+.env
+.env.*
+!.env.example
+.DS_Store
