@@ -33,8 +33,9 @@ locks are under [tools/qualification/python](../../tools/qualification/python/re
 the [web manifest](../../tools/qualification/web/package.json) and
 [npm lock](../../tools/qualification/web/package-lock.json) record the web graph.
 These standalone probes inform T004–T006. T004 now provides a separate
-[Rust application scaffold](../../crates/README.md); the SDK and worker remain
-future deliverables. No package named Transflow was fetched from an index.
+[Rust application scaffold](../../crates/README.md); T005 now packages both Python
+modules in one local [transflow wheel](../../python/README.md). No package named
+Transflow was fetched from an index.
 
 ## Results and boundaries
 
@@ -62,7 +63,7 @@ DuckDB values, unknown-column rejection, Arrow-backed pandas without an implicit
 index, empty-file schema preservation and reading the Rust-written Parquet file.
 The fixture covers integers beyond JavaScript's exact range, decimal128 values,
 nanosecond timestamps, nulls and NaN. Full schema/engine conformance, timezone
-precision, subprocess control, check isolation and matched SDK/worker wheels
+precision, subprocess control, check isolation and release wheel qualification
 remain later tasks. DuckDB reported its own native memory limit as 102.3 GiB on
 this host; the probe did not impose a Transflow memory budget.
 
@@ -147,12 +148,14 @@ together; do not run automatic dependency upgrades during normal checks.
 
 [The native CI workflow](../../.github/workflows/qualification.yml) is prepared for
 six OS/interpreter combinations, with official actions pinned to commit SHAs.
-It has not been pushed or run during this session. CI needs no sibling specification
+The owner has pushed it and reported jobs running; results remain unreviewed here.
+CI needs no sibling specification
 checkout to build or run these probes. It uses read-only repository permissions,
 does not publish packages, and uploads measured reports when available.
 
-T003 stays unchecked pending native Linux/CI evidence. Matched SDK/worker
-artifacts are also still unavailable; their creation belongs to T005/T116.
+T003 stays unchecked pending native Linux/CI evidence. T005 now builds the single
+`transflow` bootstrap wheel with both modules; full release qualification belongs
+to T116 and later gates.
 No A40/A67 end-to-end acceptance result is claimed. The full CI/security/
 license baseline remains T008. Canonical rationale is in
 [ADR-001](../../../transflow-spec/docs/adr/ADR-001.md).

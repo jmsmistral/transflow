@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Contributor and Rust scaffold checks; no dependency installation.
+# Contributor, Rust and Python checks; external dependency setup is explicit.
 set -euo pipefail
 
 implementation_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -18,4 +18,5 @@ cd -- "$implementation_root"
     --root "$spec_root" --implementation-root "$implementation_root"
 "$python_bin" -B -m unittest discover -s "$spec_root/tools/tests" -v
 bash "$implementation_root/tools/check-rust.sh"
-echo "Contributor and Rust scaffold checks passed. Pipeline and release conformance remain unimplemented."
+bash "$implementation_root/tools/check-python.sh"
+echo "Contributor, Rust and Python bootstrap checks passed. Pipeline and release conformance remain unimplemented."
