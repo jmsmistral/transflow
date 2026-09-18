@@ -37,10 +37,10 @@ Installation commands, verified package names, supported release versions and ac
 
 ## Specification and contributor setup
 
-Keep the canonical specification in a sibling checkout:
+Keep the canonical specification in a sibling checkout directly under `~/dev/`. These are independent repositories; the shared parent is not a Transflow project or scan root:
 
 ```text
-parent/
+~/dev/
   transflow/       # this implementation repository
   transflow-spec/  # authoritative design, task ledger and agent guidance
 ```
