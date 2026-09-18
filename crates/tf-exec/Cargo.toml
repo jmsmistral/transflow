@@ -1,0 +1,10 @@
+[package]
+name = "tf-exec"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Process supervision, resource admission, validation phases and publication orchestration."
+
+[lints]
+workspace = true

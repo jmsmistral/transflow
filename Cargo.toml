@@ -1,0 +1,37 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/tf-domain",
+    "crates/tf-protocol",
+    "crates/tf-catalog",
+    "crates/tf-plan",
+    "crates/tf-store",
+    "crates/tf-exec",
+    "crates/tf-schedule",
+    "crates/tf-api",
+    "crates/tf-lsp",
+    "crates/transflow",
+]
+default-members = ["crates/transflow"]
+exclude = ["tools/qualification/rust"]
+
+[workspace.package]
+version = "0.0.0-dev"
+edition = "2024"
+rust-version = "1.98.1"
+publish = false
+
+[workspace.dependencies]
+clap = { version = "=4.6.7", default-features = false, features = ["std", "help", "usage", "error-context"] }
+thiserror = "=2.0.20"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"

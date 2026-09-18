@@ -2,7 +2,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** Contributor foundation implemented (T001–T002); T003 dependency qualification is in progress. Repository checks, exact dependency locks and native qualification probes are available. There is no working Transflow application, installable binary, Python SDK or frontend yet.
+**Status:** Contributor foundation implemented (T001–T002). T004's ten-crate Rust scaffold builds locally and provides CLI help/version output. T003 native qualification is running in CI, with results pending. Dataset builds, the coordinator, Python SDK and frontend remain unimplemented; this is not an application release.
 
 ## Intended experience
 
@@ -24,7 +24,7 @@ def order_totals(orders: pl.LazyFrame) -> pl.LazyFrame:
     return orders.group_by("customer_id").agg(pl.col("amount").sum())
 ```
 
-These commands describe the intended workflow; they do **not** work from this documentation scaffold alone:
+These commands describe the intended workflow; they are **not implemented yet**:
 
 ```bash
 transflow init
@@ -51,21 +51,36 @@ Specification baseline: **1.1.0**. See its task ledger for intended scope; unche
 
 ## Development checks
 
-Use the existing project-local pyenv environment. The contributor checker uses
-only the Python standard library (Python 3.11 or newer) and Git:
+Use the project-local pyenv environment, Git and the pinned Rust 1.98.1 toolchain
+with rustfmt and Clippy. Python checks use only the standard library (3.11+).
+Fetch the locked Cargo dependencies once before running the offline checks:
 
 ```bash
 cd ~/dev/transflow
+cargo fetch --locked
 bash tools/check.sh
 ```
 
 This checks specification metadata, task dependencies/evidence, references,
-example syntax and public file paths, then runs the checker's regression tests.
-It does not install packages or run Transflow application tests. See the
+example syntax and public file paths; it then runs tooling regressions, Rust
+dependency checks, formatting, compilation, Clippy and scaffold tests. The check
+command does not install dependencies. See the
 [verification contract](docs/development/verification.md) for scope and limitations.
+
+Try the development CLI after fetching dependencies:
+
+```bash
+cargo run --locked --offline -p transflow -- --help
+cargo run --locked --offline -p transflow -- --version
+```
+
+Only help and version are available. Other commands fail with a diagnostic.
+The built executable works outside either checkout without Python or Git.
+`bash tools/check-rust.sh` runs the Rust checks without the sibling specification.
 
 The initial source boundaries are [crates/](crates/README.md),
 [python/](python/README.md) and [web/](web/README.md). T003 has pinned the initial
 toolchain/dependency candidates and exercised them on macOS arm64. Native Linux
-qualification remains pending. See the [compatibility matrix and setup](docs/development/compatibility.md)
+qualification remains pending, so T003 and T004 remain unchecked in the task ledger.
+See the [compatibility matrix and setup](docs/development/compatibility.md)
 for the isolated probe environment, measured results and CI workflow.

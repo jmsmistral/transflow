@@ -1,0 +1,10 @@
+[package]
+name = "tf-domain"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Domain IDs, states, value types, errors and invariant helpers. No storage, HTTP or Python dependencies."
+
+[lints]
+workspace = true

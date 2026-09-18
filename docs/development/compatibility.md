@@ -32,8 +32,9 @@ The complete direct Rust pins and transitive resolution live in
 locks are under [tools/qualification/python](../../tools/qualification/python/requirements.in);
 the [web manifest](../../tools/qualification/web/package.json) and
 [npm lock](../../tools/qualification/web/package-lock.json) record the web graph.
-These standalone probes will inform T004–T006; they do not create the SDK, worker
-or application workspace. No package named Transflow was fetched from an index.
+These standalone probes inform T004–T006. T004 now provides a separate
+[Rust application scaffold](../../crates/README.md); the SDK and worker remain
+future deliverables. No package named Transflow was fetched from an index.
 
 ## Results and boundaries
 

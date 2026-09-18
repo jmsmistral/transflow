@@ -1,0 +1,10 @@
+[package]
+name = "tf-catalog"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Descriptors, source manifests, dataset reference resolution and graph validation."
+
+[lints]
+workspace = true

@@ -1,6 +1,7 @@
 # Contributor verification
 
-The T001–T002 foundation uses Python's standard library and Git. It was verified
+The contributor checks use Python's standard library and Git; T004 adds the
+pinned Rust toolchain, rustfmt and Clippy. They were verified
 on macOS 15.3.1 arm64 with Python 3.14.7 from the project's `transflow` pyenv
 environment. Python 3.11+ is the checker syntax baseline; other interpreters and
 Linux have not yet been run for the document checker. The separate
@@ -10,6 +11,7 @@ Linux have not yet been run for the document checker. The separate
 
 ```bash
 cd ~/dev/transflow
+cargo fetch --locked  # Explicit first-time setup; requires registry access.
 bash tools/check.sh
 ```
 
@@ -17,6 +19,8 @@ The script resolves both checkout paths relative to itself, enters the
 implementation root so pyenv selects `.python-version`, and stops on failure.
 An optional `PYTHON` environment variable can name another interpreter executable.
 It requires the sibling specification checkout for contributor verification.
+After explicit setup, checks use locked, offline Cargo resolution. The Rust-only
+entry point, `bash tools/check-rust.sh`, works without the sibling specification.
 
 The checker inventories each repository using Git, checks all tracked and
 nonignored candidate Markdown, and checks Python/TOML/JSON fences by parsing them.
@@ -43,17 +47,40 @@ need review and the T008/T120 checks. No private image bytes are loaded.
 
 ## Extending the aggregate contract
 
-The contributor aggregate runs the documentation checker and its regression tests.
+The contributor aggregate runs document validation and 43 tooling regression
+tests, followed by ten Rust dependency-checker tests and the following gates:
+
+```bash
+cargo fmt --all -- --check
+cargo check --workspace --locked --offline
+cargo clippy --workspace --all-targets --locked --offline -- -D warnings
+cargo test --workspace --locked --offline
+```
+
+The dependency checker examines declared normal, optional, target, build and dev
+dependencies by package identity, rejects forbidden edges/cycles, requires exact
+pins and verifies external lock entries against T003's probe lockfile. It also
+checks that each crate inherits workspace lints. Expanding its allowlists requires
+explicit architectural and qualification review.
+
+Five Rust tests cover the CLI: help/version and rejected commands in a subprocess
+outside the checkouts with an empty PATH, plus typed stdout/stderr failures.
+The nine other crates contain no runtime implementation or tests yet. The
+[Rust CI workflow](../../.github/workflows/rust.yml) runs the same Rust entry point
+on macOS arm64 and Linux x86_64/arm64; it does not need the specification checkout.
+Its remote results are pending.
+
 Run `bash tools/qualification/check.sh` separately with its prepared Python
 environment for T003 native dependency probes; the compatibility guide documents
-explicit setup. No dependency installation occurs during either check command. Add the
-Rust checks in T004, Python checks in T005, frontend checks in T006, and CI,
+explicit setup. No dependency installation occurs during either check command. Add
+Python checks in T005, frontend checks in T006, and broader CI,
 dependency/license/privacy checks in T008 as their real manifests and runners
 become available. Add schema drift, canonical fixtures, integration/recovery and
 browser gates with their implementations. A missing required runner must fail,
 not silently count as a pass. Explicit dependency setup remains separate.
 
-No application correctness, installed-runtime independence, release archive
+The executable tests establish that help/version need no specification checkout,
+Python or Git. No pipeline correctness, installed-package independence, release archive
 contents, engine compatibility or full acceptance scenario is established by
 this script. The [task evidence](../../../transflow-spec/TASKS.md) and
 [current verification report](../../../transflow-spec/VERIFICATION.md) record

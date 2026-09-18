@@ -1,0 +1,10 @@
+[package]
+name = "tf-store"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "SQLite persistence, migrations, artifact manifests and guarded publication."
+
+[lints]
+workspace = true

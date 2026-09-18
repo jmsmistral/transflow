@@ -1,0 +1,10 @@
+[package]
+name = "tf-plan"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Build selection, boundaries, fingerprints, freshness and explanations. No process launching."
+
+[lints]
+workspace = true

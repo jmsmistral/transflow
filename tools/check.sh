@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Contributor checks only: no package installation or application execution.
+# Contributor and Rust scaffold checks; no dependency installation.
 set -euo pipefail
 
 implementation_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -17,4 +17,5 @@ cd -- "$implementation_root"
 "$python_bin" -B "$spec_root/tools/check_spec.py" \
     --root "$spec_root" --implementation-root "$implementation_root"
 "$python_bin" -B -m unittest discover -s "$spec_root/tools/tests" -v
-echo "Contributor checks passed. Application gates are not implemented or run."
+bash "$implementation_root/tools/check-rust.sh"
+echo "Contributor and Rust scaffold checks passed. Pipeline and release conformance remain unimplemented."
