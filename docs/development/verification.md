@@ -3,7 +3,8 @@
 The T001–T002 foundation uses Python's standard library and Git. It was verified
 on macOS 15.3.1 arm64 with Python 3.14.7 from the project's `transflow` pyenv
 environment. Python 3.11+ is the checker syntax baseline; other interpreters and
-Linux have not yet been run. Application toolchain qualification belongs to T003.
+Linux have not yet been run for the document checker. The separate
+[T003 compatibility matrix](compatibility.md) records dependency probe results.
 
 ## Run the current checks
 
@@ -42,7 +43,10 @@ need review and the T008/T120 checks. No private image bytes are loaded.
 
 ## Extending the aggregate contract
 
-Only the documentation checker and its regression tests currently run. Add the
+The contributor aggregate runs the documentation checker and its regression tests.
+Run `bash tools/qualification/check.sh` separately with its prepared Python
+environment for T003 native dependency probes; the compatibility guide documents
+explicit setup. No dependency installation occurs during either check command. Add the
 Rust checks in T004, Python checks in T005, frontend checks in T006, and CI,
 dependency/license/privacy checks in T008 as their real manifests and runners
 become available. Add schema drift, canonical fixtures, integration/recovery and

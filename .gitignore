@@ -2,6 +2,9 @@
 /target/
 /web/node_modules/
 /web/dist/
+/tools/qualification/web/node_modules/
+/tools/qualification/web/dist/
+/tools/qualification/rust/target/
 **/__pycache__/
 *.py[cod]
 *.egg-info/

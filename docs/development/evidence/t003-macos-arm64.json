@@ -1,0 +1,446 @@
+{
+  "date": "2026-09-19",
+  "scope": "T003 dependency qualification, not application conformance",
+  "implementation_base": "2bae56b49833c97e968b977644e1fbfad502b1bf",
+  "specification_base": "72fb5b2d514edd1b4af8ca9a079a228f72bac4b4",
+  "toolchains": {
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+    "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+    "node": "v24.4.1",
+    "npm": "11.4.2"
+  },
+  "rust": {
+    "sqlite_version": "3.51.3",
+    "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+    "sqlite_journal_mode": "wal",
+    "parquet_rows": 3,
+    "checks": [
+      "sqlite_version",
+      "wal_full_foreign_keys",
+      "rollback",
+      "parquet_roundtrip",
+      "advisory_lock",
+      "http_router",
+      "dst_gap",
+      "json_schema"
+    ]
+  },
+  "python314": {
+    "python": "3.14.7",
+    "platform": "macOS-15.3.1-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "packages": {
+      "polars": "1.44.2",
+      "duckdb": "1.5.5",
+      "pyarrow": "25.0.1",
+      "pandas": "3.0.6"
+    },
+    "locked_packages": {
+      "duckdb": "1.5.5",
+      "numpy": "2.5.3",
+      "pandas": "3.0.6",
+      "polars": "1.44.2",
+      "polars-runtime-32": "1.44.2",
+      "pyarrow": "25.0.1",
+      "python-dateutil": "2.9.0.post0",
+      "six": "1.17.0"
+    },
+    "duckdb_runtime": "v1.5.5",
+    "duckdb_native_memory_limit": "102.3 GiB",
+    "python_sqlite": {
+      "version": "3.43.2",
+      "role": "informational; not the Rust control plane"
+    },
+    "checks": [
+      "polars_streaming_sink_pyarrow_roundtrip",
+      "duckdb_exact_parquet_values",
+      "duckdb_missing_column_rejected",
+      "pandas_arrow_backed_parquet_roundtrip",
+      "empty_parquet_schema",
+      "rust_to_python_parquet"
+    ],
+    "limits": [
+      "Not full logical-type conformance",
+      "No DuckDB query-security qualification (T009)",
+      "No matched SDK/worker packages yet (T005)"
+    ]
+  },
+  "python313": {
+    "python": "3.13.0",
+    "platform": "macOS-15.3.1-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "packages": {
+      "polars": "1.44.2",
+      "duckdb": "1.5.5",
+      "pyarrow": "25.0.1",
+      "pandas": "3.0.6"
+    },
+    "locked_packages": {
+      "duckdb": "1.5.5",
+      "numpy": "2.5.3",
+      "pandas": "3.0.6",
+      "polars": "1.44.2",
+      "polars-runtime-32": "1.44.2",
+      "pyarrow": "25.0.1",
+      "python-dateutil": "2.9.0.post0",
+      "six": "1.17.0"
+    },
+    "duckdb_runtime": "v1.5.5",
+    "duckdb_native_memory_limit": "102.3 GiB",
+    "python_sqlite": {
+      "version": "3.43.2",
+      "role": "informational; not the Rust control plane"
+    },
+    "checks": [
+      "polars_streaming_sink_pyarrow_roundtrip",
+      "duckdb_exact_parquet_values",
+      "duckdb_missing_column_rejected",
+      "pandas_arrow_backed_parquet_roundtrip",
+      "empty_parquet_schema",
+      "rust_to_python_parquet"
+    ],
+    "limits": [
+      "Not full logical-type conformance",
+      "No DuckDB query-security qualification (T009)",
+      "No matched SDK/worker packages yet (T005)"
+    ]
+  },
+  "wheels": {
+    "scope": "Wheel resolution only; not native execution or full marker qualification",
+    "pip": "26.2.1",
+    "results": [
+      {
+        "python": "3.13",
+        "target": "macos-arm64",
+        "status": "wheels_resolved",
+        "wheels": [
+          {
+            "name": "duckdb",
+            "version": "1.5.5",
+            "filename": "duckdb-1.5.5-cp313-cp313-macosx_11_0_arm64.whl",
+            "sha256": "49c963d9469373d7aba8d750d9ea565ab823e94166efed953f184dd9b169b98c"
+          },
+          {
+            "name": "numpy",
+            "version": "2.5.3",
+            "filename": "numpy-2.5.3-cp313-cp313-macosx_14_0_arm64.whl",
+            "sha256": "f9a2353b37a1a9e78fd82b27ad7e2a32a2d036604d18f02b05e3136c62ca3b09"
+          },
+          {
+            "name": "pandas",
+            "version": "3.0.6",
+            "filename": "pandas-3.0.6-cp313-cp313-macosx_11_0_arm64.whl",
+            "sha256": "60d81f9e1799b36f3739e7fff44d1fbb2e8fd5a271b3863e03de9715fccda0fa"
+          },
+          {
+            "name": "polars",
+            "version": "1.44.2",
+            "filename": "polars-1.44.2-py3-none-any.whl",
+            "sha256": "1bb331f17a40d9d931101533dcd33637b66edc61eb377b07020dac16a0f0377b"
+          },
+          {
+            "name": "polars-runtime-32",
+            "version": "1.44.2",
+            "filename": "polars_runtime_32-1.44.2-cp310-abi3-macosx_11_0_arm64.whl",
+            "sha256": "e0fd43720c8222ae39919c8ff891636d53b352706087120e62f83544dd3ff782"
+          },
+          {
+            "name": "pyarrow",
+            "version": "25.0.1",
+            "filename": "pyarrow-25.0.1-cp313-cp313-macosx_12_0_arm64.whl",
+            "sha256": "c7c534ec03c358a76ea3e505e74c1b6aef290af90c444dfd092dbfe23e755b85"
+          },
+          {
+            "name": "python-dateutil",
+            "version": "2.9.0.post0",
+            "filename": "python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+            "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
+          },
+          {
+            "name": "six",
+            "version": "1.17.0",
+            "filename": "six-1.17.0-py2.py3-none-any.whl",
+            "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+          }
+        ]
+      },
+      {
+        "python": "3.13",
+        "target": "linux-x86_64",
+        "status": "wheels_resolved",
+        "wheels": [
+          {
+            "name": "duckdb",
+            "version": "1.5.5",
+            "filename": "duckdb-1.5.5-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl",
+            "sha256": "078e6a60dd8eedde5832f45422ca5c4a6b8c837aeabd8a56ca0b7d933f588053"
+          },
+          {
+            "name": "numpy",
+            "version": "2.5.3",
+            "filename": "numpy-2.5.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+            "sha256": "a5fa86b80fd24bcd1aff83ad23be44ea323de3f787be8f8b15d4a65621e25321"
+          },
+          {
+            "name": "pandas",
+            "version": "3.0.6",
+            "filename": "pandas-3.0.6-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+            "sha256": "1e92d9fa834c7d877130027cddc0cad8dcff97c1f6cca26bd6310f847228b658"
+          },
+          {
+            "name": "polars",
+            "version": "1.44.2",
+            "filename": "polars-1.44.2-py3-none-any.whl",
+            "sha256": "1bb331f17a40d9d931101533dcd33637b66edc61eb377b07020dac16a0f0377b"
+          },
+          {
+            "name": "polars-runtime-32",
+            "version": "1.44.2",
+            "filename": "polars_runtime_32-1.44.2-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+            "sha256": "a1bafb441e99199a62c63bf1bbdc0ea09ee9776dbac2bf31452b5000fb1df2f7"
+          },
+          {
+            "name": "pyarrow",
+            "version": "25.0.1",
+            "filename": "pyarrow-25.0.1-cp313-cp313-manylinux_2_28_x86_64.whl",
+            "sha256": "0befcf816e45a1af33ac775a9970b749e4868a230c7372f0ae5e932bee27039f"
+          },
+          {
+            "name": "python-dateutil",
+            "version": "2.9.0.post0",
+            "filename": "python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+            "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
+          },
+          {
+            "name": "six",
+            "version": "1.17.0",
+            "filename": "six-1.17.0-py2.py3-none-any.whl",
+            "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+          }
+        ]
+      },
+      {
+        "python": "3.13",
+        "target": "linux-aarch64",
+        "status": "wheels_resolved",
+        "wheels": [
+          {
+            "name": "duckdb",
+            "version": "1.5.5",
+            "filename": "duckdb-1.5.5-cp313-cp313-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl",
+            "sha256": "a736217825461732b5442d05a220f3da2e23a0dae114efbf08c9bf171b53098a"
+          },
+          {
+            "name": "numpy",
+            "version": "2.5.3",
+            "filename": "numpy-2.5.3-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+            "sha256": "c76d5dde9f445058f83d0c02af00557a4db91de9a9a57c0df87d1535001d654b"
+          },
+          {
+            "name": "pandas",
+            "version": "3.0.6",
+            "filename": "pandas-3.0.6-cp313-cp313-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl",
+            "sha256": "097090508a1dd335013d39106fc10b20f4fd4a171638e47b77d55798ed9dab6c"
+          },
+          {
+            "name": "polars",
+            "version": "1.44.2",
+            "filename": "polars-1.44.2-py3-none-any.whl",
+            "sha256": "1bb331f17a40d9d931101533dcd33637b66edc61eb377b07020dac16a0f0377b"
+          },
+          {
+            "name": "polars-runtime-32",
+            "version": "1.44.2",
+            "filename": "polars_runtime_32-1.44.2-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+            "sha256": "bbf9b45040291dc1c6c588c837019c33557bde25ec536562a9cca9e1f6dfcc45"
+          },
+          {
+            "name": "pyarrow",
+            "version": "25.0.1",
+            "filename": "pyarrow-25.0.1-cp313-cp313-manylinux_2_28_aarch64.whl",
+            "sha256": "44a9120ce5bd81936b8ab9a88076e3fd47c2c6838e0e43630fed83626aca81d9"
+          },
+          {
+            "name": "python-dateutil",
+            "version": "2.9.0.post0",
+            "filename": "python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+            "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
+          },
+          {
+            "name": "six",
+            "version": "1.17.0",
+            "filename": "six-1.17.0-py2.py3-none-any.whl",
+            "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+          }
+        ]
+      },
+      {
+        "python": "3.14",
+        "target": "macos-arm64",
+        "status": "wheels_resolved",
+        "wheels": [
+          {
+            "name": "duckdb",
+            "version": "1.5.5",
+            "filename": "duckdb-1.5.5-cp314-cp314-macosx_11_0_arm64.whl",
+            "sha256": "8c11775cc99a447618d5f1840126db17f2652f3eae05529df4f81f40e2df7151"
+          },
+          {
+            "name": "numpy",
+            "version": "2.5.3",
+            "filename": "numpy-2.5.3-cp314-cp314-macosx_14_0_arm64.whl",
+            "sha256": "adc1ada2662f8a5f960b8a10d9986897e7499ef07e06d4cfe7197f8cce923c07"
+          },
+          {
+            "name": "pandas",
+            "version": "3.0.6",
+            "filename": "pandas-3.0.6-cp314-cp314-macosx_11_0_arm64.whl",
+            "sha256": "ff51a4459ed036e93d1eb1bb5e6e7b28685d3cb6b7c12b91c05b31024e234729"
+          },
+          {
+            "name": "polars",
+            "version": "1.44.2",
+            "filename": "polars-1.44.2-py3-none-any.whl",
+            "sha256": "1bb331f17a40d9d931101533dcd33637b66edc61eb377b07020dac16a0f0377b"
+          },
+          {
+            "name": "polars-runtime-32",
+            "version": "1.44.2",
+            "filename": "polars_runtime_32-1.44.2-cp310-abi3-macosx_11_0_arm64.whl",
+            "sha256": "e0fd43720c8222ae39919c8ff891636d53b352706087120e62f83544dd3ff782"
+          },
+          {
+            "name": "pyarrow",
+            "version": "25.0.1",
+            "filename": "pyarrow-25.0.1-cp314-cp314-macosx_12_0_arm64.whl",
+            "sha256": "bf0b672390cdcb640d7288f96b826d71ff4e9abb254a86c89890baf51a29cee6"
+          },
+          {
+            "name": "python-dateutil",
+            "version": "2.9.0.post0",
+            "filename": "python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+            "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
+          },
+          {
+            "name": "six",
+            "version": "1.17.0",
+            "filename": "six-1.17.0-py2.py3-none-any.whl",
+            "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+          }
+        ]
+      },
+      {
+        "python": "3.14",
+        "target": "linux-x86_64",
+        "status": "wheels_resolved",
+        "wheels": [
+          {
+            "name": "duckdb",
+            "version": "1.5.5",
+            "filename": "duckdb-1.5.5-cp314-cp314-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl",
+            "sha256": "fbf0f2d48b43c6c304d00463b463c27ead6c4b01c3c1816b750f728decf71afe"
+          },
+          {
+            "name": "numpy",
+            "version": "2.5.3",
+            "filename": "numpy-2.5.3-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+            "sha256": "b0521d0f4aebb6e06189451025fa17a913287b13c03d5fe05c017333b654ea5b"
+          },
+          {
+            "name": "pandas",
+            "version": "3.0.6",
+            "filename": "pandas-3.0.6-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+            "sha256": "62f51d7f651c8054c5e82a69265c98082e795d1442df7ca6edc3a545d61214b1"
+          },
+          {
+            "name": "polars",
+            "version": "1.44.2",
+            "filename": "polars-1.44.2-py3-none-any.whl",
+            "sha256": "1bb331f17a40d9d931101533dcd33637b66edc61eb377b07020dac16a0f0377b"
+          },
+          {
+            "name": "polars-runtime-32",
+            "version": "1.44.2",
+            "filename": "polars_runtime_32-1.44.2-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+            "sha256": "a1bafb441e99199a62c63bf1bbdc0ea09ee9776dbac2bf31452b5000fb1df2f7"
+          },
+          {
+            "name": "pyarrow",
+            "version": "25.0.1",
+            "filename": "pyarrow-25.0.1-cp314-cp314-manylinux_2_28_x86_64.whl",
+            "sha256": "9171748cdf796972d85a4b60157c279913e242992e350c90c7450182a9838b2a"
+          },
+          {
+            "name": "python-dateutil",
+            "version": "2.9.0.post0",
+            "filename": "python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+            "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
+          },
+          {
+            "name": "six",
+            "version": "1.17.0",
+            "filename": "six-1.17.0-py2.py3-none-any.whl",
+            "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+          }
+        ]
+      },
+      {
+        "python": "3.14",
+        "target": "linux-aarch64",
+        "status": "wheels_resolved",
+        "wheels": [
+          {
+            "name": "duckdb",
+            "version": "1.5.5",
+            "filename": "duckdb-1.5.5-cp314-cp314-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl",
+            "sha256": "77bbc1e6ba12e1e06f9020117bdf848627ecfdf36f907550e62e008e6109dece"
+          },
+          {
+            "name": "numpy",
+            "version": "2.5.3",
+            "filename": "numpy-2.5.3-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+            "sha256": "be5a8381859b6da607c84f4f7d6847725f1cf1853ef8a2c9e115b7d58bef47dc"
+          },
+          {
+            "name": "pandas",
+            "version": "3.0.6",
+            "filename": "pandas-3.0.6-cp314-cp314-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl",
+            "sha256": "654aae059295dbba6ecd2328ca12712a2cf1676214c8699f1c29213f7ccf9c34"
+          },
+          {
+            "name": "polars",
+            "version": "1.44.2",
+            "filename": "polars-1.44.2-py3-none-any.whl",
+            "sha256": "1bb331f17a40d9d931101533dcd33637b66edc61eb377b07020dac16a0f0377b"
+          },
+          {
+            "name": "polars-runtime-32",
+            "version": "1.44.2",
+            "filename": "polars_runtime_32-1.44.2-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+            "sha256": "bbf9b45040291dc1c6c588c837019c33557bde25ec536562a9cca9e1f6dfcc45"
+          },
+          {
+            "name": "pyarrow",
+            "version": "25.0.1",
+            "filename": "pyarrow-25.0.1-cp314-cp314-manylinux_2_28_aarch64.whl",
+            "sha256": "0b726ad7e7b669be982b0c71c07fe4b037d654354130da79a7902a669e93a66b"
+          },
+          {
+            "name": "python-dateutil",
+            "version": "2.9.0.post0",
+            "filename": "python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+            "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
+          },
+          {
+            "name": "six",
+            "version": "1.17.0",
+            "filename": "six-1.17.0-py2.py3-none-any.whl",
+            "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+          }
+        ]
+      }
+    ]
+  },
+  "native_linux": "pending; workflow prepared, not run",
+  "matched_sdk_worker": "not implemented"
+}

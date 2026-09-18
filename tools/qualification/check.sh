@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Run already-installed, locked dependency probes. Never installs dependencies.
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+cd -- "$repo_root"
+python_bin="${PYTHON:-python}"
+if [[ "$(rustc --version)" != "rustc 1.98.1 "* ]]; then
+    echo "Qualification requires the pinned Rust 1.98.1 toolchain." >&2
+    exit 1
+fi
+if [[ "$(node --version)" != "v24.4.1" || "$(npm --version)" != "11.4.2" ]]; then
+    echo "Qualification requires Node 24.4.1 and npm 11.4.2." >&2
+    exit 1
+fi
+export CARGO_TARGET_DIR="$repo_root/target/qualification/cargo"
+mkdir -p "$repo_root/target/qualification/runs"
+run_dir="$(mktemp -d "$repo_root/target/qualification/runs/native.XXXXXX")"
+
+cargo fmt --manifest-path tools/qualification/rust/Cargo.toml -- --check
+cargo clippy --locked --offline --all-targets --manifest-path tools/qualification/rust/Cargo.toml -- -D warnings
+cargo run --quiet --locked --offline --manifest-path tools/qualification/rust/Cargo.toml \
+    -- --output-dir "$run_dir/data" > "$run_dir/rust.json"
+
+# A nonempty output must fail before touching existing probe artifacts.
+if "$CARGO_TARGET_DIR/debug/transflow-dependency-probe" --output-dir "$run_dir/data" > "$run_dir/repeated.stdout" 2> "$run_dir/repeated.stderr"; then
+    echo "Probe incorrectly accepted a nonempty directory." >&2
+    exit 1
+fi
+"$python_bin" -c 'import pathlib,sys; text=pathlib.Path(sys.argv[1]).read_text(); sys.exit(0 if "Probe output directory must be empty" in text else 1)' "$run_dir/repeated.stderr"
+
+"$python_bin" -m pip check
+"$python_bin" tools/qualification/python/probe.py --rust-parquet "$run_dir/data/rust.parquet" > "$run_dir/python.json"
+node tools/qualification/web/patch-elk.mjs
+npm --prefix tools/qualification/web run typecheck
+npm --prefix tools/qualification/web test
+npm --prefix tools/qualification/web run build
+echo "Dependency qualification passed. Native reports: $run_dir"
+echo "This is not a Transflow application or release-conformance result."

@@ -2,7 +2,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** Contributor foundation implemented (T001–T002). Repository structure and automated specification checks are available. There is no working Transflow application, installable binary, Python SDK or frontend yet.
+**Status:** Contributor foundation implemented (T001–T002); T003 dependency qualification is in progress. Repository checks, exact dependency locks and native qualification probes are available. There is no working Transflow application, installable binary, Python SDK or frontend yet.
 
 ## Intended experience
 
@@ -65,5 +65,7 @@ It does not install packages or run Transflow application tests. See the
 [verification contract](docs/development/verification.md) for scope and limitations.
 
 The initial source boundaries are [crates/](crates/README.md),
-[python/](python/README.md) and [web/](web/README.md). T003 next qualifies and pins
-toolchains and dependencies before the Rust, SDK/worker and frontend build tasks.
+[python/](python/README.md) and [web/](web/README.md). T003 has pinned the initial
+toolchain/dependency candidates and exercised them on macOS arm64. Native Linux
+qualification remains pending. See the [compatibility matrix and setup](docs/development/compatibility.md)
+for the isolated probe environment, measured results and CI workflow.

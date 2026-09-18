@@ -1,0 +1,54 @@
+name: Native dependency qualification
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, ubuntu-24.04, ubuntu-24.04-arm]
+        python: ['3.13.15', '3.14.7']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - name: Prepare exact Rust toolchain
+        run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Install locked qualification dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --require-hashes --only-binary=:all: -r tools/qualification/python/resolver.lock
+          python_minor="$(python -c 'import sys; print(f"{sys.version_info.major}{sys.version_info.minor}")')"
+          python -m pip install --require-hashes --only-binary=:all: -r "tools/qualification/python/py${python_minor}.lock"
+          npm install --global npm@11.4.2 --ignore-scripts --no-audit --no-fund
+          npm --prefix tools/qualification/web ci --ignore-scripts --no-audit --no-fund
+          npm --prefix tools/qualification/web run prepare:types
+          cargo fetch --locked --manifest-path tools/qualification/rust/Cargo.toml
+      - name: Run native probes
+        run: bash tools/qualification/check.sh
+      - name: Preserve measured native reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: qualification-${{ matrix.os }}-py${{ matrix.python }}
+          path: |
+            target/qualification/runs/*/*.json
+            target/qualification/runs/*/*.stderr
+          if-no-files-found: warn
+          retention-days: 14

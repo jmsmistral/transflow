@@ -1,0 +1,31 @@
+[package]
+name = "transflow-dependency-probe"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.98.1"
+publish = false
+
+# Standalone feasibility probe, not the application workspace (T004).
+[workspace]
+
+[dependencies]
+arrow-array = "=60.0.0"
+arrow-schema = "=60.0.0"
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+chrono = "=0.4.45"
+chrono-tz = "=0.10.4"
+clap = { version = "=4.6.7", features = ["derive"] }
+fs4 = "=1.1.0"
+libsqlite3-sys = { version = "=0.37.0", features = ["bundled"] }
+parquet = { version = "=60.0.0", default-features = false, features = ["arrow", "snap", "zstd"] }
+schemars = "=1.2.2"
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
+sqlx = { version = "=0.9.0", default-features = false, features = ["runtime-tokio", "sqlite-bundled"] }
+thiserror = "=2.0.20"
+tokio = { version = "=1.53.1", features = ["macros", "rt-multi-thread"] }
+tower = { version = "=0.5.3", features = ["util"] }
+tracing = "=0.1.44"
+
+[lints.rust]
+unsafe_code = "forbid"

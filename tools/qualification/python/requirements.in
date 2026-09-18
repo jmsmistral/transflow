@@ -1,0 +1,5 @@
+# Engine versions selected for T003. This is not an installable Transflow SDK.
+polars==1.44.2
+duckdb==1.5.5
+pyarrow==25.0.1
+pandas==3.0.6
