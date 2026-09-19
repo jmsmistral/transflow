@@ -186,4 +186,7 @@ eleven Rust boundary regressions, 52 Rust tests plus one compile-fail documentat
 test, 403 Python tests and 182 web tests. Both local Python 3.14.7 and 3.13.0
 runners pass. The shared corpus now includes integral decimal metadata written
 as JSON `3.0`/`-2.0` (157 schema cases plus 17 version cases).
-[Local evidence](evidence/t014-macos-arm64.json) records the scope; CI is pending.
+[Local evidence](evidence/t014-macos-arm64.json) records the scope. All five
+[CI workflows and their 19 jobs](evidence/t014-ci.json) pass at implementation
+`36bee7164c92cd66a93160456b007241e4b34917`, paired with specification progress
+`072167dd2243bb67103a03229242b1ee1d36d702`. T014 is complete.
