@@ -1,0 +1,22 @@
+{
+  "task": "T028",
+  "date": "2026-09-19",
+  "command": "bash tools/check.sh",
+  "result": "pass",
+  "platform": "macOS arm64",
+  "rust_tests": 139,
+  "rust_documentation_tests": 1,
+  "python_tests": 566,
+  "web_tests": 224,
+  "candidate_tests": 8,
+  "coverage": [
+    "Whole-pass forward references and symbolic pending identities",
+    "Duplicate producers, input aliases and whole-graph cycles before UUID allocation",
+    "Foreign, tombstone, kind and stale bound-reference guards",
+    "Exact additive proposals preserve existing identities and registry policies"
+  ],
+  "limits": [
+    "Filesystem reconciliation belongs to T029",
+    "Public validation and planning commands remain later tasks"
+  ]
+}

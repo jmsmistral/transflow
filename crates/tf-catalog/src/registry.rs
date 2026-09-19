@@ -103,7 +103,7 @@ pub enum DatasetKind {
     /// Imported immutable files, without a Python producer.
     Imported,
 }
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct Raw {
     format_version: u32,
@@ -116,20 +116,20 @@ struct Raw {
     #[serde(default)]
     external_registrations: Vec<RawExternal>,
 }
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct RawDataset {
     id: String,
     path: String,
     kind: DatasetKind,
 }
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct RawAlias {
     path: String,
     target_id: String,
 }
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct RawExternal {
     id: String,
@@ -240,6 +240,7 @@ pub struct RegistrySnapshot {
     names: BTreeMap<DatasetPath, Name>,
     raw_digest: ContentDigest,
     fingerprint: ContentDigest,
+    raw: Raw,
 }
 fn path(text: &str, scope: DatasetScope, location: &str) -> Result<DatasetPath> {
     if text.len() > 4096 || text.split('/').count() > 64 {
@@ -419,6 +420,7 @@ impl RegistrySnapshot {
             names,
             raw_digest,
             fingerprint,
+            raw,
         })
     }
     /// Explicit context; parsing never discovers a workspace through the current directory.
@@ -509,5 +511,96 @@ impl RegistrySnapshot {
             Resolved::Local { dataset, .. } => Ok(dataset),
             Resolved::External(_) => Err(error(RegistryErrorKind::ForeignOutput, "/reference")),
         }
+    }
+}
+
+impl RegistrySnapshot {
+    /// Narrow immutable SDK wire projection; aliases are resolved separately by the registry.
+    pub fn sdk_projection(&self, source: tf_domain::SourceSnapshotId) -> Result<serde_json::Value> {
+        let mut entries: Vec<_> = self.datasets().filter(|d| !d.is_tombstone()).map(|d| {
+            serde_json::json!({"key":{"workspace_id":d.key().workspace_id().to_string(),"dataset_id":d.key().dataset_id().to_string()},"path":d.path().as_str(),"kind":d.kind()})
+        }).chain(self.external_registrations().map(|e| {
+            serde_json::json!({"key":{"workspace_id":e.key().workspace_id().to_string(),"dataset_id":e.key().dataset_id().to_string()},"path":e.alias().as_str(),"kind":"external"})
+        })).collect();
+        entries.sort_by(|a, b| a["path"].as_str().cmp(&b["path"].as_str()));
+        // The v1 projection has one canonical path per identity. Alternate
+        // registration aliases remain exact string lookups until T030 expansion.
+        let mut keys = std::collections::BTreeSet::new();
+        entries.retain(|e| {
+            keys.insert((
+                e["key"]["workspace_id"].as_str().unwrap_or("").to_owned(),
+                e["key"]["dataset_id"].as_str().unwrap_or("").to_owned(),
+            ))
+        });
+        let mut value = serde_json::json!({"format_version":1,"workspace_id":self.workspace().to_string(),"source_snapshot_id":source.to_string(),"catalog_fingerprint":"0".repeat(64),"entries":entries});
+        value["catalog_fingerprint"] = tf_protocol::canonical::catalog_fingerprint(&value)
+            .map_err(|_| error(RegistryErrorKind::Invalid, "/projection"))?
+            .hex()
+            .into();
+        Ok(value)
+    }
+    /// Deterministically render an additive proposal, preserving every durable section.
+    /// Full parse validates collisions, tombstones, kinds and identities before returning bytes.
+    pub fn render_additions(
+        &self,
+        additions: &[(DatasetPath, DatasetId, DatasetKind)],
+    ) -> Result<String> {
+        let mut raw = self.raw.clone();
+        for (path, id, kind) in additions {
+            raw.datasets.push(RawDataset {
+                id: id.to_string(),
+                path: path.as_str().to_owned(),
+                kind: *kind,
+            });
+        }
+        raw.datasets.sort_by(|a, b| a.id.cmp(&b.id));
+        let quote = |text: &str| {
+            serde_json::to_string(text).map_err(|_| error(RegistryErrorKind::Invalid, "/render"))
+        };
+        let mut text = String::from("format_version = 1\n");
+        for (section, records) in [("datasets", &raw.datasets), ("tombstones", &raw.tombstones)] {
+            for d in records {
+                let kind = match d.kind {
+                    DatasetKind::Transform => "transform",
+                    DatasetKind::Source => "source",
+                    DatasetKind::Imported => "imported",
+                };
+                text.push_str(&format!(
+                    "\n[[{section}]]\nid = {}\npath = {}\nkind = {}\n",
+                    quote(&d.id)?,
+                    quote(&d.path)?,
+                    quote(kind)?
+                ));
+            }
+        }
+        for a in &raw.aliases {
+            text.push_str(&format!(
+                "\n[[aliases]]\npath = {}\ntarget_id = {}\n",
+                quote(&a.path)?,
+                quote(&a.target_id)?
+            ));
+        }
+        for e in &raw.external_registrations {
+            text.push_str("\n[[external_registrations]]\n");
+            for (key, value) in [
+                ("id", &e.id),
+                ("alias", &e.alias),
+                ("provider_workspace_id", &e.provider_workspace_id),
+                ("provider_dataset_id", &e.provider_dataset_id),
+                ("provider_display_path", &e.provider_display_path),
+                ("default_branch", &e.default_branch),
+            ] {
+                text.push_str(&format!("{key} = {}\n", quote(value)?));
+            }
+            if let Some(fallback) = &e.fallback_override {
+                let names = fallback
+                    .iter()
+                    .map(|v| quote(v))
+                    .collect::<Result<Vec<_>>>()?;
+                text.push_str(&format!("fallback_override = [{}]\n", names.join(", ")));
+            }
+        }
+        Self::parse(self.workspace(), &text)?;
+        Ok(text)
     }
 }
