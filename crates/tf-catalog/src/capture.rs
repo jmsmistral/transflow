@@ -68,7 +68,7 @@ struct Manifest {
     source_roots: Vec<String>,
     files: Vec<Entry>,
     source_digest: String,
-    git: Option<()>,
+    git: Option<crate::git::GitProvenance>,
 }
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct Guard {
@@ -115,6 +115,15 @@ impl SourceSnapshot {
     pub fn capture_with_observer(
         workspace: &Workspace,
         limits: CaptureLimits,
+        observer: impl FnMut(&Path) -> std::io::Result<()>,
+    ) -> Result<Self, CaptureError> {
+        Self::capture_internal(workspace, limits, None, None, observer)
+    }
+    pub(crate) fn capture_internal(
+        workspace: &Workspace,
+        limits: CaptureLimits,
+        git: Option<crate::git::GitProvenance>,
+        destination_runtime: Option<&Path>,
         mut observer: impl FnMut(&Path) -> std::io::Result<()>,
     ) -> Result<Self, CaptureError> {
         let before = SourceIndex::enumerate(workspace)?;
@@ -122,6 +131,8 @@ impl SourceSnapshot {
         let source_root = open_directory(workspace.root())?;
         let runtime = workspace.root().join(".transflow/runtime");
         let _runtime = open_relative(&source_root, Path::new(".transflow/runtime"), true)?;
+        let runtime = destination_runtime.unwrap_or(&runtime);
+        let _destination = open_directory(runtime)?;
         let parent = runtime.join("source-snapshots");
         match fs::symlink_metadata(&parent) {
             Ok(m) if !m.is_dir() || m.file_type().is_symlink() => {
@@ -216,7 +227,7 @@ impl SourceSnapshot {
                     .collect::<Result<_, _>>()?,
                 files: entries,
                 source_digest: String::new(),
-                git: None,
+                git,
             };
             manifest.source_digest = source_digest(&manifest)?;
             let bytes = serde_json::to_vec(&manifest).map_err(|_| CaptureError::Integrity)?;
@@ -259,7 +270,7 @@ impl SourceSnapshot {
         if manifest.format_version != 1
             || manifest.snapshot_id != id.to_string()
             || manifest.workspace_id.parse::<WorkspaceId>().is_err()
-            || manifest.git.is_some()
+            || manifest.git.as_ref().is_some_and(|git| !git.valid())
             || manifest.files.len() > 100_004
             || source_digest(&manifest)? != manifest.source_digest
         {
@@ -319,6 +330,10 @@ impl SourceSnapshot {
             directory,
             manifest,
         })
+    }
+    /// Captured optional Git provenance, separate from exact copied content identity.
+    pub fn git(&self) -> Option<&crate::git::GitProvenance> {
+        self.manifest.git.as_ref()
     }
     /// Opaque random identity independent of the content digest.
     pub fn id(&self) -> Result<SourceSnapshotId, CaptureError> {

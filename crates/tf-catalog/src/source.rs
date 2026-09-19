@@ -387,3 +387,14 @@ fn glob_matches(pattern: &str, path: &str) -> bool {
     }
     previous[t.len()]
 }
+
+/// Apply the same validated exclusion patterns to a prospective Git path before reading its blob.
+pub(crate) fn excluded_by_patterns(patterns: &[String], path: &Path) -> Result<bool, SourceError> {
+    for pattern in patterns {
+        validate_glob(pattern)?;
+    }
+    Ok(path
+        .ancestors()
+        .filter_map(Path::to_str)
+        .any(|name| patterns.iter().any(|p| glob_matches(p, name))))
+}

@@ -2,5 +2,6 @@
 mod registry;
 pub use registry::*;
 pub mod capture;
+pub mod git;
 pub mod source;
 pub mod workspace;

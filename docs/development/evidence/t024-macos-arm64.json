@@ -1,0 +1,23 @@
+{
+  "task": "T024",
+  "date": "2026-09-19",
+  "platform": "macOS arm64",
+  "command": "bash tools/check.sh",
+  "result": "pass",
+  "rust_tests": 128,
+  "rust_documentation_tests": 1,
+  "python_tests": 483,
+  "web_tests": 220,
+  "git_tests": 5,
+  "scenario_coverage": [
+    "A17/A42 explicit ref requires output branch and preserves user checkout",
+    "A43 unborn and detached branch selection",
+    "A44 exact captured dirty or committed bytes"
+  ],
+  "limits": [
+    "No build/plan CLI dispatch yet",
+    "Registry-overlay application remains T029",
+    "Managed captures use raw Git objects rather than worktree checkout",
+    "Unsupported submodule sources fail explicitly"
+  ]
+}
