@@ -112,7 +112,7 @@ supervised test children. It does not implement dataset publication or workers.
 The initial source boundaries are [crates/](crates/README.md),
 [python/](python/README.md) and [web/](web/README.md). T003 has pinned the initial
 toolchain/dependency candidates and exercised them on macOS arm64. Native Linux
-qualification now passes; T001–T018 are complete for their bootstrap/domain/transport/hash/diagnostic/state-machine/storage scope. T009 and T011 probes pass
+qualification now passes; T001–T019 are complete for their bootstrap/domain/transport/hash/diagnostic/state-machine/storage/ownership scope. T009 and T011 probes pass
 the native platform/Python matrix; T010 retains native editor checks for later integration.
 The [catalogue overlay spike](docs/development/catalog-overlay.md) now passes runtime and
 mypy checks on both Python versions; T010 is complete for its prototype scope, with native editor checks retained for later integration.
