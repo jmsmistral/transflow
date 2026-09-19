@@ -158,3 +158,12 @@ and all five [CI workflows](docs/development/evidence/t013-ci.json).
 CLI options and the current JSON/error contract are documented in the
 [CLI guide](crates/transflow/README.md). `--json` is available for help/version;
 unavailable commands still fail clearly without starting work.
+
+### Python declarations
+
+The SDK now provides `Input`, `Output`, `Check`, `transform` and `source_transform`.
+Decorated functions remain directly callable for unit tests. Declarations preserve
+branch/fallback policy, immutable checks, typed parameters and source refresh
+metadata. See the [authoring guide](python/DECLARATIONS.md) for examples and limits.
+The initial expectation constructors cover primary keys and non-null columns; the
+complete DSL, discovery, build execution and publication remain later tasks.

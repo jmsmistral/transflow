@@ -100,7 +100,17 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
     modules = {"__init__.py", "_version.py", "compatibility.py", "py.typed"}
     expected = {f"transflow/{module}" for module in modules}
     expected |= {f"transflow_worker/{module}" for module in modules | {"__main__.py", "cli.py"}}
-    expected |= {f"transflow/{name}.py" for name in ("_catalog_prototype", "catalog", "testing")}
+    expected |= {
+        f"transflow/{name}.py"
+        for name in (
+            "_catalog_prototype",
+            "catalog",
+            "testing",
+            "declarations",
+            "_declaration_values",
+            "expectations",
+        )
+    }
     expected |= {
         f"transflow_worker/{name}.py"
         for name in (
@@ -219,6 +229,10 @@ def test_installed_sdk_exposes_types(installed: Path, tmp_path: Path) -> None:
     valid.write_text(
         "from transflow import ProtocolVersion, require_protocol\n"
         "require_protocol(ProtocolVersion(1, 0))\n"
+        "from transflow import Input, Output, transform\n"
+        "@transform(value=Input('raw/value'), output=Output('out'))\n"
+        "def ordinary(value: int) -> int: return value + 1\n"
+        "answer: int = ordinary(1)\n"
     )
     command = [
         sys.executable,
@@ -230,7 +244,7 @@ def test_installed_sdk_exposes_types(installed: Path, tmp_path: Path) -> None:
         str(valid),
     ]
     run(command, tmp_path)
-    valid.write_text('from transflow import ProtocolVersion\nProtocolVersion("wrong", 0)\n')
+    valid.write_text(valid.read_text() + 'ordinary("wrong")\nProtocolVersion("wrong", 0)\n')
     result = run(command, tmp_path, ok=False)
     assert result.returncode == 1
     assert "arg-type" in result.stdout
@@ -277,6 +291,10 @@ def test_workspace_overlays_with_installed_sdk(installed: Path, tmp_path: Path) 
             "from transflow.testing import catalog_context\n"
             "from transflow_worker import __version__ as worker_version\n"
             "require_protocol(ProtocolVersion(1, 0))\n"
+            "from transflow import Input, Output, transform\n"
+            "@transform(value=Input('raw/value'), output=Output('out'))\n"
+            "def ordinary(value: int) -> int: return value + 1\n"
+            "answer: int = ordinary(1)\n"
             "assert isinstance(__version__, str)\n"
             "assert isinstance(PROTOCOL_VERSION, ProtocolVersion)\n"
             "assert issubclass(ProtocolCompatibilityError, RuntimeError)\n"

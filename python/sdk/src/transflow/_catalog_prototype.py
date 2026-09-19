@@ -133,3 +133,10 @@ def resolve_reference(node: CatalogNode, *, expected_fingerprint: str) -> Protot
         if path == node._path:
             return PrototypeRef(snapshot.workspace_id, dataset_id, path, snapshot.fingerprint)
     raise CatalogContextError("This catalogue node is a namespace, not a registered dataset")
+
+
+def capture_reference(node: CatalogNode) -> PrototypeRef:
+    """Capture the node's own immutable identity without consulting ambient context."""
+    if not isinstance(node, _BoundNode):
+        raise TypeError("Expected a bound catalogue node")
+    return resolve_reference(node, expected_fingerprint=node._snapshot.fingerprint)

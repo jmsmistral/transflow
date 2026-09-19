@@ -7,8 +7,9 @@ with source responsibilities retained under `sdk/` and `worker/`.
 The development package supports Python 3.13 and 3.14. It provides version and
 bootstrap compatibility metadata, plus worker help/version/compatibility commands.
 T010 adds an internal immutable catalogue binding and typing-overlay prototype with
-explicit test contexts. Production catalogue references, transform declarations,
-engine adapters and execution are not implemented yet. See the
+explicit test contexts. T026 adds [immutable authoring declarations](DECLARATIONS.md) and preserved-callable
+decorators. Production catalogue binding, engine adapters and execution remain
+later tasks. See the
 [prototype evidence and limits](../docs/development/catalog-overlay.md). Importing the SDK does not initialize a workspace or worker.
 
 ## Contributor setup and checks

@@ -1,0 +1,22 @@
+{
+  "task": "T026",
+  "date": "2026-09-19",
+  "platform": "macOS arm64",
+  "command": "bash tools/check.sh",
+  "result": "pass",
+  "rust_tests": 130,
+  "rust_documentation_tests": 1,
+  "python_tests": 543,
+  "web_tests": 220,
+  "declaration_cases": 49,
+  "additional_verification": [
+    "Python 3.13 full package/lint/type suite: 543 passed",
+    "Real Polars 1.44.2 returns: DataFrame/LazyFrame accepted, five invalid returns rejected on Python 3.13 and 3.14",
+    "Installed-wheel decorator typing and overlay exports verified"
+  ],
+  "limits": [
+    "Discovery and production catalogue binding remain T027/T030",
+    "Full expectation AST/DSL and evaluation remain T059-T062",
+    "Execution context is an interface; decorators do not execute lifecycle checks"
+  ]
+}

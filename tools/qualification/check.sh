@@ -33,6 +33,7 @@ fi
 "$python_bin" tools/qualification/python/probe.py --rust-parquet "$run_dir/data/rust.parquet" > "$run_dir/python.json"
 "$python_bin" tools/qualification/duckdb/probe.py --output "$run_dir/duckdb-capabilities.json"
 "$python_bin" tools/qualification/resources/probe.py --output "$run_dir/resource-capabilities.json"
+"$python_bin" -I -B python/tools/check_declaration_returns.py > "$run_dir/declaration-returns.json"
 node tools/qualification/web/patch-elk.mjs
 npm --prefix tools/qualification/web run typecheck
 npm --prefix tools/qualification/web test
