@@ -1,5 +1,6 @@
 //! Deterministic source allowlist. Enumeration reads metadata, never imports user code.
 use crate::workspace::Workspace;
+use std::os::unix::fs::MetadataExt;
 use std::{
     collections::BTreeSet,
     fs,
@@ -23,6 +24,7 @@ fn fail(reason: &'static str, paths: Vec<PathBuf>) -> SourceError {
 pub struct SourceFile {
     path: PathBuf,
     bytes: u64,
+    identity: (u64, u64, i64, i64, i64, i64),
 }
 impl SourceFile {
     /// Workspace-relative destination in a source capture.
@@ -221,6 +223,14 @@ impl Scanner<'_> {
             self.files.push(SourceFile {
                 path: relative.to_owned(),
                 bytes: metadata.len(),
+                identity: (
+                    metadata.dev(),
+                    metadata.ino(),
+                    metadata.mtime(),
+                    metadata.mtime_nsec(),
+                    metadata.ctime(),
+                    metadata.ctime_nsec(),
+                ),
             });
         } else {
             return Err(fail(
