@@ -1,5 +1,6 @@
 //! CLI argument handling, human diagnostics and versioned JSON results.
 //! Help/version require no workspace I/O. Application services remain later work.
+mod env;
 mod init;
 use std::{
     ffi::OsString,
@@ -31,8 +32,16 @@ fn command() -> clap::Command {
     use clap::{Arg, ArgAction};
     clap::Command::new("transflow")
         .about("A local build system for dataframe datasets (development scaffold)")
-        .after_help("Help, version and workspace initialization are available. Dataset builds and the coordinator are not implemented yet.")
+        .after_help("Help, version, workspace initialization and explicit environment commands are available. Dataset builds and the coordinator are not implemented yet.")
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
+        .subcommand(clap::Command::new("env").disable_help_flag(true).about("Explicit environment lock, sync and drift verification")
+            .arg(Arg::new("python").long("python").global(true).value_name("EXECUTABLE"))
+            .arg(Arg::new("runtime-wheel").long("runtime-wheel").global(true).value_name("WHEEL"))
+            .arg(Arg::new("wheelhouse").long("wheelhouse").global(true).value_name("DIRECTORY"))
+            .arg(Arg::new("no-index").long("no-index").global(true).action(ArgAction::SetTrue))
+            .subcommand(clap::Command::new("lock").disable_help_flag(true).about("Resolve exact hashed dependencies using qualified tooling"))
+            .subcommand(clap::Command::new("sync").disable_help_flag(true).about("Install locked wheels and the explicit matched Transflow wheel"))
+            .subcommand(clap::Command::new("check").disable_help_flag(true).about("Reject interpreter, lock or installed-file drift without installation")))
         .subcommand(clap::Command::new("init").disable_help_flag(true).about("Initialize a workspace without Git, Python or package installation").arg(Arg::new("directory").value_name("DIRECTORY")))
         .arg(Arg::new("help").global(true).long("help").short('h').action(ArgAction::SetTrue).help("Show implemented commands and options"))
         .arg(Arg::new("version").long("version").short('V').action(ArgAction::SetTrue).help("Show product version"))
@@ -163,6 +172,55 @@ pub fn run(
     let version = redactor.text(env!("CARGO_PKG_VERSION"))?;
     match command().try_get_matches_from(args) {
         Ok(matches) => {
+            if let Some(("env", environment)) = matches.subcommand()
+                && !matches.get_flag("help")
+                && !matches.get_flag("version")
+            {
+                return match env::execute(environment, matches.get_one::<String>("workspace")) {
+                    Ok(text) => {
+                        if intent.json {
+                            stdout
+                                .write_all(
+                                    CliEnvelope::success(
+                                        &version,
+                                        InformationKind::Environment,
+                                        &redactor.text(&text)?,
+                                        &context,
+                                    )?
+                                    .as_bytes(),
+                                )
+                                .map_err(CliError::Stdout)?;
+                        } else {
+                            writeln!(stdout, "{text}").map_err(CliError::Stdout)?;
+                        }
+                        Ok(ExitCode::SUCCESS)
+                    }
+                    Err(error) => {
+                        let status = if matches!(error, env::EnvError::Usage) {
+                            ExitStatus::Usage
+                        } else {
+                            ExitStatus::Failure
+                        };
+                        let d=Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Environment preparation could not finish")?,redactor.text(&error.to_string())?,redactor.text("Prepare the qualified Python tooling, then run the explicit env lock, env sync or env check command. Builds never install dependencies automatically.")?);
+                        if intent.json {
+                            stdout
+                                .write_all(
+                                    CliEnvelope::failure(&version, status, &context, &[d])?
+                                        .as_bytes(),
+                                )
+                                .map_err(CliError::Stdout)?;
+                        } else {
+                            stderr
+                                .write_all(
+                                    render_diagnostic(&d, &context, intent.verbose, false)
+                                        .as_bytes(),
+                                )
+                                .map_err(CliError::Stderr)?;
+                        }
+                        Ok(ExitCode::from(status.code()))
+                    }
+                };
+            }
             if let Some(("init", init)) = matches.subcommand()
                 && !matches.get_flag("help")
                 && !matches.get_flag("version")

@@ -110,6 +110,7 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
             "_wire_schema",
             "_wire_validators",
             "source_index",
+            "environment",
         )
     }
     metadata_files = {"METADATA", "WHEEL", "RECORD", "top_level.txt", "entry_points.txt"}

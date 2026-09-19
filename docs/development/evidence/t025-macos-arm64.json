@@ -1,0 +1,24 @@
+{
+  "task": "T025",
+  "date": "2026-09-19",
+  "platform": "macOS arm64",
+  "command": "bash tools/check.sh",
+  "result": "pass",
+  "rust_tests": 130,
+  "rust_documentation_tests": 1,
+  "python_tests": 494,
+  "web_tests": 220,
+  "environment_python_tests": 11,
+  "environment_cli_tests": 2,
+  "cli_smoke": "Real binary init, offline env lock, sync and check passed with synthetic wheels",
+  "coverage": [
+    "Transitive hash locks and cold offline sync",
+    "Package, interpreter/configuration and SDK metadata drift",
+    "Failed sync preserves last ready environment",
+    "Check never executes package .pth files or installs packages"
+  ],
+  "limits": [
+    "Runtime wheel supplied explicitly until release bundles exist",
+    "Build integration and old-generation garbage collection remain later tasks"
+  ]
+}

@@ -6,11 +6,14 @@ use tf_domain::diagnostic::{Diagnostic, ExitStatus, RequestContext, SafeText};
 /// Initial complete-result envelope format, independent of the worker protocol.
 pub const CLI_ENVELOPE_VERSION: u32 = 1;
 /// Implemented CLI operations. This does not advertise dataset/coordinator capabilities.
-pub const CLI_CAPABILITIES: [&str; 4] = [
+pub const CLI_CAPABILITIES: [&str; 7] = [
     "cli.help",
     "cli.version",
     "cli.diagnostics.v1",
     "workspace.init",
+    "env.lock",
+    "env.sync",
+    "env.check",
 ];
 /// Successful informational operation.
 #[derive(Clone, Copy, Debug)]
@@ -19,6 +22,8 @@ pub enum InformationKind {
     Help,
     /// Initialize or verify a durable workspace.
     WorkspaceInit,
+    /// Explicit environment operation.
+    Environment,
     /// Installed product version.
     Version,
 }
@@ -70,7 +75,7 @@ impl CliEnvelope {
             version,
             ExitStatus::Success,
             ctx,
-            json!({"kind":match kind {InformationKind::Help=>"help",InformationKind::Version=>"version",InformationKind::WorkspaceInit=>"workspace_init"},"text":text.as_str()}),
+            json!({"kind":match kind {InformationKind::Help=>"help",InformationKind::Version=>"version",InformationKind::WorkspaceInit=>"workspace_init",InformationKind::Environment=>"environment"},"text":text.as_str()}),
             Vec::new(),
         )
     }

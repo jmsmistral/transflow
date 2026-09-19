@@ -252,6 +252,10 @@ fn process_start(pid: u32) -> Result<String> {
     }
 }
 impl RuntimeOwner {
+    /// Explicit canonical workspace associated with this live ownership guard.
+    pub fn workspace_root(&self) -> &Path {
+        &self.registration.root.path
+    }
     /// Acquire ownership of an existing private `.transflow/runtime` directory.
     /// No DB, discovery import, process signal or metadata replacement happens on contention.
     pub fn acquire(root: &Path, workspace: WorkspaceId, mode: CoordinatorMode) -> Result<Self> {

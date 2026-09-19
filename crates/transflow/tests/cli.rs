@@ -22,7 +22,7 @@ fn help_works_outside_a_checkout_without_other_tools() -> Result<(), Box<dyn Err
         assert!(output.status.success());
         assert!(output.stderr.is_empty());
         let help = String::from_utf8(output.stdout)?;
-        assert!(help.contains("workspace initialization are available"));
+        assert!(help.contains("explicit environment commands are available"));
         assert!(help.contains("not implemented yet"));
     }
     Ok(())
