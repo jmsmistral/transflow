@@ -1289,7 +1289,8 @@
               "const": [
                 "cli.help",
                 "cli.version",
-                "cli.diagnostics.v1"
+                "cli.diagnostics.v1",
+                "workspace.init"
               ]
             },
             "context": {
@@ -1309,7 +1310,8 @@
                 "kind": {
                   "enum": [
                     "help",
-                    "version"
+                    "version",
+                    "workspace_init"
                   ]
                 },
                 "text": {
@@ -1356,7 +1358,8 @@
               "const": [
                 "cli.help",
                 "cli.version",
-                "cli.diagnostics.v1"
+                "cli.diagnostics.v1",
+                "workspace.init"
               ]
             },
             "context": {
@@ -1408,7 +1411,8 @@
               "const": [
                 "cli.help",
                 "cli.version",
-                "cli.diagnostics.v1"
+                "cli.diagnostics.v1",
+                "workspace.init"
               ]
             },
             "context": {

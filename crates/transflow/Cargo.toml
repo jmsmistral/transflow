@@ -9,6 +9,8 @@ description = "Transflow CLI and application composition root"
 [dependencies]
 tf-domain = { path = "../tf-domain" }
 tf-protocol = { path = "../tf-protocol" }
+tf-catalog = { path = "../tf-catalog" }
+tf-exec = { path = "../tf-exec" }
 clap.workspace = true
 thiserror.workspace = true
 

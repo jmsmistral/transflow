@@ -1,0 +1,25 @@
+{
+  "task": "T021",
+  "date": "2026-09-19",
+  "platform": "macOS arm64",
+  "command": "bash tools/check.sh",
+  "result": "pass",
+  "rust_tests": 111,
+  "rust_documentation_tests": 1,
+  "python_tests": 462,
+  "web_tests": 220,
+  "document_regressions": 44,
+  "safety_regressions": 27,
+  "rust_boundary_regressions": 12,
+  "scenarios": [
+    "A41 initialization without Git or Python",
+    "A61 independent typed timeouts with no default memory cap",
+    "A67 stable repeat init and durable registry ignore rules"
+  ],
+  "limits": [
+    "No dataset build or coordinator service",
+    "Environment sync and source enumeration follow",
+    "Initialization is not a multi-file transaction; partial state is diagnosed without replacing identity",
+    "Local filesystem checks are not a hostile-code sandbox"
+  ]
+}

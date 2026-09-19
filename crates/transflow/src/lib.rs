@@ -1,5 +1,6 @@
 //! CLI argument handling, human diagnostics and versioned JSON results.
 //! Help/version require no workspace I/O. Application services remain later work.
+mod init;
 use std::{
     ffi::OsString,
     io::{self, IsTerminal},
@@ -30,9 +31,10 @@ fn command() -> clap::Command {
     use clap::{Arg, ArgAction};
     clap::Command::new("transflow")
         .about("A local build system for dataframe datasets (development scaffold)")
-        .after_help("Only help and version are available. Dataset builds and the coordinator are not implemented yet.")
+        .after_help("Help, version and workspace initialization are available. Dataset builds and the coordinator are not implemented yet.")
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
-        .arg(Arg::new("help").long("help").short('h').action(ArgAction::SetTrue).help("Show implemented commands and options"))
+        .subcommand(clap::Command::new("init").disable_help_flag(true).about("Initialize a workspace without Git, Python or package installation").arg(Arg::new("directory").value_name("DIRECTORY")))
+        .arg(Arg::new("help").global(true).long("help").short('h').action(ArgAction::SetTrue).help("Show implemented commands and options"))
         .arg(Arg::new("version").long("version").short('V').action(ArgAction::SetTrue).help("Show product version"))
         .arg(Arg::new("json").long("json").global(true).action(ArgAction::SetTrue).help("Emit one versioned result envelope on stdout"))
         .arg(Arg::new("workspace").long("workspace").value_name("DIRECTORY").help("Select root workspace context before a command (no discovery for help/version)"))
@@ -161,6 +163,64 @@ pub fn run(
     let version = redactor.text(env!("CARGO_PKG_VERSION"))?;
     match command().try_get_matches_from(args) {
         Ok(matches) => {
+            if let Some(("init", init)) = matches.subcommand()
+                && !matches.get_flag("help")
+                && !matches.get_flag("version")
+            {
+                let destination = init
+                    .get_one::<String>("directory")
+                    .map(std::path::PathBuf::from)
+                    .or_else(|| {
+                        matches
+                            .get_one::<String>("workspace")
+                            .map(std::path::PathBuf::from)
+                    })
+                    .unwrap_or_else(|| std::path::PathBuf::from("."));
+                return match init::initialize(&destination) {
+                    Ok(text) => {
+                        if intent.json {
+                            stdout
+                                .write_all(
+                                    CliEnvelope::success(
+                                        &version,
+                                        InformationKind::WorkspaceInit,
+                                        &redactor.text(&text)?,
+                                        &context,
+                                    )?
+                                    .as_bytes(),
+                                )
+                                .map_err(CliError::Stdout)?;
+                        } else {
+                            writeln!(stdout, "{text}").map_err(CliError::Stdout)?;
+                        }
+                        Ok(ExitCode::SUCCESS)
+                    }
+                    Err(error) => {
+                        let d=Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Workspace initialization could not finish")?,redactor.text(&error.to_string())?,redactor.text("Correct the reported files without deleting the durable registry, then run transflow init again.")?);
+                        if intent.json {
+                            stdout
+                                .write_all(
+                                    CliEnvelope::failure(
+                                        &version,
+                                        ExitStatus::Failure,
+                                        &context,
+                                        &[d],
+                                    )?
+                                    .as_bytes(),
+                                )
+                                .map_err(CliError::Stdout)?;
+                        } else {
+                            stderr
+                                .write_all(
+                                    render_diagnostic(&d, &context, intent.verbose, false)
+                                        .as_bytes(),
+                                )
+                                .map_err(CliError::Stderr)?;
+                        }
+                        Ok(ExitCode::FAILURE)
+                    }
+                };
+            }
             let (kind, text) = if matches.get_flag("version") {
                 (
                     InformationKind::Version,
@@ -183,7 +243,7 @@ pub fn run(
         Err(_error) => {
             // Never dump Clap's error: it can echo secret values or terminal controls.
             let d=Diagnostic::new(DiagnosticCode::CliUsage,redactor.text("The command could not be understood")?,
-                redactor.text("An argument is unknown, missing, or invalid. This development build supports only help and version.")?,
+                redactor.text("An argument is unknown, missing, or invalid. Run help to inspect the implemented commands.")?,
                 redactor.text("Run transflow --help to see the available options. Dataset builds and the coordinator are not implemented yet.")?);
             if intent.json {
                 let envelope = CliEnvelope::failure(&version, ExitStatus::Usage, &context, &[d])?;
