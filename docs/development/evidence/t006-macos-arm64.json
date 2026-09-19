@@ -1,0 +1,82 @@
+{
+  "task": "T006",
+  "date": "2026-09-19",
+  "specification": "1.1.1",
+  "platform": {
+    "os": "macOS",
+    "version": "15.3.1",
+    "architecture": "arm64"
+  },
+  "base_revisions": {
+    "implementation": "65e4dacf3e4c5bbe9b2c0c442e2bec0e444aeb06",
+    "specification": "f8c5083c5a7462e36617508c7d67337d6d368139"
+  },
+  "node": "24.4.1",
+  "npm": "11.4.2",
+  "dependency_setup": {
+    "command": "npm ci --ignore-scripts --offline --cache ../target/web/npm-cache",
+    "cwd": "web",
+    "result": "passed",
+    "cache": "Prepared explicitly; task-specific cache removed after the owner requested removal of Playwright downloads."
+  },
+  "web_checks": {
+    "command": "bash tools/check-web.sh",
+    "result": "passed",
+    "component_tests_passed": 6,
+    "component_tests_failed": 0,
+    "checks": [
+      "exact Node/npm versions",
+      "strict TypeScript",
+      "ESLint",
+      "Prettier",
+      "Vitest/jsdom components",
+      "Vite production build",
+      "second build byte comparison"
+    ]
+  },
+  "production_asset_sha256": {
+    ".vite/manifest.json": "d38936808b6d91b33fb901f309042740486407aa214933fa578e19dec4357fc0",
+    "assets/index-BgRlqXg-.js": "c386cdb7089bca381b8b3c70f012f734118e6d1a494995941cf02c2c1b3fb6cf",
+    "assets/index-jzaaa0Oy.css": "d13c82bc65d0bd4039aa383da0f0436602b5d76a622d4be8509a9366c167019b",
+    "index.html": "e10184fd60cd65211e8cda357a3f8a6af2c850eee026d3dc66592fdf7e86f902"
+  },
+  "browser": {
+    "tool": "Codex internal Browser",
+    "url": "http://127.0.0.1:4173/",
+    "result": "passed for observed preview journeys",
+    "viewports": [
+      "default desktop (964 x 992 observed screenshot)",
+      "375 x 812"
+    ],
+    "observations": [
+      "Disconnected empty state; no dataset/build success claimed",
+      "Tab/Enter skip link focuses main workspace",
+      "Keyboard opens labelled native modal and focuses close button",
+      "Background controls absent from modal accessibility tree; Tab/Shift+Tab do not reach background controls",
+      "Escape and close button dismiss modal and restore opener focus",
+      "Space/Enter toggle light/dark state; reload restores light theme",
+      "Both themes inspected; narrow dialog fits and page scrolls to footer",
+      "Narrow document content and viewport widths both 375 pixels in light/dark themes",
+      "No captured browser console warnings or errors"
+    ],
+    "external_browser_dependencies_installed": false
+  },
+  "limitations": [
+    "T003 native qualification remains pending",
+    "Web CI workflow not pushed or run in this increment",
+    "No coordinator, domain API contracts, graph or embedded native assets",
+    "Observed browser checks are separate from CI and not a full accessibility audit",
+    "Same-platform repeat builds; cross-platform byte identity not asserted",
+    "ESLint 9.39.5 and transitive whatwg-encoding have npm deprecation notices; developer-tool review remains T008",
+    "No commits or push in this increment"
+  ],
+  "aggregate_checks": {
+    "command": "bash tools/check.sh",
+    "result": "passed",
+    "spec_regressions": 43,
+    "rust_boundary_tests": 10,
+    "rust_tests": 5,
+    "python_tests": 28,
+    "web_component_tests": 6
+  }
+}

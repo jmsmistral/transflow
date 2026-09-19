@@ -2,7 +2,8 @@
 
 The contributor checks use Python's standard library and Git; T004 adds the
 pinned Rust toolchain, rustfmt and Clippy; T005 adds hash-locked Python package
-tooling in a separate repository-local environment. Document checks were verified
+tooling in a separate repository-local environment. T006 adds Node 24.4.1/npm
+11.4.2 and locked web tooling. Document checks were verified
 on macOS 15.3.1 arm64 with Python 3.14.7 from the project's `transflow` pyenv
 environment. Python 3.11+ is the checker syntax baseline; other interpreters and
 Linux have not yet been run for the document checker. The separate
@@ -15,6 +16,7 @@ cd ~/dev/transflow
 cargo fetch --locked  # Explicit first-time setup; requires registry access.
 python -m venv target/python/py314
 target/python/py314/bin/python -m pip install --require-hashes --only-binary=:all: -r python/dev-py314.lock
+npm --prefix web ci --ignore-scripts
 bash tools/check.sh
 ```
 
@@ -91,10 +93,19 @@ reports. Native local execution uses Python 3.14.7 and the available 3.13.0;
 CI's Python 3.13.15 and Linux results remain pending. Wire protocol `0.0` is only
 bootstrap metadata; no framed transport or execution operation is implemented.
 
+The aggregate also runs `bash tools/check-web.sh`: exact Node/npm versions,
+strict TypeScript, ESLint, Prettier, six Vitest/jsdom component tests and two Vite
+production builds compared byte-for-byte. Reports go to `target/web/`. The
+[web workflow](../../.github/workflows/web.yml) runs this on all three target
+platforms; remote results are pending. Browser checks use only Codex’s internal
+Browser and the [observed checklist](browser-checks.md); no browser driver or
+binaries are installed. The component runner does not verify native dialog focus.
+No API contracts exist yet; Rust-generated types and drift checks follow T012/T074.
+
 Run `bash tools/qualification/check.sh` separately with its prepared Python
 environment for T003 native dependency probes; the compatibility guide documents
 explicit setup. Checks never fetch external dependencies; Python tests install
-the locally built wheel into disposable environments. Add frontend checks in T006 and broader CI,
+the locally built wheel into disposable environments. Add broader CI and
 dependency/license/privacy checks in T008 as their real manifests and runners
 become available. Add schema drift, canonical fixtures, integration/recovery and
 browser gates with their implementations. A missing required runner must fail,

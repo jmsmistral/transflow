@@ -2,6 +2,7 @@
 /target/
 /web/node_modules/
 /web/dist/
+/web/.vitest/
 /tools/qualification/web/node_modules/
 /tools/qualification/web/dist/
 /tools/qualification/rust/target/

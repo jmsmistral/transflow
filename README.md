@@ -2,7 +2,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** Contributor foundation implemented (T001–T002). T004 provides the ten-crate Rust scaffold and CLI help/version. T005 adds one locally installable `transflow` wheel containing the typed SDK and worker bootstrap modules. T003 native CI results remain pending. Transform declarations, dataset builds, the coordinator and frontend remain unimplemented; this is not an application release.
+**Status:** Contributor foundation implemented (T001–T002). T004 provides the ten-crate Rust scaffold and CLI help/version. T005 adds one locally installable `transflow` wheel containing the typed SDK and worker bootstrap modules. T003 native CI results remain pending. T006 adds a web development preview with theme and dialog controls. Transform declarations, dataset builds and the coordinator remain unimplemented; this is not an application release.
 
 ## Intended experience
 
@@ -54,6 +54,7 @@ Specification baseline: **1.1.1**. See its task ledger for intended scope; unche
 Use the project-local pyenv environment, Git and the pinned Rust 1.98.1 toolchain
 with rustfmt and Clippy. Document checks use the Python standard library (3.11+);
 package checks use a separate, hash-locked Python 3.14 tooling environment.
+Web checks require Node 24.4.1 and npm 11.4.2.
 Prepare dependencies once before running the offline checks:
 
 ```bash
@@ -61,12 +62,14 @@ cd ~/dev/transflow
 cargo fetch --locked
 python -m venv target/python/py314
 target/python/py314/bin/python -m pip install --require-hashes --only-binary=:all: -r python/dev-py314.lock
+npm --prefix web ci --ignore-scripts
 bash tools/check.sh
 ```
 
 This checks specification metadata, task dependencies/evidence, references,
 example syntax and public file paths; it then runs tooling regressions, Rust
 dependency checks, formatting, compilation, Clippy, Ruff, mypy and bootstrap tests.
+Web gates check TypeScript, ESLint, component tests and repeatable production assets.
 Tests build a wheel and install it into disposable environments without network
 access; external dependency installation remains explicit. See the
 [verification contract](docs/development/verification.md) for scope and limitations.
@@ -82,9 +85,13 @@ Only help and version are available. Other commands fail with a diagnostic.
 The built executable works outside either checkout without Python or Git.
 `bash tools/check-rust.sh` runs the Rust checks without the sibling specification.
 
+Try the [web preview](web/README.md) with `npm --prefix web run dev`. Browser
+verification uses Codex’s internal Browser; no browser installation is needed.
+The preview does not connect to a coordinator or execute dataset operations.
+
 The initial source boundaries are [crates/](crates/README.md),
 [python/](python/README.md) and [web/](web/README.md). T003 has pinned the initial
 toolchain/dependency candidates and exercised them on macOS arm64. Native Linux
-qualification remains pending, so T003–T005 remain unchecked in the task ledger.
+qualification remains pending, so T003–T006 remain unchecked in the task ledger.
 See the [compatibility matrix and setup](docs/development/compatibility.md)
 for the isolated probe environment, measured results and CI workflow.
