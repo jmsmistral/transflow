@@ -1,12 +1,12 @@
 {
   "locks": {
-    "Cargo.lock": "452d4276ee78a79099f7a7691ced427f2bc1f14ba167c3f61f9d64d9b2116e32",
+    "Cargo.lock": "accf1f2196f5fef3583f5f54aaae70fa91836de250d45a3a850bc88f8cae0038",
     "python/dev-py313.lock": "70e9c67f810e843334c39b4d47c1a23c30e7a982a1da144b87fc86c844227ddc",
     "python/dev-py314.lock": "70e9c67f810e843334c39b4d47c1a23c30e7a982a1da144b87fc86c844227ddc",
     "tools/qualification/python/py313.lock": "cd008e118c8e66bda4e999a67be7d869a1fa62ada37ca19246e42a00f7014be3",
     "tools/qualification/python/py314.lock": "cd008e118c8e66bda4e999a67be7d869a1fa62ada37ca19246e42a00f7014be3",
     "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
-    "tools/qualification/rust/Cargo.lock": "10a5d661be67cf314c6d50e1560373eab61c3d7be32ae4ee52a92b98e6db7a9d",
+    "tools/qualification/rust/Cargo.lock": "7071609d12e60217e4b690627aa9134536b1a48c638618053bcbfad51faa9177",
     "tools/qualification/web/package-lock.json": "a9105bbe9e499ec2f60b679f0f838cbf7a5bc7bdee19b1b03de8a6c606f49574",
     "web/package-lock.json": "d6001f7ec228fc459a67c214b46e4299f6151186a3b528f0c18e6ddfd0dadc90"
   },
@@ -2405,6 +2405,20 @@
     {
       "deprecations": [],
       "ecosystem": "crates.io",
+      "id": "crates.io:serde_spanned@1.1.1",
+      "licenses": [
+        "MIT OR Apache-2.0"
+      ],
+      "locks": [
+        "Cargo.lock",
+        "tools/qualification/rust/Cargo.lock"
+      ],
+      "name": "serde_spanned",
+      "version": "1.1.1"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "crates.io",
       "id": "crates.io:sha2@0.10.9",
       "licenses": [
         "MIT OR Apache-2.0"
@@ -2759,6 +2773,62 @@
       ],
       "name": "tokio",
       "version": "1.53.1"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "crates.io",
+      "id": "crates.io:toml@1.1.6+spec-1.1.0",
+      "licenses": [
+        "MIT OR Apache-2.0"
+      ],
+      "locks": [
+        "Cargo.lock",
+        "tools/qualification/rust/Cargo.lock"
+      ],
+      "name": "toml",
+      "version": "1.1.6+spec-1.1.0"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "crates.io",
+      "id": "crates.io:toml_datetime@1.1.1+spec-1.1.0",
+      "licenses": [
+        "MIT OR Apache-2.0"
+      ],
+      "locks": [
+        "Cargo.lock",
+        "tools/qualification/rust/Cargo.lock"
+      ],
+      "name": "toml_datetime",
+      "version": "1.1.1+spec-1.1.0"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "crates.io",
+      "id": "crates.io:toml_parser@1.1.3+spec-1.1.0",
+      "licenses": [
+        "MIT OR Apache-2.0"
+      ],
+      "locks": [
+        "Cargo.lock",
+        "tools/qualification/rust/Cargo.lock"
+      ],
+      "name": "toml_parser",
+      "version": "1.1.3+spec-1.1.0"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "crates.io",
+      "id": "crates.io:toml_writer@1.1.2+spec-1.1.0",
+      "licenses": [
+        "MIT OR Apache-2.0"
+      ],
+      "locks": [
+        "Cargo.lock",
+        "tools/qualification/rust/Cargo.lock"
+      ],
+      "name": "toml_writer",
+      "version": "1.1.2+spec-1.1.0"
     },
     {
       "deprecations": [],
@@ -3122,6 +3192,20 @@
       ],
       "name": "windows-sys",
       "version": "0.61.2"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "crates.io",
+      "id": "crates.io:winnow@1.0.4",
+      "licenses": [
+        "MIT"
+      ],
+      "locks": [
+        "Cargo.lock",
+        "tools/qualification/rust/Cargo.lock"
+      ],
+      "name": "winnow",
+      "version": "1.0.4"
     },
     {
       "deprecations": [],

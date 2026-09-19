@@ -8,3 +8,10 @@ description = "Descriptors, source manifests, dataset reference resolution and g
 
 [lints]
 workspace = true
+
+[dependencies]
+tf-domain = { path = "../tf-domain" }
+tf-protocol = { path = "../tf-protocol" }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+toml.workspace = true

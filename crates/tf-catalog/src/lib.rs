@@ -1,3 +1,3 @@
-//! Descriptors, source manifests, dataset reference resolution and graph validation.
-//!
-//! Crate boundary established by T004. No runtime services are implemented yet.
+//! Immutable durable catalogue parsing and exact reference lookup. No identity allocation or I/O.
+mod registry;
+pub use registry::*;

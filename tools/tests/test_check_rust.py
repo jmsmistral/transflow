@@ -51,6 +51,14 @@ class RustBoundaries(unittest.TestCase):
         self.add_internal("tf-protocol", "tf-domain")
         self.assertIn("Crate dependency cycle: tf-domain -> tf-protocol -> tf-domain", self.messages())
 
+    def test_cycle_omits_acyclic_prefix_and_duplicate_edges(self):
+        self.add_internal("tf-catalog", "tf-domain")
+        self.add_internal("tf-domain", "tf-protocol")
+        self.add_internal("tf-protocol", "tf-domain")
+        self.add_internal("tf-protocol", "tf-domain")
+        cycles = [m for m in self.messages().splitlines() if m.startswith("Crate dependency cycle:")]
+        self.assertEqual(cycles, ["Crate dependency cycle: tf-domain -> tf-protocol -> tf-domain"])
+
     def test_alias_optional_target_and_build_dependencies_do_not_bypass_policy(self):
         self.packages["tf-domain"]["dependencies"].append({
             "name": "sqlx", "rename": "innocent_name", "optional": True,

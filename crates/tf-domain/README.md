@@ -8,7 +8,7 @@ contracts are implemented by [tf-protocol](../tf-protocol/README.md) in T014.
 
 | Module | Delivered types |
 |---|---|
-| `identity` | RequestId (T014), BuildId, JobId, PlanId, CoordinatorSessionId (T017), WorkspaceId, DatasetId, VersionId, AttemptId, BranchId, SourceSnapshotId, DatasetKey, DatasetScope |
+| `identity` | RequestId (T014), BuildId, JobId, PlanId, CoordinatorSessionId (T017), ExternalRegistrationId (T020), WorkspaceId, DatasetId, VersionId, AttemptId, BranchId, SourceSnapshotId, DatasetKey, DatasetScope |
 | `path` | DatasetPath with syntax and ownership-scope validation |
 | `branch` | BranchName, BranchSelector and independent FallbackPermission |
 | `schema` | FieldName, Field, unique ordered Fields, LogicalType and LogicalSchema |

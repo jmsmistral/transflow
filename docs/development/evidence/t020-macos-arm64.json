@@ -1,0 +1,42 @@
+{
+  "task": "T020",
+  "date": "2026-09-19",
+  "platform": "macOS arm64",
+  "implementation_base": "954344127ce85963e91b96889f3e09c328a6a45a",
+  "specification_base": "aa8957062c0c1ddee865bbdbc80b560ef6a4cbbd",
+  "commands": [
+    "bash tools/check.sh",
+    "cargo run --manifest-path tools/qualification/rust/Cargo.toml --locked --offline -- --output-dir target/qualification/t020-native"
+  ],
+  "result": "passed",
+  "counts": {
+    "document_regressions": 44,
+    "safety_regressions": 27,
+    "rust_boundary_regressions": 12,
+    "rust_tests": 100,
+    "rust_compile_fail_documentation_tests": 1,
+    "python_tests": 462,
+    "web_tests": 220,
+    "registry_tests": 10,
+    "synthetic_lookup_datasets": 5000
+  },
+  "dependencies": {
+    "distinct_versions": 640,
+    "new_distinct_versions": 6,
+    "toml": "1.1.6+spec-1.1.0",
+    "advisory_matches": 0
+  },
+  "coverage": [
+    "Exact path/ID resolution, dataset/namespace coexistence and nonmutating missing references.",
+    "Collision locations, aliases, tombstones and strict unknown-field/type/version rejection.",
+    "Foreign owner-qualified identities, separate registration policies and output rejection.",
+    "Raw-byte versus complete semantic fingerprints; order/format invariance.",
+    "Retained IDs through registry rename/reparse/move and removal of synthetic runtime file.",
+    "Dependency checker reports actual cycles without acyclic prefixes or duplicate edges."
+  ],
+  "limits": [
+    "No registry mutation, reconciliation, code discovery or SDK integration.",
+    "Semantic registry fingerprint is distinct from existing narrower SDK wire projection.",
+    "A45/A50/A53 end-to-end authoring workflows remain later tasks."
+  ]
+}

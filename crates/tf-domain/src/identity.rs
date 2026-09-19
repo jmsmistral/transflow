@@ -69,6 +69,10 @@ id!(
     RequestId,
     "Worker request UUID, independent of execution attempt identity."
 );
+id!(
+    ExternalRegistrationId,
+    "Explicit local registration of a foreign dataset."
+);
 id!(BuildId, "Build request identity.");
 id!(JobId, "Planned producer job identity.");
 id!(

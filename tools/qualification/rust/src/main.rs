@@ -52,6 +52,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
             == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
         "SHA-256 known-answer vector failed",
     )?;
+    let registry: toml::Table = toml::from_str("format_version = 1")?;
+    require(
+        registry
+            .get("format_version")
+            .and_then(toml::Value::as_integer)
+            == Some(1),
+        "TOML registry parse failed",
+    )?;
+    require(
+        toml::from_str::<toml::Table>("format_version = 1\nformat_version = 2").is_err(),
+        "TOML duplicate keys must fail",
+    )?;
     let args = Arguments::parse();
     std::fs::create_dir_all(&args.output_dir)?;
     require(

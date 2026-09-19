@@ -29,7 +29,7 @@ INTERNAL = {
 EXTERNAL = {
     "tf-domain": set(),
     "tf-protocol": {"serde", "serde_json", "schemars", "sha2", "thiserror"},
-    "tf-catalog": {"serde", "serde_json", "thiserror"},
+    "tf-catalog": {"toml", "serde", "serde_json", "thiserror"},
     "tf-plan": {"thiserror"},
     "tf-store": {"rustix", "sqlx", "libsqlite3-sys", "arrow-array", "arrow-schema", "parquet", "fs4", "serde", "serde_json", "thiserror"},
     "tf-exec": {"serde", "serde_json", "rustix", "tokio", "fs4", "tracing", "thiserror"},
@@ -84,15 +84,22 @@ def validate_graph(metadata: dict, qualified: dict[str, str]) -> list[str]:
 
     visited = set()
     active = []
+    reported_cycles = set()
 
     def visit(name: str) -> None:
         if name in active:
-            errors.append("Crate dependency cycle: " + " -> ".join([*active, name]))
+            cycle = active[active.index(name):]
+            start = cycle.index(min(cycle))
+            cycle = cycle[start:] + cycle[:start]
+            description = "Crate dependency cycle: " + " -> ".join([*cycle, cycle[0]])
+            if description not in reported_cycles:
+                errors.append(description)
+                reported_cycles.add(description)
             return
         if name in visited:
             return
         active.append(name)
-        for target in edges.get(name, []):
+        for target in sorted(set(edges.get(name, []))):
             visit(target)
         active.pop()
         visited.add(name)
