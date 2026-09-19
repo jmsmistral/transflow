@@ -1770,6 +1770,7 @@ dependencies = [
  "fs4",
  "libsqlite3-sys",
  "parquet",
+ "rustix",
  "schemars",
  "serde",
  "serde_json",

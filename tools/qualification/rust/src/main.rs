@@ -58,6 +58,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         std::fs::read_dir(&args.output_dir)?.next().is_none(),
         "Probe output directory must be empty",
     )?;
+    rustix::fs::statfs(&args.output_dir)?;
     let options = SqliteConnectOptions::new()
         .filename(args.output_dir.join("probe.sqlite"))
         .create_if_missing(true)
