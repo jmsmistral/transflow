@@ -231,7 +231,7 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
                 .map_err(|_| EditorError::Conflict)
         },
     )?;
-    let value = json!({"kind":"import_preparation","status":"prepared","published":false,"import_id":request.to_string(),"workspace_id":workspace.config().id().to_string(),"dataset_id":id.to_string(),"path":path.as_str(),"branch":branch.as_str(),"source_snapshot_id":final_capture.id()?.to_string(),"schema_normalization":"pending","source_snapshot_limitation":true,"registered":registered,"file_count":selection.files().len().to_string(),"row_count":files.rows()?.to_string(),"byte_count":files.bytes()?.to_string(),"staging_path":format!(".transflow/runtime/import-staging/{request}")});
+    let value = json!({"kind":"import_preparation","status":"prepared","published":false,"import_id":request.to_string(),"workspace_id":workspace.config().id().to_string(),"dataset_id":id.to_string(),"path":path.as_str(),"branch":branch.as_str(),"source_snapshot_id":final_capture.id()?.to_string(),"schema_normalization":"complete","source_snapshot_limitation":true,"registered":registered,"file_count":selection.files().len().to_string(),"row_count":files.rows()?.to_string(),"byte_count":files.bytes()?.to_string(),"staging_path":format!(".transflow/runtime/import-staging/{request}")});
     let mut manifest = value.clone();
     for key in [
         "status",
@@ -252,6 +252,8 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
     manifest["source_root"] = selection.root().to_str().ok_or(Error::Target)?.into();
     manifest["source_files"] = json!(selection.files());
     manifest["files"] = files.files();
+    manifest["logical_schema"] = files.schema()?.value().clone();
+    manifest["schema_fingerprint"] = files.schema()?.fingerprint().into();
     selection.verify_root()?;
     files.retain(&manifest)?;
     Ok(value)

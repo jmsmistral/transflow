@@ -2553,7 +2553,7 @@
           "$ref": "#/$defs/Uuid"
         },
         "schema_normalization": {
-          "const": "pending"
+          "const": "complete"
         },
         "source_snapshot_limitation": {
           "const": true
@@ -2622,7 +2622,7 @@
           "$ref": "#/$defs/Uuid"
         },
         "schema_normalization": {
-          "const": "pending"
+          "const": "complete"
         },
         "source_snapshot_limitation": {
           "const": true
@@ -2675,6 +2675,12 @@
           },
           "minItems": 1,
           "maxItems": 10000
+        },
+        "logical_schema": {
+          "$ref": "#/$defs/LogicalSchemaV1"
+        },
+        "schema_fingerprint": {
+          "$ref": "#/$defs/Sha256"
         }
       },
       "required": [
@@ -2693,7 +2699,9 @@
         "validation_certificate_fingerprint",
         "source_root",
         "source_files",
-        "files"
+        "files",
+        "logical_schema",
+        "schema_fingerprint"
       ],
       "additionalProperties": false
     }

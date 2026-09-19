@@ -192,3 +192,9 @@ identity after graph validation, and retains preparation metadata. It accepts
 valid zero-row files and detects observable source changes. This is staging only;
 no dataset version, branch head or quality certificate is published. See the
 [import preparation guide](crates/transflow/IMPORTS.md) for setup and limitations.
+
+T036 now normalizes imported Arrow/Parquet schemas, validates exact value ranges,
+and retains logical schema fingerprints in preparation manifests. It preserves
+null/NaN, integer/decimal precision, timestamp units/timezones and nested values,
+with explicit unsupported-adapter errors. See [normalization and capabilities](crates/tf-store/NORMALIZATION.md).
+Data-quality checks and publication remain later work.

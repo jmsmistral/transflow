@@ -311,3 +311,6 @@ impl Reader {
 
 /// Guarded copy-only local Parquet import preparation.
 pub mod imports;
+
+/// Logical schema normalization, precision guards and bounded typed cells.
+pub mod normalization;

@@ -1,0 +1,57 @@
+{
+  "task": "T036",
+  "date": "2026-09-20",
+  "platform": "macOS arm64",
+  "result": "pass",
+  "commands": [
+    "bash tools/check.sh",
+    "bash tools/check-rust.sh",
+    "target/qualification/py314/bin/python -I -B python/tools/check_normalization.py target/debug/examples/normalization_probe",
+    "target/qualification/py313/bin/python -I -B python/tools/check_normalization.py target/debug/examples/normalization_probe"
+  ],
+  "rust_tests": 190,
+  "rust_documentation_tests": 1,
+  "python_tests": 635,
+  "web_tests": 250,
+  "cli_integration_tests": 28,
+  "document_tests": 44,
+  "safety_tests": 27,
+  "boundary_tests": 12,
+  "verification_note": "Aggregate passed with 189 Rust tests plus one documentation test. After adding the retained-schema forgery regression and metadata byte guard, the complete Rust check passed with 190 plus one documentation test.",
+  "engine_probes": {
+    "py313": {
+      "result": "pass",
+      "checks": 7,
+      "engines": {
+        "pyarrow": "25.0.1",
+        "polars": "1.44.2",
+        "duckdb": "1.5.5"
+      }
+    },
+    "py314": {
+      "result": "pass",
+      "checks": 7,
+      "engines": {
+        "pyarrow": "25.0.1",
+        "polars": "1.44.2",
+        "duckdb": "1.5.5"
+      }
+    }
+  },
+  "coverage": [
+    "Logical scalar/list/struct schemas, duplicate names, nullability, physical layout equivalence and stable canonical fingerprints",
+    "All integer widths, null/NaN/infinities/signed zero, precision-38 decimals and negative epoch timestamps",
+    "Millisecond/microsecond/nanosecond, naive/UTC/Europe-London metadata and exact bounded typed cells",
+    "Real Parquet rewrites through PyArrow, Polars and the compatible DuckDB subset, inspected by production Rust normalization",
+    "Zero-row schema retention, masked struct nulls, unsupported object/duration/decimal/timezone conversions",
+    "Import staging retains exact normalized schema/fingerprint and rejects forged evidence; unsupported imports do not register identities"
+  ],
+  "limits": [
+    "No quality evaluation, immutable object installation, publication or transform execution",
+    "Pandas and DuckDB SQL transform adapters explicitly unavailable",
+    "Second-resolution timestamps and negative/excess decimal scales require explicit conversion at storage/engine boundaries",
+    "DuckDB validation rejects aware ns and non-UTC timezone labels; UTC session required",
+    "Logical preflights do not replace installed-engine/timezone/expression checks",
+    "Older unpublished import preparations without normalized schema evidence must be prepared again"
+  ]
+}

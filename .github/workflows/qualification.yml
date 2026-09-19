@@ -40,6 +40,7 @@ jobs:
           npm --prefix tools/qualification/web ci --ignore-scripts --no-audit --no-fund
           npm --prefix tools/qualification/web run prepare:types
           cargo fetch --locked --manifest-path tools/qualification/rust/Cargo.toml
+          cargo fetch --locked
       - name: Run native probes
         run: bash tools/qualification/check.sh
       - name: Preserve measured native reports

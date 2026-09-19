@@ -3777,7 +3777,7 @@
       "path": "raw/orders",
       "branch": "main",
       "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
-      "schema_normalization": "pending",
+      "schema_normalization": "complete",
       "source_snapshot_limitation": true,
       "kind": "import_preparation",
       "status": "prepared",
@@ -3800,7 +3800,7 @@
       "path": "raw/orders",
       "branch": "main",
       "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
-      "schema_normalization": "pending",
+      "schema_normalization": "complete",
       "source_snapshot_limitation": true,
       "format_version": 1,
       "kind": "import_staging",
@@ -3818,7 +3818,20 @@
           "byte_length": "256",
           "row_count": "0"
         }
-      ]
+      ],
+      "logical_schema": {
+        "format_version": 1,
+        "fields": [
+          {
+            "name": "id",
+            "logical_type": {
+              "type": "i64"
+            },
+            "nullable": false
+          }
+        ]
+      },
+      "schema_fingerprint": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     }
   },
   {
@@ -3832,7 +3845,7 @@
       "path": "raw/orders",
       "branch": "main",
       "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
-      "schema_normalization": "pending",
+      "schema_normalization": "complete",
       "source_snapshot_limitation": true,
       "kind": "import_preparation",
       "status": "prepared",
@@ -3845,7 +3858,7 @@
     }
   },
   {
-    "name": "import-cannot-claim-normalized",
+    "name": "import-unknown-normalization",
     "schema": "ImportPreparationResultV1",
     "valid": false,
     "value": {
@@ -3855,7 +3868,7 @@
       "path": "raw/orders",
       "branch": "main",
       "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
-      "schema_normalization": "complete",
+      "schema_normalization": "unknown",
       "source_snapshot_limitation": true,
       "kind": "import_preparation",
       "status": "prepared",
@@ -3878,7 +3891,7 @@
       "path": "raw/orders",
       "branch": "main",
       "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
-      "schema_normalization": "pending",
+      "schema_normalization": "complete",
       "source_snapshot_limitation": false,
       "format_version": 1,
       "kind": "import_staging",
@@ -3896,7 +3909,20 @@
           "byte_length": "256",
           "row_count": "0"
         }
-      ]
+      ],
+      "logical_schema": {
+        "format_version": 1,
+        "fields": [
+          {
+            "name": "id",
+            "logical_type": {
+              "type": "i64"
+            },
+            "nullable": false
+          }
+        ]
+      },
+      "schema_fingerprint": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     }
   },
   {
@@ -3910,7 +3936,7 @@
       "path": "raw/orders",
       "branch": "main",
       "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
-      "schema_normalization": "pending",
+      "schema_normalization": "complete",
       "source_snapshot_limitation": true,
       "format_version": 1,
       "kind": "import_staging",
@@ -3921,7 +3947,20 @@
       "source_files": [
         "empty.parquet"
       ],
-      "files": []
+      "files": [],
+      "logical_schema": {
+        "format_version": 1,
+        "fields": [
+          {
+            "name": "id",
+            "logical_type": {
+              "type": "i64"
+            },
+            "nullable": false
+          }
+        ]
+      },
+      "schema_fingerprint": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     }
   }
 ]

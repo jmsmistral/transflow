@@ -427,11 +427,13 @@ def consumer(data): raise AssertionError("Import preparation must not call produ
     result = prepare_import(workspace, path)["result"]
     assert result["status"] == "prepared" and result["published"] is False
     assert result["registered"] and result["row_count"] == "2"
-    assert result["schema_normalization"] == "pending"
+    assert result["schema_normalization"] == "complete"
     staging = workspace / result["staging_path"]
     manifest = json.loads((staging / "prepared.json").read_text())
     validate_document("ImportStagingManifestV1", manifest)
     assert manifest["source_files"] == ["input.parquet"]
+    assert manifest["logical_schema"]["fields"][0]["logical_type"] == {"type": "i64"}
+    assert len(manifest["schema_fingerprint"]) == 64
     assert (staging / "part-00000.parquet").read_bytes() == path.read_bytes()
     assert (staging / "part-00000.parquet").stat().st_ino != path.stat().st_ino
     with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db:
@@ -458,11 +460,16 @@ def test_zero_row_parquet_and_frozen_sorted_multifile_import(workspace: Path) ->
     assert [f["row_count"] for f in manifest["files"]] == ["0", "2"]
 
 
-@pytest.mark.parametrize("invalid", ["empty_glob", "empty_file", "symlink"])
+@pytest.mark.parametrize("invalid", ["empty_glob", "empty_file", "symlink", "unsupported_type"])
 def test_invalid_import_sources_do_not_register(workspace: Path, invalid: str) -> None:
     original = parquet_input(workspace)
     if invalid == "empty_glob":
         path = original.parent / "*.absent"
+    elif invalid == "unsupported_type":
+        path = original
+        path.write_bytes(
+            (REPOSITORY / "tests/fixtures/import/unsupported-duration.parquet").read_bytes()
+        )
     elif invalid == "empty_file":
         path = original
         path.write_bytes(b"")

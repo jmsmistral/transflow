@@ -57,7 +57,7 @@ impl Drop for Tree {
     }
 }
 fn manifest(tree: &Tree, files: &PreparedFiles) -> Value {
-    json!({"format_version":1,"kind":"import_staging","import_id":RequestId::from_bytes([3;16]).to_string(),"workspace_id":RequestId::from_bytes([1;16]).to_string(),"dataset_id":RequestId::from_bytes([2;16]).to_string(),"path":"raw/input","branch":"master","source_snapshot_id":RequestId::from_bytes([4;16]).to_string(),"schema_normalization":"pending","source_snapshot_limitation":true,"catalog_fingerprint":"a".repeat(64),"environment_fingerprint":"b".repeat(64),"validation_certificate_fingerprint":"c".repeat(64),"source_root":tree.0.join("source"),"source_files":["a.parquet"],"files":files.files()})
+    json!({"format_version":1,"kind":"import_staging","import_id":RequestId::from_bytes([3;16]).to_string(),"workspace_id":RequestId::from_bytes([1;16]).to_string(),"dataset_id":RequestId::from_bytes([2;16]).to_string(),"path":"raw/input","branch":"master","source_snapshot_id":RequestId::from_bytes([4;16]).to_string(),"schema_normalization":"complete","source_snapshot_limitation":true,"catalog_fingerprint":"a".repeat(64),"environment_fingerprint":"b".repeat(64),"validation_certificate_fingerprint":"c".repeat(64),"source_root":tree.0.join("source"),"source_files":["a.parquet"],"files":files.files(),"logical_schema":files.schema().unwrap().value(),"schema_fingerprint":files.schema().unwrap().fingerprint()})
 }
 #[test]
 fn copied_parquet_is_independent_and_zero_rows_are_valid() {
@@ -189,4 +189,26 @@ fn different_file_schemas_are_refused_without_retained_staging() {
             .count(),
         0
     );
+}
+
+#[test]
+fn forged_normalization_evidence_is_not_retained() {
+    for key in ["schema_fingerprint", "logical_schema"] {
+        let tree = Tree::new();
+        tree.put("a.parquet", "two-rows.parquet");
+        let prepared = tree.prepare(&["a.parquet"]);
+        let mut metadata = manifest(&tree, &prepared);
+        if key == "schema_fingerprint" {
+            metadata[key] = "f".repeat(64).into();
+        } else {
+            metadata[key]["fields"][0]["logical_type"]["type"] = "u64".into();
+        }
+        assert!(prepared.retain(&metadata).is_err());
+        assert_eq!(
+            fs::read_dir(tree.0.join(".transflow/runtime/import-staging"))
+                .unwrap()
+                .count(),
+            0
+        );
+    }
 }

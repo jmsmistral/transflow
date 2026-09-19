@@ -1,10 +1,10 @@
 //! Copy-only Parquet import staging. These files are not published dataset versions.
-use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
+use crate::normalization::{NormalizedSchema, inspect_parquet};
 use rustix::fs::{AtFlags, Mode, OFlags};
 use serde_json::{Value, json};
 use std::{
     fs::File,
-    io::{Read, Seek, SeekFrom, Write},
+    io::{Read, Seek, Write},
     os::unix::fs::MetadataExt,
     path::{Component, Path, PathBuf},
 };
@@ -21,13 +21,14 @@ pub enum ImportError {
     #[error("Import source or staging changed; provide a stable producer snapshot and retry")]
     Changed,
     /// Unsupported/corrupt Parquet input.
-    #[error(
-        "Import requires valid compatible Parquet files (uncompressed, Snappy or Zstandard); schema normalization remains a later stage"
-    )]
+    #[error("Import requires Parquet files with compatible normalized logical schemas")]
     Parquet,
     /// Bounded manifest/metadata requirements.
     #[error("Import metadata exceeds its limit or has an unsupported shape")]
     Metadata,
+    /// Logical schema or precision cannot be normalized losslessly.
+    #[error(transparent)]
+    Normalization(#[from] crate::normalization::NormalizationError),
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Guard {
@@ -121,6 +122,7 @@ pub struct PreparedFiles {
     copied: Vec<Copied>,
     created: Vec<String>,
     retained: bool,
+    schema: Option<NormalizedSchema>,
 }
 impl PreparedFiles {
     /// Copy a frozen list through no-follow descriptor-relative paths, then decode all rows.
@@ -167,8 +169,8 @@ impl PreparedFiles {
             copied: vec![],
             created: vec![],
             retained: false,
+            schema: None,
         };
-        let mut schema = None;
         for (index, path) in files.iter().enumerate() {
             stage.guard()?;
             let mut input = source(&stage.source, path)?;
@@ -203,43 +205,18 @@ impl PreparedFiles {
             {
                 return Err(ImportError::Changed);
             }
-            // Bound the footer before handing metadata to the qualified Parquet decoder.
-            if guard.len < 12 {
-                return Err(ImportError::Parquet);
-            }
-            output.seek(SeekFrom::End(-8))?;
-            let mut footer = [0; 8];
-            output.read_exact(&mut footer)?;
-            let metadata =
-                u32::from_le_bytes(footer[..4].try_into().map_err(|_| ImportError::Parquet)?)
-                    as u64;
-            if &footer[4..] != b"PAR1" || metadata > 16 * 1024 * 1024 || metadata > guard.len - 12 {
-                return Err(ImportError::Parquet);
-            }
-            output.rewind()?;
-            let builder = ParquetRecordBatchReaderBuilder::try_new(output.try_clone()?)
-                .map_err(|_| ImportError::Parquet)?;
-            if schema
+            let normalized = inspect_parquet(output.try_clone()?)?;
+            if stage
+                .schema
                 .as_ref()
-                .is_some_and(|expected| expected != builder.schema())
+                .is_some_and(|expected| expected != &normalized.schema)
             {
                 return Err(ImportError::Parquet);
             }
-            schema = Some(builder.schema().clone());
-            let expected = u64::try_from(builder.metadata().file_metadata().num_rows())
-                .map_err(|_| ImportError::Parquet)?;
-            let mut rows = 0u64;
-            for batch in builder
-                .with_batch_size(8192)
-                .build()
-                .map_err(|_| ImportError::Parquet)?
-            {
-                rows = rows
-                    .checked_add(batch.map_err(|_| ImportError::Parquet)?.num_rows() as u64)
-                    .ok_or(ImportError::Metadata)?;
-            }
-            if rows != expected || digest(&mut output, guard.len)? != hash {
-                return Err(ImportError::Parquet);
+            stage.schema = Some(normalized.schema);
+            let rows = normalized.rows;
+            if digest(&mut output, guard.len)? != hash {
+                return Err(ImportError::Changed);
             }
             stage.copied.push(Copied {
                 source: path.clone(),
@@ -325,6 +302,10 @@ impl PreparedFiles {
     pub fn files(&self) -> Value {
         json!(self.copied.iter().map(|f|json!({"path":f.name,"sha256":f.digest,"byte_length":f.guard.len.to_string(),"row_count":f.rows.to_string()})).collect::<Vec<_>>())
     }
+    /// Normalized logical schema for the exact copied bytes.
+    pub fn schema(&self) -> Result<&NormalizedSchema, ImportError> {
+        self.schema.as_ref().ok_or(ImportError::Metadata)
+    }
     /// Total decoded rows; a valid zero-row Parquet input is allowed.
     pub fn rows(&self) -> Result<u64, ImportError> {
         self.copied.iter().try_fold(0u64, |n, f| {
@@ -385,6 +366,11 @@ impl PreparedFiles {
         let original = self.source.metadata()?;
         if (current.dev(), current.ino()) != (original.dev(), original.ino()) {
             return Err(ImportError::Changed);
+        }
+        if manifest["logical_schema"] != *self.schema()?.value()
+            || manifest["schema_fingerprint"] != self.schema()?.fingerprint()
+        {
+            return Err(ImportError::Metadata);
         }
         self.verify_sources()?;
         self.verify_copies()?;

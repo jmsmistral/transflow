@@ -218,7 +218,7 @@ pub fn run(
                                     )
                                     .map_err(CliError::Stdout)?;
                             } else {
-                                writeln!(stdout,"Prepared {} file(s), {} rows, {} bytes for {} on branch {}.\nStaging: {}\nNo data version or branch head was published. Schema normalization and data checks remain pending. Use a producer-provided atomic snapshot for strong consistency against concurrent external writers.",value["file_count"].as_str().unwrap_or(""),value["row_count"].as_str().unwrap_or(""),value["byte_count"].as_str().unwrap_or(""),redactor.text(value["path"].as_str().unwrap_or("unknown"))?.as_str(),redactor.text(value["branch"].as_str().unwrap_or("unknown"))?.as_str(),value["staging_path"].as_str().unwrap_or("")).map_err(CliError::Stdout)?;
+                                writeln!(stdout,"Prepared {} file(s), {} rows, {} bytes for {} on branch {}.\nStaging: {}\nNo data version or branch head was published. Logical schema is normalized; data checks remain pending. Use a producer-provided atomic snapshot for strong consistency against concurrent external writers.",value["file_count"].as_str().unwrap_or(""),value["row_count"].as_str().unwrap_or(""),value["byte_count"].as_str().unwrap_or(""),redactor.text(value["path"].as_str().unwrap_or("unknown"))?.as_str(),redactor.text(value["branch"].as_str().unwrap_or("unknown"))?.as_str(),value["staging_path"].as_str().unwrap_or("")).map_err(CliError::Stdout)?;
                             }
                             return Ok(ExitCode::SUCCESS);
                         }

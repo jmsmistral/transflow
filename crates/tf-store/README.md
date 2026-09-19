@@ -64,3 +64,7 @@ Nine real-file tests cover fresh/reopen/upgrade, compatibility/checksum refusal,
 foreign keys and identity constraints, injected migration/audit failure, bounded
 contention, concurrent WAL snapshots, immutable evidence and symlink refusal.
 A20/A39 crash recovery, backup/restore and full publication remain later tasks.
+
+[Logical normalization](NORMALIZATION.md) projects Arrow/Parquet schemas, validates
+actual values, emits bounded typed cells and exposes per-adapter schema guards.
+The import service retains this evidence without publishing artifacts or heads.

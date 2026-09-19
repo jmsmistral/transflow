@@ -11,3 +11,5 @@ cargo run --locked --offline -p tf-store --example import_fixtures -- tests/fixt
 Import tests decode every row, verify zero-row acceptance, compare copied bytes,
 and assert that source/staging inodes are distinct. Normalization and publication
 are separate later stages.
+
+`unsupported-duration.parquet` is a valid synthetic duration column that the portable logical contract must reject before import registration.

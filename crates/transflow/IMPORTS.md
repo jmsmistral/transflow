@@ -1,6 +1,7 @@
 # Local Parquet import preparation
 
-T035 provides explicit copy staging for later normalization, checks and publication:
+T035–T036 provide explicit copy staging and logical normalization before later
+checks and publication:
 
 ```bash
 transflow --workspace /path/to/workspace dataset import raw/orders \
@@ -19,9 +20,10 @@ levels. An empty selection fails. A valid zero-row Parquet file succeeds.
 
 Preparation copies bytes into private runtime staging, never hard-links the
 source. It decodes all rows using the pinned Arrow/Parquet reader, requires
-matching physical Arrow schemas across files, and supports uncompressed, Snappy
+matching normalized logical schemas across files, and supports uncompressed, Snappy
 and Zstandard Parquet. It bounds footer metadata to 16 MiB and decodes in batches;
-this is not a general memory cap. Logical schema normalization remains T036.
+this is not a general memory cap. The [shared normalization service](../tf-store/NORMALIZATION.md)
+checks portable types and exact value ranges; incompatible or lossy types fail explicitly.
 
 Before accepting staging, Transflow rechecks file identities, lengths, timestamps
 and SHA-256 digests. Observable source changes fail preparation. Concurrent
@@ -37,14 +39,18 @@ foreign and tombstoned identities cannot be replaced. Once registration commits,
 a later preparation failure preserves that identity and reports failure.
 
 Success returns `status: prepared`, `published: false`, counts and a staging path.
-Its closed `prepared.json` records source/copy paths, hashes, source capture,
-catalogue/environment and structural validation fingerprints. `--branch` records
+Its closed `prepared.json` records the normalized logical schema and fingerprint,
+source/copy paths, hashes, source capture, catalogue/environment and structural validation fingerprints. `--branch` records
 branch intent (default: configured workspace default); it creates no data branch
 or head. Later publication must resolve and validate its own accepted context.
 The copies remain private preparation files, not sealed artifacts or versions.
 
-Omitting `--prepare-only` fails clearly before workspace mutation. Standard
-candidate normalization, data-quality checks, durable artifact installation and
-publication are T036–T038/T064. Preparation cannot be consumed as published data.
+Omitting `--prepare-only` fails clearly before workspace mutation. Logical
+normalization is complete. Data-quality checks, durable artifact installation and
+publication remain T037–T038/T064. Preparation cannot be consumed as published data.
 Interrupted staging may remain for later runtime cleanup; ordinary failure
 removes only files created by this operation, preserving unexpected files.
+
+T036 updates preparation results to `schema_normalization: complete`. Earlier
+preparation manifests lacking the logical schema/fingerprint must be prepared
+again; they were never published versions.

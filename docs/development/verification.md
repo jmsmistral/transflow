@@ -234,3 +234,15 @@ also passes workspace Clippy and all nine candidate tests. The dependency invent
 remains 640 versions, with no new versions and zero advisory matches after refresh.
 The shared contract corpus now contains 196 cases. See the [local evidence](evidence/t035-macos-arm64.json)
 and [import guide](../../crates/transflow/IMPORTS.md). All five [CI workflows and 19 jobs](evidence/t035-ci.json) pass at implementation `8451e4fa215d0ee1126c1d22c1804bb8af50e75f`, paired with specification progress `ec3ba66530a8c15b89077ce0579d4d7b754f85ff`. T035 preparation is complete; no normalization, quality-check PASS, artifact or dataset publication is claimed.
+
+## T036 logical normalization verification (2026-09-20)
+
+The full contributor aggregate passes. Final Rust verification (after the added
+schema-forgery regression) passes 190 tests plus one documentation test. Python
+passes 635 tests, web 250, installed-worker CLI 28, document regressions 44,
+safety 27 and boundary checks twelve. The production-normalizer engine probe
+passes seven groups on both prepared local Python versions using PyArrow 25.0.1,
+Polars 1.44.2 and DuckDB 1.5.5. No dependency version or lock changed.
+See [local evidence](evidence/t036-macos-arm64.json) and the
+[normalization guide](../../crates/tf-store/NORMALIZATION.md). CI qualification is pending.
+Publication and quality evaluation remain later tasks; pandas/SQL transforms remain deferred.

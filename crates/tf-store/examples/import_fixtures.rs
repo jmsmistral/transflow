@@ -1,5 +1,5 @@
 //! Explicit generator for repository-owned synthetic Parquet test inputs.
-use arrow_array::{Int64Array, RecordBatch};
+use arrow_array::{DurationNanosecondArray, Int64Array, RecordBatch};
 use arrow_schema::{DataType, Field, Schema};
 use parquet::arrow::ArrowWriter;
 use std::{
@@ -25,5 +25,21 @@ fn main() -> Result<(), Box<dyn Error>> {
         writer.write(&batch)?;
         writer.close()?;
     }
+    let schema = Arc::new(Schema::new(vec![Field::new(
+        "duration",
+        DataType::Duration(arrow_schema::TimeUnit::Nanosecond),
+        false,
+    )]));
+    let batch = RecordBatch::try_new(
+        schema.clone(),
+        vec![Arc::new(DurationNanosecondArray::from(vec![1]))],
+    )?;
+    let mut writer = ArrowWriter::try_new(
+        File::create(destination.join("unsupported-duration.parquet"))?,
+        schema,
+        None,
+    )?;
+    writer.write(&batch)?;
+    writer.close()?;
     Ok(())
 }
