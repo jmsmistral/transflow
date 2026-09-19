@@ -173,3 +173,13 @@ def test_catalogue_projection_and_tampering() -> None:
     assert original != catalog_fingerprint(snapshot)
     with pytest.raises(CanonicalError):
         verify_catalog_fingerprint(snapshot)
+
+
+def test_catalogue_aliases_are_in_the_shared_fingerprint() -> None:
+    fixture = FIXTURES["catalog_aliases"]
+    snapshot = deepcopy(fixture["snapshot"])
+    verify_catalog_fingerprint(snapshot)
+    assert catalog_fingerprint(snapshot).hex == fixture["sha256"]
+    snapshot["aliases"][0]["path"] = "raw/changed_alias"
+    with pytest.raises(CanonicalError):
+        verify_catalog_fingerprint(snapshot)

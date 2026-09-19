@@ -231,12 +231,34 @@ function invariant(name: string, value: Record<string, unknown>): void {
       name,
     );
     for (const entry of entries) {
+      need(entry.path !== "external", name);
       const foreign = obj(entry.key).workspace_id !== value.workspace_id;
       need(
         (entry.kind === "external") === foreign &&
           str(entry.path).startsWith("external/") === foreign,
         name,
       );
+    }
+    const paths = new Set(entries.map((e) => e.path));
+    const keys = new Set(
+      entries.map((e) =>
+        JSON.stringify([obj(e.key).workspace_id, obj(e.key).dataset_id]),
+      ),
+    );
+    for (const alias of list(value.aliases ?? []).map(obj)) {
+      need(alias.path !== "external", name);
+      const key = obj(alias.key);
+      need(
+        !paths.has(alias.path) &&
+          keys.has(JSON.stringify([key.workspace_id, key.dataset_id])),
+        name,
+      );
+      need(
+        str(alias.path).startsWith("external/") ===
+          (key.workspace_id !== value.workspace_id),
+        name,
+      );
+      paths.add(alias.path);
     }
   } else if (name === "frame-capabilities") {
     const required = list(value.required_capabilities).map(str),

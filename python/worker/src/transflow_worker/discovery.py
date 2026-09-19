@@ -19,7 +19,7 @@ from pathlib import Path
 from types import CodeType, ModuleType
 from typing import Any, BinaryIO, cast
 
-from transflow._catalog_prototype import PrototypeRef, _binding, _CapturedSnapshot
+from transflow._catalog import CatalogSnapshot, DatasetRef, _bind_worker
 from transflow.declarations import Branch, Check, Declaration, get_declaration
 
 from .canonical import DigestKind, content_digest
@@ -123,7 +123,7 @@ class CapturedFinder(importlib.abc.MetaPathFinder):
         return spec
 
 
-def _ref(value: str | PrototypeRef) -> dict[str, object]:
+def _ref(value: str | DatasetRef) -> dict[str, object]:
     if isinstance(value, str):
         return {"form": "string", "value": value}
     return {
@@ -240,16 +240,9 @@ def collect(request: dict[str, Any]) -> dict[str, object]:
                     exc.lineno,
                     "SyntaxError",
                 ) from exc
-    snapshot = _CapturedSnapshot(
-        catalog["workspace_id"],
-        catalog["catalog_fingerprint"],
-        tuple(
-            (e["path"], e["key"]["workspace_id"], e["key"]["dataset_id"])
-            for e in catalog["entries"]
-        ),
-    )
+    snapshot = CatalogSnapshot(catalog)
     finder = CapturedFinder(root, index, codes)
-    token = _binding.set(snapshot)
+    _bind_worker(snapshot, expected_fingerprint=catalog["catalog_fingerprint"])
     sys.meta_path.insert(0, finder)
     original_path = sys.path[:]
     sys.path[:0] = [str(root / path) for path in request["source_roots"]]
@@ -311,7 +304,6 @@ def collect(request: dict[str, Any]) -> dict[str, object]:
     finally:
         sys.path[:] = original_path
         sys.meta_path.remove(finder)
-        _binding.reset(token)
 
 
 def _write(path: Path, value: object) -> str:

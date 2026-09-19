@@ -1,0 +1,30 @@
+{
+  "task": "T030",
+  "date": "2026-09-20",
+  "commands": [
+    "bash tools/check.sh"
+  ],
+  "result": "pass",
+  "platform": "macOS arm64",
+  "rust_tests": 156,
+  "rust_documentation_tests": 1,
+  "python_tests": 606,
+  "web_tests": 237,
+  "document_tests": 44,
+  "safety_tests": 27,
+  "boundary_tests": 12,
+  "contract_cases": 183,
+  "coverage": [
+    "Immutable validated catalogue snapshots and explicit local/foreign aliases",
+    "Alias-bound canonical fingerprints in Rust, Python and TypeScript",
+    "Installed worker lifetime binding and independent simultaneous workspace processes",
+    "Lookup without file, database, producer or import access",
+    "Nested explicit testing contexts and fail-closed stale/malformed references",
+    "No installed SDK mutation or version-head lookup"
+  ],
+  "limits": [
+    "Native editor refresh qualification remains T031/T108",
+    "Public catalogue/build command composition remains later tasks"
+  ],
+  "dependency_changes": 0
+}

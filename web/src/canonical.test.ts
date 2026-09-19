@@ -74,3 +74,13 @@ test("bounds count UTF-8 bytes and nesting including cycles", () => {
   cycle.push(cycle);
   expect(() => canonicalJson(cycle)).toThrow(CanonicalError);
 });
+
+test("catalogue aliases participate in the shared fingerprint", async () => {
+  const entry = fixtures.catalog_aliases;
+  expect(new TextDecoder().decode(canonicalJson(entry.projection))).toBe(
+    entry.canonical,
+  );
+  expect((await contentDigest("catalog", entry.projection)).hex).toBe(
+    entry.sha256,
+  );
+});

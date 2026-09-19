@@ -166,10 +166,10 @@ def catalog_fingerprint(snapshot: object) -> ContentDigest:
     _validate("CatalogSnapshotV1", snapshot)
     if not isinstance(snapshot, dict):
         raise CanonicalError("A catalogue snapshot must be an object")
-    return content_digest(
-        DigestKind.CATALOG,
-        {key: snapshot[key] for key in ("format_version", "workspace_id", "entries")},
-    )
+    projection = {key: snapshot[key] for key in ("format_version", "workspace_id", "entries")}
+    if "aliases" in snapshot:
+        projection["aliases"] = snapshot["aliases"]
+    return content_digest(DigestKind.CATALOG, projection)
 
 
 def verify_catalog_fingerprint(snapshot: object) -> None:

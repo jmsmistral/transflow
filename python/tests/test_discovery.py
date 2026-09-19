@@ -300,3 +300,38 @@ def test_precompiled_bytes_ignore_changes_during_import(installed: Path, tmp_pat
             byte_length=str(source.stat().st_size),
         )
     assert run_worker(installed, value)[0] == 0
+
+
+def test_worker_collects_explicit_alias_refs_and_rejects_alias_fingerprint_tampering(
+    installed: Path, tmp_path: Path
+) -> None:
+    value = request(
+        tmp_path,
+        {
+            "src/model.py": """from transflow import transform, Input, Output
+from transflow.catalog import C
+@transform(items=Input(C.external.alternate.items), output=Output(C.old.items))
+def model(items): return items
+"""
+        },
+    )
+    local = {"workspace_id": value["catalog"]["workspace_id"], "dataset_id": str(uuid4())}
+    foreign = {"workspace_id": str(uuid4()), "dataset_id": str(uuid4())}
+    value["catalog"]["entries"] = [
+        {"path": "raw/items", "key": local, "kind": "transform"},
+        {"path": "external/provider/items", "key": foreign, "kind": "external"},
+    ]
+    value["catalog"]["aliases"] = [
+        {"path": "old/items", "key": local},
+        {"path": "external/alternate/items", "key": foreign},
+    ]
+    value["catalog"]["catalog_fingerprint"] = catalog_fingerprint(value["catalog"]).hex
+    status, result, _ = run_worker(installed, value)
+    assert status == 0
+    definition = result["definitions"][0]
+    assert definition["output"]["ref"]["path"] == "old/items"
+    assert definition["output"]["ref"]["dataset_id"] == local["dataset_id"]
+    assert definition["inputs"][0]["ref"]["workspace_id"] == foreign["workspace_id"]
+    value["catalog"]["aliases"][0]["path"] = "old/changed"
+    status, result, _ = run_worker(installed, value)
+    assert status == 1 and result["code"] == "catalog"

@@ -515,7 +515,7 @@ impl RegistrySnapshot {
 }
 
 impl RegistrySnapshot {
-    /// Narrow immutable SDK wire projection; aliases are resolved separately by the registry.
+    /// Immutable SDK wire projection, including explicit local and foreign alias paths.
     pub fn sdk_projection(&self, source: tf_domain::SourceSnapshotId) -> Result<serde_json::Value> {
         let mut entries: Vec<_> = self.datasets().filter(|d| !d.is_tombstone()).map(|d| {
             serde_json::json!({"key":{"workspace_id":d.key().workspace_id().to_string(),"dataset_id":d.key().dataset_id().to_string()},"path":d.path().as_str(),"kind":d.kind()})
@@ -523,16 +523,27 @@ impl RegistrySnapshot {
             serde_json::json!({"key":{"workspace_id":e.key().workspace_id().to_string(),"dataset_id":e.key().dataset_id().to_string()},"path":e.alias().as_str(),"kind":"external"})
         })).collect();
         entries.sort_by(|a, b| a["path"].as_str().cmp(&b["path"].as_str()));
-        // The v1 projection has one canonical path per identity. Alternate
-        // registration aliases remain exact string lookups until T030 expansion.
+        // Retain one canonical entry per owner-qualified identity and explicit alias paths.
         let mut keys = std::collections::BTreeSet::new();
+        let mut aliases = Vec::new();
         entries.retain(|e| {
-            keys.insert((
+            let first = keys.insert((
                 e["key"]["workspace_id"].as_str().unwrap_or("").to_owned(),
                 e["key"]["dataset_id"].as_str().unwrap_or("").to_owned(),
-            ))
+            ));
+            if !first {
+                aliases.push(serde_json::json!({"path":e["path"],"key":e["key"]}));
+            }
+            first
         });
+        for alias in &self.raw.aliases {
+            aliases.push(serde_json::json!({"path":alias.path,"key":{"workspace_id":self.workspace().to_string(),"dataset_id":alias.target_id}}));
+        }
+        aliases.sort_by(|a, b| a["path"].as_str().cmp(&b["path"].as_str()));
         let mut value = serde_json::json!({"format_version":1,"workspace_id":self.workspace().to_string(),"source_snapshot_id":source.to_string(),"catalog_fingerprint":"0".repeat(64),"entries":entries});
+        if !aliases.is_empty() {
+            value["aliases"] = aliases.into();
+        }
         value["catalog_fingerprint"] = tf_protocol::canonical::catalog_fingerprint(&value)
             .map_err(|_| error(RegistryErrorKind::Invalid, "/projection"))?
             .hex()

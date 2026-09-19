@@ -700,5 +700,87 @@
       "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "sha256": "41edece42d63e8d9bf515a9ba6932e1c20cbc9f5a5d134645adb5db1b9737ea3"
     }
-  ]
+  ],
+  "catalog_aliases": {
+    "snapshot": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "9b72387b67cfed5b652229cf580a034b8a24fe2164b6667109e8432cfbcf10c7",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/old_orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "projection": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/old_orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "canonical": "{\"aliases\":[{\"key\":{\"dataset_id\":\"00000000-0000-4000-8000-000000000002\",\"workspace_id\":\"00000000-0000-4000-8000-000000000001\"},\"path\":\"raw/old_orders\"},{\"key\":{\"dataset_id\":\"00000000-0000-4000-8000-000000000001\",\"workspace_id\":\"00000000-0000-4000-8000-000000000002\"},\"path\":\"external/alternate/orders\"}],\"entries\":[{\"key\":{\"dataset_id\":\"00000000-0000-4000-8000-000000000002\",\"workspace_id\":\"00000000-0000-4000-8000-000000000001\"},\"kind\":\"source\",\"path\":\"raw/orders\"},{\"key\":{\"dataset_id\":\"00000000-0000-4000-8000-000000000001\",\"workspace_id\":\"00000000-0000-4000-8000-000000000002\"},\"kind\":\"external\",\"path\":\"external/reference/orders\"}],\"format_version\":1,\"workspace_id\":\"00000000-0000-4000-8000-000000000001\"}",
+    "sha256": "9b72387b67cfed5b652229cf580a034b8a24fe2164b6667109e8432cfbcf10c7"
+  }
 }

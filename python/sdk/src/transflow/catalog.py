@@ -1,7 +1,21 @@
-"""SDK-owned catalogue proxy. T010 prototype; no discovery or implicit binding."""
+"""SDK-owned immutable catalogue references; no discovery or implicit workspace selection."""
 
-from ._catalog_prototype import CatalogRoot
+from ._catalog import (
+    CatalogContextError,
+    CatalogLookupError,
+    CatalogRoot,
+    CatalogSnapshot,
+    DatasetRef,
+    resolve_reference,
+)
 
 C = CatalogRoot()
 
-__all__ = ["C"]
+__all__ = [
+    "C",
+    "CatalogSnapshot",
+    "DatasetRef",
+    "CatalogContextError",
+    "CatalogLookupError",
+    "resolve_reference",
+]

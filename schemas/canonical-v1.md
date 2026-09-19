@@ -44,7 +44,7 @@ JSON bytes**, in that order. Prefixes are fixed and versioned:
 | Physical artifact | `transflow.artifact.v1` | All validated `ArtifactManifestV1` fields |
 | Source capture | `transflow.source.v1` | Explicit source-content descriptor |
 | Semantic computation | `transflow.compute.v1` | Explicit selected computation semantics |
-| Catalogue references | `transflow.catalog.v1` | Snapshot format version, workspace ID and ordered entries |
+| Catalogue references | `transflow.catalog.v1` | Snapshot format version, workspace ID, ordered entries and optional ordered aliases |
 | Logical schema | `transflow.schema.v1` | All validated `LogicalSchemaV1` fields |
 
 A raw file digest is ordinary **unprefixed SHA-256 of every file byte**, used in
@@ -58,7 +58,7 @@ this helper cannot establish that caller-supplied file assertions are true.
 T012 shape-only fixtures with placeholder schema fingerprints are not sealed objects.
 
 `catalog_fingerprint` validates the snapshot then selects `format_version`,
-`workspace_id` and `entries`. The self-referential fingerprint and independent
+`workspace_id`, `entries`, and `aliases` when present. The self-referential fingerprint and independent
 `source_snapshot_id` are excluded. A changed dataset owner/ID/path/kind or entry
 order changes the fingerprint. `verify_catalog_fingerprint` rejects stale/tampered
 values. Source snapshot identity is still separately bound by the caller.
@@ -87,3 +87,5 @@ checks the standard empty/`abc`/million-`a` answers.
 Changing byte rules or field selection for a purpose requires a new hash prefix
 version and compatibility/migration decision. This initial profile activates no
 cache, object store, source capture or publication path. Those remain later tasks.
+
+T030 adds an alias-bearing catalogue golden vector. Absent aliases preserve the earlier projection; adding, removing or editing alias mappings changes its digest.

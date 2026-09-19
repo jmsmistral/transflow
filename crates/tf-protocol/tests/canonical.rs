@@ -169,3 +169,21 @@ fn retained_digest_parsing_is_canonical_and_keeps_its_role() {
         assert!(ContentDigest::from_hex(DigestKind::File, &invalid).is_err());
     }
 }
+
+#[test]
+fn catalogue_alias_fingerprint_matches_shared_vector_and_detects_alias_edits() {
+    let fixture = fixtures();
+    let entry = &fixture["catalog_aliases"];
+    let mut snapshot = entry["snapshot"].clone();
+    verify_catalog_fingerprint(&snapshot).unwrap();
+    assert_eq!(
+        catalog_fingerprint(&snapshot).unwrap().hex(),
+        entry["sha256"]
+    );
+    assert_eq!(
+        canonical_json(&entry["projection"]).unwrap(),
+        entry["canonical"].as_str().unwrap().as_bytes()
+    );
+    snapshot["aliases"][0]["path"] = json!("raw/changed_alias");
+    assert!(verify_catalog_fingerprint(&snapshot).is_err());
+}

@@ -16,7 +16,7 @@ from types import FunctionType
 from typing import Protocol, TypeVar
 from uuid import UUID
 
-from ._catalog_prototype import CatalogNode, PrototypeRef, capture_reference
+from ._catalog import CatalogNode, DatasetRef, capture_reference
 from ._declaration_values import DeclarationError, Parameter, frozen_json
 from .expectations import Expectation
 
@@ -46,7 +46,7 @@ def _alias(value: str) -> None:
         raise DeclarationError("Input/parameter alias must be a public Python identifier")
 
 
-def _reference(value: str | CatalogNode) -> str | PrototypeRef:
+def _reference(value: str | CatalogNode) -> str | DatasetRef:
     if isinstance(value, CatalogNode):
         return capture_reference(value)
     if not isinstance(value, str):
@@ -134,7 +134,7 @@ def _checks(value: object) -> tuple[Check, ...]:
 
 @dataclass(frozen=True, slots=True, init=False)
 class Input:
-    ref: str | PrototypeRef
+    ref: str | DatasetRef
     branch: str | Branch | None
     stop_branch_fallback: bool
     checks: tuple[Check, ...]
@@ -169,7 +169,7 @@ class Input:
 
 @dataclass(frozen=True, slots=True, init=False)
 class Output:
-    ref: str | PrototypeRef
+    ref: str | DatasetRef
     checks: tuple[Check, ...]
     _schema: bytes | None
 

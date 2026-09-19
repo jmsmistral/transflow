@@ -51,3 +51,5 @@ Tests build and install the actual wheel, launch fresh interpreters over real Un
 sockets, and verify source guards, helper imports, re-exports, import exceptions,
 C ownership, separate print output, policy serialization and unchanged producer
 counters. Shared fixtures exercise Rust, Python and TypeScript schema readers.
+
+T030 binds the verified catalogue once for the worker lifetime, including its threads. Explicit aliases participate in the fingerprint; testing contexts cannot replace that binding. See the [catalogue guide](CATALOG.md).

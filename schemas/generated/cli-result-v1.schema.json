@@ -866,6 +866,14 @@
             "$ref": "#/$defs/CatalogEntryV1"
           },
           "minItems": 0
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CatalogAliasV1"
+          },
+          "minItems": 0,
+          "maxItems": 100000
         }
       },
       "required": [
@@ -2018,6 +2026,23 @@
         "path",
         "line",
         "exception_type"
+      ],
+      "additionalProperties": false
+    },
+    "CatalogAliasV1": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "format": "transflow-dataset-path"
+        },
+        "key": {
+          "$ref": "#/$defs/DatasetKey"
+        }
+      },
+      "required": [
+        "path",
+        "key"
       ],
       "additionalProperties": false
     }

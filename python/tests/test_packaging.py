@@ -104,6 +104,7 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
         f"transflow/{name}.py"
         for name in (
             "_catalog_prototype",
+            "_catalog",
             "catalog",
             "testing",
             "declarations",

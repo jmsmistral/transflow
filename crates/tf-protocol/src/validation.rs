@@ -169,20 +169,42 @@ fn invariant(name: &str, v: &Value) -> bool {
                 return false;
             };
             let mut keys = BTreeSet::new();
-            unique(entries, "path")
-                && entries.iter().all(|e| {
-                    let (Some(workspace), Some(dataset), Some(path)) = (
-                        e["key"]["workspace_id"].as_str(),
-                        e["key"]["dataset_id"].as_str(),
-                        e["path"].as_str(),
-                    ) else {
-                        return false;
-                    };
-                    let foreign = workspace != owner;
-                    keys.insert((workspace, dataset))
-                        && (e["kind"] == "external") == foreign
-                        && path.starts_with("external/") == foreign
-                })
+            let mut paths = BTreeSet::new();
+            if !entries.iter().all(|e| {
+                let (Some(workspace), Some(dataset), Some(path)) = (
+                    e["key"]["workspace_id"].as_str(),
+                    e["key"]["dataset_id"].as_str(),
+                    e["path"].as_str(),
+                ) else {
+                    return false;
+                };
+                let foreign = workspace != owner;
+                path != "external"
+                    && paths.insert(path)
+                    && keys.insert((workspace, dataset))
+                    && (e["kind"] == "external") == foreign
+                    && path.starts_with("external/") == foreign
+            }) {
+                return false;
+            }
+            match v.get("aliases") {
+                None => true,
+                Some(aliases) => aliases.as_array().is_some_and(|aliases| {
+                    aliases.iter().all(|a| {
+                        let (Some(workspace), Some(dataset), Some(path)) = (
+                            a["key"]["workspace_id"].as_str(),
+                            a["key"]["dataset_id"].as_str(),
+                            a["path"].as_str(),
+                        ) else {
+                            return false;
+                        };
+                        path != "external"
+                            && paths.insert(path)
+                            && keys.contains(&(workspace, dataset))
+                            && path.starts_with("external/") == (workspace != owner)
+                    })
+                }),
+            }
         }
         "frame-capabilities" => {
             let (Some(required), Some(extensions)) = (

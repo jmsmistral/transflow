@@ -281,7 +281,7 @@ fn invariant(name: &str, value: &Value) -> bool {
         }
         "catalog-entries" => {
             let entries = value["entries"].as_array().unwrap();
-            let paths = entries
+            let mut paths = entries
                 .iter()
                 .map(|e| e["path"].as_str().unwrap())
                 .collect::<BTreeSet<_>>();
@@ -298,8 +298,21 @@ fn invariant(name: &str, value: &Value) -> bool {
                 && keys.len() == entries.len()
                 && entries.iter().all(|e| {
                     let foreign = e["key"]["workspace_id"] != value["workspace_id"];
-                    (e["kind"] == "external") == foreign
+                    e["path"] != "external"
+                        && (e["kind"] == "external") == foreign
                         && e["path"].as_str().unwrap().starts_with("external/") == foreign
+                })
+                && value.get("aliases").is_none_or(|aliases| {
+                    aliases.as_array().unwrap().iter().all(|a| {
+                        let workspace = a["key"]["workspace_id"].as_str().unwrap();
+                        let dataset = a["key"]["dataset_id"].as_str().unwrap();
+                        let path = a["path"].as_str().unwrap();
+                        path != "external"
+                            && paths.insert(path)
+                            && keys.contains(&(workspace, dataset))
+                            && path.starts_with("external/")
+                                == (workspace != value["workspace_id"].as_str().unwrap())
+                    })
                 })
         }
         "frame-capabilities" => {

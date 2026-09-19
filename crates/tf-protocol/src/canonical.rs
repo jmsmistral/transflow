@@ -231,14 +231,11 @@ pub fn artifact_digest(value: &Value) -> Result<ContentDigest, CanonicalError> {
 /// Entry array order is significant; producers must supply a deterministic order.
 pub fn catalog_fingerprint(snapshot: &Value) -> Result<ContentDigest, CanonicalError> {
     validate_document("CatalogSnapshotV1", snapshot).map_err(|_| CanonicalError::Contract)?;
-    content_digest(
-        DigestKind::Catalog,
-        &serde_json::json!({
-            "format_version": snapshot["format_version"],
-            "workspace_id": snapshot["workspace_id"],
-            "entries": snapshot["entries"],
-        }),
-    )
+    let mut projection = serde_json::json!({"format_version":snapshot["format_version"],"workspace_id":snapshot["workspace_id"],"entries":snapshot["entries"]});
+    if let Some(aliases) = snapshot.get("aliases") {
+        projection["aliases"] = aliases.clone();
+    }
+    content_digest(DigestKind::Catalog, &projection)
 }
 /// Reject a catalogue snapshot whose recorded fingerprint does not describe its content.
 pub fn verify_catalog_fingerprint(snapshot: &Value) -> Result<(), CanonicalError> {

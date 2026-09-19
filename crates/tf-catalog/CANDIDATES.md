@@ -34,9 +34,9 @@ again. Validation has no allocation callback and never obtains a durable identit
 Rendering preserves all existing datasets, aliases, tombstones and external
 registration policies, including fallback order. Complete parsing revalidates
 collisions before returning bytes. TOML comments/formatting are presentation;
-replacement has deterministic formatting. The narrow SDK projection has one
-canonical path per identity; alternate local/foreign alias expansion remains T030.
-Exact string resolution already supports every registered alias.
+replacement has deterministic formatting. The SDK projection has one canonical path per identity and explicit local/foreign
+alias mappings. T030 binds these aliases into the same immutable catalogue
+fingerprint. Exact strings and bound alias references resolve consistently.
 
 T029 owns guarded writes and recovery. T032 extends structural checks to complete
 AST/engine/schema capabilities, and T033 integrates preparation services. Public

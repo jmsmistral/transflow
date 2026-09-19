@@ -244,3 +244,44 @@ fn helper_only_and_dataset_namespace_prefixes_are_valid() {
             .is_ok()
     );
 }
+
+#[test]
+fn sdk_projection_retains_all_aliases_and_bound_aliases_resolve_like_strings() {
+    let original = retained();
+    let text = original.render_additions(&[]).unwrap();
+    let text = format!(
+        "{text}\n[[external_registrations]]\nid='{}'\nalias='external/alternate/items'\nprovider_workspace_id='{}'\nprovider_dataset_id='{}'\nprovider_display_path='raw/items'\ndefault_branch='other'\n",
+        id(8),
+        WorkspaceId::from_bytes([9; 16]),
+        id(6)
+    );
+    let registry = RegistrySnapshot::parse(workspace(), &text).unwrap();
+    let projection = registry.sdk_projection(source()).unwrap();
+    assert_eq!(projection["entries"].as_array().unwrap().len(), 2);
+    assert_eq!(projection["aliases"].as_array().unwrap().len(), 2);
+    assert_eq!(projection["aliases"][0]["path"], "external/vendor/items");
+    assert_eq!(projection["aliases"][1]["path"], "old/items");
+    let mut bound = input("items", "old/items");
+    bound["ref"] = json!({"form":"bound","workspace_id":workspace().to_string(),"dataset_id":id(3).to_string(),"path":"old/items","catalog_fingerprint":projection["catalog_fingerprint"]});
+    let c = CandidateCatalog::prepare(
+        &registry,
+        source(),
+        &result(
+            &registry,
+            vec![definition("consumer", "new/items", vec![bound])],
+        ),
+    )
+    .unwrap();
+    assert_eq!(
+        c.definitions()[0].inputs[0].identity,
+        CandidateIdentity::Registered(registry.resolve("raw/items").unwrap().key())
+    );
+    let mut edited = projection.clone();
+    edited["aliases"][1]["path"] = json!("older/items");
+    assert_ne!(
+        tf_protocol::canonical::catalog_fingerprint(&edited)
+            .unwrap()
+            .hex(),
+        projection["catalog_fingerprint"]
+    );
+}

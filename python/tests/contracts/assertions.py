@@ -184,9 +184,22 @@ def invariant(name: str, value: dict[str, Any]) -> None:
             name,
         )
         for entry in entries:
+            need(entry["path"] != "external", name)
             foreign = entry["key"]["workspace_id"] != value["workspace_id"]
             need((entry["kind"] == "external") == foreign, name)
             need(entry["path"].startswith("external/") == foreign, name)
+        aliases = value.get("aliases", [])
+        paths = {e["path"] for e in entries}
+        keys = {(e["key"]["workspace_id"], e["key"]["dataset_id"]) for e in entries}
+        for alias in aliases:
+            need(alias["path"] != "external", name)
+            alias_key = (alias["key"]["workspace_id"], alias["key"]["dataset_id"])
+            need(alias["path"] not in paths and alias_key in keys, name)
+            need(
+                alias["path"].startswith("external/") == (alias_key[0] != value["workspace_id"]),
+                name,
+            )
+            paths.add(alias["path"])
     elif name == "frame-capabilities":
         required = value["required_capabilities"]
         extensions = value["extensions"]

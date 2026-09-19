@@ -2704,5 +2704,545 @@
       "exception_type": "ImportError"
     },
     "valid": true
+  },
+  {
+    "name": "catalog-explicit-local-foreign-aliases",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/old_orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "catalog-alias-dataset-prefix",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/old_orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "path": "raw/orders/daily",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "catalog-alias-repeated-path",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/old_orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "path": "raw/old_orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "catalog-alias-canonical-collision",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "catalog-alias-unregistered-key",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/old_orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000009"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "catalog-alias-foreign-local-path",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/old_orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "raw/foreign",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "catalog-alias-local-external-path",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "external/local/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "catalog-alias-keyword",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/class",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "catalog-alias-unknown-field",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/old_orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "latest": "not-authority"
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "catalog-alias-empty-list",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": []
+    },
+    "valid": true
+  },
+  {
+    "name": "catalog-reserved-external-root-entry",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "external",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "raw/old_orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "catalog-reserved-external-root-alias",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "external",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": "external/alternate/orders",
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ]
+    },
+    "valid": false
   }
 ]

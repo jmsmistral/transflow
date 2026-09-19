@@ -39,7 +39,7 @@ export type ArtifactManifestV1 = { readonly "format_version": 1; readonly "logic
 export type CatalogEntryV1 = { readonly "key": DatasetKey; readonly "path": string; readonly "kind": ("source" | "transform" | "imported" | "external") };
 
 // prettier-ignore
-export type CatalogSnapshotV1 = { readonly "format_version": 1; readonly "workspace_id": Uuid; readonly "source_snapshot_id": Uuid; readonly "catalog_fingerprint": Sha256; readonly "entries": ReadonlyArray<CatalogEntryV1> };
+export type CatalogSnapshotV1 = { readonly "format_version": 1; readonly "workspace_id": Uuid; readonly "source_snapshot_id": Uuid; readonly "catalog_fingerprint": Sha256; readonly "entries": ReadonlyArray<CatalogEntryV1>; readonly "aliases"?: ReadonlyArray<CatalogAliasV1> };
 
 // prettier-ignore
 export type ProtocolVersion = { readonly "major": 1; readonly "minor": number };
@@ -88,3 +88,6 @@ export type DiscoveryResultV1 = { readonly "format_version": 1; readonly "source
 
 // prettier-ignore
 export type DiscoveryDiagnosticV1 = { readonly "format_version": 1; readonly "code": string; readonly "message": string; readonly "path": (null | RelativePath); readonly "line": (null | number); readonly "exception_type": (null | string) };
+
+// prettier-ignore
+export type CatalogAliasV1 = { readonly "path": string; readonly "key": DatasetKey };
