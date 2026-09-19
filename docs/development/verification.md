@@ -207,4 +207,6 @@ documentation test, 442 Python tests and 210 web tests. Both local Python 3.14.7
 and 3.13.0 package runners pass. Native qualification passes using the prepared
 engine environment. The final fixture correction was rechecked by all three
 languages and both Python versions. See [local evidence](evidence/t015-macos-arm64.json);
-CI is pending.
+All five [CI workflows and their 19 jobs](evidence/t015-ci.json) pass at implementation
+`34506fa27a0c10c98f3830daf9b8a73b833494e8`, paired with specification progress
+`d09ce720917e9ec7ed3f55ae614fc916fcae8d08`. T015 is complete.
