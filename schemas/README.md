@@ -4,12 +4,12 @@
 contract source, exposed by `tf-protocol` through `CONTRACT_SCHEMA`. Consumers
 select a named `$defs` entry; the document root is a definition collection, not a
 validator for arbitrary payloads. These definitions implement architecture 7.1
-and the shape of the future worker boundary. They do not start a worker, publish
+and the shape of the future worker boundary. They do not start a worker or publish
 artifacts. T014 now implements protocol 1.0 framing; installed SDK/worker diagnostics
 report 1.0 with no execution operations enabled.
 [Production domain types](../crates/tf-domain/README.md) are implemented by T013.
 [Transport/code generation](../crates/tf-protocol/README.md) is implemented by T014;
-canonical hashing remains T015.
+[Canonical encoding/hashing](canonical-v1.md) is implemented by T015.
 
 ## Independent versions and compatibility
 
@@ -70,8 +70,10 @@ identity is `(workspace_id, dataset_id)`, independent of its display path.
 Float decimal syntax is JSON-number syntax inside a string. Finite text must
 convert to a finite value of the declared width; a nonzero mantissa cannot underflow
 to zero. NaN is distinct from null; individual NaN payload bits are not represented.
-Writers must emit decimal text that round-trips their IEEE value; T015 will define
-canonical spelling. The fixture readers retain text rather than reformatting it.
+Writers must emit decimal text that round-trips their IEEE value. Canonical JSON v1
+preserves the supplied validated string exactly; it does not collapse equivalent
+IEEE decimal spellings. This conservative content identity retains signed zero and
+avoids cross-runtime float reformatting. The fixture readers also retain text.
 
 For positive decimal scale, exactly that many fractional digits are required;
 precision counts digits of the unscaled integer, ignoring leading zeros (zero
@@ -106,9 +108,10 @@ An artifact manifest carries ordered file entries, a logical schema and its
 fingerprint, and writer engine/version/compression/row-group settings. Every file
 has a path, digest and string byte/row counts. At least one file is required even
 for an empty table; duplicate file paths fail. Engine identifiers include future
-adapters without claiming those adapters exist. Fingerprint correctness, physical
-file contents and normalized writer settings are verified by later storage work.
-The artifact digest is computed over the manifest/files by T015, not embedded
+adapters without claiming those adapters exist. T015 checks the logical-schema
+fingerprint before hashing a manifest. Physical file contents/lengths and normalized
+writer settings still require later storage verification. The artifact digest covers
+the canonical manifest (including ordered file digests), and is not embedded
 recursively in the manifest itself.
 
 Each control envelope has protocol major/minor, request and attempt UUIDs, a
@@ -149,3 +152,7 @@ Positive fixtures survive JSON serialization unchanged; negative fixtures exerci
 range/precision/shape/version/capability failures. Native engine conversion and
 socket conformance remain later A10/A37 work. T014 additionally runs the shared corpus through runtime validators and registers
 its generated schema, TypeScript and Python outputs with deterministic drift checks.
+
+T015 fixes [canonical JSON and hash domains v1](canonical-v1.md), with shared fixed
+[golden vectors](fixtures/canonical-v1.json). Generic canonical metadata is bounded
+to 16 MiB, distinct from the 1 MiB control-frame cap. The protocol stays at 1.0.

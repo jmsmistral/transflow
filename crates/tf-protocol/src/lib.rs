@@ -18,3 +18,6 @@ pub use frame::{
 };
 pub use session::{Negotiated, Operation, Session};
 pub use validation::validate_document;
+
+/// Canonical metadata encoding and purpose-separated content hashes.
+pub mod canonical;

@@ -103,7 +103,7 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
     expected |= {f"transflow/{name}.py" for name in ("_catalog_prototype", "catalog", "testing")}
     expected |= {
         f"transflow_worker/{name}.py"
-        for name in ("wire", "_wire_assertions", "_wire_schema", "_wire_validators")
+        for name in ("wire", "canonical", "_wire_assertions", "_wire_schema", "_wire_validators")
     }
     metadata_files = {"METADATA", "WHEEL", "RECORD", "top_level.txt", "entry_points.txt"}
     expected |= {f"transflow-{VERSION}.dist-info/{name}" for name in metadata_files}
@@ -339,6 +339,14 @@ with catalog_context(snapshot, expected_fingerprint={snapshot.fingerprint!r}):
 
 def test_installed_wire_validators_need_no_repository(installed: Path, tmp_path: Path) -> None:
     script = """
+from transflow_worker.canonical import canonical_json, file_digest
+from io import BytesIO
+assert canonical_json({"z": -0.0, "a": "18446744073709551615"}) == (
+    b'{"a":"18446744073709551615","z":0}'
+)
+assert file_digest(BytesIO(b"abc")).hex == (
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+)
 from transflow_worker._wire_validators import validate_WireValue
 from transflow_worker.wire import ProtocolError, MAX_FRAME_BYTES
 validate_WireValue({"type": "u64", "value": "18446744073709551615"})

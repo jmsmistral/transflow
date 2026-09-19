@@ -96,3 +96,8 @@ Run the existing Rust/Python/web and safety runners. Local environments that blo
 Unix sockets must grant that test local IPC access; skipping it is not a pass.
 Live engine execution, authentication, cancellation/backpressure and production log
 supervision still require their own integration and failure tests.
+
+T015 adds the `canonical` module for bounded JSON encoding, purpose-separated SHA-256,
+streamed raw file hashes and validated manifest/catalogue projections. See the
+[byte contract and limits](../../schemas/canonical-v1.md). Full source/compute field
+selection, object verification and publication remain later services.

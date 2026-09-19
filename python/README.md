@@ -68,3 +68,8 @@ To deliberately regenerate locks, use the corresponding prepared interpreter's
 pip-tools 7.6.1 with `python/requirements-dev.in`, `--generate-hashes`,
 `--allow-unsafe`, `--strip-extras`, `--no-header` and `--no-emit-index-url`.
 Review changes and requalify both interpreters and target platforms.
+
+The installed `transflow_worker.canonical` module provides canonical JSON, streaming
+file SHA-256 and selected content fingerprints without third-party runtime packages.
+See the [canonical contract](../schemas/canonical-v1.md); complete cache/source field
+selection and storage/publication remain unimplemented.

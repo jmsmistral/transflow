@@ -69,3 +69,7 @@ embedding and offline release verification have not yet been implemented.
 T014 adds generated readonly [contract types](src/generated/contracts.ts) from the
 authored schema. Compile-time and Node tests verify their tagged shapes; this does
 not yet add an HTTP client, connected graph or runtime UI operations.
+
+`src/canonical.ts` implements canonical bytes and Web Crypto content hashing against
+the shared T015 golden vectors. It does not infer computation field selection or
+change the current preview UI.

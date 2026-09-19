@@ -28,7 +28,7 @@ INTERNAL = {
 # The domain crate intentionally starts with no third-party dependencies.
 EXTERNAL = {
     "tf-domain": set(),
-    "tf-protocol": {"serde", "serde_json", "schemars", "thiserror"},
+    "tf-protocol": {"serde", "serde_json", "schemars", "sha2", "thiserror"},
     "tf-catalog": {"serde", "serde_json", "thiserror"},
     "tf-plan": {"thiserror"},
     "tf-store": {"sqlx", "libsqlite3-sys", "arrow-array", "arrow-schema", "parquet", "fs4", "serde", "serde_json", "thiserror"},

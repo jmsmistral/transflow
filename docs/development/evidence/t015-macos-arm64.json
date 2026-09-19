@@ -1,0 +1,64 @@
+{
+  "task": "T015",
+  "date": "2026-09-19",
+  "platform": "macOS arm64",
+  "implementation_base": "a7ae08459d481c4cf7688ea298f097012ac38ec3",
+  "specification_base": "c40457f",
+  "status": "Local pre-commit verification; CI pending",
+  "commands": [
+    "bash tools/check.sh",
+    "PYTHON_CHECK=target/python/py313/bin/python bash tools/check-python.sh",
+    "PYTHON=target/qualification/py314/bin/python bash tools/qualification/check.sh"
+  ],
+  "result": "passed",
+  "counts": {
+    "document_regressions": 44,
+    "safety_regressions": 27,
+    "rust_boundary_regressions": 11,
+    "rust_tests": 56,
+    "rust_compile_fail_documentation_tests": 1,
+    "python_314_tests": 442,
+    "python_313_tests": 442,
+    "web_tests": 210
+  },
+  "canonical_vectors": {
+    "fixed_encodings": 21,
+    "purpose_digests": 105,
+    "invalid_shared_numbers": 5,
+    "rust_invariant_tests": 4,
+    "python_cases": 39,
+    "typescript_cases": 28,
+    "final_fixture_review": "Corrected illustrative scalar carriers and added real wire-validation assertions; reran Rust/Python 3.13+3.14/TypeScript canonical suites successfully."
+  },
+  "native_rust": {
+    "sqlite_version": "3.51.3",
+    "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+    "sqlite_journal_mode": "wal",
+    "parquet_rows": 3,
+    "checks": [
+      "sqlite_version",
+      "wal_full_foreign_keys",
+      "rollback",
+      "parquet_roundtrip",
+      "advisory_lock",
+      "http_router",
+      "dst_gap",
+      "json_schema",
+      "sha256"
+    ]
+  },
+  "dependency_review": {
+    "promoted_exact_dependency": "sha2 =0.10.9",
+    "boundary": "tf-protocol and native qualification probe",
+    "new_third_party_versions": 0,
+    "inventory_packages": 634,
+    "advisory_matches": 0,
+    "licenses": "Existing sha2 and transitive dependency licenses retained; identities, versions and lock memberships unchanged."
+  },
+  "limits": [
+    "Hash profile v1 is a primitive, not complete source capture/environment/compute selection.",
+    "Artifact file claims require future storage verification; no publication path exists.",
+    "Publication IDs remain separate domain values; full A12/A13 and G0 remain open.",
+    "Input is decoded JSON; raw decoders must reject duplicate keys and avoid prior precision loss."
+  ]
+}

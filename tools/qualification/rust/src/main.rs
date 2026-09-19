@@ -11,6 +11,7 @@ use fs4::FileExt;
 use parquet::arrow::{ArrowWriter, arrow_reader::ParquetRecordBatchReaderBuilder};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use sqlx::{Connection, SqliteConnection, sqlite::SqliteConnectOptions};
 use tower::ServiceExt;
 
@@ -46,6 +47,11 @@ struct Report {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    require(
+        format!("{:x}", Sha256::digest(b"abc"))
+            == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+        "SHA-256 known-answer vector failed",
+    )?;
     let args = Arguments::parse();
     std::fs::create_dir_all(&args.output_dir)?;
     require(
@@ -172,6 +178,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             "http_router",
             "dst_gap",
             "json_schema",
+            "sha256",
         ]
         .map(str::to_owned)
         .to_vec(),

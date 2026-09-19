@@ -190,3 +190,21 @@ as JSON `3.0`/`-2.0` (157 schema cases plus 17 version cases).
 [CI workflows and their 19 jobs](evidence/t014-ci.json) pass at implementation
 `36bee7164c92cd66a93160456b007241e4b34917`, paired with specification progress
 `072167dd2243bb67103a03229242b1ee1d36d702`. T014 is complete.
+
+## T015 canonical encoding and hashing
+
+The [canonical profile](../../schemas/canonical-v1.md) defines exact byte rules and
+purpose/version prefixes. Shared vectors test 21 encodings, 105 content digests and
+five invalid numeric values in Rust/Python/TypeScript. Targeted tests cover limits,
+streamed raw hashing, artifact schema integrity, catalogue tampering and explicit
+semantic/presentation selection. Publication UUIDs remain independent.
+
+The already locked `sha2` 0.10.9 is now a direct tf-protocol/native probe dependency;
+the native probe checks the standard SHA-256 `abc` answer. No package identity or
+version was added. The full aggregate passes: 44 document regressions, 27 safety
+regressions, eleven boundary regressions, 56 Rust tests plus one compile-fail
+documentation test, 442 Python tests and 210 web tests. Both local Python 3.14.7
+and 3.13.0 package runners pass. Native qualification passes using the prepared
+engine environment. The final fixture correction was rechecked by all three
+languages and both Python versions. See [local evidence](evidence/t015-macos-arm64.json);
+CI is pending.
