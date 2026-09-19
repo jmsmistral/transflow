@@ -69,6 +69,23 @@ pub struct ContentDigest {
     bytes: [u8; 32],
 }
 impl ContentDigest {
+    /// Parse a canonical lowercase SHA-256, with the role supplied by its enclosing contract.
+    pub fn from_hex(kind: DigestKind, text: &str) -> Result<Self, CanonicalError> {
+        if text.len() != 64
+            || !text
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        {
+            return Err(CanonicalError::Invalid);
+        }
+        let mut bytes = [0; 32];
+        for (out, pair) in bytes.iter_mut().zip(text.as_bytes().as_chunks::<2>().0) {
+            let pair = std::str::from_utf8(pair).map_err(|_| CanonicalError::Invalid)?;
+            *out = u8::from_str_radix(pair, 16).map_err(|_| CanonicalError::Invalid)?;
+        }
+        Ok(Self { kind, bytes })
+    }
+
     /// Purpose used to compute this digest.
     pub fn kind(&self) -> DigestKind {
         self.kind

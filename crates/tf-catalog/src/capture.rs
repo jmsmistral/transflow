@@ -104,6 +104,71 @@ pub struct SourceSnapshot {
     manifest: Manifest,
 }
 impl SourceSnapshot {
+    /// Compare current allowlisted bytes/configuration to this capture. Registry bytes
+    /// may be checked separately after replacement. Caller retains mutation ownership.
+    pub fn verify_working_copy(
+        &self,
+        workspace: &Workspace,
+        registry_replaced: bool,
+    ) -> Result<(), CaptureError> {
+        if workspace.config().id().to_string() != self.manifest.workspace_id {
+            return Err(CaptureError::Changed);
+        }
+        let index = SourceIndex::enumerate(workspace)?;
+        let paths = allowlist(workspace, &index)?;
+        if paths
+            .iter()
+            .map(|p| path_text(p))
+            .collect::<Result<Vec<_>, _>>()?
+            != self
+                .manifest
+                .files
+                .iter()
+                .map(|e| e.path.clone())
+                .collect::<Vec<_>>()
+        {
+            return Err(CaptureError::Changed);
+        }
+        let root = open_directory(workspace.root())?;
+        for entry in &self.manifest.files {
+            if registry_replaced && entry.path == ".transflow/catalog.toml" {
+                continue;
+            }
+            let mut file = open_source(workspace, &root, Path::new(&entry.path))?;
+            let before = Guard::from(&file)?;
+            if before.bytes != entry.bytes {
+                return Err(CaptureError::Changed);
+            }
+            let digest =
+                file_digest(&mut Read::by_ref(&mut file).take(entry.bytes.saturating_add(1)))
+                    .map_err(|_| CaptureError::Integrity)?;
+            if digest.hex() != entry.sha256 || before != Guard::from(&file)? {
+                return Err(CaptureError::Changed);
+            }
+            let reopened = open_source(workspace, &root, Path::new(&entry.path))?;
+            if before != Guard::from(&reopened)? {
+                return Err(CaptureError::Changed);
+            }
+        }
+        if index != SourceIndex::enumerate(workspace)? {
+            return Err(CaptureError::Changed);
+        }
+        let current = crate::git::inspect(workspace).map_err(|_| CaptureError::Changed)?;
+        if self.git().is_some() != current.is_some() {
+            return Err(CaptureError::Changed);
+        }
+        if let Some(git) = self.git() {
+            let current = current.ok_or(CaptureError::Changed)?;
+            if git.requested_ref().is_some()
+                || git.branch() != current.branch()
+                || git.commit() != current.commit()
+                || git.workspace_relative() != current.workspace_relative()
+            {
+                return Err(CaptureError::Changed);
+            }
+        }
+        Ok(())
+    }
     /// Copy configured sources plus workspace config, registry, dependency input and lock.
     /// The caller owns coordinator authority when used in a mutating application operation.
     /// No Git executable, Python import, package installation or database is involved.

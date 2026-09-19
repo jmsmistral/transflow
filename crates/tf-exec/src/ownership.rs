@@ -256,6 +256,13 @@ impl RuntimeOwner {
     pub fn workspace_root(&self) -> &Path {
         &self.registration.root.path
     }
+    /// Validated workspace identity fenced by this owner.
+    pub fn workspace_id(&self) -> Result<WorkspaceId> {
+        self.registration
+            .workspace_id
+            .parse()
+            .map_err(|_| OwnershipError::Invalid)
+    }
     /// Acquire ownership of an existing private `.transflow/runtime` directory.
     /// No DB, discovery import, process signal or metadata replacement happens on contention.
     pub fn acquire(root: &Path, workspace: WorkspaceId, mode: CoordinatorMode) -> Result<Self> {

@@ -147,3 +147,25 @@ fn manifest_integrity_and_publication_identity_are_separate() {
     assert_ne!(fingerprint, catalog_fingerprint(&catalog).unwrap());
     assert!(verify_catalog_fingerprint(&catalog).is_err());
 }
+
+#[test]
+fn retained_digest_parsing_is_canonical_and_keeps_its_role() {
+    let digest = file_digest(&mut &b"registry bytes"[..]).unwrap();
+    assert_eq!(
+        ContentDigest::from_hex(DigestKind::File, &digest.hex()).unwrap(),
+        digest
+    );
+    assert_ne!(
+        ContentDigest::from_hex(DigestKind::Source, &digest.hex()).unwrap(),
+        digest
+    );
+    for invalid in [
+        digest.hex().to_uppercase(),
+        "a".repeat(63),
+        "0".repeat(65),
+        "g".repeat(64),
+        "é".repeat(32),
+    ] {
+        assert!(ContentDigest::from_hex(DigestKind::File, &invalid).is_err());
+    }
+}

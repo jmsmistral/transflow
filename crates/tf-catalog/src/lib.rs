@@ -7,3 +7,6 @@ pub mod capture;
 pub mod git;
 pub mod source;
 pub mod workspace;
+
+/// Guarded authoring writes; SQLite composition belongs to the application crate.
+pub mod registry_write;

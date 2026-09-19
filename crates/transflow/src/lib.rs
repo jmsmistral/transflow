@@ -2,6 +2,8 @@
 //! Help/version require no workspace I/O. Application services remain later work.
 mod env;
 mod init;
+/// Registry durability and recovery application service.
+pub mod reconcile;
 use std::{
     ffi::OsString,
     io::{self, IsTerminal},

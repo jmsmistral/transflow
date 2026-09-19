@@ -1,0 +1,44 @@
+{
+  "task": "T029",
+  "date": "2026-09-19",
+  "commands": [
+    "bash tools/check.sh",
+    "bash tools/check-rust.sh (after final ownership guard regression)"
+  ],
+  "result": "pass",
+  "platform": "macOS arm64",
+  "rust_tests": 154,
+  "rust_documentation_tests": 1,
+  "python_tests": 566,
+  "web_tests": 224,
+  "application_reconciliation_tests": 12,
+  "new_store_tests": 2,
+  "new_digest_tests": 1,
+  "real_process_kill_boundaries": [
+    "JournalPrepared",
+    "TemporarySynced",
+    "BeforeRename",
+    "Renamed",
+    "DirectorySynced",
+    "BeforeIndex",
+    "Indexed"
+  ],
+  "coverage": [
+    "Exact persisted IDs survive post-rename interruption",
+    "Registry, source, config, lock, membership and Git context guards",
+    "Preserved user edits, file permissions, tombstones and historical IDs",
+    "SQLite index transaction rollback and malformed journal refusal",
+    "Request cancellation retains ownership; replaced runtime lock rejects write",
+    "Registration creates zero dataset version rows"
+  ],
+  "dependencies": {
+    "locked_versions": 640,
+    "new_versions": 0,
+    "refreshed_advisory_matches": 0
+  },
+  "limits": [
+    "Catalogue/build CLI composition remains T033/T049",
+    "POSIX rename has no atomic digest CAS against non-cooperating editors between guards",
+    "SIGKILL evidence is not hardware power-loss qualification"
+  ]
+}

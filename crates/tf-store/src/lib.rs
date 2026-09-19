@@ -1,4 +1,5 @@
 //! Serialized SQLite repositories. The coordinator owns one Store; no transaction escapes.
+pub mod catalog_mutations;
 mod migrations;
 mod path;
 use sqlx::{
@@ -240,6 +241,15 @@ impl Reader {
         .fetch_one(&mut self.db)
         .await?
             == 1)
+    }
+    /// Count materialized versions for an owner-qualified identity; registration alone is zero.
+    pub async fn dataset_version_count(
+        &mut self,
+        workspace: WorkspaceId,
+        id: DatasetId,
+    ) -> Result<i64> {
+        Ok(sqlx::query_scalar("SELECT count(*) FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id WHERE d.workspace_id=? AND d.id=?")
+            .bind(workspace.to_string()).bind(id.to_string()).fetch_one(&mut self.db).await?)
     }
     /// Read at most 100 events after a cursor. No long-lived transaction escapes.
     pub async fn events_after(&mut self, cursor: i64, limit: u32) -> Result<Vec<Event>> {

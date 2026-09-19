@@ -372,3 +372,54 @@ fn branch_heads_require_matching_versions_and_increasing_generations() -> Result
         Ok(())
     })
 }
+
+fn mutation() -> std::result::Result<tf_store::catalog_mutations::CatalogMutation, Box<dyn Error>> {
+    use tf_protocol::canonical::file_digest;
+    Ok(tf_store::catalog_mutations::CatalogMutation {
+        id: RequestId::from_bytes([12; 16]),
+        workspace: workspace(),
+        source: tf_domain::SourceSnapshotId::from_bytes([13; 16]),
+        old_digest: file_digest(&mut &b"old"[..])?,
+        new_digest: file_digest(&mut &b"new"[..])?,
+        assignments: vec![
+            ("raw/a".parse()?, dataset()),
+            ("raw/b".parse()?, DatasetId::from_bytes([3; 16])),
+        ],
+        index_ids: vec![dataset(), DatasetId::from_bytes([3; 16])],
+    })
+}
+#[test]
+fn registry_journal_roundtrip_single_pending_and_atomic_index_failure() -> Result {
+    use tf_store::catalog_mutations::MutationState;
+    runtime()?.block_on(async {
+        let dir=ScratchDirectory::new()?;let path=dir.path().join("runtime.sqlite");let mut store=Store::open(&path).await?;
+        store.register_workspace(workspace(),"synthetic-root",100).await?;
+        let m=mutation()?;store.prepare_catalog_mutation(&m).await?;let mut another=m.clone();another.id=RequestId::from_bytes([14;16]);
+        assert!(store.prepare_catalog_mutation(&another).await.is_err());store.close().await?;
+        let mut store=Store::open(&path).await?;assert_eq!(store.pending_catalog_mutations().await?,vec![m.clone()]);
+        let mut db=raw(&path).await?;
+        sqlx::query("CREATE TRIGGER fail_second BEFORE INSERT ON datasets WHEN NEW.id='03030303-0303-0303-0303-030303030303' BEGIN SELECT RAISE(ABORT,'synthetic write failure'); END").execute(&mut db).await?;
+        assert!(store.index_catalog_mutation(m.id,200).await.is_err());
+        let mut reader=store.reader().await?;assert!(!reader.contains_dataset(workspace(),dataset()).await?);reader.close().await?;
+        assert_eq!(store.catalog_mutation_state(m.id).await?,Some(MutationState::Prepared));
+        sqlx::query("DROP TRIGGER fail_second").execute(&mut db).await?;
+        store.catalog_replaced(m.id).await?;store.index_catalog_mutation(m.id,200).await?;
+        assert_eq!(store.catalog_mutation_state(m.id).await?,Some(MutationState::Indexed));assert!(store.pending_catalog_mutations().await?.is_empty());
+        let mut reader=store.reader().await?;assert!(reader.contains_dataset(workspace(),dataset()).await?);assert_eq!(reader.dataset_version_count(workspace(),dataset()).await?,0);reader.close().await?;
+        assert_eq!(sqlx::query_scalar::<_,i64>("SELECT count(*) FROM dataset_versions").fetch_one(&mut db).await?,0);
+        db.close().await?;store.close().await?;Ok(())
+    })
+}
+#[test]
+fn invalid_or_corrupt_registry_intent_fails_without_partial_indexing() -> Result {
+    runtime()?.block_on(async {
+        let dir=ScratchDirectory::new()?;let path=dir.path().join("runtime.sqlite");let mut store=Store::open(&path).await?;store.register_workspace(workspace(),"synthetic-root",100).await?;
+        let mut invalid=mutation()?;invalid.index_ids.clear();assert!(store.prepare_catalog_mutation(&invalid).await.is_err());
+        let mut invalid=mutation()?;invalid.assignments.push(invalid.assignments[0].clone());assert!(store.prepare_catalog_mutation(&invalid).await.is_err());
+        let m=mutation()?;store.prepare_catalog_mutation(&m).await?;
+        let mut db=raw(&path).await?;sqlx::query("UPDATE catalog_mutations SET proposed_ids_json='[{\"path\":\"raw/a\",\"id\":\"malformed\"}]'").execute(&mut db).await?;
+        assert!(store.pending_catalog_mutations().await.is_err());assert!(store.index_catalog_mutation(m.id,200).await.is_err());
+        assert_eq!(sqlx::query_scalar::<_,i64>("SELECT count(*) FROM datasets").fetch_one(&mut db).await?,0);
+        db.close().await?;store.close().await?;Ok(())
+    })
+}
