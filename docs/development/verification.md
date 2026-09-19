@@ -165,5 +165,9 @@ Three tf-protocol tests project shared scalar/schema/catalogue fixtures through
 the production constructors. See the [domain API and limits](../../crates/tf-domain/README.md).
 The Rust total is 42 ordinary tests and one documentation test; the eleven boundary
 regressions still run. No third-party dependency or version was introduced. Only
-the allowed tf-protocol test dependency on tf-domain was added. Full contributor
-and remote CI results are recorded in the task evidence when verified.
+the allowed tf-protocol test dependency on tf-domain was added. The full contributor aggregate passes (44 document regressions, 26 safety
+regressions, eleven Rust boundary regressions, 42 Rust tests plus one compile-fail
+test, 222 Python and 180 web tests). [Local evidence](evidence/t013-macos-arm64.json)
+and [all five CI workflows / 19 successful jobs](evidence/t013-ci.json) qualify
+implementation `51c6bd7`, paired with specification progress `c15071b`. T013 is
+complete; production codecs/framing and canonical hashing remain T014–T015.
