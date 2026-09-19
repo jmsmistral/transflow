@@ -10,3 +10,6 @@ pub mod workspace;
 
 /// Guarded authoring writes; SQLite composition belongs to the application crate.
 pub mod registry_write;
+
+/// Workspace-local typing-only catalogue generations and atomic refresh.
+pub mod editor;

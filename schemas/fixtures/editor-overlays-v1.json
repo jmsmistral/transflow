@@ -1,0 +1,125 @@
+[
+  {
+    "name": "orders",
+    "snapshot": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-0000-0000-000000000001",
+      "source_snapshot_id": "00000000-0000-0000-0000-000000000063",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-0000-0000-000000000001",
+            "dataset_id": "00000000-0000-0000-0000-000000000064"
+          },
+          "path": "raw/orders",
+          "kind": "transform"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-0000-0000-000000000001",
+            "dataset_id": "00000000-0000-0000-0000-000000000065"
+          },
+          "path": "raw/orders/daily",
+          "kind": "transform"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "legacy/orders",
+          "key": {
+            "workspace_id": "00000000-0000-0000-0000-000000000001",
+            "dataset_id": "00000000-0000-0000-0000-000000000064"
+          }
+        }
+      ],
+      "catalog_fingerprint": "ea743579e753386ff08414e2ef7d0962326d3ee353cbbdafa97232364b59f823"
+    },
+    "files": {
+      "manifest.json": "{\n  \"catalog_fingerprint\": \"ea743579e753386ff08414e2ef7d0962326d3ee353cbbdafa97232364b59f823\",\n  \"files\": {\n    \"transflow/__init__.pyi\": \"6075963a2f6b44354be7a8d2c4ca2c4111376f722764e20604b0de580995b78a\",\n    \"transflow/catalog.pyi\": \"8e4fa28d4092817f1bae2553d78ba65a502011d57b2ef47a377366b0235856ca\"\n  },\n  \"generator_format\": 1,\n  \"workspace_id\": \"00000000-0000-0000-0000-000000000001\"\n}\n",
+      "transflow/__init__.pyi": "from transflow._version import __version__ as __version__\nfrom transflow.compatibility import (\n    PROTOCOL_VERSION as PROTOCOL_VERSION,\n    ProtocolCompatibilityError as ProtocolCompatibilityError,\n    ProtocolVersion as ProtocolVersion,\n    require_protocol as require_protocol,\n)\nfrom transflow._declaration_values import (\n    DeclarationError as DeclarationError, Parameter as Parameter,\n)\nfrom transflow.declarations import (\n    Branch as Branch, Check as Check, Input as Input, Output as Output,\n    TransformContext as TransformContext, transform as transform,\n    source_transform as source_transform,\n)\n",
+      "transflow/catalog.pyi": "# Catalogue fingerprint: ea743579e753386ff08414e2ef7d0962326d3ee353cbbdafa97232364b59f823\nfrom transflow._catalog import (\n    CatalogNode, CatalogSnapshot as CatalogSnapshot, DatasetRef as DatasetRef,\n    CatalogContextError as CatalogContextError, CatalogLookupError as CatalogLookupError,\n    resolve_reference as resolve_reference,\n)\n\nclass _Node0(CatalogNode):\n    @property\n    def legacy(self) -> _Node1: ...\n    @property\n    def raw(self) -> _Node3: ...\n\nclass _Node1(CatalogNode):\n    @property\n    def orders(self) -> _Node2: ...\n\nclass _Node2(CatalogNode):\n    pass\n\nclass _Node3(CatalogNode):\n    @property\n    def orders(self) -> _Node4: ...\n\nclass _Node4(CatalogNode):\n    @property\n    def daily(self) -> _Node5: ...\n\nclass _Node5(CatalogNode):\n    pass\n\nC: _Node0\n"
+    }
+  },
+  {
+    "name": "invoices",
+    "snapshot": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "source_snapshot_id": "00000000-0000-0000-0000-000000000063",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-0000-0000-000000000002",
+            "dataset_id": "00000000-0000-0000-0000-000000000064"
+          },
+          "path": "raw/invoices",
+          "kind": "transform"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-0000-0000-000000000002",
+            "dataset_id": "00000000-0000-0000-0000-000000000065"
+          },
+          "path": "raw/invoices/daily",
+          "kind": "transform"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "legacy/invoices",
+          "key": {
+            "workspace_id": "00000000-0000-0000-0000-000000000002",
+            "dataset_id": "00000000-0000-0000-0000-000000000064"
+          }
+        }
+      ],
+      "catalog_fingerprint": "28ea4033da0eef88e8bc35be6a5417e9b82509119e95ca52446d4cf3f500f539"
+    },
+    "files": {
+      "manifest.json": "{\n  \"catalog_fingerprint\": \"28ea4033da0eef88e8bc35be6a5417e9b82509119e95ca52446d4cf3f500f539\",\n  \"files\": {\n    \"transflow/__init__.pyi\": \"6075963a2f6b44354be7a8d2c4ca2c4111376f722764e20604b0de580995b78a\",\n    \"transflow/catalog.pyi\": \"bfdf1e37246fd8847dd1455c27ca8f9e92e1ed02652a43aadf11bb60c8be0a9c\"\n  },\n  \"generator_format\": 1,\n  \"workspace_id\": \"00000000-0000-0000-0000-000000000002\"\n}\n",
+      "transflow/__init__.pyi": "from transflow._version import __version__ as __version__\nfrom transflow.compatibility import (\n    PROTOCOL_VERSION as PROTOCOL_VERSION,\n    ProtocolCompatibilityError as ProtocolCompatibilityError,\n    ProtocolVersion as ProtocolVersion,\n    require_protocol as require_protocol,\n)\nfrom transflow._declaration_values import (\n    DeclarationError as DeclarationError, Parameter as Parameter,\n)\nfrom transflow.declarations import (\n    Branch as Branch, Check as Check, Input as Input, Output as Output,\n    TransformContext as TransformContext, transform as transform,\n    source_transform as source_transform,\n)\n",
+      "transflow/catalog.pyi": "# Catalogue fingerprint: 28ea4033da0eef88e8bc35be6a5417e9b82509119e95ca52446d4cf3f500f539\nfrom transflow._catalog import (\n    CatalogNode, CatalogSnapshot as CatalogSnapshot, DatasetRef as DatasetRef,\n    CatalogContextError as CatalogContextError, CatalogLookupError as CatalogLookupError,\n    resolve_reference as resolve_reference,\n)\n\nclass _Node0(CatalogNode):\n    @property\n    def legacy(self) -> _Node1: ...\n    @property\n    def raw(self) -> _Node3: ...\n\nclass _Node1(CatalogNode):\n    @property\n    def invoices(self) -> _Node2: ...\n\nclass _Node2(CatalogNode):\n    pass\n\nclass _Node3(CatalogNode):\n    @property\n    def invoices(self) -> _Node4: ...\n\nclass _Node4(CatalogNode):\n    @property\n    def daily(self) -> _Node5: ...\n\nclass _Node5(CatalogNode):\n    pass\n\nC: _Node0\n"
+    }
+  },
+  {
+    "name": "shipments",
+    "snapshot": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-0000-0000-000000000001",
+      "source_snapshot_id": "00000000-0000-0000-0000-000000000063",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-0000-0000-000000000001",
+            "dataset_id": "00000000-0000-0000-0000-000000000064"
+          },
+          "path": "raw/shipments",
+          "kind": "transform"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-0000-0000-000000000001",
+            "dataset_id": "00000000-0000-0000-0000-000000000065"
+          },
+          "path": "raw/shipments/daily",
+          "kind": "transform"
+        }
+      ],
+      "aliases": [
+        {
+          "path": "legacy/shipments",
+          "key": {
+            "workspace_id": "00000000-0000-0000-0000-000000000001",
+            "dataset_id": "00000000-0000-0000-0000-000000000064"
+          }
+        }
+      ],
+      "catalog_fingerprint": "2112be3c4e7556f351fabb141a5cb4464fa5ec887561856717d3cb66a03ddda4"
+    },
+    "files": {
+      "manifest.json": "{\n  \"catalog_fingerprint\": \"2112be3c4e7556f351fabb141a5cb4464fa5ec887561856717d3cb66a03ddda4\",\n  \"files\": {\n    \"transflow/__init__.pyi\": \"6075963a2f6b44354be7a8d2c4ca2c4111376f722764e20604b0de580995b78a\",\n    \"transflow/catalog.pyi\": \"e337cec2f11af59b71662b61e44b568eb8af5d8131d27c3842bbcfed8574a71e\"\n  },\n  \"generator_format\": 1,\n  \"workspace_id\": \"00000000-0000-0000-0000-000000000001\"\n}\n",
+      "transflow/__init__.pyi": "from transflow._version import __version__ as __version__\nfrom transflow.compatibility import (\n    PROTOCOL_VERSION as PROTOCOL_VERSION,\n    ProtocolCompatibilityError as ProtocolCompatibilityError,\n    ProtocolVersion as ProtocolVersion,\n    require_protocol as require_protocol,\n)\nfrom transflow._declaration_values import (\n    DeclarationError as DeclarationError, Parameter as Parameter,\n)\nfrom transflow.declarations import (\n    Branch as Branch, Check as Check, Input as Input, Output as Output,\n    TransformContext as TransformContext, transform as transform,\n    source_transform as source_transform,\n)\n",
+      "transflow/catalog.pyi": "# Catalogue fingerprint: 2112be3c4e7556f351fabb141a5cb4464fa5ec887561856717d3cb66a03ddda4\nfrom transflow._catalog import (\n    CatalogNode, CatalogSnapshot as CatalogSnapshot, DatasetRef as DatasetRef,\n    CatalogContextError as CatalogContextError, CatalogLookupError as CatalogLookupError,\n    resolve_reference as resolve_reference,\n)\n\nclass _Node0(CatalogNode):\n    @property\n    def legacy(self) -> _Node1: ...\n    @property\n    def raw(self) -> _Node3: ...\n\nclass _Node1(CatalogNode):\n    @property\n    def shipments(self) -> _Node2: ...\n\nclass _Node2(CatalogNode):\n    pass\n\nclass _Node3(CatalogNode):\n    @property\n    def shipments(self) -> _Node4: ...\n\nclass _Node4(CatalogNode):\n    @property\n    def daily(self) -> _Node5: ...\n\nclass _Node5(CatalogNode):\n    pass\n\nC: _Node0\n"
+    }
+  }
+]

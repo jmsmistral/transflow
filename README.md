@@ -175,3 +175,5 @@ complete DSL, build execution and publication remain later tasks.
 [Registry recovery](crates/transflow/REGISTRY_RECOVERY.md) journals exact IDs before guarded file replacement and recovers interrupted indexing without rewriting user edits.
 
 [Snapshot-bound C references](python/CATALOG.md) support explicit aliases, namespace prefixes and separate workspace test contexts without database access.
+
+Workspace-local [catalogue editor generations](crates/tf-catalog/EDITOR.md) now have a Rust renderer and atomic refresh service (T031 implementation). Installed-SDK mypy qualification is automated; native VS Code/Emacs qualification is still pending.

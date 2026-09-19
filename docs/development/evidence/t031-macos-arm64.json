@@ -1,0 +1,31 @@
+{
+  "task": "T031",
+  "date": "2026-09-20",
+  "commands": [
+    "bash tools/check.sh"
+  ],
+  "implementation_result": "pass",
+  "completion_status": "native editor qualification pending",
+  "platform": "macOS arm64",
+  "rust_tests": 161,
+  "rust_documentation_tests": 1,
+  "python_tests": 608,
+  "web_tests": 237,
+  "editor_service_tests": 5,
+  "installed_checker_tests": 2,
+  "qualified_checker": "mypy 2.3.1",
+  "native_editors_tested": [],
+  "coverage": [
+    "Exact Rust-rendered fixtures checked against installed SDK",
+    "Concurrent workspace checkers and one-workspace refresh",
+    "Installed files byte-identical and runtime imports unshadowed",
+    "Private durable immutable generations and atomic current pointer",
+    "Three interruption boundaries, stale fingerprints, tampering and replaced directories"
+  ],
+  "limits": [
+    "VS Code is unavailable; no installation authorization received",
+    "Native Emacs/server completion not tested",
+    "Public catalogue/preparation command composition remains T033",
+    "Private interrupted staging may remain until explicit cache cleanup"
+  ]
+}
