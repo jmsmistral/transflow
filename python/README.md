@@ -73,3 +73,8 @@ The installed `transflow_worker.canonical` module provides canonical JSON, strea
 file SHA-256 and selected content fingerprints without third-party runtime packages.
 See the [canonical contract](../schemas/canonical-v1.md); complete cache/source field
 selection and storage/publication remain unimplemented.
+
+T022 adds `transflow_worker.source_index`, an immutable pre-import module index
+using the selected interpreter’s stdlib and identifier rules. It accepts explicit
+captured paths, does not import user code, and rejects conflicting roots/modules
+and SDK/runtime shadowing. Actual discovery remains T027.

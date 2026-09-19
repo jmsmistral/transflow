@@ -103,7 +103,14 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
     expected |= {f"transflow/{name}.py" for name in ("_catalog_prototype", "catalog", "testing")}
     expected |= {
         f"transflow_worker/{name}.py"
-        for name in ("wire", "canonical", "_wire_assertions", "_wire_schema", "_wire_validators")
+        for name in (
+            "wire",
+            "canonical",
+            "_wire_assertions",
+            "_wire_schema",
+            "_wire_validators",
+            "source_index",
+        )
     }
     metadata_files = {"METADATA", "WHEEL", "RECORD", "top_level.txt", "entry_points.txt"}
     expected |= {f"transflow-{VERSION}.dist-info/{name}" for name in metadata_files}
