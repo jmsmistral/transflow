@@ -1,0 +1,35 @@
+{
+  "task": "T016",
+  "verified": "2026-09-19",
+  "implementation_sha": "492ebc3a72ebe79afb6785e59eeaea6dbc26b4b4",
+  "specification_progress_sha": "62c7d0b5a498ea503c14250825852d88d91d3a4f",
+  "verification_method": "Internal Browser GitHub Actions page: each exact-head workflow displayed completed successfully. Public REST API was rate-limited.",
+  "workflows": [
+    {
+      "name": "Lineage web UI",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35444954084",
+      "conclusion": "success"
+    },
+    {
+      "name": "Security & license checks",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35444954003",
+      "conclusion": "success"
+    },
+    {
+      "name": "Python packages",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35444953909",
+      "conclusion": "success"
+    },
+    {
+      "name": "Toolchains & dependencies",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35444953876",
+      "conclusion": "success"
+    },
+    {
+      "name": "Rust backend & CLI",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35444953830",
+      "conclusion": "success"
+    }
+  ],
+  "scope": "All five workflows pass. Per-job REST metadata was unavailable; full runtime A46/A65 remain later work."
+}

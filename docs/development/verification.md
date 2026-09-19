@@ -220,4 +220,7 @@ and 3.13.0 runners pass. The shared corpus now has 167 cases, including diagnost
 text and result-envelope failures; five generated outputs reproduce exactly.
 The TypeScript fixture reader now compares array constants structurally. The
 renamed-checkout document test preserves links to the intra-repository CLI crate.
-[Local evidence](evidence/t016-macos-arm64.json) records scope; CI is pending.
+[Local evidence](evidence/t016-macos-arm64.json) records scope. All five
+[CI workflows](evidence/t016-ci.json) pass at `492ebc3a72ebe79afb6785e59eeaea6dbc26b4b4`;
+specification progress `62c7d0b5a498ea503c14250825852d88d91d3a4f` is pushed. Browser verification
+was used while the public API was rate-limited. T016 is complete.
