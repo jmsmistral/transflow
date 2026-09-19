@@ -51,7 +51,8 @@ Both checks reject the private reference directory, mapped screenshot basenames,
 Finder metadata and symlinks that cannot be safely audited. Original public image
 assets are allowed. These are path hygiene checks, not image-content recognition
 or a secret scanner: renamed copies and arbitrary embedded private content still
-need review and the T008/T120 checks. No private image bytes are loaded.
+need review and the T120 release checks. T008 adds the bounded credential-pattern
+scanner described in the [safety baseline](safety.md). No private image bytes are loaded.
 
 ## Extending the aggregate contract
 
@@ -105,15 +106,19 @@ production builds compared byte-for-byte. Reports go to `target/web/`. The
 platforms; all three jobs passed at `1717a4f`. Browser checks use only Codex’s internal
 Browser and the [observed checklist](browser-checks.md); no browser driver or
 binaries are installed. The component runner does not verify native dialog focus.
-No API contracts exist yet; Rust-generated types and drift checks follow T012/T074.
+No API contracts exist yet; the T008 drift runner has an explicit empty registry.
+Rust-generated types must be registered with their T012/T074 implementation.
 
 Run `bash tools/qualification/check.sh` separately with its prepared Python
 environment for T003 native dependency probes; the compatibility guide documents
 explicit setup. Checks never fetch external dependencies; Python tests install
-the locally built wheel into disposable environments. Add broader CI and
-dependency/license/privacy checks in T008 as their real manifests and runners
-become available. Add schema drift, canonical fixtures, integration/recovery and
-browser gates with their implementations. A missing required runner must fail,
+the locally built wheel into disposable environments. Add broader
+integration/release checks as their real manifests and runners become available.
+T008 now runs `bash tools/check-safety.sh` in the aggregate: 23 failure/success
+regressions, credential scanning of both explicit repositories, nine-lock license
+coverage, bounded-age advisory evidence, expiring exceptions and generated-contract
+drift. See [safety setup and limitations](safety.md). Add canonical fixtures,
+integration/recovery and browser gates with their implementations. A missing required runner must fail,
 not silently count as a pass. Explicit dependency setup remains separate.
 
 The executable tests establish that help/version need no specification checkout,

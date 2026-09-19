@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "exceptions": [
+    {
+      "finding": "deprecated:npm:eslint@9.39.5",
+      "owner": "Transflow maintainers",
+      "reason": "Development tooling only. eslint-plugin-jsx-a11y 6.10.2 supports ESLint through version 9; qualify the compatible replacement together before changing the locked frontend tools.",
+      "expires": "2026-10-19"
+    },
+    {
+      "finding": "deprecated:npm:whatwg-encoding@3.1.1",
+      "owner": "Transflow maintainers",
+      "reason": "Development-only jsdom 26.1.0 dependency. The newer jsdom requires a later Node patch than the qualified 24.4.1 baseline; qualify the runtime and DOM toolchain together.",
+      "expires": "2026-10-19"
+    }
+  ]
+}

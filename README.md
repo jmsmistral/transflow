@@ -4,10 +4,11 @@
 [![Rust](https://github.com/jmsmistral/transflow/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/rust.yml)
 [![Python](https://github.com/jmsmistral/transflow/actions/workflows/python.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/python.yml)
 [![Web](https://github.com/jmsmistral/transflow/actions/workflows/web.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/web.yml)
+[![Safety](https://github.com/jmsmistral/transflow/actions/workflows/safety.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/safety.yml)
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** Contributor foundation implemented (T001–T002). T004 provides the ten-crate Rust scaffold and CLI help/version. T005 adds one locally installable `transflow` wheel containing the typed SDK and worker bootstrap modules. T003 native qualification passes on all three supported platforms. T006 adds a web development preview with theme and dialog controls. T007 adds deterministic integration-test fixtures for future execution and storage work. Transform declarations, dataset builds and the coordinator remain unimplemented; this is not an application release.
+**Status:** Contributor foundation implemented (T001–T002). T004 provides the ten-crate Rust scaffold and CLI help/version. T005 adds one locally installable `transflow` wheel containing the typed SDK and worker bootstrap modules. T003 native qualification passes on all three supported platforms. T006 adds a web development preview with theme and dialog controls. T007 adds deterministic integration-test fixtures for future execution and storage work. T008 adds dependency/license audits and repository privacy checks. Transform declarations, dataset builds and the coordinator remain unimplemented; this is not an application release.
 
 ## Intended experience
 
@@ -75,6 +76,9 @@ This checks specification metadata, task dependencies/evidence, references,
 example syntax and public file paths; it then runs tooling regressions, Rust
 dependency checks, formatting, compilation, Clippy, Ruff, mypy and bootstrap tests.
 Web gates check TypeScript, ESLint, component tests and repeatable production assets.
+The [safety baseline](docs/development/safety.md) checks credentials, locked dependency
+licenses, advisory evidence, expiring exceptions and registered generated contracts.
+Advisory refresh is explicit and required after seven UTC calendar days; CI queries current data.
 Tests build a wheel and install it into disposable environments without network
 access; external dependency installation remains explicit. See the
 [verification contract](docs/development/verification.md) for scope and limitations.
@@ -101,7 +105,8 @@ supervised test children. It does not implement dataset publication or workers.
 The initial source boundaries are [crates/](crates/README.md),
 [python/](python/README.md) and [web/](web/README.md). T003 has pinned the initial
 toolchain/dependency candidates and exercised them on macOS arm64. Native Linux
-qualification now passes; T001–T007 are complete for their bootstrap scope.
+qualification now passes; T001–T008 are complete for their bootstrap scope.
+Local verification and remote CI results are recorded separately in the task evidence.
 T007’s [three-platform Rust CI run](https://github.com/jmsmistral/transflow/actions/runs/35410393011) also passes.
 See the [compatibility matrix and setup](docs/development/compatibility.md)
 for the isolated probe environment, measured results and CI workflow.

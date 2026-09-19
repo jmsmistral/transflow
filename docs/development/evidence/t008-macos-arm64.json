@@ -1,0 +1,48 @@
+{
+  "task": "T008",
+  "date": "2026-09-19",
+  "platform": "macOS 15.3.1 arm64",
+  "python": "3.14.7",
+  "implementation_base": "aee19c266ba17ec13884ed4ee4262ea042591a56",
+  "specification_base": "6dfb61c83efc8758c0c307b0402fe159628b2bda",
+  "status": "Local verification snapshot before commits; new safety CI not yet run at this snapshot",
+  "command": "bash tools/check.sh",
+  "exit_code": 0,
+  "tests": {
+    "spec_regressions": 43,
+    "safety_regressions": 23,
+    "rust_boundary_regressions": 11,
+    "rust": 21,
+    "python": 28,
+    "web": 6
+  },
+  "gates": [
+    "specification checks",
+    "privacy scan",
+    "license/lock inventory",
+    "advisory freshness/coverage",
+    "exact expiring exceptions",
+    "generated contract drift (synthetic generator; real registry empty)",
+    "Rust fmt/check/clippy/test",
+    "Python Ruff/mypy/pytest",
+    "TypeScript/ESLint/Prettier/Vitest",
+    "repeatable Vite assets"
+  ],
+  "audit": {
+    "source": "OSV",
+    "checked_at": "2026-09-19T01:04:36.717191+00:00",
+    "package_versions": 634,
+    "advisory_matches": 0,
+    "active_deprecation_exceptions": 2,
+    "exceptions_expire": "2026-10-19",
+    "lockfiles": 9
+  },
+  "limits": [
+    "No new remote CI result",
+    "No complete A38/A40 or G0 conformance",
+    "No generated application contracts yet",
+    "Scanner does not inspect history, ignored runtime files, decoded archives, image contents or arbitrary private names",
+    "Declared licenses are not release notices or legal approval",
+    "No packages published or credentials configured"
+  ]
+}

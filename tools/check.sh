@@ -17,7 +17,8 @@ cd -- "$implementation_root"
 "$python_bin" -B "$spec_root/tools/check_spec.py" \
     --root "$spec_root" --implementation-root "$implementation_root"
 "$python_bin" -B -m unittest discover -s "$spec_root/tools/tests" -v
+bash "$implementation_root/tools/check-safety.sh"
 bash "$implementation_root/tools/check-rust.sh"
 bash "$implementation_root/tools/check-python.sh"
 bash "$implementation_root/tools/check-web.sh"
-echo "Contributor, Rust, Python and web bootstrap checks passed. Pipeline and release conformance remain unimplemented."
+echo "Contributor, safety, Rust, Python and web bootstrap checks passed. Pipeline and release conformance remain unimplemented."
