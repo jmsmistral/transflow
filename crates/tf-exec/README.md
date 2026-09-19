@@ -12,7 +12,9 @@ file paths. The guard validates root/runtime device and inode and the locked fil
 identity before publishing metadata or handing out its owned repository.
 
 A second process cannot acquire the same lock. The OS releases it on process exit or
-kill. Lock files are never removed during shutdown, avoiding a second lock inode.
+kill. Normal guard/probe release explicitly unlocks before closing the descriptor,
+so a concurrent fork cannot briefly prolong ownership through an inherited descriptor.
+Lock files are never removed during shutdown, avoiding a second lock inode.
 Metadata may remain stale; discovery treats an unlocked runtime as inactive regardless
 of its PID file. Only a new lock holder can atomically replace registration, with file
 and directory synchronization. All ownership I/O is synchronous and belongs outside
@@ -58,9 +60,15 @@ foundation does not supervise worker cancellation or implement recovery publicat
 
 ## Verification
 
-Eight tests include one subprocess fixture entry point. Parent tests launch a real
+Nine tests include one subprocess fixture entry point and a deterministic inherited-descriptor regression. Parent tests launch a real
 owner, wait on a readiness marker, prove contention, kill/reap it and reacquire with
 a different session. They cover stale metadata, copied clones, incompatible schemas,
 process identity, unsafe files/permissions, replaced locks, private atomic registration,
 loopback-only endpoints, mode policy and the owned database lifetime. A21/A63 service,
 CLI disconnect and cancellation scenarios remain later tasks.
+
+A macOS CI recurrence during T020 was reproduced as a failed immediate reacquisition
+after dropping an owner. A deterministic test keeps a duplicate locked descriptor in
+a live child: closing alone fails, explicit unlock permits reacquisition before the
+child exits. The guard and temporary discovery probes now explicitly unlock. This
+fix preserves contention while the guard is live and does not extend test timeouts.

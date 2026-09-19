@@ -13,12 +13,13 @@
     "document_regressions": 44,
     "safety_regressions": 27,
     "rust_boundary_regressions": 12,
-    "rust_tests": 100,
+    "rust_tests": 101,
     "rust_compile_fail_documentation_tests": 1,
     "python_tests": 462,
     "web_tests": 220,
     "registry_tests": 10,
-    "synthetic_lookup_datasets": 5000
+    "synthetic_lookup_datasets": 5000,
+    "ownership_test_entries": 9
   },
   "dependencies": {
     "distinct_versions": 640,
@@ -38,5 +39,16 @@
     "No registry mutation, reconciliation, code discovery or SDK integration.",
     "Semantic registry fingerprint is distinct from existing narrower SDK wire projection.",
     "A45/A50/A53 end-to-end authoring workflows remain later tasks."
-  ]
+  ],
+  "lock_release_regression": {
+    "reproduction": "Full Rust suite with RUST_TEST_THREADS=3 reproduced Owned after guard drop; public CI annotation named the same test.",
+    "negative_control": "Deterministic inherited-descriptor test fails with Error: Owned when explicit unlock is removed.",
+    "fixed_result": "Deterministic regression and all 30 repeated complete Rust suites pass with explicit unlock.",
+    "stress_command": "cargo test --workspace --locked --offline",
+    "stress_environment": {
+      "RUST_TEST_THREADS": "3"
+    },
+    "stress_runs": 30,
+    "fix": "Explicit unlock in RuntimeOwner drop and temporary discovery probes; no timeout or acceptance changes."
+  }
 }

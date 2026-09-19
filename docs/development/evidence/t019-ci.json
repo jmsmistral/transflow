@@ -121,5 +121,13 @@
     "implementation_commit": "7c95eb2a470eaefc7303a09e216b8ff7fd2d7caf",
     "job_url": "https://github.com/jmsmistral/transflow/actions/runs/35447637495/job/105909221690",
     "detail": "Initial macOS Rust job failed with exit 101; detailed log unavailable without authentication. Twenty repeated local ownership suites and full Rust recheck passed. Rerun passed with unchanged ownership code; added reporter emits only public-source test names and fixed phase labels. Initial cause remains unconfirmed."
+  },
+  "follow_up_diagnosis": {
+    "during_task": "T020",
+    "failed_test": "owned_store_closes_before_ownership_can_be_released",
+    "cause": "A child can inherit the locked file description during concurrent process spawning, briefly retaining the lock after parent descriptor close.",
+    "fix": "Explicit unlock in guard drop and temporary discovery probes.",
+    "regression": "A live child deliberately retains the same locked descriptor; regression fails without explicit unlock and passes with it.",
+    "verification": "Post-fix full verification and CI retained in T020 evidence."
   }
 }

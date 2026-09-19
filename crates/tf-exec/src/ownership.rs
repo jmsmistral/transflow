@@ -132,6 +132,22 @@ pub struct RuntimeOwner {
     directory: File,
     registration: Registration,
 }
+impl Drop for RuntimeOwner {
+    fn drop(&mut self) {
+        // Explicit unlock releases the open-file-description lock even if a concurrent
+        // fork inherited a descriptor before CLOEXEC closes it in the child.
+        // Drop cannot report errors; closing the descriptor remains the fallback.
+        let _ = self.lock.unlock();
+    }
+}
+fn held_else_release(file: &File) -> Result<bool> {
+    if lock(file)? {
+        file.unlock()?;
+        Ok(false)
+    } else {
+        Ok(true)
+    }
+}
 fn io(error: rustix::io::Errno) -> OwnershipError {
     std::io::Error::from(error).into()
 }
@@ -360,7 +376,7 @@ pub fn discover(root: &Path, workspace: WorkspaceId) -> Result<Option<Registrati
         Err(e) => return Err(e),
     };
     regular(&lock_file)?;
-    if lock(&lock_file)? {
+    if !held_else_release(&lock_file)? {
         return Ok(None);
     }
     let metadata = open_at(&directory, "runtime.json", OFlags::RDONLY)?;
@@ -399,8 +415,76 @@ pub fn discover(root: &Path, workspace: WorkspaceId) -> Result<Option<Registrati
     let current = open_at(&directory, "lock", OFlags::RDONLY)?;
     let a = current.metadata()?;
     let b = lock_file.metadata()?;
-    if a.dev() != b.dev() || a.ino() != b.ino() || lock(&lock_file)? {
+    if a.dev() != b.dev() || a.ino() != b.ino() || !held_else_release(&lock_file)? {
         return Err(OwnershipError::Invalid);
     }
     Ok(Some(registration))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        os::unix::fs::PermissionsExt,
+        process::{Command, Stdio},
+    };
+
+    #[test]
+    fn explicit_unlock_releases_a_descriptor_inherited_by_a_live_child()
+    -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let root = std::env::temp_dir().join(format!("tf-inherited-lock-{}", std::process::id()));
+        fs::create_dir(&root)?;
+        struct Root(PathBuf);
+        impl Drop for Root {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+        let _root = Root(root.clone());
+        fs::create_dir_all(root.join(".transflow/runtime"))?;
+        fs::set_permissions(
+            root.join(".transflow/runtime"),
+            fs::Permissions::from_mode(0o700),
+        )?;
+        let owner = RuntimeOwner::acquire(
+            &root,
+            WorkspaceId::from_bytes([1; 16]),
+            CoordinatorMode::Temporary,
+        )?;
+        // Child deliberately retains a duplicate of the SAME locked file description
+        // as stdout, while waiting for input. This makes the fork inheritance window
+        // deterministic without unsafe fork calls or timing-dependent sleeps.
+        let child = Command::new("/bin/sh")
+            .args(["-c", "printf ready >&2; read value"])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::from(owner.lock.try_clone()?))
+            .stderr(Stdio::piped())
+            .spawn()?;
+        struct Child(std::process::Child);
+        impl Drop for Child {
+            fn drop(&mut self) {
+                let _ = self.0.kill();
+                let _ = self.0.wait();
+            }
+        }
+        let mut child = Child(child);
+        let stderr = child
+            .0
+            .stderr
+            .take()
+            .ok_or("Missing child readiness pipe")?;
+        let mut ready = std::io::BufReader::new(stderr);
+        let mut signal = [0; 5];
+        ready.read_exact(&mut signal)?;
+        assert_eq!(&signal, b"ready");
+        assert!(child.0.try_wait()?.is_none());
+        drop(owner);
+        let _replacement = RuntimeOwner::acquire(
+            &root,
+            WorkspaceId::from_bytes([1; 16]),
+            CoordinatorMode::Temporary,
+        )?;
+        assert!(child.0.try_wait()?.is_none());
+        Ok(())
+    }
 }
