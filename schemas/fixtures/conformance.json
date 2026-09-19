@@ -2641,5 +2641,68 @@
       ]
     },
     "valid": true
+  },
+  {
+    "name": "discovery-ready",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "1",
+      "required_capabilities": [
+        "discovery.v1"
+      ],
+      "extensions": [],
+      "message": {
+        "type": "discovery_ready",
+        "result_path": "discovery.json",
+        "result_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "discovery-empty",
+    "schema": "DiscoveryResultV1",
+    "value": {
+      "format_version": 1,
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+      "catalog_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "environment_fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "definitions": [],
+      "imported_modules": []
+    },
+    "valid": true
+  },
+  {
+    "name": "discovery-unknown-result-field",
+    "schema": "DiscoveryResultV1",
+    "value": {
+      "format_version": 1,
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+      "catalog_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "environment_fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "definitions": [],
+      "imported_modules": [],
+      "unexpected": true
+    },
+    "valid": false
+  },
+  {
+    "name": "discovery-error",
+    "schema": "DiscoveryDiagnosticV1",
+    "value": {
+      "format_version": 1,
+      "code": "import",
+      "message": "Module import failed",
+      "path": "src/example.py",
+      "line": 2,
+      "exception_type": "ImportError"
+    },
+    "valid": true
   }
 ]

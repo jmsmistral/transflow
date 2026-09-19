@@ -1,0 +1,24 @@
+{
+  "task": "T027",
+  "date": "2026-09-19",
+  "command": "bash tools/check.sh",
+  "result": "pass",
+  "platform": "macOS arm64",
+  "rust_tests": 131,
+  "rust_documentation_tests": 1,
+  "python_tests": 566,
+  "web_tests": 224,
+  "discovery_tests": 15,
+  "coverage": [
+    "Fresh installed workers over real private sockets",
+    "Forward strings, helper imports and re-export ownership",
+    "Producer invocation counters remain zero",
+    "Syntax/index/hash/authentication guards before imports",
+    "Immutable C owner identity and metadata serialization",
+    "Captured compiled bytes remain authority after source mutation"
+  ],
+  "limits": [
+    "Caller owns environment drift verification and process supervision",
+    "Full build preparation and public catalogue binding remain later tasks"
+  ]
+}

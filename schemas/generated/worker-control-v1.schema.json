@@ -1034,6 +1034,26 @@
           "type": "object",
           "properties": {
             "type": {
+              "const": "discovery_ready"
+            },
+            "result_path": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "result_digest": {
+              "$ref": "#/$defs/Sha256"
+            }
+          },
+          "required": [
+            "type",
+            "result_path",
+            "result_digest"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
               "const": "completed"
             }
           },
@@ -1461,6 +1481,545 @@
           "additionalProperties": false
         }
       ]
+    },
+    "DiscoveryRefV1": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "form": {
+              "const": "string"
+            },
+            "value": {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          },
+          "required": [
+            "form",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "form": {
+              "const": "bound"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/Uuid"
+            },
+            "dataset_id": {
+              "$ref": "#/$defs/Uuid"
+            },
+            "path": {
+              "type": "string",
+              "format": "transflow-dataset-path"
+            },
+            "catalog_fingerprint": {
+              "$ref": "#/$defs/Sha256"
+            }
+          },
+          "required": [
+            "form",
+            "workspace_id",
+            "dataset_id",
+            "path",
+            "catalog_fingerprint"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "DeclarationCheckV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "transflow-name"
+        },
+        "name": {
+          "type": "string",
+          "format": "transflow-name"
+        },
+        "expectation": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "non_null",
+                "primary_key"
+              ]
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "minItems": 0,
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "kind",
+            "columns"
+          ],
+          "additionalProperties": false
+        },
+        "on_error": {
+          "enum": [
+            "FAIL",
+            "WARN"
+          ]
+        },
+        "null_policy": {
+          "enum": [
+            null,
+            "fail",
+            "ignore"
+          ]
+        },
+        "sample_rows": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "description": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "expectation",
+        "on_error",
+        "null_policy",
+        "sample_rows",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "DeclarationInputV1": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string",
+          "format": "transflow-name"
+        },
+        "ref": {
+          "$ref": "#/$defs/DiscoveryRefV1"
+        },
+        "branch": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "omitted",
+                "current",
+                "named"
+              ]
+            },
+            "name": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "format": "transflow-name"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "stop_branch_fallback": {
+          "type": "boolean"
+        },
+        "role": {
+          "enum": [
+            "data",
+            "validation"
+          ]
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeclarationCheckV1"
+          },
+          "minItems": 0,
+          "maxItems": 10000
+        }
+      },
+      "required": [
+        "alias",
+        "ref",
+        "branch",
+        "stop_branch_fallback",
+        "role",
+        "checks"
+      ],
+      "additionalProperties": false
+    },
+    "DeclarationV1": {
+      "type": "object",
+      "properties": {
+        "module": {
+          "type": "string",
+          "format": "transflow-name"
+        },
+        "function": {
+          "type": "string",
+          "format": "transflow-name"
+        },
+        "path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        },
+        "source": {
+          "type": "boolean"
+        },
+        "engine": {
+          "const": "polars"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeclarationInputV1"
+          },
+          "minItems": 0,
+          "maxItems": 10000
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "$ref": "#/$defs/DiscoveryRefV1"
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DeclarationCheckV1"
+              },
+              "minItems": 0,
+              "maxItems": 10000
+            },
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/LogicalSchemaV1"
+                }
+              ]
+            }
+          },
+          "required": [
+            "ref",
+            "checks",
+            "schema"
+          ],
+          "additionalProperties": false
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "logical_type": {
+                "$ref": "#/$defs/LogicalType"
+              },
+              "default": {
+                "$ref": "#/$defs/WireValue"
+              }
+            },
+            "required": [
+              "name",
+              "logical_type",
+              "default"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 10000
+        },
+        "wall_timeout_seconds": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "cache": {
+          "enum": [
+            null,
+            "deterministic",
+            "never"
+          ]
+        },
+        "refresh": {
+          "oneOf": [
+            {
+              "enum": [
+                null,
+                "always",
+                "manual"
+              ]
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4294967295
+            }
+          ]
+        },
+        "secret_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "minItems": 0,
+          "maxItems": 10000
+        },
+        "lineage_json": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "module",
+        "function",
+        "path",
+        "line",
+        "source",
+        "engine",
+        "inputs",
+        "output",
+        "parameters",
+        "wall_timeout_seconds",
+        "cache",
+        "refresh",
+        "secret_refs",
+        "lineage_json"
+      ],
+      "additionalProperties": false
+    },
+    "DiscoveryRequestV1": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "protocol": {
+          "$ref": "#/$defs/ProtocolVersion"
+        },
+        "request_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "capture_root": {
+          "type": "string"
+        },
+        "source_roots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RelativePath"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "$ref": "#/$defs/RelativePath"
+              },
+              "sha256": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "byte_length": {
+                "$ref": "#/$defs/Count"
+              }
+            },
+            "required": [
+              "path",
+              "sha256",
+              "byte_length"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 100000
+        },
+        "catalog": {
+          "$ref": "#/$defs/CatalogSnapshotV1"
+        },
+        "environment_fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "result_directory": {
+          "type": "string"
+        },
+        "auth_token": {
+          "$ref": "#/$defs/Sha256"
+        }
+      },
+      "required": [
+        "format_version",
+        "protocol",
+        "request_id",
+        "attempt_id",
+        "capture_root",
+        "source_roots",
+        "files",
+        "catalog",
+        "environment_fingerprint",
+        "result_directory",
+        "auth_token"
+      ],
+      "additionalProperties": false
+    },
+    "DiscoveryResultV1": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "source_snapshot_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "catalog_fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "environment_fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "definitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeclarationV1"
+          },
+          "minItems": 0,
+          "maxItems": 10000
+        },
+        "imported_modules": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "minItems": 0,
+          "maxItems": 10000
+        }
+      },
+      "required": [
+        "format_version",
+        "source_snapshot_id",
+        "catalog_fingerprint",
+        "environment_fingerprint",
+        "definitions",
+        "imported_modules"
+      ],
+      "additionalProperties": false
+    },
+    "DiscoveryDiagnosticV1": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "code": {
+          "type": "string",
+          "format": "transflow-name"
+        },
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/RelativePath"
+            }
+          ]
+        },
+        "line": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4294967295
+            }
+          ]
+        },
+        "exception_type": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          ]
+        }
+      },
+      "required": [
+        "format_version",
+        "code",
+        "message",
+        "path",
+        "line",
+        "exception_type"
+      ],
+      "additionalProperties": false
     }
   },
   "$ref": "#/$defs/ControlFrameV1"

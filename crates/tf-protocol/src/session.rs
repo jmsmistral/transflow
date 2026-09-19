@@ -68,7 +68,10 @@ impl Session {
         operation: Operation,
         capabilities: BTreeSet<String>,
     ) -> Result<Self, ProtocolError> {
-        if capabilities.iter().any(|s| s != "diagnostic.note.v1") {
+        if capabilities
+            .iter()
+            .any(|s| s != "diagnostic.note.v1" && s != "discovery.v1")
+        {
             return Err(ProtocolError::Capability);
         }
         Ok(Self {
@@ -127,6 +130,14 @@ impl Session {
             });
         }
         let facts = negotiated.as_ref().ok_or(ProtocolError::Order)?;
+        if frame.message_type() == MessageType::DiscoveryReady {
+            if self.operation != Operation::Discover {
+                return Err(ProtocolError::Order);
+            }
+            if !facts.capabilities.contains("discovery.v1") {
+                return Err(ProtocolError::Capability);
+            }
+        }
         let required = frame.as_json()["required_capabilities"]
             .as_array()
             .ok_or(ProtocolError::InvalidDocument)?;

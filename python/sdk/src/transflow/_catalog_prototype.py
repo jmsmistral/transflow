@@ -84,7 +84,7 @@ class CatalogNode:
 
 @dataclass(frozen=True, slots=True)
 class _BoundNode(CatalogNode):
-    _snapshot: PrototypeSnapshot
+    _snapshot: PrototypeSnapshot | _CapturedSnapshot
     _path: str
 
     def __getattr__(self, name: str) -> _BoundNode:
@@ -101,7 +101,31 @@ class _BoundNode(CatalogNode):
         return list(self._snapshot.children(self._path))
 
 
-_binding: ContextVar[PrototypeSnapshot | None] = ContextVar(
+@dataclass(frozen=True, slots=True)
+class _CapturedSnapshot:
+    """Worker-only adapter for an already validated CatalogSnapshotV1 projection.
+
+    Public wire-snapshot testing/binding APIs and alias expansion remain T030.
+    """
+
+    workspace_id: str
+    fingerprint: str
+    records: tuple[tuple[str, str, str], ...]
+
+    def children(self, prefix: str) -> tuple[str, ...]:
+        start = prefix + "/" if prefix else ""
+        return tuple(
+            sorted(
+                {
+                    path[len(start) :].split("/")[0]
+                    for path, _, _ in self.records
+                    if path.startswith(start)
+                }
+            )
+        )
+
+
+_binding: ContextVar[PrototypeSnapshot | _CapturedSnapshot | None] = ContextVar(
     "transflow_catalog_prototype", default=None
 )
 
@@ -129,6 +153,11 @@ def resolve_reference(node: CatalogNode, *, expected_fingerprint: str) -> Protot
     snapshot = node._snapshot
     if snapshot.fingerprint != expected_fingerprint:
         raise CatalogContextError("Catalogue fingerprint is stale or belongs to another workspace")
+    if isinstance(snapshot, _CapturedSnapshot):
+        for path, owner, dataset_id in snapshot.records:
+            if path == node._path:
+                return PrototypeRef(owner, dataset_id, path, snapshot.fingerprint)
+        raise CatalogContextError("This catalogue node is a namespace, not a registered dataset")
     for path, dataset_id in snapshot.entries:
         if path == node._path:
             return PrototypeRef(snapshot.workspace_id, dataset_id, path, snapshot.fingerprint)

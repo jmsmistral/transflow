@@ -116,3 +116,38 @@ def validate_DiagnosticV1(value: object) -> None:
 def validate_CliEnvelopeV1(value: object) -> None:
     """Assert the CliEnvelopeV1 contract, including custom formats."""
     validate_document("CliEnvelopeV1", value)
+
+
+def validate_DiscoveryRefV1(value: object) -> None:
+    """Assert the DiscoveryRefV1 contract, including custom formats."""
+    validate_document("DiscoveryRefV1", value)
+
+
+def validate_DeclarationCheckV1(value: object) -> None:
+    """Assert the DeclarationCheckV1 contract, including custom formats."""
+    validate_document("DeclarationCheckV1", value)
+
+
+def validate_DeclarationInputV1(value: object) -> None:
+    """Assert the DeclarationInputV1 contract, including custom formats."""
+    validate_document("DeclarationInputV1", value)
+
+
+def validate_DeclarationV1(value: object) -> None:
+    """Assert the DeclarationV1 contract, including custom formats."""
+    validate_document("DeclarationV1", value)
+
+
+def validate_DiscoveryRequestV1(value: object) -> None:
+    """Assert the DiscoveryRequestV1 contract, including custom formats."""
+    validate_document("DiscoveryRequestV1", value)
+
+
+def validate_DiscoveryResultV1(value: object) -> None:
+    """Assert the DiscoveryResultV1 contract, including custom formats."""
+    validate_document("DiscoveryResultV1", value)
+
+
+def validate_DiscoveryDiagnosticV1(value: object) -> None:
+    """Assert the DiscoveryDiagnosticV1 contract, including custom formats."""
+    validate_document("DiscoveryDiagnosticV1", value)

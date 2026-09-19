@@ -205,7 +205,7 @@ class Session:
         validate_document("Uuid", attempt_id)
         if operation not in OPERATIONS:
             raise ProtocolError("order")
-        if not capabilities <= {"diagnostic.note.v1"}:
+        if not capabilities <= {"diagnostic.note.v1", "discovery.v1"}:
             raise ProtocolError("capability")
         self._request = request_id
         self._attempt = attempt_id
@@ -242,6 +242,10 @@ class Session:
         required = set(value["required_capabilities"]) | {
             e["capability"] for e in value["extensions"]
         }
+        if frame.message_type == "discovery_ready":
+            if self._operation != "discover":
+                raise ProtocolError("order")
+            required.add("discovery.v1")
         if not required <= negotiated.capabilities:
             raise ProtocolError("capability")
         self._negotiated = negotiated

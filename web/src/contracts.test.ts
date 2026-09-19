@@ -247,7 +247,9 @@ function invariant(name: string, value: Record<string, unknown>): void {
       name,
     );
     need(
-      required.every((c) => c === "diagnostic.note.v1") &&
+      required.every(
+        (c) => c === "diagnostic.note.v1" || c === "discovery.v1",
+      ) &&
         extensions.every(
           (e) =>
             e.capability === "diagnostic.note.v1" &&

@@ -33,6 +33,8 @@ pub enum MessageType {
     ArtifactReady,
     /// Bounded results-file reference.
     CheckResults,
+    /// Captured discovery metadata file.
+    DiscoveryReady,
     /// Terminal successful result.
     Completed,
     /// Terminal failure.
@@ -84,6 +86,7 @@ impl ControlFrame {
             Some("metric") => MessageType::Metric,
             Some("artifact_ready") => MessageType::ArtifactReady,
             Some("check_results") => MessageType::CheckResults,
+            Some("discovery_ready") => MessageType::DiscoveryReady,
             Some("completed") => MessageType::Completed,
             Some("error") => MessageType::Error,
             _ => return Err(ProtocolError::InvalidDocument),

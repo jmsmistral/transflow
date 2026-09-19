@@ -5,6 +5,7 @@ import json
 import sys
 from collections.abc import Sequence
 from dataclasses import asdict
+from pathlib import Path
 
 from ._version import __version__
 from .compatibility import CompatibilityError, check_compatibility
@@ -26,12 +27,30 @@ def main(argv: Sequence[str] | None = None) -> int:
     compatibility.add_argument("-h", "--help", action="store_true", dest="command_help")
     compatibility.add_argument("--protocol-major", type=int, default=1)
     compatibility.add_argument("--protocol-minor", type=int, default=0)
+    discovery = subcommands.add_parser(
+        "discover", help="import captured declarations on a private channel"
+    )
+    discovery.add_argument("--request", type=Path, required=True)
+    discovery.add_argument("--control-socket", type=Path, required=True)
     try:
         args = parser.parse_args(argv)
         if args.help or args.command is None and not args.version:
             print(parser.format_help(), end="")
         elif args.version:
             print(f"transflow-worker {__version__}")
+        elif args.command == "discover":
+            from .discovery import DiscoveryError, serve
+            from .wire import ProtocolError
+
+            try:
+                return serve(args.request, args.control_socket)
+            except (DiscoveryError, ProtocolError, OSError, ValueError):
+                print(
+                    "Discovery setup failed; verify the captured request "
+                    "and private coordinator channel",
+                    file=sys.stderr,
+                )
+                return 1
         elif args.command_help:
             print(compatibility.format_help(), end="")
         else:

@@ -190,10 +190,13 @@ def invariant(name: str, value: dict[str, Any]) -> None:
     elif name == "frame-capabilities":
         required = value["required_capabilities"]
         extensions = value["extensions"]
-        supported = {"diagnostic.note.v1"}  # Fixture reader profile; not a live worker capability.
+        supported = {
+            "diagnostic.note.v1",
+            "discovery.v1",
+        }  # Fixture reader profile; not a live worker capability.
         need(len(set(required)) == len(required) and set(required) <= supported, name)
         need(len({e["capability"] for e in extensions}) == len(extensions), name)
-        need(all(e["capability"] in supported for e in extensions), name)
+        need(all(e["capability"] == "diagnostic.note.v1" for e in extensions), name)
         need(all(e["value"]["type"] == "string" for e in extensions), name)
     else:
         raise ValueError("Unknown invariant: " + name)

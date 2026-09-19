@@ -33,7 +33,7 @@ fn runtime_assertions_agree_with_all_shared_schema_cases() {
     assert_eq!(versions["worker_protocol"]["minor"], PROTOCOL_MINOR);
     let cases: Vec<Value> =
         serde_json::from_str(include_str!("../../../schemas/fixtures/conformance.json")).unwrap();
-    assert_eq!(cases.len(), 167);
+    assert_eq!(cases.len(), 171);
     for case in cases {
         assert_eq!(
             validate_document(case["schema"].as_str().unwrap(), &case["value"]).is_ok(),
@@ -325,4 +325,46 @@ fn python_peer_uses_a_private_socket_and_separate_log_streams() {
     assert!(stdout.contains("hello"));
     assert!(stderr.contains("synthetic diagnostic"));
     assert!(read_frame(&mut Cursor::new(stdout)).is_err());
+}
+
+#[test]
+fn discovery_results_require_the_operation_and_capability() {
+    let ready = frame(
+        1,
+        json!({"type":"discovery_ready","result_path":"discovery.json","result_digest":"a".repeat(64)}),
+    );
+    let mut accepted = Session::new(
+        REQUEST.parse().unwrap(),
+        ATTEMPT.parse().unwrap(),
+        Operation::Discover,
+        BTreeSet::from(["discovery.v1".to_string()]),
+    )
+    .unwrap();
+    accepted
+        .accept(&frame(
+            0,
+            json!({"type":"hello","operation":"discover","capabilities":["discovery.v1"]}),
+        ))
+        .unwrap();
+    accepted.accept(&ready).unwrap();
+    let mut denied = Session::new(
+        REQUEST.parse().unwrap(),
+        ATTEMPT.parse().unwrap(),
+        Operation::Discover,
+        BTreeSet::new(),
+    )
+    .unwrap();
+    denied
+        .accept(&frame(
+            0,
+            json!({"type":"hello","operation":"discover","capabilities":[]}),
+        ))
+        .unwrap();
+    assert!(matches!(
+        denied.accept(&ready),
+        Err(ProtocolError::Capability)
+    ));
+    let mut wrong = session();
+    wrong.accept(&frame(0, hello())).unwrap();
+    assert!(matches!(wrong.accept(&ready), Err(ProtocolError::Order)));
 }

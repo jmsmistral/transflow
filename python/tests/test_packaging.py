@@ -121,6 +121,7 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
             "_wire_validators",
             "source_index",
             "environment",
+            "discovery",
         )
     }
     metadata_files = {"METADATA", "WHEEL", "RECORD", "top_level.txt", "entry_points.txt"}
@@ -171,7 +172,7 @@ def test_isolated_worker_ignores_source_shadowing(installed: Path, tmp_path: Pat
         "protocol_major": 1,
         "protocol_minor": 0,
         "wire_protocol_implemented": True,
-        "supported_operations": [],
+        "supported_operations": ["discover"],
     }
     assert result.stderr == ""
     assert sorted(path.name for path in tmp_path.iterdir()) == [

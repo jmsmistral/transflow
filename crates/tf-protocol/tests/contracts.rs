@@ -317,8 +317,8 @@ fn invariant(name: &str, value: &Value) -> bool {
                 && extra.len() == extensions.len()
                 && names
                     .iter()
-                    .chain(extra.iter())
-                    .all(|n| *n == "diagnostic.note.v1")
+                    .all(|n| matches!(*n, "diagnostic.note.v1" | "discovery.v1"))
+                && extra.iter().all(|n| *n == "diagnostic.note.v1")
                 && extensions.iter().all(|e| e["value"]["type"] == "string")
         }
         _ => false,

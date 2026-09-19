@@ -47,7 +47,7 @@ target/python/demo/bin/python -I -m transflow_worker compatibility
 The report checks installed package/version consistency and worker protocol 1.0.
 T014 provides [bounded framing and generated validators](../crates/tf-protocol/README.md).
 The report now says `wire_protocol_implemented: true`, but `supported_operations`
-remains empty: no discovery/execution/query operation is enabled. Major mismatch
+now contains `discover`: [isolated discovery](DISCOVERY.md) is implemented; execution/query operations remain unavailable. Major mismatch
 fails immediately; sessions separately check minor compatibility and mutually
 supported capabilities. This diagnostic JSON is not the worker control channel.
 
