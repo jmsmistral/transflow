@@ -1,0 +1,35 @@
+{
+  "task": "T013",
+  "date": "2026-09-19",
+  "platform": "macOS arm64",
+  "implementation_base": "c715b93fb1ff54056369e21ca968b381fce3932d",
+  "specification_base": "1466806ecaee59b66e64ce053c3d109694119909",
+  "status": "Local pre-commit verification; CI pending",
+  "command": "bash tools/check.sh",
+  "result": "passed",
+  "counts": {
+    "document_regressions": 44,
+    "safety_regressions": 26,
+    "rust_boundary_regressions": 11,
+    "rust_tests": 42,
+    "rust_compile_fail_documentation_tests": 1,
+    "python_314_tests": 222,
+    "web_tests": 180
+  },
+  "shared_projections": {
+    "scalar_content": 101,
+    "logical_schema_field_content": 5,
+    "catalogue_identity_examples": true
+  },
+  "dependencies": {
+    "new_third_party_versions": 0,
+    "domain_dependencies": 0,
+    "advisory_matches": 0,
+    "locked_versions_queried": 634
+  },
+  "limits": [
+    "No UUID allocation or catalogue mutation.",
+    "No production JSON codec, generated API types or framed socket transport.",
+    "No engine conversion, timezone database lookup or canonical hashing."
+  ]
+}

@@ -4,15 +4,17 @@ The T004 workspace contains the ten specified crates. Crate responsibilities and
 permitted dependency direction are
 canonical in [architecture section 2.2](../../transflow-spec/TECHNICAL_ARCHITECTURE.md#22-rust-modules-and-dependency-direction).
 
-Only `transflow` has executable behaviour: help, version, argument diagnostics and
-typed output errors. The nine `tf-*` libraries reserve their boundaries without
-implementing domain, storage, execution or service behaviour. T012 exposes the
+The `transflow` executable provides help, version, argument diagnostics and typed
+output errors. T013 implements the pure [tf-domain library](tf-domain/README.md)
+for IDs, names, schemas, values and location-aware errors. Storage, execution and
+service behaviour remain unimplemented. T012 exposes the
 authored [wire schema](../schemas/README.md) through `tf-protocol` constants and
 checks shared fixtures using the already-qualified serde_json as a dev dependency.
 
 [check_rust.py](../tools/check_rust.py) enforces allowed dependency directions,
 cycles, exact qualified dependency versions/sources and workspace lint inheritance.
-The domain crate starts with no dependencies. T007 adds SQLx/bundled SQLite
+The domain crate still has no third-party dependencies; tf-protocol imports it only
+in tests to project shared fixtures through its constructors. T007 adds SQLx/bundled SQLite
 and Tokio only as `tf-store` dev dependencies for the [integration fixtures](../tests/README.md).
 Tokio is permitted there only for tests; the checker rejects normal/build promotion. New external dependencies require
 an explicit boundary and qualification review; permitted edges do not require

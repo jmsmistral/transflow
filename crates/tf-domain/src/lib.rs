@@ -1,3 +1,27 @@
-//! Domain IDs, states, value types, errors and invariant helpers. No storage, HTTP or Python dependencies.
+//! Validated domain identities, names, logical schemas and lossless value carriers.
 //!
-//! Crate boundary established by T004. No runtime services are implemented yet.
+//! Constructors perform no I/O, identity allocation, catalogue lookup or conversion
+//! through an engine. JSON codecs belong to tf-protocol; storage and execution are
+//! separate crate responsibilities.
+//!
+//! Identity roles cannot be interchanged accidentally:
+//! ```compile_fail
+//! use tf_domain::{AttemptId, DatasetId};
+//! let dataset = DatasetId::from_bytes([0; 16]);
+//! let attempt: AttemptId = dataset;
+//! ```
+
+pub mod branch;
+mod error;
+pub mod identity;
+pub mod path;
+pub mod schema;
+pub mod value;
+
+pub use branch::{BranchName, BranchSelector, FallbackPermission};
+pub use error::{DomainError, ErrorKind};
+pub use identity::{
+    AttemptId, BranchId, DatasetId, DatasetKey, DatasetScope, SourceSnapshotId, VersionId,
+    WorkspaceId,
+};
+pub use path::DatasetPath;

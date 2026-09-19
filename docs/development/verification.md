@@ -74,7 +74,8 @@ explicit architectural and qualification review.
 
 Five Rust tests cover the CLI: help/version and rejected commands in a subprocess
 outside the checkouts with an empty PATH, plus typed stdout/stderr failures.
-The nine other crates contain no runtime implementation. T007 adds sixteen
+T013 adds pure domain constructors in `tf-domain`; no storage or runtime service
+is implemented. T007 adds sixteen
 `tf-store` integration tests for deterministic providers, labelled barriers, real
 SQLite/filesystem behavior and supervised direct children; see the [fixture
 contracts](../../tests/README.md). The tiny transaction schema is not the product
@@ -156,3 +157,13 @@ five [CI workflows and their 19 jobs](evidence/t012-ci.json) passed for implemen
 `22c5f53`. The Rust/web jobs cover all three platforms; Python and native
 qualification cover both Python minor versions on each platform. T012 is complete
 for contract definitions; production domain/transport/hashing work remains T013–T015.
+
+## T013 domain verification
+
+T013 adds 15 constructor/invariant tests plus a compile-fail identity-role test.
+Three tf-protocol tests project shared scalar/schema/catalogue fixtures through
+the production constructors. See the [domain API and limits](../../crates/tf-domain/README.md).
+The Rust total is 42 ordinary tests and one documentation test; the eleven boundary
+regressions still run. No third-party dependency or version was introduced. Only
+the allowed tf-protocol test dependency on tf-domain was added. Full contributor
+and remote CI results are recorded in the task evidence when verified.

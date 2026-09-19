@@ -6,8 +6,8 @@ select a named `$defs` entry; the document root is a definition collection, not 
 validator for arbitrary payloads. These definitions implement architecture 7.1
 and the shape of the future worker boundary. They do not start a worker, publish
 artifacts or change the installed SDK's bootstrap protocol metadata (`0.0`).
-Production domain types, transport/code generation and canonical hashing belong
-to T013, T014 and T015 respectively.
+[Production domain types](../crates/tf-domain/README.md) are implemented by T013.
+Transport/code generation and canonical hashing remain T014 and T015.
 
 ## Independent versions and compatibility
 
