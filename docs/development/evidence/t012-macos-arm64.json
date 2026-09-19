@@ -1,0 +1,47 @@
+{
+  "task": "T012",
+  "date": "2026-09-19",
+  "platform": "macOS arm64",
+  "implementation_base": "d2f1a1d166296b5d6851faee1c1ce217d6811e5b",
+  "specification_base": "f102b3b961abf212a1d6f56f40c1fd4dfe555186",
+  "status": "Local pre-commit verification; CI pending",
+  "shared_cases": {
+    "schema": 156,
+    "versions": 17,
+    "unknown_rule_test_per_reader": 1
+  },
+  "checks": [
+    {
+      "command": "bash tools/check.sh",
+      "result": "passed",
+      "counts": {
+        "document_regressions": 43,
+        "safety_regressions": 26,
+        "rust_boundary_regressions": 11,
+        "rust_tests": 24,
+        "python_tests": 222,
+        "web_tests": 180
+      },
+      "python": "3.14.7",
+      "rust": "1.98.1",
+      "node": "24.4.1"
+    },
+    {
+      "command": "PYTHON_CHECK=\"$PWD/target/python/py313/bin/python\" bash tools/check-python.sh",
+      "result": "passed",
+      "python": "3.13.0",
+      "tests": 222
+    },
+    {
+      "command": "python tools/safety/advisories.py --output security/advisories.json",
+      "result": "passed",
+      "queried_package_versions": 634,
+      "advisory_matches": 0
+    }
+  ],
+  "limits": [
+    "Test-only schema subset readers, not production codecs.",
+    "No live worker transport, native engine conversion or canonical hashing qualification.",
+    "No new runtime SDK operations or generated type copies."
+  ]
+}

@@ -1,0 +1,150 @@
+# T012 wire contract baseline
+
+[`contracts-v1.schema.json`](contracts-v1.schema.json) is the single authored
+contract source, exposed by `tf-protocol` through `CONTRACT_SCHEMA`. Consumers
+select a named `$defs` entry; the document root is a definition collection, not a
+validator for arbitrary payloads. These definitions implement architecture 7.1
+and the shape of the future worker boundary. They do not start a worker, publish
+artifacts or change the installed SDK's bootstrap protocol metadata (`0.0`).
+Production domain types, transport/code generation and canonical hashing belong
+to T013, T014 and T015 respectively.
+
+## Independent versions and compatibility
+
+[`versions.json`](versions.json) records independent baselines:
+
+| Format | Baseline | Status |
+|---|---|---|
+| Worker control protocol | major 1, minor 0 | Defined here; transport not implemented |
+| Logical schema, artifact manifest, catalogue snapshot | 1 each | Shapes defined here |
+| Expectation AST, workspace config, authoring registry, HTTP API | 1 each | Reserved; their full schemas remain with later tasks |
+| SQLite schema | 0 | No product migration exists; not permission to adopt an arbitrary database |
+
+Product version, specification version and these format versions are independent.
+Persisted documents accept only their exact known format version; unsupported
+versions fail before state is used or modified. There is no automatic downgrade,
+recreation or migration. Changing one format does not bump every other format.
+
+Worker peers must agree on the major version. A higher minor version is compatible
+only when the actual message and required capabilities are understood. Core
+objects are closed: unknown members, missing required members, unknown tags and
+unknown operations fail. Adding a required field, removing/changing a field or
+changing its meaning requires a new major version (or new persisted format).
+An additive minor feature uses a named extension/capability, with its own explicit
+shape. Senders emit it only after the receiver advertises support; an old receiver
+must reject an unsolicited unknown extension, even when it is not marked required.
+Absence of an optional extension preserves the baseline behavior. Ordinary field
+metadata is an open string-to-string map, without executable meaning.
+
+The fixtures use a deliberately small receiver profile that understands only
+`diagnostic.note.v1`, carrying a string scalar. This demonstrates compatible minor
+extensions and unknown required-capability rejection; it is not a shipping worker
+capability. Required capability names and extension names must be unique, and
+there can be at most 64 of each. The hello capability advertisement has the same
+64-item bound. T014 owns the handshake and enforcement against the actual peer.
+
+## Values and identities
+
+All integer values, file byte/row counts and frame sequences are decimal strings.
+Signed/unsigned 8/16/32/64-bit ranges are checked; leading zeros, a leading plus,
+negative zero and exponent notation are rejected. Small version/precision/scale
+numbers remain JSON numbers and cannot be booleans. UUIDs use lowercase hexadecimal
+with 8-4-4-4-12 grouping; digests use 64 lowercase hexadecimal characters. UUID
+version/variant allocation and generation remain domain responsibilities. Dataset
+identity is `(workspace_id, dataset_id)`, independent of its display path.
+
+| Value | Wire representation and assertions |
+|---|---|
+| Null | `{"type":"null"}` with no value member |
+| Boolean/string | Tagged JSON boolean / Unicode string; strings remain text |
+| Binary | Tagged canonical padded RFC 4648 base64, including empty data |
+| Integer | Width/signedness tag and range-checked decimal string |
+| IEEE float | Width tag and decimal string, or exactly `NaN`, `Infinity`, `-Infinity`; signed zero retained |
+| Decimal128 | Decimal string plus precision 1–38 and scale −38–38; preserve exact trailing fractional digits |
+| Date | Gregorian `YYYY-MM-DD`, years 0001–9999, with actual day/leap-year validation |
+| Timestamp | ISO calendar text plus explicit `s`, `ms`, `us` or `ns` unit and nullable timezone |
+| List/struct | Recursive tagged values; struct fields are ordered and uniquely named |
+
+Float decimal syntax is JSON-number syntax inside a string. Finite text must
+convert to a finite value of the declared width; a nonzero mantissa cannot underflow
+to zero. NaN is distinct from null; individual NaN payload bits are not represented.
+Writers must emit decimal text that round-trips their IEEE value; T015 will define
+canonical spelling. The fixture readers retain text rather than reformatting it.
+
+For positive decimal scale, exactly that many fractional digits are required;
+precision counts digits of the unscaled integer, ignoring leading zeros (zero
+counts as one digit). Scale may exceed precision. At scale zero, no decimal point
+is allowed; at negative scale, the integer value must be a multiple of the
+corresponding power of ten. No exponent or implicit float conversion is allowed.
+
+Naive timestamps have no suffix and no timezone assumption. Aware timestamps store
+the instant as UTC text ending in `Z`, alongside the original named timezone.
+Fractions have exactly 0/3/6/9 digits according to the unit; leap seconds and numeric
+UTC offsets in the text are rejected. The timezone carrier accepts `UTC` or slash-
+separated IANA-style names; checking zone existence and engine representability
+requires later adapters. These calendar strings do not promise every engine can
+represent every year at every unit. Unsupported conversions must fail explicitly.
+
+Logical fields have a name, type, nullability and optional metadata. Names are
+1–256 Unicode scalar values without ASCII controls or DEL. Lists carry an element
+field, structs carry ordered fields; field names must be unique within each schema
+or struct. Nested values are a representation contract, not a dataframe transport.
+
+Dataset path segments use `[a-z][a-z0-9_]*` and exclude Python hard keywords.
+Catalogue snapshots reject duplicate paths/identity pairs. Local entries belong
+to the snapshot workspace; foreign entries use kind `external` and the reserved
+`external/` path prefix. Artifact paths are nonempty relative paths of at most
+1024 Unicode scalar values, with no empty/dot/parent segments, backslash, colon,
+ASCII controls or DEL. Filesystem containment, symlinks and case sensitivity need
+actual filesystem checks later; this lexical check alone is not a sandbox.
+
+## Artifacts and control messages
+
+An artifact manifest carries ordered file entries, a logical schema and its
+fingerprint, and writer engine/version/compression/row-group settings. Every file
+has a path, digest and string byte/row counts. At least one file is required even
+for an empty table; duplicate file paths fail. Engine identifiers include future
+adapters without claiming those adapters exist. Fingerprint correctness, physical
+file contents and normalized writer settings are verified by later storage work.
+The artifact digest is computed over the manifest/files by T015, not embedded
+recursively in the manifest itself.
+
+Each control envelope has protocol major/minor, request and attempt UUIDs, a
+sequence, required capabilities, extensions and one discriminated message. Defined
+messages are hello, phase, heartbeat, metric, artifact_ready, check_results,
+completed and error. Hello names one of the six architecture operations. Metrics
+carry scalars; artifacts and check results travel by relative paths plus digests,
+not inline tables or pickle. File sizes, sequence monotonicity, lifecycle ordering,
+request payload schemas and error propagation remain production transport work.
+
+Architecture 2.4 requires a private Unix socket, four-byte big-endian length prefix,
+UTF-8 JSON capped at 1 MiB, and separate stdout/stderr logging. T012 tests decoded
+JSON shapes; it does not yet enforce raw frame sizes, duplicate raw JSON keys,
+stream backpressure or process lifecycle. T014 must implement those boundary
+checks before any worker operation is enabled. Arrays in persisted schemas have
+no arbitrary small item cap; actual byte/depth limits belong to each reader.
+
+## Conformance checks
+
+The JSON Schema uses Draft 2020-12 structural keywords plus asserted custom
+`transflow-*` formats and `x-transflow-invariant` rules. A generic schema validator
+that ignores these annotations is **insufficient**. The named invariants enforce
+decimal precision/scale, timestamp unit/timezone, unique field/file names,
+catalogue ownership and the receiver capability profile described above.
+
+Three independent, test-only assertion readers consume this one schema and the
+same fixtures: Rust `crates/tf-protocol/tests/contracts.rs`, Python
+`python/tests/contracts/assertions.py`, and TypeScript `web/src/contracts.test.ts`.
+They support only the documented schema subset, reject unknown rules and use a
+64-call recursion guard. That guard bounds the fixture interpreter, not a promised
+production nesting limit. These are not general JSON Schema engines or installed
+runtime APIs. No test helper is shipped inside the Python wheel.
+
+Run `cargo test -p tf-protocol --locked --offline`, the Python package check runner
+and the web test runner. The shared corpus has 156 value/identity/schema/message
+cases and 17 independent version cases, plus each reader's unknown-rule test.
+Positive fixtures survive JSON serialization unchanged; negative fixtures exercise
+range/precision/shape/version/capability failures. Native engine conversion and
+socket conformance remain later A10/A37 work. There are no generated schema copies
+in this task: the generated-contract registry remains empty until T014 registers
+its actual generated outputs and drift commands.

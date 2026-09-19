@@ -5,7 +5,7 @@ export default defineConfig({
   build: { target: "es2022", manifest: true, sourcemap: false },
   test: {
     environment: "jsdom",
-    include: ["src/**/*.test.tsx"],
+    include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["src/test-setup.ts"],
     restoreMocks: true,
   },

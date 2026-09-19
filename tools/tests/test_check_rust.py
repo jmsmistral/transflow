@@ -61,7 +61,8 @@ class RustBoundaries(unittest.TestCase):
 
     def test_local_crate_cannot_be_substituted_from_registry(self):
         self.add_internal("tf-protocol", "tf-domain")
-        self.packages["tf-protocol"]["dependencies"][0]["source"] = "registry+https://github.com/rust-lang/crates.io-index"
+        dependency = next(d for d in self.packages["tf-protocol"]["dependencies"] if d["name"] == "tf-domain")
+        dependency["source"] = "registry+https://github.com/rust-lang/crates.io-index"
         self.assertIn("must use the local workspace crate", self.messages())
 
     def test_exact_external_pins(self):

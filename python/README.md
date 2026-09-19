@@ -45,8 +45,9 @@ target/python/demo/bin/python -I -m transflow_worker compatibility
 
 The report checks installed package/version consistency and protocol `0.0`, a
 provisional bootstrap identifier with no supported execution operations. Explicit
-unknown major/minor versions fail. T012 will define the framed wire schemas and
-negotiation; this diagnostic JSON is not the worker control channel.
+unknown major/minor versions fail. T012 defines the initial [wire schemas and
+compatibility policy](../schemas/README.md); T014 will implement framing and
+negotiation. This diagnostic JSON is not the worker control channel.
 
 ## Distribution and tooling decisions
 

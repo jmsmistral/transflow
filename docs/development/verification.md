@@ -110,8 +110,14 @@ production builds compared byte-for-byte. Reports go to `target/web/`. The
 platforms; all three jobs passed at `1717a4f`. Browser checks use only Codex’s internal
 Browser and the [observed checklist](browser-checks.md); no browser driver or
 binaries are installed. The component runner does not verify native dialog focus.
-No API contracts exist yet; the T008 drift runner has an explicit empty registry.
-Rust-generated types must be registered with their T012/T074 implementation.
+T012 adds [authored contracts](../../schemas/README.md), exposed by `tf-protocol`,
+and 156 shared schema cases plus 17 version cases. Each language also rejects an
+unknown schema rule. Rust runs three contract tests (24 Rust tests total), Python
+runs 222 tests, and Vitest runs 180 tests: 174 Node contract tests plus six jsdom
+component tests. No browser installation is involved. The generated-contract
+registry remains empty because this is an authored source, not generated output;
+T014/T074 must register their actual generated outputs. Runtime framing and API
+operations remain unimplemented.
 
 Run `bash tools/qualification/check.sh` separately with its prepared Python
 environment for T003 native dependency probes; the compatibility guide documents

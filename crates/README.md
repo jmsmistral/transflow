@@ -6,7 +6,9 @@ canonical in [architecture section 2.2](../../transflow-spec/TECHNICAL_ARCHITECT
 
 Only `transflow` has executable behaviour: help, version, argument diagnostics and
 typed output errors. The nine `tf-*` libraries reserve their boundaries without
-implementing domain, storage, execution or service behaviour.
+implementing domain, storage, execution or service behaviour. T012 exposes the
+authored [wire schema](../schemas/README.md) through `tf-protocol` constants and
+checks shared fixtures using the already-qualified serde_json as a dev dependency.
 
 [check_rust.py](../tools/check_rust.py) enforces allowed dependency directions,
 cycles, exact qualified dependency versions/sources and workspace lint inheritance.

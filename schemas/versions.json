@@ -1,0 +1,14 @@
+{
+  "worker_protocol": {
+    "major": 1,
+    "minor": 0
+  },
+  "logical_schema": 1,
+  "artifact_manifest": 1,
+  "catalog_snapshot": 1,
+  "expectation_ast": 1,
+  "workspace_config": 1,
+  "authoring_registry": 1,
+  "sqlite_schema": 0,
+  "http_api": 1
+}

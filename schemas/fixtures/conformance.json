@@ -1,0 +1,2148 @@
+[
+  {
+    "name": "i8-min",
+    "schema": "WireValue",
+    "value": {
+      "type": "i8",
+      "value": "-128"
+    },
+    "valid": true
+  },
+  {
+    "name": "i8-max",
+    "schema": "WireValue",
+    "value": {
+      "type": "i8",
+      "value": "127"
+    },
+    "valid": true
+  },
+  {
+    "name": "i8-underflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "i8",
+      "value": "-129"
+    },
+    "valid": false
+  },
+  {
+    "name": "i8-overflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "i8",
+      "value": "128"
+    },
+    "valid": false
+  },
+  {
+    "name": "i16-min",
+    "schema": "WireValue",
+    "value": {
+      "type": "i16",
+      "value": "-32768"
+    },
+    "valid": true
+  },
+  {
+    "name": "i16-max",
+    "schema": "WireValue",
+    "value": {
+      "type": "i16",
+      "value": "32767"
+    },
+    "valid": true
+  },
+  {
+    "name": "i16-underflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "i16",
+      "value": "-32769"
+    },
+    "valid": false
+  },
+  {
+    "name": "i16-overflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "i16",
+      "value": "32768"
+    },
+    "valid": false
+  },
+  {
+    "name": "i32-min",
+    "schema": "WireValue",
+    "value": {
+      "type": "i32",
+      "value": "-2147483648"
+    },
+    "valid": true
+  },
+  {
+    "name": "i32-max",
+    "schema": "WireValue",
+    "value": {
+      "type": "i32",
+      "value": "2147483647"
+    },
+    "valid": true
+  },
+  {
+    "name": "i32-underflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "i32",
+      "value": "-2147483649"
+    },
+    "valid": false
+  },
+  {
+    "name": "i32-overflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "i32",
+      "value": "2147483648"
+    },
+    "valid": false
+  },
+  {
+    "name": "i64-min",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": "-9223372036854775808"
+    },
+    "valid": true
+  },
+  {
+    "name": "i64-max",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": "9223372036854775807"
+    },
+    "valid": true
+  },
+  {
+    "name": "i64-underflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": "-9223372036854775809"
+    },
+    "valid": false
+  },
+  {
+    "name": "i64-overflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": "9223372036854775808"
+    },
+    "valid": false
+  },
+  {
+    "name": "u8-min",
+    "schema": "WireValue",
+    "value": {
+      "type": "u8",
+      "value": "0"
+    },
+    "valid": true
+  },
+  {
+    "name": "u8-max",
+    "schema": "WireValue",
+    "value": {
+      "type": "u8",
+      "value": "255"
+    },
+    "valid": true
+  },
+  {
+    "name": "u8-underflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "u8",
+      "value": "-1"
+    },
+    "valid": false
+  },
+  {
+    "name": "u8-overflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "u8",
+      "value": "256"
+    },
+    "valid": false
+  },
+  {
+    "name": "u16-min",
+    "schema": "WireValue",
+    "value": {
+      "type": "u16",
+      "value": "0"
+    },
+    "valid": true
+  },
+  {
+    "name": "u16-max",
+    "schema": "WireValue",
+    "value": {
+      "type": "u16",
+      "value": "65535"
+    },
+    "valid": true
+  },
+  {
+    "name": "u16-underflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "u16",
+      "value": "-1"
+    },
+    "valid": false
+  },
+  {
+    "name": "u16-overflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "u16",
+      "value": "65536"
+    },
+    "valid": false
+  },
+  {
+    "name": "u32-min",
+    "schema": "WireValue",
+    "value": {
+      "type": "u32",
+      "value": "0"
+    },
+    "valid": true
+  },
+  {
+    "name": "u32-max",
+    "schema": "WireValue",
+    "value": {
+      "type": "u32",
+      "value": "4294967295"
+    },
+    "valid": true
+  },
+  {
+    "name": "u32-underflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "u32",
+      "value": "-1"
+    },
+    "valid": false
+  },
+  {
+    "name": "u32-overflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "u32",
+      "value": "4294967296"
+    },
+    "valid": false
+  },
+  {
+    "name": "u64-min",
+    "schema": "WireValue",
+    "value": {
+      "type": "u64",
+      "value": "0"
+    },
+    "valid": true
+  },
+  {
+    "name": "u64-max",
+    "schema": "WireValue",
+    "value": {
+      "type": "u64",
+      "value": "18446744073709551615"
+    },
+    "valid": true
+  },
+  {
+    "name": "u64-underflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "u64",
+      "value": "-1"
+    },
+    "valid": false
+  },
+  {
+    "name": "u64-overflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "u64",
+      "value": "18446744073709551616"
+    },
+    "valid": false
+  },
+  {
+    "name": "int-leading-zero",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": "01"
+    },
+    "valid": false
+  },
+  {
+    "name": "int-negative-zero",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": "-0"
+    },
+    "valid": false
+  },
+  {
+    "name": "int-plus",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": "+1"
+    },
+    "valid": false
+  },
+  {
+    "name": "int-unicode",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": "١"
+    },
+    "valid": false
+  },
+  {
+    "name": "int-empty",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": ""
+    },
+    "valid": false
+  },
+  {
+    "name": "numeric-large-int",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": 9007199254740993
+    },
+    "valid": false
+  },
+  {
+    "name": "f32-0",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "0"
+    },
+    "valid": true
+  },
+  {
+    "name": "f32--0.0",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "-0.0"
+    },
+    "valid": true
+  },
+  {
+    "name": "f32-1.25",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "1.25"
+    },
+    "valid": true
+  },
+  {
+    "name": "f32-2.5e-12",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "2.5e-12"
+    },
+    "valid": true
+  },
+  {
+    "name": "f32-NaN",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "NaN"
+    },
+    "valid": true
+  },
+  {
+    "name": "f32-Infinity",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "Infinity"
+    },
+    "valid": true
+  },
+  {
+    "name": "f32--Infinity",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "-Infinity"
+    },
+    "valid": true
+  },
+  {
+    "name": "f32-bad-nan",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "nan"
+    },
+    "valid": false
+  },
+  {
+    "name": "f32-bad-inf",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "inf"
+    },
+    "valid": false
+  },
+  {
+    "name": "f32-bad-1e999",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "1e999"
+    },
+    "valid": false
+  },
+  {
+    "name": "f32-bad-01.0",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "01.0"
+    },
+    "valid": false
+  },
+  {
+    "name": "f64-0",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "0"
+    },
+    "valid": true
+  },
+  {
+    "name": "f64--0.0",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "-0.0"
+    },
+    "valid": true
+  },
+  {
+    "name": "f64-1.25",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "1.25"
+    },
+    "valid": true
+  },
+  {
+    "name": "f64-2.5e-12",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "2.5e-12"
+    },
+    "valid": true
+  },
+  {
+    "name": "f64-NaN",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "NaN"
+    },
+    "valid": true
+  },
+  {
+    "name": "f64-Infinity",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "Infinity"
+    },
+    "valid": true
+  },
+  {
+    "name": "f64--Infinity",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "-Infinity"
+    },
+    "valid": true
+  },
+  {
+    "name": "f64-bad-nan",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "nan"
+    },
+    "valid": false
+  },
+  {
+    "name": "f64-bad-inf",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "inf"
+    },
+    "valid": false
+  },
+  {
+    "name": "f64-bad-1e999",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "1e999"
+    },
+    "valid": false
+  },
+  {
+    "name": "f64-bad-01.0",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "01.0"
+    },
+    "valid": false
+  },
+  {
+    "name": "f32-overflow",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "3.5e38"
+    },
+    "valid": false
+  },
+  {
+    "name": "sql-null",
+    "schema": "WireValue",
+    "value": {
+      "type": "null"
+    },
+    "valid": true
+  },
+  {
+    "name": "null-with-value",
+    "schema": "WireValue",
+    "value": {
+      "type": "null",
+      "value": null
+    },
+    "valid": false
+  },
+  {
+    "name": "true",
+    "schema": "WireValue",
+    "value": {
+      "type": "bool",
+      "value": true
+    },
+    "valid": true
+  },
+  {
+    "name": "bool-is-not-int",
+    "schema": "WireValue",
+    "value": {
+      "type": "bool",
+      "value": 1
+    },
+    "valid": false
+  },
+  {
+    "name": "unicode-text",
+    "schema": "WireValue",
+    "value": {
+      "type": "string",
+      "value": "こんにちは 🦀 é"
+    },
+    "valid": true
+  },
+  {
+    "name": "binary",
+    "schema": "WireValue",
+    "value": {
+      "type": "binary",
+      "value": "AP+A"
+    },
+    "valid": true
+  },
+  {
+    "name": "binary-empty",
+    "schema": "WireValue",
+    "value": {
+      "type": "binary",
+      "value": ""
+    },
+    "valid": true
+  },
+  {
+    "name": "bad-binary-abc",
+    "schema": "WireValue",
+    "value": {
+      "type": "binary",
+      "value": "abc"
+    },
+    "valid": false
+  },
+  {
+    "name": "bad-binary-AB==",
+    "schema": "WireValue",
+    "value": {
+      "type": "binary",
+      "value": "AB=="
+    },
+    "valid": false
+  },
+  {
+    "name": "bad-binary-!!!!",
+    "schema": "WireValue",
+    "value": {
+      "type": "binary",
+      "value": "!!!!"
+    },
+    "valid": false
+  },
+  {
+    "name": "date-2000-02-29",
+    "schema": "WireValue",
+    "value": {
+      "type": "date",
+      "value": "2000-02-29"
+    },
+    "valid": true
+  },
+  {
+    "name": "date-2024-02-29",
+    "schema": "WireValue",
+    "value": {
+      "type": "date",
+      "value": "2024-02-29"
+    },
+    "valid": true
+  },
+  {
+    "name": "date-0001-01-01",
+    "schema": "WireValue",
+    "value": {
+      "type": "date",
+      "value": "0001-01-01"
+    },
+    "valid": true
+  },
+  {
+    "name": "date-9999-12-31",
+    "schema": "WireValue",
+    "value": {
+      "type": "date",
+      "value": "9999-12-31"
+    },
+    "valid": true
+  },
+  {
+    "name": "date-1900-02-29",
+    "schema": "WireValue",
+    "value": {
+      "type": "date",
+      "value": "1900-02-29"
+    },
+    "valid": false
+  },
+  {
+    "name": "date-2023-02-29",
+    "schema": "WireValue",
+    "value": {
+      "type": "date",
+      "value": "2023-02-29"
+    },
+    "valid": false
+  },
+  {
+    "name": "date-2026-13-01",
+    "schema": "WireValue",
+    "value": {
+      "type": "date",
+      "value": "2026-13-01"
+    },
+    "valid": false
+  },
+  {
+    "name": "date-2026-1-01",
+    "schema": "WireValue",
+    "value": {
+      "type": "date",
+      "value": "2026-1-01"
+    },
+    "valid": false
+  },
+  {
+    "name": "decimal-123.4500-4",
+    "schema": "WireValue",
+    "value": {
+      "type": "decimal",
+      "value": "123.4500",
+      "precision": 18,
+      "scale": 4
+    },
+    "valid": true
+  },
+  {
+    "name": "decimal-99999999999999999999999999999999999999-0",
+    "schema": "WireValue",
+    "value": {
+      "type": "decimal",
+      "value": "99999999999999999999999999999999999999",
+      "precision": 38,
+      "scale": 0
+    },
+    "valid": true
+  },
+  {
+    "name": "decimal-0.0001-4",
+    "schema": "WireValue",
+    "value": {
+      "type": "decimal",
+      "value": "0.0001",
+      "precision": 1,
+      "scale": 4
+    },
+    "valid": true
+  },
+  {
+    "name": "decimal-12300--2",
+    "schema": "WireValue",
+    "value": {
+      "type": "decimal",
+      "value": "12300",
+      "precision": 3,
+      "scale": -2
+    },
+    "valid": true
+  },
+  {
+    "name": "decimal-12301--2",
+    "schema": "WireValue",
+    "value": {
+      "type": "decimal",
+      "value": "12301",
+      "precision": 3,
+      "scale": -2
+    },
+    "valid": false
+  },
+  {
+    "name": "decimal-123.45-2",
+    "schema": "WireValue",
+    "value": {
+      "type": "decimal",
+      "value": "123.45",
+      "precision": 4,
+      "scale": 2
+    },
+    "valid": false
+  },
+  {
+    "name": "decimal-1.0-2",
+    "schema": "WireValue",
+    "value": {
+      "type": "decimal",
+      "value": "1.0",
+      "precision": 2,
+      "scale": 2
+    },
+    "valid": false
+  },
+  {
+    "name": "decimal-1-0",
+    "schema": "WireValue",
+    "value": {
+      "type": "decimal",
+      "value": "1",
+      "precision": 39,
+      "scale": 0
+    },
+    "valid": false
+  },
+  {
+    "name": "decimal-01.00-2",
+    "schema": "WireValue",
+    "value": {
+      "type": "decimal",
+      "value": "01.00",
+      "precision": 4,
+      "scale": 2
+    },
+    "valid": false
+  },
+  {
+    "name": "timestamp-s-None",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00",
+      "unit": "s",
+      "timezone": null
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-s-UTC",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00Z",
+      "unit": "s",
+      "timezone": "UTC"
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-s-Asia/Tokyo",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00Z",
+      "unit": "s",
+      "timezone": "Asia/Tokyo"
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-ms-None",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00.123",
+      "unit": "ms",
+      "timezone": null
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-ms-UTC",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00.123Z",
+      "unit": "ms",
+      "timezone": "UTC"
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-ms-Asia/Tokyo",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00.123Z",
+      "unit": "ms",
+      "timezone": "Asia/Tokyo"
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-us-None",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00.123456",
+      "unit": "us",
+      "timezone": null
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-us-UTC",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00.123456Z",
+      "unit": "us",
+      "timezone": "UTC"
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-us-Asia/Tokyo",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00.123456Z",
+      "unit": "us",
+      "timezone": "Asia/Tokyo"
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-ns-None",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00.123456789",
+      "unit": "ns",
+      "timezone": null
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-ns-UTC",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00.123456789Z",
+      "unit": "ns",
+      "timezone": "UTC"
+    },
+    "valid": true
+  },
+  {
+    "name": "timestamp-ns-Asia/Tokyo",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00.123456789Z",
+      "unit": "ns",
+      "timezone": "Asia/Tokyo"
+    },
+    "valid": true
+  },
+  {
+    "name": "bad-time-2026-09-17T10:00:00.123456-None",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00.123456",
+      "unit": "ns",
+      "timezone": null
+    },
+    "valid": false
+  },
+  {
+    "name": "bad-time-2026-09-17T10:00:00Z-None",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00Z",
+      "unit": "s",
+      "timezone": null
+    },
+    "valid": false
+  },
+  {
+    "name": "bad-time-2026-09-17T10:00:00-UTC",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:00",
+      "unit": "s",
+      "timezone": "UTC"
+    },
+    "valid": false
+  },
+  {
+    "name": "bad-time-2026-09-17T24:00:00-None",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T24:00:00",
+      "unit": "s",
+      "timezone": null
+    },
+    "valid": false
+  },
+  {
+    "name": "bad-time-2026-09-17T10:00:60-None",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-09-17T10:00:60",
+      "unit": "s",
+      "timezone": null
+    },
+    "valid": false
+  },
+  {
+    "name": "bad-time-2026-02-30T10:00:00-None",
+    "schema": "WireValue",
+    "value": {
+      "type": "timestamp",
+      "value": "2026-02-30T10:00:00",
+      "unit": "s",
+      "timezone": null
+    },
+    "valid": false
+  },
+  {
+    "name": "nested-values",
+    "schema": "WireValue",
+    "value": {
+      "type": "struct",
+      "fields": [
+        {
+          "name": "items",
+          "value": {
+            "type": "list",
+            "values": [
+              {
+                "type": "u64",
+                "value": "18446744073709551615"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "f64",
+                "value": "NaN"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "duplicate-value-fields",
+    "schema": "WireValue",
+    "value": {
+      "type": "struct",
+      "fields": [
+        {
+          "name": "x",
+          "value": {
+            "type": "null"
+          }
+        },
+        {
+          "name": "x",
+          "value": {
+            "type": "null"
+          }
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "unknown-value-variant",
+    "schema": "WireValue",
+    "value": {
+      "type": "complex",
+      "value": "1+2i"
+    },
+    "valid": false
+  },
+  {
+    "name": "unknown-required-field",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": "1",
+      "required_new_semantics": true
+    },
+    "valid": false
+  },
+  {
+    "name": "logical-schema",
+    "schema": "LogicalSchemaV1",
+    "value": {
+      "format_version": 1,
+      "fields": [
+        {
+          "name": "id",
+          "logical_type": {
+            "type": "u64"
+          },
+          "nullable": false
+        },
+        {
+          "name": "details",
+          "logical_type": {
+            "type": "struct",
+            "fields": [
+              {
+                "name": "items",
+                "logical_type": {
+                  "type": "list",
+                  "element": {
+                    "name": "item",
+                    "logical_type": {
+                      "type": "decimal",
+                      "precision": 38,
+                      "scale": 4
+                    },
+                    "nullable": true
+                  }
+                },
+                "nullable": true
+              }
+            ]
+          },
+          "nullable": true,
+          "metadata": {
+            "description": "Synthetic"
+          }
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "duplicate-column",
+    "schema": "LogicalSchemaV1",
+    "value": {
+      "format_version": 1,
+      "fields": [
+        {
+          "name": "id",
+          "logical_type": {
+            "type": "u64"
+          },
+          "nullable": false
+        },
+        {
+          "name": "id",
+          "logical_type": {
+            "type": "u64"
+          },
+          "nullable": false
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "unknown-logical-type",
+    "schema": "LogicalType",
+    "value": {
+      "type": "object"
+    },
+    "valid": false
+  },
+  {
+    "name": "future-logical-schema",
+    "schema": "LogicalSchemaV1",
+    "value": {
+      "format_version": 2,
+      "fields": [
+        {
+          "name": "id",
+          "logical_type": {
+            "type": "u64"
+          },
+          "nullable": false
+        },
+        {
+          "name": "details",
+          "logical_type": {
+            "type": "struct",
+            "fields": [
+              {
+                "name": "items",
+                "logical_type": {
+                  "type": "list",
+                  "element": {
+                    "name": "item",
+                    "logical_type": {
+                      "type": "decimal",
+                      "precision": 38,
+                      "scale": 4
+                    },
+                    "nullable": true
+                  }
+                },
+                "nullable": true
+              }
+            ]
+          },
+          "nullable": true,
+          "metadata": {
+            "description": "Synthetic"
+          }
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "multi-file-empty-table",
+    "schema": "ArtifactManifestV1",
+    "value": {
+      "format_version": 1,
+      "logical_schema": {
+        "format_version": 1,
+        "fields": [
+          {
+            "name": "id",
+            "logical_type": {
+              "type": "u64"
+            },
+            "nullable": false
+          },
+          {
+            "name": "details",
+            "logical_type": {
+              "type": "struct",
+              "fields": [
+                {
+                  "name": "items",
+                  "logical_type": {
+                    "type": "list",
+                    "element": {
+                      "name": "item",
+                      "logical_type": {
+                        "type": "decimal",
+                        "precision": 38,
+                        "scale": 4
+                      },
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              ]
+            },
+            "nullable": true,
+            "metadata": {
+              "description": "Synthetic"
+            }
+          }
+        ]
+      },
+      "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "files": [
+        {
+          "path": "part-000.parquet",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "byte_length": "9007199254740993",
+          "row_count": "0"
+        },
+        {
+          "path": "parts/part-001.parquet",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "byte_length": "9007199254740993",
+          "row_count": "0"
+        }
+      ],
+      "writer": {
+        "engine": "polars",
+        "version": "1.44.2",
+        "compression": "zstd",
+        "row_group_size": "100000"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "no-files",
+    "schema": "ArtifactManifestV1",
+    "value": {
+      "format_version": 1,
+      "logical_schema": {
+        "format_version": 1,
+        "fields": [
+          {
+            "name": "id",
+            "logical_type": {
+              "type": "u64"
+            },
+            "nullable": false
+          },
+          {
+            "name": "details",
+            "logical_type": {
+              "type": "struct",
+              "fields": [
+                {
+                  "name": "items",
+                  "logical_type": {
+                    "type": "list",
+                    "element": {
+                      "name": "item",
+                      "logical_type": {
+                        "type": "decimal",
+                        "precision": 38,
+                        "scale": 4
+                      },
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              ]
+            },
+            "nullable": true,
+            "metadata": {
+              "description": "Synthetic"
+            }
+          }
+        ]
+      },
+      "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "files": [],
+      "writer": {
+        "engine": "polars",
+        "version": "1.44.2",
+        "compression": "zstd",
+        "row_group_size": "100000"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "duplicate-files",
+    "schema": "ArtifactManifestV1",
+    "value": {
+      "format_version": 1,
+      "logical_schema": {
+        "format_version": 1,
+        "fields": [
+          {
+            "name": "id",
+            "logical_type": {
+              "type": "u64"
+            },
+            "nullable": false
+          },
+          {
+            "name": "details",
+            "logical_type": {
+              "type": "struct",
+              "fields": [
+                {
+                  "name": "items",
+                  "logical_type": {
+                    "type": "list",
+                    "element": {
+                      "name": "item",
+                      "logical_type": {
+                        "type": "decimal",
+                        "precision": 38,
+                        "scale": 4
+                      },
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              ]
+            },
+            "nullable": true,
+            "metadata": {
+              "description": "Synthetic"
+            }
+          }
+        ]
+      },
+      "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "files": [
+        {
+          "path": "part-000.parquet",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "byte_length": "9007199254740993",
+          "row_count": "0"
+        },
+        {
+          "path": "part-000.parquet",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "byte_length": "9007199254740993",
+          "row_count": "0"
+        }
+      ],
+      "writer": {
+        "engine": "polars",
+        "version": "1.44.2",
+        "compression": "zstd",
+        "row_group_size": "100000"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "future-artifact",
+    "schema": "ArtifactManifestV1",
+    "value": {
+      "format_version": 2,
+      "logical_schema": {
+        "format_version": 1,
+        "fields": [
+          {
+            "name": "id",
+            "logical_type": {
+              "type": "u64"
+            },
+            "nullable": false
+          },
+          {
+            "name": "details",
+            "logical_type": {
+              "type": "struct",
+              "fields": [
+                {
+                  "name": "items",
+                  "logical_type": {
+                    "type": "list",
+                    "element": {
+                      "name": "item",
+                      "logical_type": {
+                        "type": "decimal",
+                        "precision": 38,
+                        "scale": 4
+                      },
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              ]
+            },
+            "nullable": true,
+            "metadata": {
+              "description": "Synthetic"
+            }
+          }
+        ]
+      },
+      "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "files": [
+        {
+          "path": "part-000.parquet",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "byte_length": "9007199254740993",
+          "row_count": "0"
+        },
+        {
+          "path": "parts/part-001.parquet",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "byte_length": "9007199254740993",
+          "row_count": "0"
+        }
+      ],
+      "writer": {
+        "engine": "polars",
+        "version": "1.44.2",
+        "compression": "zstd",
+        "row_group_size": "100000"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "unknown-manifest-field",
+    "schema": "ArtifactManifestV1",
+    "value": {
+      "format_version": 1,
+      "logical_schema": {
+        "format_version": 1,
+        "fields": [
+          {
+            "name": "id",
+            "logical_type": {
+              "type": "u64"
+            },
+            "nullable": false
+          },
+          {
+            "name": "details",
+            "logical_type": {
+              "type": "struct",
+              "fields": [
+                {
+                  "name": "items",
+                  "logical_type": {
+                    "type": "list",
+                    "element": {
+                      "name": "item",
+                      "logical_type": {
+                        "type": "decimal",
+                        "precision": 38,
+                        "scale": 4
+                      },
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              ]
+            },
+            "nullable": true,
+            "metadata": {
+              "description": "Synthetic"
+            }
+          }
+        ]
+      },
+      "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "files": [
+        {
+          "path": "part-000.parquet",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "byte_length": "9007199254740993",
+          "row_count": "0"
+        },
+        {
+          "path": "parts/part-001.parquet",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "byte_length": "9007199254740993",
+          "row_count": "0"
+        }
+      ],
+      "writer": {
+        "engine": "polars",
+        "version": "1.44.2",
+        "compression": "zstd",
+        "row_group_size": "100000"
+      },
+      "machine_path": "/private/example"
+    },
+    "valid": false
+  },
+  {
+    "name": "unsafe-path-../outside",
+    "schema": "ArtifactFileV1",
+    "value": {
+      "path": "../outside",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byte_length": "9007199254740993",
+      "row_count": "0"
+    },
+    "valid": false
+  },
+  {
+    "name": "unsafe-path-/outside",
+    "schema": "ArtifactFileV1",
+    "value": {
+      "path": "/outside",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byte_length": "9007199254740993",
+      "row_count": "0"
+    },
+    "valid": false
+  },
+  {
+    "name": "unsafe-path-a//b",
+    "schema": "ArtifactFileV1",
+    "value": {
+      "path": "a//b",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byte_length": "9007199254740993",
+      "row_count": "0"
+    },
+    "valid": false
+  },
+  {
+    "name": "unsafe-path-a/./b",
+    "schema": "ArtifactFileV1",
+    "value": {
+      "path": "a/./b",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byte_length": "9007199254740993",
+      "row_count": "0"
+    },
+    "valid": false
+  },
+  {
+    "name": "unsafe-path-C:\\outside",
+    "schema": "ArtifactFileV1",
+    "value": {
+      "path": "C:\\outside",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byte_length": "9007199254740993",
+      "row_count": "0"
+    },
+    "valid": false
+  },
+  {
+    "name": "unsafe-path-a\\b",
+    "schema": "ArtifactFileV1",
+    "value": {
+      "path": "a\\b",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byte_length": "9007199254740993",
+      "row_count": "0"
+    },
+    "valid": false
+  },
+  {
+    "name": "uppercase-hash",
+    "schema": "Sha256",
+    "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "valid": false
+  },
+  {
+    "name": "bad-uuid",
+    "schema": "Uuid",
+    "value": "00000000000040008000000000000001",
+    "valid": false
+  },
+  {
+    "name": "integer-count",
+    "schema": "ArtifactFileV1",
+    "value": {
+      "path": "part-000.parquet",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byte_length": "9007199254740993",
+      "row_count": 0
+    },
+    "valid": false
+  },
+  {
+    "name": "local-foreign-identities",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "external"
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "duplicate-catalog-entry",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        },
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000002"
+          },
+          "path": "raw/orders",
+          "kind": "source"
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "foreign-as-local",
+    "schema": "CatalogSnapshotV1",
+    "value": {
+      "format_version": 1,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000002",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [
+        {
+          "key": {
+            "workspace_id": "00000000-0000-4000-8000-000000000002",
+            "dataset_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "path": "external/reference/orders",
+          "kind": "source"
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "keyword-dataset-path",
+    "schema": "CatalogEntryV1",
+    "value": {
+      "key": {
+        "workspace_id": "00000000-0000-4000-8000-000000000001",
+        "dataset_id": "00000000-0000-4000-8000-000000000002"
+      },
+      "path": "raw/class",
+      "kind": "source"
+    },
+    "valid": false
+  },
+  {
+    "name": "frame-hello",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "hello",
+        "operation": "execute",
+        "capabilities": []
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "frame-phase",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "phase",
+        "phase": "validating_outputs"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "frame-heartbeat",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "heartbeat"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "frame-metric",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "metric",
+        "name": "count",
+        "value": {
+          "type": "u64",
+          "value": "18446744073709551615"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "frame-artifact_ready",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "artifact_ready",
+        "manifest_path": "candidate/manifest.json",
+        "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "frame-check_results",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "check_results",
+        "results_path": "checks/results.json",
+        "results_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "frame-completed",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "completed"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "frame-error",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "error",
+        "code": "VALIDATION_TIMEOUT",
+        "message": "Validation exceeded its limit.",
+        "retryable": false
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "additive-minor-known-capability",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 1
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [
+        "diagnostic.note.v1"
+      ],
+      "extensions": [
+        {
+          "capability": "diagnostic.note.v1",
+          "value": {
+            "type": "string",
+            "value": "A note"
+          }
+        }
+      ],
+      "message": {
+        "type": "heartbeat"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "wrong-major",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 2,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "heartbeat"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "boolean-major",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": true,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "heartbeat"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "unknown-opcode",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "future_required"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "unknown-operation",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "hello",
+        "operation": "delete_all",
+        "capabilities": []
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "missing-attempt",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": null,
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "heartbeat"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "unnegotiated-capability",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [
+        "future.v1"
+      ],
+      "extensions": [],
+      "message": {
+        "type": "heartbeat"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "unnegotiated-extension",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [
+        {
+          "capability": "future.v1",
+          "value": {
+            "type": "null"
+          }
+        }
+      ],
+      "message": {
+        "type": "heartbeat"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "arbitrary-rows",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [],
+      "extensions": [],
+      "message": {
+        "type": "metric",
+        "name": "rows",
+        "value": {
+          "type": "list",
+          "values": []
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "f64-boundary-'1e-999'",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "1e-999"
+    },
+    "valid": false
+  },
+  {
+    "name": "f32-boundary-'1e-46'",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "1e-46"
+    },
+    "valid": false
+  },
+  {
+    "name": "f64-boundary-'5e-324'",
+    "schema": "WireValue",
+    "value": {
+      "type": "f64",
+      "value": "5e-324"
+    },
+    "valid": true
+  },
+  {
+    "name": "f32-boundary-'1.401298464324817e-45'",
+    "schema": "WireValue",
+    "value": {
+      "type": "f32",
+      "value": "1.401298464324817e-45"
+    },
+    "valid": true
+  },
+  {
+    "name": "i64-boundary-'1\\n'",
+    "schema": "WireValue",
+    "value": {
+      "type": "i64",
+      "value": "1\n"
+    },
+    "valid": false
+  },
+  {
+    "name": "unicode-name-256",
+    "schema": "Field",
+    "value": {
+      "name": "🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀",
+      "logical_type": {
+        "type": "string"
+      },
+      "nullable": true
+    },
+    "valid": true
+  },
+  {
+    "name": "unicode-name-257",
+    "schema": "Field",
+    "value": {
+      "name": "🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀",
+      "logical_type": {
+        "type": "string"
+      },
+      "nullable": true
+    },
+    "valid": false
+  }
+]

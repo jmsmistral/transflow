@@ -1,0 +1,87 @@
+[
+  {
+    "format": "logical_schema",
+    "version": 1,
+    "valid": true
+  },
+  {
+    "format": "artifact_manifest",
+    "version": 1,
+    "valid": true
+  },
+  {
+    "format": "catalog_snapshot",
+    "version": 1,
+    "valid": true
+  },
+  {
+    "format": "expectation_ast",
+    "version": 1,
+    "valid": true
+  },
+  {
+    "format": "workspace_config",
+    "version": 1,
+    "valid": true
+  },
+  {
+    "format": "authoring_registry",
+    "version": 1,
+    "valid": true
+  },
+  {
+    "format": "sqlite_schema",
+    "version": 0,
+    "valid": true
+  },
+  {
+    "format": "http_api",
+    "version": 1,
+    "valid": true
+  },
+  {
+    "format": "logical_schema",
+    "version": 2,
+    "valid": false
+  },
+  {
+    "format": "artifact_manifest",
+    "version": 2,
+    "valid": false
+  },
+  {
+    "format": "catalog_snapshot",
+    "version": 2,
+    "valid": false
+  },
+  {
+    "format": "expectation_ast",
+    "version": 2,
+    "valid": false
+  },
+  {
+    "format": "workspace_config",
+    "version": 2,
+    "valid": false
+  },
+  {
+    "format": "authoring_registry",
+    "version": 2,
+    "valid": false
+  },
+  {
+    "format": "sqlite_schema",
+    "version": 1,
+    "valid": false
+  },
+  {
+    "format": "http_api",
+    "version": 2,
+    "valid": false
+  },
+  {
+    "format": "unknown_format",
+    "version": 1,
+    "valid": false
+  }
+]

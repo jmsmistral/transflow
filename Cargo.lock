@@ -889,6 +889,9 @@ version = "0.0.0-dev"
 [[package]]
 name = "tf-protocol"
 version = "0.0.0-dev"
+dependencies = [
+ "serde_json",
+]
 
 [[package]]
 name = "tf-schedule"

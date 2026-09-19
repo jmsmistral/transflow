@@ -129,8 +129,9 @@ document checker also retains its separate path/export checks.
 
 [generated-contracts.json](../../security/generated-contracts.json) is explicitly
 empty: the scaffold has no generated domain/API contracts yet. The runner reports
-that state, rather than claiming cross-language conformance. T012/T014/T074 must
-register generators as they introduce contracts. Artifacts under a `generated/`
+that state, rather than claiming generated-output conformance. T012 adds one
+[authored schema and cross-language fixtures](../../schemas/README.md), without
+generated copies. T014/T074 must register generators as they introduce outputs. Artifacts under a `generated/`
 directory or with `.generated.` in their filename must be registered; other
 naming conventions require an explicit discovery-rule update.
 

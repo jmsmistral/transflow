@@ -8,3 +8,6 @@ description = "Versioned wire contracts and schema generation over domain types.
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
