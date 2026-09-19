@@ -6,15 +6,16 @@ canonical in [architecture section 2.2](../../transflow-spec/TECHNICAL_ARCHITECT
 
 The `transflow` executable provides help, version, argument diagnostics and typed
 output errors. T013 implements the pure [tf-domain library](tf-domain/README.md)
-for IDs, names, schemas, values and location-aware errors. Storage, execution and
+for IDs, names, schemas, values and location-aware errors. T014 adds the
+[protocol library](tf-protocol/README.md) for bounded frames and session guards.
+Storage, execution and
 service behaviour remain unimplemented. T012 exposes the
 authored [wire schema](../schemas/README.md) through `tf-protocol` constants and
 checks shared fixtures using the already-qualified serde_json as a dev dependency.
 
 [check_rust.py](../tools/check_rust.py) enforces allowed dependency directions,
 cycles, exact qualified dependency versions/sources and workspace lint inheritance.
-The domain crate still has no third-party dependencies; tf-protocol imports it only
-in tests to project shared fixtures through its constructors. T007 adds SQLx/bundled SQLite
+The domain crate still has no third-party dependencies; tf-protocol now imports it at runtime for semantic validation and typed IDs. T007 adds SQLx/bundled SQLite
 and Tokio only as `tf-store` dev dependencies for the [integration fixtures](../tests/README.md).
 Tokio is permitted there only for tests; the checker rejects normal/build promotion. New external dependencies require
 an explicit boundary and qualification review; permitted edges do not require

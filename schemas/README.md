@@ -5,9 +5,11 @@ contract source, exposed by `tf-protocol` through `CONTRACT_SCHEMA`. Consumers
 select a named `$defs` entry; the document root is a definition collection, not a
 validator for arbitrary payloads. These definitions implement architecture 7.1
 and the shape of the future worker boundary. They do not start a worker, publish
-artifacts or change the installed SDK's bootstrap protocol metadata (`0.0`).
+artifacts. T014 now implements protocol 1.0 framing; installed SDK/worker diagnostics
+report 1.0 with no execution operations enabled.
 [Production domain types](../crates/tf-domain/README.md) are implemented by T013.
-Transport/code generation and canonical hashing remain T014 and T015.
+[Transport/code generation](../crates/tf-protocol/README.md) is implemented by T014;
+canonical hashing remains T015.
 
 ## Independent versions and compatibility
 
@@ -15,7 +17,7 @@ Transport/code generation and canonical hashing remain T014 and T015.
 
 | Format | Baseline | Status |
 |---|---|---|
-| Worker control protocol | major 1, minor 0 | Defined here; transport not implemented |
+| Worker control protocol | major 1, minor 0 | Framing and session guards implemented by T014 |
 | Logical schema, artifact manifest, catalogue snapshot | 1 each | Shapes defined here |
 | Expectation AST, workspace config, authoring registry, HTTP API | 1 each | Reserved; their full schemas remain with later tasks |
 | SQLite schema | 0 | No product migration exists; not permission to adopt an arbitrary database |
@@ -37,11 +39,11 @@ Absence of an optional extension preserves the baseline behavior. Ordinary field
 metadata is an open string-to-string map, without executable meaning.
 
 The fixtures use a deliberately small receiver profile that understands only
-`diagnostic.note.v1`, carrying a string scalar. This demonstrates compatible minor
-extensions and unknown required-capability rejection; it is not a shipping worker
-capability. Required capability names and extension names must be unique, and
+`diagnostic.note.v1`, carrying a string scalar. T014 implements the same optional diagnostic extension, gated by both peers
+advertising support. Worker execution operations remain unavailable. Required capability names and extension names must be unique, and
 there can be at most 64 of each. The hello capability advertisement has the same
-64-item bound. T014 owns the handshake and enforcement against the actual peer.
+64-item bound. T014 enforces hello, identity, ordering and capability intersection; T055 owns
+nonce authentication and the process launcher.
 
 ## Values and identities
 
@@ -119,10 +121,10 @@ request payload schemas and error propagation remain production transport work.
 
 Architecture 2.4 requires a private Unix socket, four-byte big-endian length prefix,
 UTF-8 JSON capped at 1 MiB, and separate stdout/stderr logging. T012 tests decoded
-JSON shapes; it does not yet enforce raw frame sizes, duplicate raw JSON keys,
-stream backpressure or process lifecycle. T014 must implement those boundary
-checks before any worker operation is enabled. Arrays in persisted schemas have
-no arbitrary small item cap; actual byte/depth limits belong to each reader.
+JSON shapes; T014 now enforces byte/depth limits, strict JSON, framing and session
+guards in Rust and Python. Full log backpressure, authentication and child lifecycle
+remain T055. Arrays in persisted schemas have no arbitrary small item cap; each
+reader owns its byte/depth limits.
 
 ## Conformance checks
 
@@ -141,10 +143,9 @@ production nesting limit. These are not general JSON Schema engines or installed
 runtime APIs. No test helper is shipped inside the Python wheel.
 
 Run `cargo test -p tf-protocol --locked --offline`, the Python package check runner
-and the web test runner. The shared corpus has 156 value/identity/schema/message
+and the web test runner. The shared corpus has 157 value/identity/schema/message
 cases and 17 independent version cases, plus each reader's unknown-rule test.
 Positive fixtures survive JSON serialization unchanged; negative fixtures exercise
 range/precision/shape/version/capability failures. Native engine conversion and
-socket conformance remain later A10/A37 work. There are no generated schema copies
-in this task: the generated-contract registry remains empty until T014 registers
-its actual generated outputs and drift commands.
+socket conformance remain later A10/A37 work. T014 additionally runs the shared corpus through runtime validators and registers
+its generated schema, TypeScript and Python outputs with deterministic drift checks.

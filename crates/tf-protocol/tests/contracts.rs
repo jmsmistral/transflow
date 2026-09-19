@@ -198,7 +198,7 @@ fn invariant(name: &str, value: &Value) -> bool {
                 return false;
             }
             let raw = s.strip_prefix('-').unwrap_or(s);
-            let scale = value["scale"].as_i64().unwrap();
+            let scale = value["scale"].as_f64().unwrap() as i64;
             let unscaled = if scale > 0 {
                 let Some((whole, frac)) = raw.split_once('.') else {
                     return false;
@@ -222,7 +222,7 @@ fn invariant(name: &str, value: &Value) -> bool {
                 }
             };
             unscaled.trim_start_matches('0').len().max(1)
-                <= value["precision"].as_u64().unwrap() as usize
+                <= value["precision"].as_f64().unwrap() as usize
         }
         "timestamp-value" => {
             let mut s = value["value"].as_str().unwrap();

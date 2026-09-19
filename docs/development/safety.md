@@ -127,13 +127,13 @@ document checker also retains its separate path/export checks.
 
 ## Generated contracts
 
-[generated-contracts.json](../../security/generated-contracts.json) is explicitly
-empty: the scaffold has no generated domain/API contracts yet. The runner reports
-that state, rather than claiming generated-output conformance. T012 adds one
-[authored schema and cross-language fixtures](../../schemas/README.md), without
-generated copies. T014/T074 must register generators as they introduce outputs. Artifacts under a `generated/`
-directory or with `.generated.` in their filename must be registered; other
-naming conventions require an explicit discovery-rule update.
+[generated-contracts.json](../../security/generated-contracts.json) registers the
+T014 worker contract generator and its JSON Schema, TypeScript and Python outputs.
+The [protocol guide](../../crates/tf-protocol/README.md) documents regeneration and
+scope. The drift gate regenerates all four outputs from the authored schema in a
+disposable directory. Future T074 API outputs must be registered too. Artifacts
+under `generated/` or with `.generated.` names must be registered; other naming
+conventions require an explicit discovery-rule update.
 
 A registry entry contains `name`, an `inputs` object mapping relative source and
 generator paths to SHA-256 values, an `outputs` list of relative paths, and a

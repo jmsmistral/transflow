@@ -4,11 +4,11 @@ This crate implements pure, validated domain types without third-party dependenc
 filesystem access, catalogue mutation or engine imports. Constructors return
 `DomainError` with a typed `ErrorKind` and a relative JSON Pointer location. Error
 messages do not echo arbitrary input data. JSON envelopes, framing and generated
-contracts remain the responsibility of `tf-protocol` in T014.
+contracts are implemented by [tf-protocol](../tf-protocol/README.md) in T014.
 
 | Module | Delivered types |
 |---|---|
-| `identity` | WorkspaceId, DatasetId, VersionId, AttemptId, BranchId, SourceSnapshotId, DatasetKey, DatasetScope |
+| `identity` | RequestId (T014), WorkspaceId, DatasetId, VersionId, AttemptId, BranchId, SourceSnapshotId, DatasetKey, DatasetScope |
 | `path` | DatasetPath with syntax and ownership-scope validation |
 | `branch` | BranchName, BranchSelector and independent FallbackPermission |
 | `schema` | FieldName, Field, unique ordered Fields, LogicalType and LogicalSchema |
@@ -72,8 +72,7 @@ validate a whole value against a declared schema or apply engine/check semantics
 Transport must bound payload sizes/depth before constructing untrusted collections.
 
 `cargo test -p tf-domain --locked --offline` runs 15 constructor/invariant tests and
-one compile-fail documentation test. `tf-protocol` has a test-only dependency on
-this crate: three additional tests project 101 scalar-content cases, five logical
+one compile-fail documentation test. T014 uses this crate for runtime semantic validation; three additional tests project 102 scalar-content cases, five logical
 schema/field cases and catalogue identity examples from the shared T012 corpus
 through the production constructors and back to the same carriers. They supplement
 the existing full JSON-shape tests; the projection helpers are not shipped codecs.

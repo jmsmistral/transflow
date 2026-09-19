@@ -890,6 +890,7 @@ version = "0.0.0-dev"
 name = "tf-protocol"
 version = "0.0.0-dev"
 dependencies = [
+ "serde",
  "serde_json",
  "tf-domain",
 ]

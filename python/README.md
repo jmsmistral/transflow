@@ -43,11 +43,12 @@ target/python/demo/bin/python -m pip install --no-index target/python/py314/whee
 target/python/demo/bin/python -I -m transflow_worker compatibility
 ```
 
-The report checks installed package/version consistency and protocol `0.0`, a
-provisional bootstrap identifier with no supported execution operations. Explicit
-unknown major/minor versions fail. T012 defines the initial [wire schemas and
-compatibility policy](../schemas/README.md); T014 will implement framing and
-negotiation. This diagnostic JSON is not the worker control channel.
+The report checks installed package/version consistency and worker protocol 1.0.
+T014 provides [bounded framing and generated validators](../crates/tf-protocol/README.md).
+The report now says `wire_protocol_implemented: true`, but `supported_operations`
+remains empty: no discovery/execution/query operation is enabled. Major mismatch
+fails immediately; sessions separately check minor compatibility and mutually
+supported capabilities. This diagnostic JSON is not the worker control channel.
 
 ## Distribution and tooling decisions
 

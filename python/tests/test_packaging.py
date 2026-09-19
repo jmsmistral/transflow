@@ -101,6 +101,10 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
     expected = {f"transflow/{module}" for module in modules}
     expected |= {f"transflow_worker/{module}" for module in modules | {"__main__.py", "cli.py"}}
     expected |= {f"transflow/{name}.py" for name in ("_catalog_prototype", "catalog", "testing")}
+    expected |= {
+        f"transflow_worker/{name}.py"
+        for name in ("wire", "_wire_assertions", "_wire_schema", "_wire_validators")
+    }
     metadata_files = {"METADATA", "WHEEL", "RECORD", "top_level.txt", "entry_points.txt"}
     expected |= {f"transflow-{VERSION}.dist-info/{name}" for name in metadata_files}
     with ZipFile(wheel) as archive:
@@ -146,9 +150,9 @@ def test_isolated_worker_ignores_source_shadowing(installed: Path, tmp_path: Pat
     result = run([str(installed), "-I", "-m", "transflow_worker", "compatibility"], tmp_path)
     assert json.loads(result.stdout) == {
         "distribution_version": VERSION,
-        "protocol_major": 0,
+        "protocol_major": 1,
         "protocol_minor": 0,
-        "wire_protocol_implemented": False,
+        "wire_protocol_implemented": True,
         "supported_operations": [],
     }
     assert result.stderr == ""
@@ -173,8 +177,8 @@ def test_worker_entrypoints(installed: Path, tmp_path: Path, args: list[str]) ->
         ["execute"],
         ["discover"],
         ["--unknown"],
-        ["compatibility", "--protocol-major", "1"],
-        ["compatibility", "--protocol-minor", "1"],
+        ["compatibility", "--protocol-major", "2"],
+        ["compatibility", "--protocol-minor", "4294967296"],
         ["compatibility", "--protocol-major", "-1"],
     ],
 )
@@ -206,7 +210,7 @@ def test_installed_sdk_exposes_types(installed: Path, tmp_path: Path) -> None:
     valid = tmp_path / "consumer.py"
     valid.write_text(
         "from transflow import ProtocolVersion, require_protocol\n"
-        "require_protocol(ProtocolVersion(0, 0))\n"
+        "require_protocol(ProtocolVersion(1, 0))\n"
     )
     command = [
         sys.executable,
@@ -264,7 +268,7 @@ def test_workspace_overlays_with_installed_sdk(installed: Path, tmp_path: Path) 
             "from transflow._catalog_prototype import resolve_reference\n"
             "from transflow.testing import catalog_context\n"
             "from transflow_worker import __version__ as worker_version\n"
-            "require_protocol(ProtocolVersion(0, 0))\n"
+            "require_protocol(ProtocolVersion(1, 0))\n"
             "assert isinstance(__version__, str)\n"
             "assert isinstance(PROTOCOL_VERSION, ProtocolVersion)\n"
             "assert issubclass(ProtocolCompatibilityError, RuntimeError)\n"
@@ -309,7 +313,7 @@ from transflow.testing import catalog_context
 from transflow.catalog import C
 assert not Path(transflow.__file__).is_relative_to({str(workspace)!r})
 assert not Path(transflow.catalog.__file__).is_relative_to({str(workspace)!r})
-require_protocol(ProtocolVersion(0, 0))
+require_protocol(ProtocolVersion(1, 0))
 snapshot = PrototypeSnapshot({snapshot.workspace_id!r}, {snapshot.entries!r})
 with catalog_context(snapshot, expected_fingerprint={snapshot.fingerprint!r}):
     assert dir(C.raw) == [{name!r}]
@@ -331,3 +335,21 @@ with catalog_context(snapshot, expected_fingerprint={snapshot.fingerprint!r}):
         for path in installed.parent.parent.rglob("*")
         if path.is_file() and not path.is_symlink()
     }
+
+
+def test_installed_wire_validators_need_no_repository(installed: Path, tmp_path: Path) -> None:
+    script = """
+from transflow_worker._wire_validators import validate_WireValue
+from transflow_worker.wire import ProtocolError, MAX_FRAME_BYTES
+validate_WireValue({"type": "u64", "value": "18446744073709551615"})
+try:
+    validate_WireValue({"type": "u64", "value": "18446744073709551616"})
+except ProtocolError:
+    pass
+else:
+    raise AssertionError("overflow accepted")
+assert MAX_FRAME_BYTES == 1048576
+print("wire-ok")
+"""
+    result = run([str(installed), "-I", "-c", script], tmp_path)
+    assert result.stdout.strip() == "wire-ok"

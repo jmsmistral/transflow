@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** Contributor foundation implemented (T001–T002). T004 provides the ten-crate Rust scaffold and CLI help/version. T005 adds one locally installable `transflow` wheel containing the typed SDK and worker bootstrap modules. T003 native qualification passes on all three supported platforms. T006 adds a web development preview with theme and dialog controls. T007 adds deterministic integration-test fixtures for future execution and storage work. T008 adds dependency/license audits and repository privacy checks. T009 qualifies DuckDB’s internal validation capabilities and records precision/security boundaries. T010 adds a snapshot-bound catalogue/mypy prototype; editor completion qualification is retained for later integration. T011 adds resource, cancellation and offline resolver probes. T012 defines versioned wire schemas and shared Rust/Python/TypeScript compatibility fixtures. T013 adds validated Rust domain identities, paths, branches, schemas and values. Transform declarations, dataset builds and the coordinator remain unimplemented; this is not an application release.
+**Status:** Contributor foundation implemented (T001–T002). T004 provides the ten-crate Rust scaffold and CLI help/version. T005 adds one locally installable `transflow` wheel containing the typed SDK and worker bootstrap modules. T003 native qualification passes on all three supported platforms. T006 adds a web development preview with theme and dialog controls. T007 adds deterministic integration-test fixtures for future execution and storage work. T008 adds dependency/license audits and repository privacy checks. T009 qualifies DuckDB’s internal validation capabilities and records precision/security boundaries. T010 adds a snapshot-bound catalogue/mypy prototype; editor completion qualification is retained for later integration. T011 adds resource, cancellation and offline resolver probes. T012 defines versioned wire schemas and shared Rust/Python/TypeScript compatibility fixtures. T013 adds validated Rust domain identities, paths, branches, schemas and values. T014 adds generated contracts and bounded Rust/Python worker framing with session guards. Transform declarations, dataset builds and the coordinator remain unimplemented; this is not an application release.
 
 ## Intended experience
 
@@ -124,7 +124,8 @@ for the isolated probe environment, measured results and CI workflow.
 T012’s [contract definitions](schemas/README.md) pass shared Rust/Python/TypeScript
 fixtures and all five [CI workflows](docs/development/evidence/t012-ci.json).
 The [T013 domain library](crates/tf-domain/README.md) now implements validated IDs,
-paths, branch declarations and lossless values. Framed transport remains T014.
+paths, branch declarations and lossless values. The [T014 protocol library](crates/tf-protocol/README.md) adds framing and generated
+contracts; canonical hashing is next in T015.
 
 T013 passes [local verification](docs/development/evidence/t013-macos-arm64.json)
 and all five [CI workflows](docs/development/evidence/t013-ci.json).

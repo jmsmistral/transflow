@@ -1,6 +1,7 @@
-"""Test-only assertions for the documented schema subset and Transflow invariants.
+"""Runtime assertions for the authored schema subset and Transflow invariants.
 
-This consumes the one Rust-owned schema; it is not an installed SDK validator.
+Any is limited to trusted schema metadata and payloads narrowed by structural checks;
+wire.py owns strict JSON decoding, byte bounds and public protocol errors.
 """
 
 import base64
@@ -41,7 +42,7 @@ def need(condition: bool, reason: str) -> None:
 
 
 def number(value: object) -> bool:
-    return type(value) in (int, float) and math.isfinite(value)  # type: ignore[arg-type]
+    return type(value) is int or (isinstance(value, float) and math.isfinite(value))
 
 
 def same(a: Any, b: Any) -> bool:
@@ -171,7 +172,9 @@ def invariant(name: str, value: dict[str, Any]) -> None:
     elif name == "frame-capabilities":
         required = value["required_capabilities"]
         extensions = value["extensions"]
-        supported = {"diagnostic.note.v1"}  # Fixture reader profile; not a live worker capability.
+        supported = {
+            "diagnostic.note.v1"
+        }  # Registered optional extension; Session checks negotiation.
         need(len(set(required)) == len(required) and set(required) <= supported, name)
         need(len({e["capability"] for e in extensions}) == len(extensions), name)
         need(all(e["capability"] in supported for e in extensions), name)
@@ -183,7 +186,7 @@ def invariant(name: str, value: dict[str, Any]) -> None:
 def validate(
     schema: dict[str, Any], value: Any, definitions: dict[str, Any], depth: int = 0
 ) -> None:
-    need(depth <= 64, "fixture nesting limit")
+    need(depth <= 64, "contract nesting limit")
     need(set(schema) <= KEYWORDS, "unsupported schema keyword")
     if "$ref" in schema:
         validate(

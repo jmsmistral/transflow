@@ -21,7 +21,7 @@ pub mod value;
 pub use branch::{BranchName, BranchSelector, FallbackPermission};
 pub use error::{DomainError, ErrorKind};
 pub use identity::{
-    AttemptId, BranchId, DatasetId, DatasetKey, DatasetScope, SourceSnapshotId, VersionId,
-    WorkspaceId,
+    AttemptId, BranchId, DatasetId, DatasetKey, DatasetScope, RequestId, SourceSnapshotId,
+    VersionId, WorkspaceId,
 };
 pub use path::DatasetPath;

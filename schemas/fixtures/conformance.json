@@ -2144,5 +2144,16 @@
       "nullable": true
     },
     "valid": false
+  },
+  {
+    "name": "integral-json-decimal-metadata",
+    "schema": "WireValue",
+    "value": {
+      "type": "decimal",
+      "value": "12300",
+      "precision": 3.0,
+      "scale": -2.0
+    },
+    "valid": true
   }
 ]

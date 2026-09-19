@@ -9,6 +9,7 @@ description = "Versioned wire contracts and schema generation over domain types.
 [lints]
 workspace = true
 
-[dev-dependencies]
+[dependencies]
 tf-domain = { path = "../tf-domain" }
+serde.workspace = true
 serde_json.workspace = true

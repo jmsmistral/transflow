@@ -1,4 +1,23 @@
 {
   "schema": 1,
-  "contracts": []
+  "contracts": [
+    {
+      "name": "worker-contract-v1",
+      "inputs": {
+        "tools/contracts/generate.py": "640c72147fde2b597e3a86c4e24a2568cd46cf369b1bfc10e76c922cd350f750",
+        "schemas/contracts-v1.schema.json": "a048092fefd1f75c552b93c64a37ed79b1f11703affdcab6c646b0721c201e9c",
+        "schemas/versions.json": "beb4e63198f8a245c2735b23f3fa9890697b166d20cc6812f0b47aa19ec4080f"
+      },
+      "outputs": [
+        "schemas/generated/worker-control-v1.schema.json",
+        "web/src/generated/contracts.ts",
+        "python/worker/src/transflow_worker/_wire_schema.py",
+        "python/worker/src/transflow_worker/_wire_validators.py"
+      ],
+      "command": [
+        "{python}",
+        "tools/contracts/generate.py"
+      ]
+    }
+  ]
 }

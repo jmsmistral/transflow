@@ -40,7 +40,12 @@ class StandaloneCommandTests(unittest.TestCase):
         # A complete minimal checkout, deliberately without a sibling specification.
         paths = [*LOCKS, *[str(p.relative_to(ROOT)) for p in (ROOT / "security").glob("*.json")]]
         paths.extend(str(p.relative_to(ROOT)) for p in (ROOT / "tools/safety").glob("*.py"))
-        for name in paths:
+        # Registered generators and their outputs are part of a complete checkout.
+        registry = json.loads((ROOT / "security/generated-contracts.json").read_text())
+        for contract in registry["contracts"]:
+            paths.extend(contract["inputs"])
+            paths.extend(contract["outputs"])
+        for name in sorted(set(paths)):
             destination = self.root / name
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, destination)
@@ -72,6 +77,14 @@ class StandaloneCommandTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Scope: implementation only", result.stdout)
         self.assertIn("Safety baseline passed", result.stdout)
+
+    def test_implementation_only_rejects_real_generated_contract_drift(self):
+        registry = json.loads((self.root / "security/generated-contracts.json").read_text())
+        output = self.root / registry["contracts"][0]["outputs"][0]
+        output.write_bytes(output.read_bytes() + b"\n")
+        result = self.check("--implementation-only")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Generated contract drift", result.stderr)
 
     def test_default_local_check_still_requires_spec_checkout(self):
         result = self.check()

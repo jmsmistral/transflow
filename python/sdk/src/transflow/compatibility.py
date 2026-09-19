@@ -1,4 +1,4 @@
-"""Provisional packaging compatibility; no worker wire operations exist yet."""
+"""Worker protocol major compatibility; sessions negotiate required capabilities."""
 
 from dataclasses import dataclass
 from typing import Final
@@ -13,11 +13,13 @@ class ProtocolVersion:
 
     def __post_init__(self) -> None:
         for name, value in (("major", self.major), ("minor", self.minor)):
-            if type(value) is not int or value < 0:
-                raise ValueError(f"Protocol {name} must be a nonnegative integer")
+            if type(value) is not int or not 0 <= value <= 4294967295:
+                raise ValueError(
+                    f"Protocol {name} must be a nonnegative integer no greater than 4294967295"
+                )
 
 
-PROTOCOL_VERSION: Final = ProtocolVersion(0, 0)
+PROTOCOL_VERSION: Final = ProtocolVersion(1, 0)
 
 
 class ProtocolCompatibilityError(ValueError):
@@ -33,6 +35,6 @@ class ProtocolCompatibilityError(ValueError):
 
 
 def require_protocol(requested: ProtocolVersion) -> None:
-    """Require the exact bootstrap version until capability negotiation exists."""
-    if requested != PROTOCOL_VERSION:
+    """Check the major before session-level capability negotiation."""
+    if requested.major != PROTOCOL_VERSION.major:
         raise ProtocolCompatibilityError(requested, PROTOCOL_VERSION)

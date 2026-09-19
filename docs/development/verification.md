@@ -101,8 +101,8 @@ completion is still unverified.
 The [Python CI workflow](../../.github/workflows/python.yml) covers both Python
 versions on all three target platforms and preserves wheel hashes and JUnit
 reports. Native local execution uses Python 3.14.7 and the available 3.13.0;
-CI's Python 3.13.15/3.14.7 matrix passes on all three platforms. Wire protocol `0.0` is only
-bootstrap metadata; no framed transport or execution operation is implemented.
+CI's Python 3.13.15/3.14.7 matrix passes on all three platforms. T014 replaces bootstrap metadata with protocol 1.0 framing and session guards;
+execution operations remain unimplemented.
 
 The aggregate also runs `bash tools/check-web.sh`: exact Node/npm versions,
 strict TypeScript, ESLint, Prettier, six Vitest/jsdom component tests and two Vite
@@ -116,8 +116,8 @@ and 156 shared schema cases plus 17 version cases. Each language also rejects an
 unknown schema rule. Rust runs three contract tests (24 Rust tests total), Python
 runs 222 tests, and Vitest runs 180 tests: 174 Node contract tests plus six jsdom
 component tests. No browser installation is involved. The generated-contract
-registry remains empty because this is an authored source, not generated output;
-T014/T074 must register their actual generated outputs. Runtime framing and API
+registry now includes T014’s four generated outputs with deterministic drift
+checks. The T014 protocol library adds framing and session validation; HTTP API
 operations remain unimplemented.
 
 Run `bash tools/qualification/check.sh` separately with its prepared Python
@@ -171,3 +171,19 @@ test, 222 Python and 180 web tests). [Local evidence](evidence/t013-macos-arm64.
 and [all five CI workflows / 19 successful jobs](evidence/t013-ci.json) qualify
 implementation `51c6bd7`, paired with specification progress `c15071b`. T013 is
 complete; production codecs/framing and canonical hashing remain T014–T015.
+
+## T014 transport and generated contracts
+
+The [protocol guide](../../crates/tf-protocol/README.md) describes strict 1 MiB
+framing, 64-level raw JSON nesting limits, session guards and deterministic exports.
+The Rust runner now needs the prepared `python` interpreter for a real Python peer
+on a private Unix socket (`TRANSFLOW_TEST_PYTHON` overrides it). An environment that
+blocks Unix sockets must grant local IPC permission; that test must not be skipped.
+The installed wheel includes schema data, named validators and framing helpers; it
+requires neither repository nor third-party Python dependencies. SDK/worker metadata
+now reports protocol 1.0 with no executable operations. The full contributor aggregate passes: 44 document regressions, 27 safety regressions,
+eleven Rust boundary regressions, 52 Rust tests plus one compile-fail documentation
+test, 403 Python tests and 182 web tests. Both local Python 3.14.7 and 3.13.0
+runners pass. The shared corpus now includes integral decimal metadata written
+as JSON `3.0`/`-2.0` (157 schema cases plus 17 version cases).
+[Local evidence](evidence/t014-macos-arm64.json) records the scope; CI is pending.

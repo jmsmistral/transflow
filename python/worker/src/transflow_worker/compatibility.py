@@ -17,12 +17,12 @@ class CompatibilityReport:
     distribution_version: str
     protocol_major: int
     protocol_minor: int
-    wire_protocol_implemented: bool = False
+    wire_protocol_implemented: bool = True
     supported_operations: tuple[str, ...] = ()
 
 
-def check_compatibility(*, protocol_major: int = 0, protocol_minor: int = 0) -> CompatibilityReport:
-    """Verify installed metadata, import identity and exact bootstrap protocol."""
+def check_compatibility(*, protocol_major: int = 1, protocol_minor: int = 0) -> CompatibilityReport:
+    """Verify installed metadata, import identity and protocol major compatibility."""
     try:
         distribution_version = version("transflow")
     except PackageNotFoundError as exc:
@@ -46,7 +46,7 @@ def check_compatibility(*, protocol_major: int = 0, protocol_minor: int = 0) -> 
         transflow.PROTOCOL_VERSION.major,
         transflow.PROTOCOL_VERSION.minor,
     ) != SUPPORTED_PROTOCOL:
-        raise CompatibilityError("SDK and worker bootstrap protocol versions differ")
+        raise CompatibilityError("SDK and worker protocol versions differ")
     try:
         transflow.require_protocol(transflow.ProtocolVersion(protocol_major, protocol_minor))
     except ValueError as exc:

@@ -24,7 +24,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "compatibility", help="check installed package compatibility", add_help=False
     )
     compatibility.add_argument("-h", "--help", action="store_true", dest="command_help")
-    compatibility.add_argument("--protocol-major", type=int, default=0)
+    compatibility.add_argument("--protocol-major", type=int, default=1)
     compatibility.add_argument("--protocol-minor", type=int, default=0)
     try:
         args = parser.parse_args(argv)

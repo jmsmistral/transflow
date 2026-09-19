@@ -65,3 +65,7 @@ T008's dependency audit. This is not a clean dependency-audit result.
 embedding (T117). Repeatability is measured across two local builds with the same
 lock/toolchain, not across platforms. Node is a development tool; native asset
 embedding and offline release verification have not yet been implemented.
+
+T014 adds generated readonly [contract types](src/generated/contracts.ts) from the
+authored schema. Compile-time and Node tests verify their tagged shapes; this does
+not yet add an HTTP client, connected graph or runtime UI operations.

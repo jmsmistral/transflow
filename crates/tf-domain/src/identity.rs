@@ -65,6 +65,10 @@ macro_rules! id {
         }
     };
 }
+id!(
+    RequestId,
+    "Worker request UUID, independent of execution attempt identity."
+);
 id!(WorkspaceId, "Stable owner workspace UUID.");
 id!(
     DatasetId,

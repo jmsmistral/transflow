@@ -25,11 +25,17 @@ fn integer_kind(tag: &str) -> Option<IntegerType> {
     })
 }
 fn decimal_type(v: &Json) -> Result<DecimalType> {
-    Ok(DecimalType::new(
-        u8::try_from(v["precision"].as_u64().ok_or("precision")?)?,
-        i8::try_from(v["scale"].as_i64().ok_or("scale")?)?,
-    )?)
+    let precision = v["precision"]
+        .as_f64()
+        .filter(|n| n.fract() == 0.0 && (0.0..=255.0).contains(n))
+        .ok_or("precision")? as u8;
+    let scale = v["scale"]
+        .as_f64()
+        .filter(|n| n.fract() == 0.0 && (-128.0..=127.0).contains(n))
+        .ok_or("scale")? as i8;
+    Ok(DecimalType::new(precision, scale)?)
 }
+
 fn time_type(v: &Json) -> Result<TimestampType> {
     let unit = match text(&v["unit"])? {
         "s" => TimeUnit::Seconds,
@@ -183,10 +189,19 @@ fn shared_scalar_content_passes_through_production_constructors() {
             case["name"]
         );
         if let Ok(value) = result {
-            assert_eq!(value, case["value"], "{}", case["name"]);
+            let mut expected = case["value"].clone();
+            // JSON Schema integer metadata treats 3.0 and 3 alike. Domain metadata
+            // uses native small integers; the actual value carrier remains exact.
+            if tag == "decimal" {
+                for key in ["precision", "scale"] {
+                    assert_eq!(value[key].as_f64(), expected[key].as_f64());
+                    expected[key] = value[key].clone();
+                }
+            }
+            assert_eq!(value, expected, "{}", case["name"]);
         }
     }
-    assert_eq!(checked, 101); // Explicit coverage, so fixture additions require review.
+    assert_eq!(checked, 102); // Explicit coverage, so fixture additions require review.
 }
 #[test]
 fn shared_logical_schema_and_field_content_preserve_nested_types() {

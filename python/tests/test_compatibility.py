@@ -21,18 +21,18 @@ def test_protocol_identity_is_immutable() -> None:
     with pytest.raises(FrozenInstanceError):
         # Deliberately test a runtime mutation that static checking also rejects.
         PROTOCOL_VERSION.major = 1  # type: ignore[misc]
-    require_protocol(ProtocolVersion(0, 0))
+    require_protocol(ProtocolVersion(1, 0))
 
 
-@pytest.mark.parametrize("component", [-1, True, 1.5, "0", None])
+@pytest.mark.parametrize("component", [-1, True, 1.5, "0", None, 4294967296])
 def test_invalid_protocol_components(component: object) -> None:
     # Deliberately simulate an untyped caller supplying an invalid value.
     with pytest.raises(ValueError, match="nonnegative integer"):
         ProtocolVersion(cast(int, component), 0)
 
 
-@pytest.mark.parametrize("version", [ProtocolVersion(1, 0), ProtocolVersion(0, 1)])
-def test_unknown_major_or_minor_fails_with_context(version: ProtocolVersion) -> None:
+@pytest.mark.parametrize("version", [ProtocolVersion(2, 0), ProtocolVersion(0, 1)])
+def test_unknown_major_fails_with_context(version: ProtocolVersion) -> None:
     with pytest.raises(ProtocolCompatibilityError) as error:
         require_protocol(version)
     assert error.value.requested == version
@@ -65,7 +65,7 @@ def test_imported_version_must_match_metadata(monkeypatch: pytest.MonkeyPatch) -
 
 def test_sdk_protocol_must_match_worker(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(compatibility, "version", lambda name: "0.0.0.dev0")
-    monkeypatch.setattr(transflow, "PROTOCOL_VERSION", ProtocolVersion(1, 0))
+    monkeypatch.setattr(transflow, "PROTOCOL_VERSION", ProtocolVersion(2, 0))
     with pytest.raises(compatibility.CompatibilityError, match="protocol versions differ"):
         compatibility.check_compatibility()
 
@@ -87,3 +87,7 @@ def test_closed_stderr_preserves_failure_exit(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr(sys, "stdout", ClosedOutput())
     monkeypatch.setattr(sys, "stderr", ClosedOutput())
     assert cli.main([]) == 1
+
+
+def test_newer_minor_still_requires_session_capability_negotiation() -> None:
+    require_protocol(ProtocolVersion(1, 7))

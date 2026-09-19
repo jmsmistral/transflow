@@ -1,0 +1,42 @@
+{
+  "task": "T014",
+  "date": "2026-09-19",
+  "platform": "macOS arm64",
+  "implementation_base": "66d2b48ecfdfe87c31cd4ebee5827ea885a66c36",
+  "specification_base": "fb0c1b86b950b7d835c8d2db0c6af33b284f3dd3",
+  "status": "Local pre-commit verification; CI pending",
+  "commands": [
+    "bash tools/check.sh",
+    "PYTHON_CHECK=target/python/py313/bin/python bash tools/check-python.sh"
+  ],
+  "result": "passed",
+  "counts": {
+    "document_regressions": 44,
+    "safety_regressions": 27,
+    "rust_boundary_regressions": 11,
+    "rust_tests": 52,
+    "rust_compile_fail_documentation_tests": 1,
+    "python_314_tests": 403,
+    "python_313_tests": 403,
+    "web_tests": 182,
+    "shared_schema_cases": 157,
+    "shared_version_cases": 17
+  },
+  "coverage": [
+    "Real Rust/Python private Unix-socket exchange with separate stdout/stderr",
+    "Framing size, truncation, duplicate keys, UTF-8 and nesting limits",
+    "Request/attempt identity, hello operation, sequence, terminal and capability guards",
+    "Four deterministic generated outputs and a real drift rejection regression",
+    "Installed wheel validators operate outside both repositories"
+  ],
+  "dependencies": {
+    "new_third_party_versions": 0,
+    "locked_versions_queried": 634,
+    "advisory_matches": 0
+  },
+  "limits": [
+    "Blocking codec requires supervisor deadlines and cancellation.",
+    "No worker operation dispatch, process supervision or nonce authentication.",
+    "No canonical hashing; full A37/A69 and G0 remain open."
+  ]
+}
