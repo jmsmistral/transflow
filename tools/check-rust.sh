@@ -17,6 +17,7 @@ run_rust_check() {
         printf 'Rust check failed during: %s
 ' "$stage" >> "$GITHUB_STEP_SUMMARY"
     fi
+    printf '::error title=Rust check failure::Failed stage: %s\n' "$stage"
     return 1
 }
 run_rust_check formatting cargo fmt --all -- --check
@@ -25,7 +26,9 @@ run_rust_check linting cargo clippy --workspace --all-targets --locked --offline
 mkdir -p target
 if ! cargo test --workspace --locked --offline 2>&1 | tee target/rust-tests.log; then
     if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
-        "$python_bin" tools/rust_failure_summary.py target/rust-tests.log >> "$GITHUB_STEP_SUMMARY"
+        public_failure_names="$("$python_bin" tools/rust_failure_summary.py target/rust-tests.log)"
+        printf '%s\n' "$public_failure_names" >> "$GITHUB_STEP_SUMMARY"
+        printf '::error title=Rust test failure::%s\n' "$public_failure_names"
     fi
     exit 1
 fi
