@@ -76,3 +76,7 @@ one compile-fail documentation test. T014 uses this crate for runtime semantic v
 schema/field cases and catalogue identity examples from the shared T012 corpus
 through the production constructors and back to the same carriers. They supplement
 the existing full JSON-shape tests; the projection helpers are not shipped codecs.
+
+T016 adds `diagnostic`: stable codes and exit statuses, immutable sanitized text,
+source ranges, request context and bounded safe causes. It performs no I/O.
+The [CLI guide](../transflow/README.md) documents redaction limits and projections.

@@ -49,3 +49,21 @@ export type ControlMessageV1 = ({ readonly "type": "hello"; readonly "operation"
 
 // prettier-ignore
 export type ControlFrameV1 = { readonly "protocol": ProtocolVersion; readonly "request_id": Uuid; readonly "attempt_id": Uuid; readonly "sequence": Count; readonly "required_capabilities": ReadonlyArray<string>; readonly "extensions": ReadonlyArray<{ readonly "capability": string; readonly "value": ScalarValue }>; readonly "message": ControlMessageV1 };
+
+// prettier-ignore
+export type DiagnosticText = string;
+
+// prettier-ignore
+export type SourcePositionV1 = { readonly "line": number; readonly "column": number };
+
+// prettier-ignore
+export type SourceRangeV1 = { readonly "path": DiagnosticText; readonly "start": SourcePositionV1; readonly "end": SourcePositionV1 };
+
+// prettier-ignore
+export type RequestContextV1 = { readonly "workspace": (null | DiagnosticText); readonly "source": (null | DiagnosticText); readonly "request_id": (null | Uuid) };
+
+// prettier-ignore
+export type DiagnosticV1 = { readonly "code": ("TF_GRAPH_CYCLE" | "TF_CLI_USAGE" | "TF_COMMAND_UNAVAILABLE" | "TF_OPERATION_FAILED" | "TF_INTERRUPTED" | "TF_STATE_TRANSITION"); readonly "heading": DiagnosticText; readonly "reason": DiagnosticText; readonly "remediation": DiagnosticText; readonly "sources": ReadonlyArray<SourceRangeV1>; readonly "affected": ReadonlyArray<DiagnosticText>; readonly "causes": ReadonlyArray<DiagnosticV1> };
+
+// prettier-ignore
+export type CliEnvelopeV1 = ({ readonly "format_version": 1; readonly "product_version": DiagnosticText; readonly "capabilities": ["cli.help", "cli.version", "cli.diagnostics.v1"]; readonly "context": RequestContextV1; readonly "outcome": "success"; readonly "exit_status": (0); readonly "result": { readonly "kind": ("help" | "version"); readonly "text": DiagnosticText }; readonly "diagnostics": ReadonlyArray<DiagnosticV1> } | { readonly "format_version": 1; readonly "product_version": DiagnosticText; readonly "capabilities": ["cli.help", "cli.version", "cli.diagnostics.v1"]; readonly "context": RequestContextV1; readonly "outcome": "failure"; readonly "exit_status": (1 | 2); readonly "result": null; readonly "diagnostics": ReadonlyArray<DiagnosticV1> } | { readonly "format_version": 1; readonly "product_version": DiagnosticText; readonly "capabilities": ["cli.help", "cli.version", "cli.diagnostics.v1"]; readonly "context": RequestContextV1; readonly "outcome": "canceled"; readonly "exit_status": (130); readonly "result": null; readonly "diagnostics": ReadonlyArray<DiagnosticV1> });

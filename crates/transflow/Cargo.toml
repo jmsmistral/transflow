@@ -7,8 +7,13 @@ publish.workspace = true
 description = "Transflow CLI and application composition root"
 
 [dependencies]
+tf-domain = { path = "../tf-domain" }
+tf-protocol = { path = "../tf-protocol" }
 clap.workspace = true
 thiserror.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

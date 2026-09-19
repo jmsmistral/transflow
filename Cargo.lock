@@ -1001,6 +1001,9 @@ name = "transflow"
 version = "0.0.0-dev"
 dependencies = [
  "clap",
+ "serde_json",
+ "tf-domain",
+ "tf-protocol",
  "thiserror",
 ]
 

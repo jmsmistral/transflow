@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:transflow:worker-control:v1",
+  "$id": "urn:transflow:cli-result:v1",
   "title": "Transflow T012 wire contract definitions",
   "$comment": "Authored contract baseline. Assert transflow-* formats and x-transflow-invariant rules; see README. Production transport/code generation is T014.",
   "$defs": {
@@ -1449,5 +1449,5 @@
       ]
     }
   },
-  "$ref": "#/$defs/ControlFrameV1"
+  "$ref": "#/$defs/CliEnvelopeV1"
 }

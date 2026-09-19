@@ -319,7 +319,7 @@
     "schema": "WireValue",
     "value": {
       "type": "i64",
-      "value": "١"
+      "value": "\u0661"
     },
     "valid": false
   },
@@ -588,7 +588,7 @@
     "schema": "WireValue",
     "value": {
       "type": "string",
-      "value": "こんにちは 🦀 é"
+      "value": "\u3053\u3093\u306b\u3061\u306f \ud83e\udd80 e\u0301"
     },
     "valid": true
   },
@@ -2125,7 +2125,7 @@
     "name": "unicode-name-256",
     "schema": "Field",
     "value": {
-      "name": "🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀",
+      "name": "\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80",
       "logical_type": {
         "type": "string"
       },
@@ -2137,7 +2137,7 @@
     "name": "unicode-name-257",
     "schema": "Field",
     "value": {
-      "name": "🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀",
+      "name": "\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80",
       "logical_type": {
         "type": "string"
       },
@@ -2153,6 +2153,452 @@
       "value": "12300",
       "precision": 3.0,
       "scale": -2.0
+    },
+    "valid": true
+  },
+  {
+    "name": "cli-diagnostic-cycle",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "failure",
+      "exit_status": 1,
+      "result": null,
+      "diagnostics": [
+        {
+          "code": "TF_GRAPH_CYCLE",
+          "heading": "Workspace validation failed",
+          "reason": "A dependency cycle was found.",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "cli-unknown-code",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "failure",
+      "exit_status": 1,
+      "result": null,
+      "diagnostics": [
+        {
+          "code": "TF_UNKNOWN",
+          "heading": "Workspace validation failed",
+          "reason": "A dependency cycle was found.",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "cli-terminal-escape",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "failure",
+      "exit_status": 1,
+      "result": null,
+      "diagnostics": [
+        {
+          "code": "TF_GRAPH_CYCLE",
+          "heading": "Workspace validation failed",
+          "reason": "unsafe\u001b[31m",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "cli-bidi-control",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "failure",
+      "exit_status": 1,
+      "result": null,
+      "diagnostics": [
+        {
+          "code": "TF_GRAPH_CYCLE",
+          "heading": "unsafe\u202e",
+          "reason": "A dependency cycle was found.",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "cli-empty-heading",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "failure",
+      "exit_status": 1,
+      "result": null,
+      "diagnostics": [
+        {
+          "code": "TF_GRAPH_CYCLE",
+          "heading": "",
+          "reason": "A dependency cycle was found.",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "cli-cancel",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "canceled",
+      "exit_status": 1,
+      "result": null,
+      "diagnostics": [
+        {
+          "code": "TF_GRAPH_CYCLE",
+          "heading": "Workspace validation failed",
+          "reason": "A dependency cycle was found.",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "cli-unknown-envelope",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 2,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "failure",
+      "exit_status": 1,
+      "result": null,
+      "diagnostics": [
+        {
+          "code": "TF_GRAPH_CYCLE",
+          "heading": "Workspace validation failed",
+          "reason": "A dependency cycle was found.",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "cli-unknown-exit",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "failure",
+      "exit_status": 3,
+      "result": null,
+      "diagnostics": [
+        {
+          "code": "TF_GRAPH_CYCLE",
+          "heading": "Workspace validation failed",
+          "reason": "A dependency cycle was found.",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "cli-no-diagnostic",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "failure",
+      "exit_status": 1,
+      "result": null,
+      "diagnostics": []
+    },
+    "valid": false
+  },
+  {
+    "name": "cli-canceled-result",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "canceled",
+      "exit_status": 130,
+      "result": null,
+      "diagnostics": [
+        {
+          "code": "TF_GRAPH_CYCLE",
+          "heading": "Workspace validation failed",
+          "reason": "A dependency cycle was found.",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
     },
     "valid": true
   }

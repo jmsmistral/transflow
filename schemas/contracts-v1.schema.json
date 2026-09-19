@@ -1130,6 +1130,323 @@
       ],
       "additionalProperties": false,
       "x-transflow-invariant": "frame-capabilities"
+    },
+    "DiagnosticText": {
+      "type": "string",
+      "format": "transflow-diagnostic-text"
+    },
+    "SourcePositionV1": {
+      "type": "object",
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        }
+      },
+      "required": [
+        "line",
+        "column"
+      ],
+      "additionalProperties": false
+    },
+    "SourceRangeV1": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/DiagnosticText"
+        },
+        "start": {
+          "$ref": "#/$defs/SourcePositionV1"
+        },
+        "end": {
+          "$ref": "#/$defs/SourcePositionV1"
+        }
+      },
+      "required": [
+        "path",
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "RequestContextV1": {
+      "type": "object",
+      "properties": {
+        "workspace": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/DiagnosticText"
+            }
+          ]
+        },
+        "source": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/DiagnosticText"
+            }
+          ]
+        },
+        "request_id": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workspace",
+        "source",
+        "request_id"
+      ],
+      "additionalProperties": false
+    },
+    "DiagnosticV1": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "enum": [
+            "TF_GRAPH_CYCLE",
+            "TF_CLI_USAGE",
+            "TF_COMMAND_UNAVAILABLE",
+            "TF_OPERATION_FAILED",
+            "TF_INTERRUPTED",
+            "TF_STATE_TRANSITION"
+          ]
+        },
+        "heading": {
+          "$ref": "#/$defs/DiagnosticText"
+        },
+        "reason": {
+          "$ref": "#/$defs/DiagnosticText"
+        },
+        "remediation": {
+          "$ref": "#/$defs/DiagnosticText"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceRangeV1"
+          },
+          "minItems": 0,
+          "maxItems": 32
+        },
+        "affected": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DiagnosticText"
+          },
+          "minItems": 0,
+          "maxItems": 32
+        },
+        "causes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DiagnosticV1"
+          },
+          "minItems": 0,
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "code",
+        "heading",
+        "reason",
+        "remediation",
+        "sources",
+        "affected",
+        "causes"
+      ],
+      "additionalProperties": false
+    },
+    "CliEnvelopeV1": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "format_version": {
+              "const": 1
+            },
+            "product_version": {
+              "$ref": "#/$defs/DiagnosticText"
+            },
+            "capabilities": {
+              "const": [
+                "cli.help",
+                "cli.version",
+                "cli.diagnostics.v1"
+              ]
+            },
+            "context": {
+              "$ref": "#/$defs/RequestContextV1"
+            },
+            "outcome": {
+              "const": "success"
+            },
+            "exit_status": {
+              "enum": [
+                0
+              ]
+            },
+            "result": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "help",
+                    "version"
+                  ]
+                },
+                "text": {
+                  "$ref": "#/$defs/DiagnosticText"
+                }
+              },
+              "required": [
+                "kind",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "diagnostics": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DiagnosticV1"
+              },
+              "minItems": 0,
+              "maxItems": 0
+            }
+          },
+          "required": [
+            "format_version",
+            "product_version",
+            "capabilities",
+            "context",
+            "outcome",
+            "exit_status",
+            "result",
+            "diagnostics"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "format_version": {
+              "const": 1
+            },
+            "product_version": {
+              "$ref": "#/$defs/DiagnosticText"
+            },
+            "capabilities": {
+              "const": [
+                "cli.help",
+                "cli.version",
+                "cli.diagnostics.v1"
+              ]
+            },
+            "context": {
+              "$ref": "#/$defs/RequestContextV1"
+            },
+            "outcome": {
+              "const": "failure"
+            },
+            "exit_status": {
+              "enum": [
+                1,
+                2
+              ]
+            },
+            "result": {
+              "type": "null"
+            },
+            "diagnostics": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DiagnosticV1"
+              },
+              "minItems": 1,
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "format_version",
+            "product_version",
+            "capabilities",
+            "context",
+            "outcome",
+            "exit_status",
+            "result",
+            "diagnostics"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "format_version": {
+              "const": 1
+            },
+            "product_version": {
+              "$ref": "#/$defs/DiagnosticText"
+            },
+            "capabilities": {
+              "const": [
+                "cli.help",
+                "cli.version",
+                "cli.diagnostics.v1"
+              ]
+            },
+            "context": {
+              "$ref": "#/$defs/RequestContextV1"
+            },
+            "outcome": {
+              "const": "canceled"
+            },
+            "exit_status": {
+              "enum": [
+                130
+              ]
+            },
+            "result": {
+              "type": "null"
+            },
+            "diagnostics": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DiagnosticV1"
+              },
+              "minItems": 1,
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "format_version",
+            "product_version",
+            "capabilities",
+            "context",
+            "outcome",
+            "exit_status",
+            "result",
+            "diagnostics"
+          ],
+          "additionalProperties": false
+        }
+      ]
     }
   }
 }

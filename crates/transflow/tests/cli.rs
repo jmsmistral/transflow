@@ -50,7 +50,9 @@ fn unavailable_commands_and_invalid_flags_fail() -> Result<(), Box<dyn Error>> {
         let output = invoke(&args)?;
         assert_eq!(output.status.code(), Some(2));
         assert!(output.stdout.is_empty());
-        assert!(String::from_utf8(output.stderr)?.contains("error:"));
+        assert!(
+            String::from_utf8(output.stderr)?.starts_with("The command could not be understood")
+        );
     }
     Ok(())
 }

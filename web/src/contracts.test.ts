@@ -33,6 +33,31 @@ function num(value: unknown): number {
   need(typeof value === "number" && Number.isFinite(value), "number");
   return value;
 }
+function same(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (Array.isArray(left) && Array.isArray(right))
+    return (
+      left.length === right.length && left.every((v, i) => same(v, right[i]))
+    );
+  if (
+    typeof left === "object" &&
+    left !== null &&
+    !Array.isArray(left) &&
+    typeof right === "object" &&
+    right !== null &&
+    !Array.isArray(right)
+  ) {
+    const a = obj(left),
+      b = obj(right);
+    return (
+      Object.keys(a).length === Object.keys(b).length &&
+      Object.keys(a).every(
+        (key) => Object.hasOwn(b, key) && same(a[key], b[key]),
+      )
+    );
+  }
+  return false;
+}
 function matches(pattern: string, value: string): boolean {
   return new RegExp(`^(?:${pattern})$`, "u").exec(value)?.[0] === value;
 }
@@ -52,7 +77,23 @@ const pythonKeywords = new Set(
 );
 function format(raw: string, value: string): void {
   const name = raw.replace(/^transflow-/u, "");
-  if (name === "uuid")
+  if (name === "diagnostic-text") {
+    need(
+      value.length > 0 &&
+        new TextEncoder().encode(value).length <= 32768 &&
+        Array.from(value).every((ch) => {
+          const n = ch.codePointAt(0) ?? 0;
+          return (
+            n >= 32 &&
+            !(n >= 127 && n <= 159) &&
+            ![0x61c, 0x200e, 0x200f, 0xfeff].includes(n) &&
+            !(n >= 0x2028 && n <= 0x202e) &&
+            !(n >= 0x2066 && n <= 0x2069)
+          );
+        }),
+      name,
+    );
+  } else if (name === "uuid")
     need(
       matches(
         "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
@@ -265,7 +306,7 @@ function validate(
     }
     need(count === 1, "oneOf");
   }
-  if ("const" in schema) need(value === schema.const, "const");
+  if ("const" in schema) need(same(value, schema.const), "const");
   if ("enum" in schema)
     need(
       list(schema.enum).some((v) => v === value),

@@ -1,51 +1,206 @@
-//! Command-line entry point. Only bootstrap help/version are implemented.
-//!
-//! Application services will be composed here as their contracts are delivered.
-//! Merely inspecting help or version does not inspect a workspace or start work.
+//! CLI argument handling, human diagnostics and versioned JSON results.
+//! Help/version require no workspace I/O. Application services remain later work.
+use std::{
+    ffi::OsString,
+    io::{self, IsTerminal},
+    process::ExitCode,
+};
+use tf_domain::diagnostic::{
+    Diagnostic, DiagnosticCode, DiagnosticError, ExitStatus, Redactor, RequestContext,
+};
+use tf_protocol::diagnostic::{CliEnvelope, InformationKind};
 
-use std::{ffi::OsString, io, process::ExitCode};
-
-/// A failed output operation, preserving the original I/O error for callers.
+/// Failed output or diagnostic construction, preserving a typed internal cause.
 #[derive(Debug, thiserror::Error)]
 pub enum CliError {
-    /// Writing normal command output failed.
-    #[error("Could not write command output: {0}")]
+    /// Normal output failed.
+    #[error("Could not write command output")]
     Stdout(#[source] io::Error),
-    /// Writing a command-line diagnostic failed.
-    #[error("Could not write command diagnostic: {0}")]
+    /// Diagnostic output failed.
+    #[error("Could not write command diagnostic")]
     Stderr(#[source] io::Error),
+    /// Safe diagnostic construction failed.
+    #[error("Could not construct a safe command diagnostic")]
+    Diagnostic(#[from] DiagnosticError),
+    /// Result encoding failed.
+    #[error("Could not encode the command result")]
+    Protocol(#[from] tf_protocol::ProtocolError),
 }
-
 fn command() -> clap::Command {
+    use clap::{Arg, ArgAction};
     clap::Command::new("transflow")
-        .version(env!("CARGO_PKG_VERSION"))
         .about("A local build system for dataframe datasets (development scaffold)")
         .after_help("Only help and version are available. Dataset builds and the coordinator are not implemented yet.")
-        .disable_help_subcommand(true)
+        .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
+        .arg(Arg::new("help").long("help").short('h').action(ArgAction::SetTrue).help("Show implemented commands and options"))
+        .arg(Arg::new("version").long("version").short('V').action(ArgAction::SetTrue).help("Show product version"))
+        .arg(Arg::new("json").long("json").global(true).action(ArgAction::SetTrue).help("Emit one versioned result envelope on stdout"))
+        .arg(Arg::new("workspace").long("workspace").value_name("DIRECTORY").help("Select root workspace context before a command (no discovery for help/version)"))
+        .arg(Arg::new("verbose").long("verbose").global(true).action(ArgAction::SetTrue).help("Include stable codes in human diagnostics"))
+        .arg(Arg::new("color").long("color").global(true).value_parser(["auto","always","never"]).default_value("auto").help("Human diagnostic colour; JSON always disables it"))
 }
-
-/// Parse command-line arguments and write to the supplied output streams.
-///
-/// Help, version and invocation without arguments return success. Invalid flags
-/// or unavailable commands produce a diagnostic and exit code 2. I/O failures
-/// return a typed error; no workspace, environment or service is initialized.
+/// Render sanitized domain diagnostics. Colour wraps only the heading with fixed escapes.
+pub fn render_diagnostic(
+    d: &Diagnostic,
+    ctx: &RequestContext,
+    verbose: bool,
+    color: bool,
+) -> String {
+    fn render(d: &Diagnostic, verbose: bool, color: bool, depth: usize, out: &mut String) {
+        let pad = "  ".repeat(depth);
+        let heading = if color {
+            format!("\x1b[1;31m{}\x1b[0m", d.heading().as_str())
+        } else {
+            d.heading().as_str().to_owned()
+        };
+        out.push_str(&format!("{pad}{heading}\n\n{pad}{}\n", d.reason().as_str()));
+        for reference in d.affected() {
+            out.push_str(&format!("{pad}  {}\n", reference.as_str()));
+        }
+        for source in d.sources() {
+            out.push_str(&format!(
+                "{pad}  {}:{}:{}–{}:{}\n",
+                source.path().as_str(),
+                source.start().0,
+                source.start().1,
+                source.end().0,
+                source.end().1
+            ));
+        }
+        out.push_str(&format!("\n{pad}{}\n", d.remediation().as_str()));
+        if verbose {
+            out.push_str(&format!("{pad}Code: {}\n", d.code().as_str()));
+        }
+        for cause in d.causes() {
+            out.push_str(&format!("\n{pad}Caused by:\n"));
+            render(cause, verbose, false, depth + 1, out);
+        }
+    }
+    let mut out = String::new();
+    render(d, verbose, color, 0, &mut out);
+    if let Some(path) = &ctx.workspace {
+        out.push_str(&format!("Workspace: {}\n", path.as_str()));
+    }
+    if let Some(source) = &ctx.source {
+        out.push_str(&format!("Source: {}\n", source.as_str()));
+    }
+    if let Some(id) = ctx.request_id {
+        out.push_str(&format!("Request: {id}\n"));
+    }
+    out
+}
+// On parse failure Clap cannot provide matches. Recognize output intent without
+// echoing argv, honoring option values and `--`. Root workspace is never inherited
+// into a later command's provider --workspace option.
+#[derive(Default)]
+struct Intent {
+    json: bool,
+    verbose: bool,
+    color: Option<String>,
+    workspace: Option<String>,
+}
+fn intent(args: &[OsString]) -> Intent {
+    let mut intent = Intent::default();
+    let mut iter = args.iter().skip(1);
+    let mut root = true;
+    while let Some(arg) = iter.next() {
+        let Some(text) = arg.to_str() else { continue };
+        if text == "--" {
+            break;
+        }
+        match text {
+            "--json" => intent.json = true,
+            "--verbose" => intent.verbose = true,
+            "--workspace" | "--color" => {
+                if let Some(value) = iter.next().and_then(|v| v.to_str()) {
+                    if text == "--color" {
+                        intent.color = Some(value.to_owned());
+                    } else if root {
+                        intent.workspace = Some(value.to_owned());
+                    }
+                }
+            }
+            _ => {
+                if let Some(value) = text.strip_prefix("--workspace=") {
+                    if root {
+                        intent.workspace = Some(value.to_owned());
+                    }
+                } else if let Some(value) = text.strip_prefix("--color=") {
+                    intent.color = Some(value.to_owned());
+                } else if !text.starts_with('-') {
+                    root = false;
+                }
+            }
+        }
+    }
+    intent
+}
+/// Parse CLI arguments and emit either human output or exactly one JSON envelope.
+/// No user argv is copied into a parser error, and no workspace is opened here.
 pub fn run(
     args: impl IntoIterator<Item = OsString>,
     stdout: &mut dyn io::Write,
     stderr: &mut dyn io::Write,
 ) -> Result<ExitCode, CliError> {
+    let args: Vec<_> = args.into_iter().collect();
+    let intent = intent(&args);
+    let redactor = Redactor::default();
+    let context = RequestContext {
+        workspace: intent
+            .workspace
+            .as_ref()
+            .map(|s| match redactor.text(s) {
+                Ok(safe) => Ok(safe),
+                Err(_) => {
+                    redactor.text("[workspace context is empty or exceeds the display limit]")
+                }
+            })
+            .transpose()?,
+        ..RequestContext::default()
+    };
+    let version = redactor.text(env!("CARGO_PKG_VERSION"))?;
     match command().try_get_matches_from(args) {
-        Ok(_) => {
-            writeln!(stdout, "{}", command().render_help()).map_err(CliError::Stdout)?;
+        Ok(matches) => {
+            let (kind, text) = if matches.get_flag("version") {
+                (
+                    InformationKind::Version,
+                    format!("transflow {}", env!("CARGO_PKG_VERSION")),
+                )
+            } else {
+                (InformationKind::Help, command().render_help().to_string())
+            };
+            if matches.get_flag("json") {
+                let envelope =
+                    CliEnvelope::success(&version, kind, &redactor.text(&text)?, &context)?;
+                stdout
+                    .write_all(envelope.as_bytes())
+                    .map_err(CliError::Stdout)?;
+            } else {
+                writeln!(stdout, "{text}").map_err(CliError::Stdout)?;
+            }
             Ok(ExitCode::SUCCESS)
         }
-        Err(error) if error.use_stderr() => {
-            write!(stderr, "{error}").map_err(CliError::Stderr)?;
-            Ok(ExitCode::from(2))
-        }
-        Err(error) => {
-            write!(stdout, "{error}").map_err(CliError::Stdout)?;
-            Ok(ExitCode::SUCCESS)
+        Err(_error) => {
+            // Never dump Clap's error: it can echo secret values or terminal controls.
+            let d=Diagnostic::new(DiagnosticCode::CliUsage,redactor.text("The command could not be understood")?,
+                redactor.text("An argument is unknown, missing, or invalid. This development build supports only help and version.")?,
+                redactor.text("Run transflow --help to see the available options. Dataset builds and the coordinator are not implemented yet.")?);
+            if intent.json {
+                let envelope = CliEnvelope::failure(&version, ExitStatus::Usage, &context, &[d])?;
+                stdout
+                    .write_all(envelope.as_bytes())
+                    .map_err(CliError::Stdout)?;
+            } else {
+                let color = match intent.color.as_deref() {
+                    Some("always") => true,
+                    Some("never") => false,
+                    _ => io::stderr().is_terminal(),
+                };
+                stderr
+                    .write_all(render_diagnostic(&d, &context, intent.verbose, color).as_bytes())
+                    .map_err(CliError::Stderr)?;
+            }
+            Ok(ExitCode::from(ExitStatus::Usage.code()))
         }
     }
 }
@@ -88,7 +243,7 @@ mod tests {
         assert!(
             error
                 .to_string()
-                .starts_with("Could not write command output:")
+                .starts_with("Could not write command output")
         );
         Ok(())
     }

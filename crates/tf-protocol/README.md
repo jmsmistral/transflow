@@ -101,3 +101,8 @@ T015 adds the `canonical` module for bounded JSON encoding, purpose-separated SH
 streamed raw file hashes and validated manifest/catalogue projections. See the
 [byte contract and limits](../../schemas/canonical-v1.md). Full source/compute field
 selection, object verification and publication remain later services.
+
+T016 adds `diagnostic::CliEnvelope` and the standalone generated CLI result schema.
+The current shared corpus has 167 cases; five schema/type/validator outputs are
+registered. Worker protocol 1.0 is unchanged. CLI envelope version 1 has independent
+output/status/context semantics described in the [CLI guide](../transflow/README.md).

@@ -25,3 +25,6 @@ pub use identity::{
     VersionId, WorkspaceId,
 };
 pub use path::DatasetPath;
+
+/// Human-first diagnostics, safe text and the shared exit-status contract.
+pub mod diagnostic;

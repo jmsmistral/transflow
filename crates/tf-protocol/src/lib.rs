@@ -21,3 +21,6 @@ pub use validation::validate_document;
 
 /// Canonical metadata encoding and purpose-separated content hashes.
 pub mod canonical;
+
+/// Versioned CLI result envelopes.
+pub mod diagnostic;

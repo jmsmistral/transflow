@@ -210,3 +210,14 @@ languages and both Python versions. See [local evidence](evidence/t015-macos-arm
 All five [CI workflows and their 19 jobs](evidence/t015-ci.json) pass at implementation
 `34506fa27a0c10c98f3830daf9b8a73b833494e8`, paired with specification progress
 `d09ce720917e9ec7ed3f55ae614fc916fcae8d08`. T015 is complete.
+
+## T016 safe diagnostics and CLI output
+
+The full `bash tools/check.sh` aggregate passes: 44 document regressions, 27 safety
+regressions, eleven Rust boundary regressions, 61 Rust tests plus one compile-fail
+documentation test, 462 Python tests and 220 web tests. Both local Python 3.14.7
+and 3.13.0 runners pass. The shared corpus now has 167 cases, including diagnostic
+text and result-envelope failures; five generated outputs reproduce exactly.
+The TypeScript fixture reader now compares array constants structurally. The
+renamed-checkout document test preserves links to the intra-repository CLI crate.
+[Local evidence](evidence/t016-macos-arm64.json) records scope; CI is pending.

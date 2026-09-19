@@ -40,7 +40,7 @@ EXTERNAL = {
 }
 
 # T007's real SQLite integration fixture needs an executor, only in tests.
-DEV_EXTERNAL = {"tf-store": {"tokio"}}
+DEV_EXTERNAL = {"tf-store": {"tokio"}, "transflow": {"serde_json"}}
 
 
 def validate_graph(metadata: dict, qualified: dict[str, str]) -> list[str]:

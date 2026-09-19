@@ -56,6 +56,25 @@ def date(value: str) -> None:
 
 def check_format(fmt: str, value: str) -> None:
     name = fmt.removeprefix("transflow-")
+    if name == "diagnostic-text":
+
+        def forbidden(c: str) -> bool:
+            n = ord(c)
+            return (
+                n < 32
+                or 127 <= n <= 159
+                or n in (0x61C, 0x200E, 0x200F, 0xFEFF)
+                or 0x2028 <= n <= 0x202E
+                or 0x2066 <= n <= 0x2069
+            )
+
+        need(
+            bool(value)
+            and len(value.encode("utf-8")) <= 32768
+            and not any(forbidden(c) for c in value),
+            name,
+        )
+        return
     if name == "uuid":
         need(
             re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", value)

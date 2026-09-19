@@ -86,3 +86,33 @@ def validate_ControlMessageV1(value: object) -> None:
 def validate_ControlFrameV1(value: object) -> None:
     """Assert the ControlFrameV1 contract, including custom formats."""
     validate_document("ControlFrameV1", value)
+
+
+def validate_DiagnosticText(value: object) -> None:
+    """Assert the DiagnosticText contract, including custom formats."""
+    validate_document("DiagnosticText", value)
+
+
+def validate_SourcePositionV1(value: object) -> None:
+    """Assert the SourcePositionV1 contract, including custom formats."""
+    validate_document("SourcePositionV1", value)
+
+
+def validate_SourceRangeV1(value: object) -> None:
+    """Assert the SourceRangeV1 contract, including custom formats."""
+    validate_document("SourceRangeV1", value)
+
+
+def validate_RequestContextV1(value: object) -> None:
+    """Assert the RequestContextV1 contract, including custom formats."""
+    validate_document("RequestContextV1", value)
+
+
+def validate_DiagnosticV1(value: object) -> None:
+    """Assert the DiagnosticV1 contract, including custom formats."""
+    validate_document("DiagnosticV1", value)
+
+
+def validate_CliEnvelopeV1(value: object) -> None:
+    """Assert the CliEnvelopeV1 contract, including custom formats."""
+    validate_document("CliEnvelopeV1", value)

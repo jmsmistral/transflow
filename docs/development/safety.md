@@ -130,7 +130,7 @@ document checker also retains its separate path/export checks.
 [generated-contracts.json](../../security/generated-contracts.json) registers the
 T014 worker contract generator and its JSON Schema, TypeScript and Python outputs.
 The [protocol guide](../../crates/tf-protocol/README.md) documents regeneration and
-scope. The drift gate regenerates all four outputs from the authored schema in a
+scope. The drift gate regenerates all five outputs from the authored schema in a
 disposable directory. Future T074 API outputs must be registered too. Artifacts
 under `generated/` or with `.generated.` names must be registered; other naming
 conventions require an explicit discovery-rule update.

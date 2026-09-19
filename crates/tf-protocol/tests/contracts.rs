@@ -111,6 +111,11 @@ fn check_format(name: &str, s: &str) -> bool {
                     }
                 })
         }
+        "diagnostic-text" => {
+            !s.is_empty()
+                && s.len() <= 32768
+                && !s.chars().any(tf_domain::diagnostic::unsafe_character)
+        }
         "sha256" => {
             s.len() == 64
                 && s.bytes()
