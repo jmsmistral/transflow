@@ -624,3 +624,72 @@ fn replaced_runtime_lock_cannot_authorize_a_later_registry_rename() {
         assert_eq!(t.bytes(), original);
     });
 }
+
+#[test]
+fn lifecycle_rename_and_tombstone_recover_exact_ids_without_allocations() {
+    for remove in [false, true] {
+        let tree = Tree::new();
+        runtime().block_on(async {
+            let completed = reconcile(tree.owner(), tree.request()).await.unwrap();
+            completed.outcome.unwrap();
+            let workspace = Workspace::load(&tree.0, Some(&tree.0)).unwrap();
+            let capture = SourceSnapshot::capture(&workspace, CaptureLimits::default()).unwrap();
+            let registry = RegistrySnapshot::parse(
+                workspace_id(),
+                std::str::from_utf8(&tree.bytes()).unwrap(),
+            )
+            .unwrap();
+            let replacement = if remove {
+                registry.render_remove(dataset_id()).unwrap()
+            } else {
+                registry
+                    .render_rename(dataset_id(), &"curated/renamed".parse().unwrap(), true)
+                    .unwrap()
+            };
+            let proposal = tf_catalog::candidate::RegistryProposal::lifecycle(
+                &registry,
+                capture.id().unwrap(),
+                replacement.clone(),
+            )
+            .unwrap();
+            assert!(proposal.assignments().is_empty());
+            let id = RequestId::from_bytes([8; 16]);
+            let stopped = reconcile_with_observer(
+                completed.owner,
+                ReconcileRequest {
+                    capture,
+                    proposal,
+                    context: WriteContext::WorkingTree,
+                    id,
+                    at_us: 456,
+                },
+                |boundary| {
+                    if boundary == Boundary::Renamed {
+                        Err(io::Error::other(
+                            "synthetic interruption after lifecycle rename",
+                        ))
+                    } else {
+                        Ok(())
+                    }
+                },
+            )
+            .await
+            .unwrap();
+            assert!(stopped.outcome.is_err());
+            let mut owner = stopped.owner;
+            assert_eq!(
+                recover(&mut owner, 789).await.unwrap(),
+                vec![RecoveryOutcome::Indexed(id)]
+            );
+            assert_eq!(tree.bytes(), replacement.as_bytes());
+            assert!(indexed(&mut owner).await);
+            let current = RegistrySnapshot::parse(workspace_id(), &replacement).unwrap();
+            assert_eq!(current.datasets().count(), 1);
+            assert_eq!(
+                current.datasets().next().unwrap().key().dataset_id(),
+                dataset_id()
+            );
+            assert_eq!(current.datasets().next().unwrap().is_tombstone(), remove);
+        });
+    }
+}

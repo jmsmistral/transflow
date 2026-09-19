@@ -1,5 +1,6 @@
 //! CLI argument handling, human diagnostics and versioned JSON results.
 //! Help/version require no workspace I/O. Application services remain later work.
+mod catalog;
 mod env;
 mod init;
 mod preparation;
@@ -47,6 +48,20 @@ fn command() -> clap::Command {
             .subcommand(clap::Command::new("check").disable_help_flag(true).about("Reject interpreter, lock or installed-file drift without installation")))
         .subcommand(clap::Command::new("validate").disable_help_flag(true).about("Validate all captured declarations without persistent changes").arg(Arg::new("python").long("python").value_name("EXECUTABLE")))
         .subcommand(clap::Command::new("catalog").disable_help_flag(true).subcommand_required(true).about("Manage durable catalogue identities")
+            .subcommand(clap::Command::new("list").disable_help_flag(true).about("Browse exact identities with revision-bound pagination")
+                .arg(Arg::new("limit").long("limit").value_parser(clap::value_parser!(u16).range(1..=100)).default_value("50"))
+                .arg(Arg::new("cursor").long("cursor")))
+            .subcommand(clap::Command::new("show").disable_help_flag(true).about("Inspect an exact identity, including tombstones and retained metadata")
+                .arg(Arg::new("reference").required(true)))
+            .subcommand(clap::Command::new("rename").disable_help_flag(true).about("Preview a rename; --yes applies it without rewriting Python")
+                .arg(Arg::new("reference").required(true)).arg(Arg::new("new-path").required(true))
+                .arg(Arg::new("keep-alias").long("keep-alias").action(ArgAction::SetTrue))
+                .arg(Arg::new("yes").long("yes").action(ArgAction::SetTrue))
+                .arg(Arg::new("python").long("python")))
+            .subcommand(clap::Command::new("remove").disable_help_flag(true).about("Preview a tombstone; --yes applies after dependency and active-use checks")
+                .arg(Arg::new("reference").required(true))
+                .arg(Arg::new("yes").long("yes").action(ArgAction::SetTrue))
+                .arg(Arg::new("python").long("python")))
             .subcommand(clap::Command::new("sync").disable_help_flag(true).about("Validate and register additive producer identities")
                 .arg(Arg::new("check").long("check").action(ArgAction::SetTrue).help("Report additions without changing workspace files"))
                 .arg(Arg::new("python").long("python").value_name("EXECUTABLE"))))
@@ -181,6 +196,73 @@ pub fn run(
     match command().try_get_matches_from(args) {
         Ok(matches) => {
             if !matches.get_flag("help") && !matches.get_flag("version") {
+                if let Some(("catalog", args)) = matches.subcommand()
+                    && args.subcommand_name() != Some("sync")
+                {
+                    match catalog::execute(args, matches.get_one::<String>("workspace")) {
+                        Ok(report) => {
+                            let errors = if report.blocked {
+                                vec![Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Catalogue change is blocked")?,redactor.text("Current declarations or runtime users still reference this catalogue.")?,redactor.text("Review the impact report, update references or finish active operations, then retry.")?)]
+                            } else {
+                                vec![]
+                            };
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::catalog(
+                                            &version,
+                                            &context,
+                                            report.value.clone(),
+                                            &errors,
+                                        )?
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                writeln!(stdout, "{}", report.human()?)
+                                    .map_err(CliError::Stdout)?;
+                            }
+                            return Ok(if report.blocked {
+                                ExitCode::FAILURE
+                            } else {
+                                ExitCode::SUCCESS
+                            });
+                        }
+                        Err(error) => {
+                            let diagnostic = if let preparation::Error::Validation(error) = error {
+                                error.diagnostic(&redactor)?
+                            } else {
+                                Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Catalogue operation could not finish")?,redactor.text(&error.to_string())?,redactor.text("Check the exact reference, current registry and prepared environment. Preview lifecycle edits before repeating with --yes; no Python source is rewritten.")?)
+                            };
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::failure(
+                                            &version,
+                                            ExitStatus::Failure,
+                                            &context,
+                                            &[diagnostic],
+                                        )?
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                stderr
+                                    .write_all(
+                                        render_diagnostic(
+                                            &diagnostic,
+                                            &context,
+                                            intent.verbose,
+                                            false,
+                                        )
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stderr)?;
+                            }
+                            return Ok(ExitCode::FAILURE);
+                        }
+                    }
+                }
                 let selected = match matches.subcommand() {
                     Some(("validate", args)) => Some((preparation::Operation::Validate, args)),
                     Some(("catalog", catalog)) => catalog.subcommand_matches("sync").map(|args| {

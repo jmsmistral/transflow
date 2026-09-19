@@ -2172,7 +2172,11 @@
         "env.check",
         "workspace.validate",
         "catalog.sync",
-        "catalog.sync.check"
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2226,7 +2230,11 @@
         "env.check",
         "workspace.validate",
         "catalog.sync",
-        "catalog.sync.check"
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2280,7 +2288,11 @@
         "env.check",
         "workspace.validate",
         "catalog.sync",
-        "catalog.sync.check"
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2334,7 +2346,11 @@
         "env.check",
         "workspace.validate",
         "catalog.sync",
-        "catalog.sync.check"
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2388,7 +2404,11 @@
         "env.check",
         "workspace.validate",
         "catalog.sync",
-        "catalog.sync.check"
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2442,7 +2462,11 @@
         "env.check",
         "workspace.validate",
         "catalog.sync",
-        "catalog.sync.check"
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2496,7 +2520,11 @@
         "env.check",
         "workspace.validate",
         "catalog.sync",
-        "catalog.sync.check"
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2550,7 +2578,11 @@
         "env.check",
         "workspace.validate",
         "catalog.sync",
-        "catalog.sync.check"
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2604,7 +2636,11 @@
         "env.check",
         "workspace.validate",
         "catalog.sync",
-        "catalog.sync.check"
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2634,7 +2670,11 @@
         "env.check",
         "workspace.validate",
         "catalog.sync",
-        "catalog.sync.check"
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -3644,6 +3684,76 @@
         "total": "0",
         "entries": []
       }
+    }
+  },
+  {
+    "name": "catalog-empty-page",
+    "schema": "CatalogResultV1",
+    "valid": true,
+    "value": {
+      "kind": "catalog",
+      "operation": "list",
+      "applied": false,
+      "registry_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [],
+      "next_cursor": null,
+      "total": "0",
+      "impact": {
+        "total": "0",
+        "items": []
+      },
+      "blockers": [],
+      "previous_path": null,
+      "new_path": null,
+      "alias_retained": false
+    }
+  },
+  {
+    "name": "catalog-blocked-preview",
+    "schema": "CatalogResultV1",
+    "valid": true,
+    "value": {
+      "kind": "catalog",
+      "operation": "remove",
+      "applied": false,
+      "registry_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [],
+      "next_cursor": null,
+      "total": "0",
+      "impact": {
+        "total": "0",
+        "items": []
+      },
+      "blockers": [
+        "Producer still references this identity"
+      ],
+      "previous_path": "raw/orders",
+      "new_path": null,
+      "alias_retained": false
+    }
+  },
+  {
+    "name": "catalog-invalid-applied-type",
+    "schema": "CatalogResultV1",
+    "valid": false,
+    "value": {
+      "kind": "catalog",
+      "operation": "remove",
+      "applied": "yes",
+      "registry_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entries": [],
+      "next_cursor": null,
+      "total": "0",
+      "impact": {
+        "total": "0",
+        "items": []
+      },
+      "blockers": [
+        "Producer still references this identity"
+      ],
+      "previous_path": "raw/orders",
+      "new_path": null,
+      "alias_retained": false
     }
   }
 ]

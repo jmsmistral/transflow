@@ -1,0 +1,35 @@
+{
+  "task": "T034",
+  "date": "2026-09-20",
+  "platform": "macOS arm64",
+  "commands": [
+    "bash tools/check.sh"
+  ],
+  "result": "pass",
+  "rust_tests": 176,
+  "rust_documentation_tests": 1,
+  "python_tests": 623,
+  "web_tests": 244,
+  "cli_integration_tests": 17,
+  "document_tests": 44,
+  "safety_tests": 27,
+  "boundary_tests": 12,
+  "coverage": [
+    "Exact local/external/tombstone browsing and revision-bound pagination",
+    "No Python environment needed for list/show",
+    "Explicit rename/remove previews and --yes application",
+    "UUID and synthetic historical version rows preserved across rename",
+    "Old C/string impacts and explicit old-path aliases",
+    "Current producer/input and conservative runtime-use blockers",
+    "Interrupted lifecycle registry replacement recovers exact retained IDs with no allocation",
+    "Old graph/capture metadata remains labelled potentially stale",
+    "Bounded result groups and shared Rust/Python/TypeScript catalogue conformance"
+  ],
+  "limits": [
+    "Precise saved schedule/view reference resolution remains later work; existing templates conservatively block edits",
+    "Read-only SQLite metadata queries may create WAL/shared-memory coordination files",
+    "Current registry remains name/tombstone authority; history rows are preserved",
+    "T033 checkbox awaits native editor prerequisite T031 although implementation CI passed",
+    "No dataset publication or artifact deletion"
+  ]
+}

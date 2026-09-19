@@ -337,3 +337,35 @@ fn thousands_of_exact_lookups_are_nonmutating_and_order_independent() {
     assert_eq!(forward.datasets().count(), 5000);
     assert_eq!(forward.fingerprint(), &before);
 }
+
+#[test]
+fn lifecycle_collisions_tombstones_and_revision_cursors() {
+    let registry = parse(&format!(
+        "{}{}",
+        dataset(1, "raw/one"),
+        dataset(2, "raw/two")
+    ));
+    assert!(
+        registry
+            .render_rename(id(1).parse().unwrap(), &"raw/two".parse().unwrap(), false)
+            .is_err()
+    );
+    let page = browse::page(&registry, None, 1).unwrap();
+    let renamed = registry
+        .render_rename(id(1).parse().unwrap(), &"new/one".parse().unwrap(), true)
+        .unwrap();
+    let updated = RegistrySnapshot::parse(workspace(), &renamed).unwrap();
+    assert_eq!(
+        updated.resolve("raw/one").unwrap().key(),
+        updated.resolve("new/one").unwrap().key()
+    );
+    assert!(browse::page(&updated, page["next_cursor"].as_str(), 1).is_err());
+    let removed = updated.render_remove(id(1).parse().unwrap()).unwrap();
+    let updated = RegistrySnapshot::parse(workspace(), &removed).unwrap();
+    assert!(updated.resolve("new/one").is_err());
+    assert_eq!(
+        browse::show(&updated, "new/one").unwrap()["tombstone"],
+        true
+    );
+    assert!(updated.resolve("raw/one").is_err());
+}

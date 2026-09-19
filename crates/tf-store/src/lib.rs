@@ -227,6 +227,40 @@ pub struct Event {
     pub wall_time_us: i64,
 }
 impl Reader {
+    /// Open existing runtime state without creating a database or applying migrations.
+    pub async fn open_existing(path: &Path) -> Result<Self> {
+        let path = path::validate(path)?;
+        if !path.is_file() {
+            return Err(StoreError::InvalidRequest);
+        }
+        let mut db = SqliteConnection::connect_with(&options(&path).read_only(true)).await?;
+        migrations::preflight(&mut db).await?;
+        let version: i64 = sqlx::query_scalar("PRAGMA user_version")
+            .fetch_one(&mut db)
+            .await?;
+        if version != SCHEMA_VERSION {
+            return Err(StoreError::Migration);
+        }
+        Ok(Self { db })
+    }
+    /// Bounded retained version/schema information; external replicas are a separate service.
+    pub async fn catalog_metadata(
+        &mut self,
+        workspace: WorkspaceId,
+        id: DatasetId,
+    ) -> Result<serde_json::Value> {
+        let count = self.dataset_version_count(workspace, id).await?;
+        let rows=sqlx::query("SELECT v.id,v.published_at_us,a.schema_json FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id JOIN artifacts a ON a.digest=v.artifact_digest WHERE d.workspace_id=? AND d.id=? ORDER BY v.published_at_us DESC,v.id DESC LIMIT 10").bind(workspace.to_string()).bind(id.to_string()).fetch_all(&mut self.db).await?;
+        let mut versions = Vec::new();
+        for row in rows {
+            let schema: String = row.try_get(2)?;
+            if schema.len() > 1024 * 1024 {
+                return Err(StoreError::InvalidRequest);
+            }
+            versions.push(serde_json::json!({"id":row.try_get::<String,_>(0)?,"published_at_us":row.try_get::<i64,_>(1)?.to_string(),"schema_available":!schema.is_empty()}));
+        }
+        Ok(serde_json::json!({"version_count":count.to_string(),"recent_versions":versions}))
+    }
     /// Whether this runtime indexes a particular durable identity.
     pub async fn contains_dataset(
         &mut self,

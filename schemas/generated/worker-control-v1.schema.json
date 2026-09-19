@@ -1324,7 +1324,11 @@
                 "env.check",
                 "workspace.validate",
                 "catalog.sync",
-                "catalog.sync.check"
+                "catalog.sync.check",
+                "catalog.list",
+                "catalog.show",
+                "catalog.rename",
+                "catalog.remove"
               ]
             },
             "context": {
@@ -1363,6 +1367,9 @@
                 },
                 {
                   "$ref": "#/$defs/PreparationResultV1"
+                },
+                {
+                  "$ref": "#/$defs/CatalogResultV1"
                 }
               ]
             },
@@ -1407,7 +1414,11 @@
                 "env.check",
                 "workspace.validate",
                 "catalog.sync",
-                "catalog.sync.check"
+                "catalog.sync.check",
+                "catalog.list",
+                "catalog.show",
+                "catalog.rename",
+                "catalog.remove"
               ]
             },
             "context": {
@@ -1429,6 +1440,9 @@
                 },
                 {
                   "$ref": "#/$defs/PreparationResultV1"
+                },
+                {
+                  "$ref": "#/$defs/CatalogResultV1"
                 }
               ]
             },
@@ -1473,7 +1487,11 @@
                 "env.check",
                 "workspace.validate",
                 "catalog.sync",
-                "catalog.sync.check"
+                "catalog.sync.check",
+                "catalog.list",
+                "catalog.show",
+                "catalog.rename",
+                "catalog.remove"
               ]
             },
             "context": {
@@ -2234,6 +2252,267 @@
         "unchanged",
         "absent_producers",
         "deferred_checks"
+      ],
+      "additionalProperties": false
+    },
+    "CatalogResultV1": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "catalog"
+        },
+        "operation": {
+          "enum": [
+            "list",
+            "show",
+            "rename",
+            "remove"
+          ]
+        },
+        "applied": {
+          "type": "boolean"
+        },
+        "registry_fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "workspace_id": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "dataset_id": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "path": {
+                "$ref": "#/$defs/RelativePath"
+              },
+              "kind": {
+                "enum": [
+                  "transform",
+                  "source",
+                  "imported",
+                  "external"
+                ]
+              },
+              "origin": {
+                "enum": [
+                  "local",
+                  "external"
+                ]
+              },
+              "tombstone": {
+                "type": "boolean"
+              },
+              "aliases": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/RelativePath"
+                },
+                "minItems": 0,
+                "maxItems": 8
+              },
+              "version_count": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/Count"
+                  }
+                ]
+              },
+              "recent_versions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "$ref": "#/$defs/Uuid"
+                    },
+                    "published_at_us": {
+                      "$ref": "#/$defs/DiagnosticText"
+                    },
+                    "schema_available": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "published_at_us",
+                    "schema_available"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 0,
+                "maxItems": 10
+              },
+              "producer": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "$ref": "#/$defs/RelativePath"
+                      },
+                      "line": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 4294967295
+                      },
+                      "source_snapshot_id": {
+                        "$ref": "#/$defs/Uuid"
+                      },
+                      "stale": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "line",
+                      "source_snapshot_id",
+                      "stale"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "branch_context": {
+                "$ref": "#/$defs/DiagnosticText"
+              },
+              "alias_count": {
+                "$ref": "#/$defs/Count"
+              }
+            },
+            "required": [
+              "workspace_id",
+              "dataset_id",
+              "path",
+              "kind",
+              "origin",
+              "tombstone",
+              "aliases",
+              "version_count",
+              "recent_versions",
+              "producer",
+              "branch_context",
+              "alias_count"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 100
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/DiagnosticText"
+            }
+          ]
+        },
+        "total": {
+          "$ref": "#/$defs/Count"
+        },
+        "impact": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "$ref": "#/$defs/Count"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "$ref": "#/$defs/RelativePath"
+                  },
+                  "line": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4294967295
+                  },
+                  "reference": {
+                    "$ref": "#/$defs/DiagnosticText"
+                  },
+                  "role": {
+                    "enum": [
+                      "producer",
+                      "input"
+                    ]
+                  }
+                },
+                "required": [
+                  "path",
+                  "line",
+                  "reference",
+                  "role"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 0,
+              "maxItems": 64
+            }
+          },
+          "required": [
+            "total",
+            "items"
+          ],
+          "additionalProperties": false
+        },
+        "blockers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DiagnosticText"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "previous_path": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/RelativePath"
+            }
+          ]
+        },
+        "new_path": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/RelativePath"
+            }
+          ]
+        },
+        "alias_retained": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "operation",
+        "applied",
+        "registry_fingerprint",
+        "entries",
+        "next_cursor",
+        "total",
+        "impact",
+        "blockers",
+        "previous_path",
+        "new_path",
+        "alias_retained"
       ],
       "additionalProperties": false
     }

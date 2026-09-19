@@ -328,6 +328,7 @@ impl CandidateCatalog {
             catalog_fingerprint: self.catalog_fingerprint.clone(),
             assignments,
             replacement,
+            lifecycle: false,
         })
     }
 }
@@ -340,8 +341,35 @@ pub struct RegistryProposal {
     catalog_fingerprint: String,
     assignments: Vec<(DatasetPath, DatasetId, DatasetKind)>,
     replacement: String,
+    lifecycle: bool,
 }
 impl RegistryProposal {
+    /// Explicit lifecycle mutation; preserves every existing identity and kind.
+    /// Caller separately validates live producer/reference impact and confirmation.
+    pub fn lifecycle(
+        registry: &RegistrySnapshot,
+        source: SourceSnapshotId,
+        replacement: String,
+    ) -> Result<Self, CandidateError> {
+        let updated = RegistrySnapshot::parse(registry.workspace(), &replacement)
+            .map_err(|_| error("Lifecycle replacement registry is invalid", vec![]))?;
+        let before: BTreeMap<_, _> = registry.datasets().map(|d| (d.key(), d.kind())).collect();
+        let after: BTreeMap<_, _> = updated.datasets().map(|d| (d.key(), d.kind())).collect();
+        if before != after {
+            return Err(error(
+                "Lifecycle mutation cannot change dataset identities or kinds",
+                vec![],
+            ));
+        }
+        Ok(Self{workspace:registry.workspace(),source,expected_old:*registry.raw_digest(),catalog_fingerprint:registry.sdk_projection(source).map_err(|_|error("Catalogue projection is invalid",vec![]))?["catalog_fingerprint"].as_str().ok_or_else(||error("Catalogue fingerprint is invalid",vec![]))?.to_owned(),assignments:vec![],replacement,lifecycle:true})
+    }
+    /// Whether the exact replacement bytes differ, independently of new allocations.
+    pub fn changes_registry(&self) -> bool {
+        !self.assignments.is_empty()
+            || (self.lifecycle
+                && tf_protocol::canonical::file_digest(&mut self.replacement.as_bytes())
+                    .map_or(true, |digest| digest != self.expected_old))
+    }
     /// Durable workspace context.
     pub fn workspace(&self) -> tf_domain::WorkspaceId {
         self.workspace

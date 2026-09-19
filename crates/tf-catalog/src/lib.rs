@@ -19,3 +19,6 @@ pub mod validation;
 
 /// Persisted structural evidence, never an execution fallback.
 pub mod graph_cache;
+
+/// Exact catalogue pages and retained identity lookup.
+pub mod browse;

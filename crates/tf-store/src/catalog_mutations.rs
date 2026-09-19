@@ -19,7 +19,7 @@ pub struct CatalogMutation {
     pub old_digest: ContentDigest,
     /// Exact proposed registry bytes.
     pub new_digest: ContentDigest,
-    /// New local paths and their already allocated IDs.
+    /// New local paths and their already allocated IDs; empty for explicit lifecycle edits.
     pub assignments: Vec<(DatasetPath, DatasetId)>,
     /// All local registry identities, including historical/tombstoned IDs.
     pub index_ids: Vec<DatasetId>,
@@ -32,7 +32,6 @@ impl CatalogMutation {
         if self.old_digest.kind() != DigestKind::File
             || self.new_digest.kind() != DigestKind::File
             || self.old_digest == self.new_digest
-            || self.assignments.is_empty()
             || self.index_ids.len() > 100_000
             || ids.len() != self.index_ids.len()
             || names.len() != self.assignments.len()
@@ -72,6 +71,11 @@ fn parse<T: std::str::FromStr>(s: &str) -> Result<T> {
     s.parse().map_err(|_| StoreError::InvalidRequest)
 }
 impl Store {
+    /// Conservatively refuse lifecycle edits while runtime users/templates may retain names.
+    /// Detailed schedule/view reference resolution belongs to their later repositories.
+    pub async fn catalog_lifecycle_blockers(&mut self, at_us: i64) -> Result<Vec<String>> {
+        lifecycle_blockers(&mut self.db, at_us).await
+    }
     /// Persist a complete intent under FULL synchronous SQLite before file replacement.
     /// Only one unfinished intent is permitted; recovery must run before another mutation.
     pub async fn prepare_catalog_mutation(&mut self, m: &CatalogMutation) -> Result<()> {
@@ -204,4 +208,38 @@ impl Store {
                 .await?;
         value.as_deref().map(state).transpose()
     }
+}
+
+impl crate::Reader {
+    /// Read-only lifecycle impact preview using the same conservative checks as application.
+    pub async fn catalog_lifecycle_blockers(&mut self, at_us: i64) -> Result<Vec<String>> {
+        lifecycle_blockers(&mut self.db, at_us).await
+    }
+}
+async fn lifecycle_blockers(db: &mut sqlx::SqliteConnection, at_us: i64) -> Result<Vec<String>> {
+    let mut blockers = Vec::new();
+    for (label, query) in [
+        (
+            "active builds",
+            "SELECT count(*) FROM builds WHERE state IN ('QUEUED','RUNNING')",
+        ),
+        (
+            "saved schedules",
+            "SELECT count(*) FROM schedules WHERE deleted_at_us IS NULL",
+        ),
+        ("saved graph views", "SELECT count(*) FROM graph_views"),
+    ] {
+        let count: i64 = sqlx::query_scalar(query).fetch_one(&mut *db).await?;
+        if count > 0 {
+            blockers.push(format!("{label}: {count}"));
+        }
+    }
+    let leases: i64 = sqlx::query_scalar("SELECT count(*) FROM read_leases WHERE expires_at_us>?")
+        .bind(at_us)
+        .fetch_one(&mut *db)
+        .await?;
+    if leases > 0 {
+        blockers.push(format!("active read leases: {leases}"));
+    }
+    Ok(blockers)
 }

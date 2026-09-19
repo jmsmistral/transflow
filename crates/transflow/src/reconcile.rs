@@ -164,7 +164,7 @@ where
     {
         return Err(ReconcileError::Authority);
     }
-    if request.proposal.assignments().is_empty() {
+    if !request.proposal.changes_registry() {
         return Ok(ReconcileOutcome::Unchanged);
     }
     let root = owner.workspace_root().to_owned();

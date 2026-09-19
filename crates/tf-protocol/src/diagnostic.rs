@@ -6,7 +6,7 @@ use tf_domain::diagnostic::{Diagnostic, ExitStatus, RequestContext, SafeText};
 /// Initial complete-result envelope format, independent of the worker protocol.
 pub const CLI_ENVELOPE_VERSION: u32 = 1;
 /// Implemented CLI operations. This does not advertise dataset/coordinator capabilities.
-pub const CLI_CAPABILITIES: [&str; 10] = [
+pub const CLI_CAPABILITIES: [&str; 14] = [
     "cli.help",
     "cli.version",
     "cli.diagnostics.v1",
@@ -17,6 +17,10 @@ pub const CLI_CAPABILITIES: [&str; 10] = [
     "workspace.validate",
     "catalog.sync",
     "catalog.sync.check",
+    "catalog.list",
+    "catalog.show",
+    "catalog.rename",
+    "catalog.remove",
 ];
 /// Successful informational operation.
 #[derive(Clone, Copy, Debug)]
@@ -120,6 +124,26 @@ impl CliEnvelope {
         Self::encode(
             version,
             status,
+            ctx,
+            result,
+            errors.iter().map(diagnostic).collect(),
+        )
+    }
+    /// Closed catalogue inspection or lifecycle result with explicit impact/blocking diagnostics.
+    pub fn catalog(
+        version: &SafeText,
+        ctx: &RequestContext,
+        result: Value,
+        errors: &[Diagnostic],
+    ) -> Result<Self, ProtocolError> {
+        validate_document("CatalogResultV1", &result)?;
+        Self::encode(
+            version,
+            if errors.is_empty() {
+                ExitStatus::Success
+            } else {
+                ExitStatus::Failure
+            },
             ctx,
             result,
             errors.iter().map(diagnostic).collect(),

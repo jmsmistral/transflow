@@ -123,7 +123,7 @@ cargo run --locked --offline -p transflow -- --version
 ```
 
 Help, version, workspace initialization, explicit environment preparation,
-`validate`, and `catalog sync [--check]` are available. Dataset builds remain upcoming.
+`validate`, and catalogue sync/list/show/rename/remove are available. Dataset builds remain upcoming.
 The built executable works outside either checkout without Python or Git.
 `bash tools/check-rust.sh` runs the Rust checks without the sibling specification.
 
@@ -181,3 +181,5 @@ Workspace-local [catalogue editor generations](crates/tf-catalog/EDITOR.md) now 
 
 The shared [structural validation service](crates/tf-catalog/VALIDATION.md) (T032) checks the complete captured local graph and issues context-bound certificates. Invalid submissions preserve the previous graph for display but block reuse; runtime schema/data checks remain explicitly deferred. Public validation and additive synchronization are available through the
 [preparation lifecycle](crates/transflow/PREPARATION.md). Build orchestration remains upcoming work.
+
+[Catalogue browsing and lifecycle commands](crates/transflow/CATALOG.md) provide revision-bound pages, exact retained identity lookup, rename previews/aliases and explicit guarded tombstones.

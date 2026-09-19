@@ -23,6 +23,12 @@ use tf_exec::{
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
+    #[error(
+        "Catalogue report exceeds its display limit; reduce --limit or inspect an exact identity"
+    )]
+    ReportLimit,
+    #[error(transparent)]
+    Store(#[from] tf_store::StoreError),
     #[error(transparent)]
     Config(#[from] tf_catalog::workspace::ConfigError),
     #[error(transparent)]
@@ -155,13 +161,24 @@ fn rebind(value: &mut Value, fingerprint: &str) {
 fn section(entries: Vec<Value>) -> Value {
     json!({"total":entries.len().to_string(),"entries":entries.into_iter().take(64).collect::<Vec<_>>()})
 }
-pub(crate) fn execute(
-    operation: Operation,
+/// Complete verified discovery retained for an explicit catalogue operation.
+pub(crate) struct Inspection {
+    pub capture: SourceSnapshot,
+    pub registry: RegistrySnapshot,
+    pub result: Value,
+    pub graph: ValidatedGraph,
+    pub env: ManagedEnvironment,
+    pub python: PathBuf,
+    pub environment_request: EnvironmentRequest,
+    pub request: RequestId,
+    pub scratch: Scratch,
+}
+pub(crate) fn inspect(
+    workspace: &Workspace,
     python: Option<&String>,
-    explicit: Option<&String>,
-) -> Result<Report, Error> {
+    persistent: bool,
+) -> Result<Inspection, Error> {
     let current = std::env::current_dir()?;
-    let workspace = Workspace::load(&current, explicit.map(Path::new))?;
     let config = workspace.config();
     let python = python
         .map(PathBuf::from)
@@ -187,6 +204,44 @@ pub(crate) fn execute(
     let request: RequestId = discovery::random_id()?
         .parse()
         .map_err(|_| Error::Context)?;
+    let capture = if persistent {
+        SourceSnapshot::capture(workspace, limits())?
+    } else {
+        SourceSnapshot::temporary(workspace, scratch.path(), limits())?
+    };
+    let registry =
+        RegistrySnapshot::parse(config.id(), &text(&capture, ".transflow/catalog.toml")?)?;
+    let result = discovery::discover(
+        &env.interpreter,
+        &scratch,
+        json!({"format_version":1,"protocol":{"major":1,"minor":0},"request_id":request.to_string(),"attempt_id":discovery::random_id()?,"capture_root":capture.files_root(),"source_roots":capture.source_roots(),"files":capture.discovery_files(),"catalog":registry.sdk_projection(capture.id()?)?,"environment_fingerprint":env.fingerprint}),
+        Duration::from_secs(300),
+    )?;
+    let graph = validate(&registry, &capture, &result, &env)?;
+    capture.verify_working_copy(workspace, false)?;
+    if environment::inspect(workspace.root(), &python, &environment_request)? != env {
+        return Err(Error::Context);
+    }
+    Ok(Inspection {
+        capture,
+        registry,
+        result,
+        graph,
+        env,
+        python,
+        environment_request,
+        request,
+        scratch,
+    })
+}
+pub(crate) fn execute(
+    operation: Operation,
+    python: Option<&String>,
+    explicit: Option<&String>,
+) -> Result<Report, Error> {
+    let current = std::env::current_dir()?;
+    let workspace = Workspace::load(&current, explicit.map(Path::new))?;
+    let config = workspace.config();
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?;
@@ -196,7 +251,7 @@ pub(crate) fn execute(
         let recovered = runtime.block_on(crate::reconcile::recover(&mut owner, now()?))?;
         if recovered
             .iter()
-            .any(|outcome| matches!(outcome, crate::reconcile::RecoveryOutcome::Conflict(_)))
+            .any(|o| matches!(o, crate::reconcile::RecoveryOutcome::Conflict(_)))
         {
             return Err(Error::Context);
         }
@@ -204,24 +259,17 @@ pub(crate) fn execute(
     } else {
         None
     };
-    let capture = if owner.is_some() {
-        SourceSnapshot::capture(&workspace, limits())?
-    } else {
-        SourceSnapshot::temporary(&workspace, scratch.path(), limits())?
-    };
-    let registry =
-        RegistrySnapshot::parse(config.id(), &text(&capture, ".transflow/catalog.toml")?)?;
-    let mut result = discovery::discover(
-        &env.interpreter,
-        &scratch,
-        json!({"format_version":1,"protocol":{"major":1,"minor":0},"request_id":request.to_string(),"attempt_id":discovery::random_id()?,"capture_root":capture.files_root(),"source_roots":capture.source_roots(),"files":capture.discovery_files(),"catalog":registry.sdk_projection(capture.id()?)?,"environment_fingerprint":env.fingerprint}),
-        Duration::from_secs(300),
-    )?;
-    let mut graph = validate(&registry, &capture, &result, &env)?;
-    capture.verify_working_copy(&workspace, false)?;
-    if environment::inspect(workspace.root(), &python, &environment_request)? != env {
-        return Err(Error::Context);
-    }
+    let Inspection {
+        capture,
+        registry,
+        mut result,
+        mut graph,
+        env,
+        python,
+        environment_request,
+        request,
+        scratch: _scratch,
+    } = inspect(&workspace, python, owner.is_some())?;
     let pending: BTreeSet<_> = graph
         .candidate()
         .pending()
@@ -334,7 +382,7 @@ pub(crate) fn execute(
         changes_required: operation == Operation::Check && !pending.is_empty(),
     })
 }
-fn now() -> Result<i64, Error> {
+pub(crate) fn now() -> Result<i64, Error> {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .ok()

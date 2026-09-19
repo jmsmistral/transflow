@@ -84,7 +84,7 @@ impl fmt::Display for RegistryError {
 impl std::error::Error for RegistryError {}
 /// Catalogue operation result.
 pub type Result<T> = std::result::Result<T, RegistryError>;
-fn error(kind: RegistryErrorKind, location: impl Into<String>) -> RegistryError {
+pub(crate) fn error(kind: RegistryErrorKind, location: impl Into<String>) -> RegistryError {
     RegistryError {
         kind,
         location: location.into(),
@@ -565,6 +565,60 @@ impl RegistrySnapshot {
             });
         }
         raw.datasets.sort_by(|a, b| a.id.cmp(&b.id));
+        self.render_raw(&raw)
+    }
+    /// Explicit rename of an active local identity. Full parse rejects every name collision.
+    pub fn render_rename(
+        &self,
+        id: DatasetId,
+        new_path: &DatasetPath,
+        keep_alias: bool,
+    ) -> Result<String> {
+        let mut raw = self.raw.clone();
+        let item = raw
+            .datasets
+            .iter_mut()
+            .find(|d| d.id == id.to_string())
+            .ok_or_else(|| error(RegistryErrorKind::Missing, "/rename"))?;
+        let previous = item.path.clone();
+        if previous == new_path.as_str() {
+            return self.render_raw(&raw);
+        }
+        item.path = new_path.as_str().to_owned();
+        if keep_alias {
+            raw.aliases.push(RawAlias {
+                path: previous,
+                target_id: id.to_string(),
+            });
+        }
+        self.render_raw(&raw)
+    }
+    /// Retain identity/name/kind as a tombstone; aliases cannot target removed identities.
+    pub fn render_remove(&self, id: DatasetId) -> Result<String> {
+        let mut raw = self.raw.clone();
+        let index = raw
+            .datasets
+            .iter()
+            .position(|d| d.id == id.to_string())
+            .ok_or_else(|| error(RegistryErrorKind::Missing, "/remove"))?;
+        let removed = raw.datasets.remove(index);
+        raw.aliases.retain(|a| a.target_id != id.to_string());
+        raw.tombstones.push(removed);
+        self.render_raw(&raw)
+    }
+    /// Explicit alias spellings for a local identity, in deterministic order.
+    pub fn aliases(&self, id: DatasetId) -> Vec<&str> {
+        let mut values: Vec<_> = self
+            .raw
+            .aliases
+            .iter()
+            .filter(|a| a.target_id == id.to_string())
+            .map(|a| a.path.as_str())
+            .collect();
+        values.sort();
+        values
+    }
+    fn render_raw(&self, raw: &Raw) -> Result<String> {
         let quote = |text: &str| {
             serde_json::to_string(text).map_err(|_| error(RegistryErrorKind::Invalid, "/render"))
         };

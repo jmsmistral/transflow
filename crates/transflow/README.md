@@ -1,7 +1,7 @@
 # CLI diagnostics and result envelopes
 
 The native executable implements help/version, init, explicit environment commands,
-and [validate/catalog sync](PREPARATION.md). It also accepts
+and [validate/catalog sync](PREPARATION.md), plus [catalogue inspection and lifecycle edits](CATALOG.md). It also accepts
 `--json`, `--verbose`, `--color auto|always|never`, and root `--workspace DIRECTORY`.
 Help/version do not discover/open a workspace, run Python or start a coordinator.
 Unavailable commands and invalid options return usage status 2 with an explanation.

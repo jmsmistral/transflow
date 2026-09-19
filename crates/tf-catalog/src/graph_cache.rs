@@ -94,3 +94,54 @@ pub fn retain(
     cache.sync_all()?;
     Ok(())
 }
+
+/// Load bounded, digest-verified retained discovery for display only, without creating paths.
+pub fn latest(workspace: &Path) -> Result<Option<Value>, EditorError> {
+    let base = root(workspace)?;
+    let a = dir_at(&base, ".transflow", false)?;
+    let r = dir_at(&a, "runtime", false)?;
+    let cache = match dir_at(&r, "graphs", false) {
+        Err(EditorError::Io(e)) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        result => result?,
+    };
+    let target = match rustix::fs::readlinkat(&cache, "current", Vec::new()) {
+        Err(rustix::io::Errno::NOENT) => return Ok(None),
+        result => result.map_err(std::io::Error::from)?,
+    };
+    let name = target.to_str().map_err(|_| EditorError::Conflict)?;
+    let digest = name.strip_suffix(".json").ok_or(EditorError::Conflict)?;
+    tf_protocol::canonical::ContentDigest::from_hex(
+        tf_protocol::canonical::DigestKind::File,
+        digest,
+    )
+    .map_err(|_| EditorError::Conflict)?;
+    let file = File::from(
+        rustix::fs::openat(
+            &cache,
+            name,
+            OFlags::RDONLY | OFlags::NONBLOCK | OFlags::NOFOLLOW | OFlags::CLOEXEC,
+            Mode::empty(),
+        )
+        .map_err(std::io::Error::from)?,
+    );
+    if !file.metadata()?.is_file() {
+        return Err(EditorError::Conflict);
+    }
+    let mut bytes = Vec::new();
+    file.take(16 * 1024 * 1024 + 1).read_to_end(&mut bytes)?;
+    if bytes.len() > 16 * 1024 * 1024
+        || file_digest(&mut bytes.as_slice())
+            .map_err(|_| EditorError::Conflict)?
+            .hex()
+            != digest
+    {
+        return Err(EditorError::Conflict);
+    }
+    let value: Value = serde_json::from_slice(&bytes).map_err(|_| EditorError::Conflict)?;
+    if value["format_version"] != 1 {
+        return Err(EditorError::Conflict);
+    }
+    tf_protocol::validate_document("DiscoveryResultV1", &value["discovery"])
+        .map_err(|_| EditorError::Conflict)?;
+    Ok(Some(value))
+}
