@@ -133,7 +133,7 @@ impl Overlay {
         &self.files
     }
 }
-fn dir_at(parent: &File, name: &str, create: bool) -> Result<File> {
+pub(crate) fn dir_at(parent: &File, name: &str, create: bool) -> Result<File> {
     if create {
         match rustix::fs::mkdirat(parent, name, Mode::RWXU) {
             Ok(()) => parent.sync_all()?,
@@ -151,7 +151,7 @@ fn dir_at(parent: &File, name: &str, create: bool) -> Result<File> {
         .map_err(std::io::Error::from)?,
     ))
 }
-fn root(path: &Path) -> Result<File> {
+pub(crate) fn root(path: &Path) -> Result<File> {
     if !path.is_absolute() || path.canonicalize()? != path {
         return Err(EditorError::Conflict);
     }
@@ -164,7 +164,7 @@ fn root(path: &Path) -> Result<File> {
         .map_err(std::io::Error::from)?,
     ))
 }
-fn identity(file: &File) -> Result<(u64, u64)> {
+pub(crate) fn identity(file: &File) -> Result<(u64, u64)> {
     let m = file.metadata()?;
     Ok((m.dev(), m.ino()))
 }

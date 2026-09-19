@@ -118,6 +118,11 @@
       "helpers",
       "source"
     ],
-    "source_snapshot_id": "02020202-0202-0202-0202-020202020202"
+    "source_snapshot_id": "02020202-0202-0202-0202-020202020202",
+    "module_index": {
+      "helpers": "src/helpers.py",
+      "source": "src/source.py",
+      "consumer": "src/consumer.py"
+    }
   }
 }

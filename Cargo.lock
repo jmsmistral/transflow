@@ -932,6 +932,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tf-domain",
+ "tf-protocol",
  "tf-store",
  "thiserror",
  "tokio",

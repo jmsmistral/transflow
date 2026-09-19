@@ -1321,7 +1321,10 @@
                 "workspace.init",
                 "env.lock",
                 "env.sync",
-                "env.check"
+                "env.check",
+                "workspace.validate",
+                "catalog.sync",
+                "catalog.sync.check"
               ]
             },
             "context": {
@@ -1336,25 +1339,32 @@
               ]
             },
             "result": {
-              "type": "object",
-              "properties": {
-                "kind": {
-                  "enum": [
-                    "help",
-                    "version",
-                    "workspace_init",
-                    "environment"
-                  ]
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "help",
+                        "version",
+                        "workspace_init",
+                        "environment"
+                      ]
+                    },
+                    "text": {
+                      "$ref": "#/$defs/DiagnosticText"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "text"
+                  ],
+                  "additionalProperties": false
                 },
-                "text": {
-                  "$ref": "#/$defs/DiagnosticText"
+                {
+                  "$ref": "#/$defs/PreparationResultV1"
                 }
-              },
-              "required": [
-                "kind",
-                "text"
-              ],
-              "additionalProperties": false
+              ]
             },
             "diagnostics": {
               "type": "array",
@@ -1394,7 +1404,10 @@
                 "workspace.init",
                 "env.lock",
                 "env.sync",
-                "env.check"
+                "env.check",
+                "workspace.validate",
+                "catalog.sync",
+                "catalog.sync.check"
               ]
             },
             "context": {
@@ -1410,7 +1423,14 @@
               ]
             },
             "result": {
-              "type": "null"
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/PreparationResultV1"
+                }
+              ]
             },
             "diagnostics": {
               "type": "array",
@@ -1450,7 +1470,10 @@
                 "workspace.init",
                 "env.lock",
                 "env.sync",
-                "env.check"
+                "env.check",
+                "workspace.validate",
+                "catalog.sync",
+                "catalog.sync.check"
               ]
             },
             "context": {
@@ -1960,6 +1983,12 @@
           },
           "minItems": 0,
           "maxItems": 10000
+        },
+        "module_index": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/RelativePath"
+          }
         }
       },
       "required": [
@@ -2043,6 +2072,168 @@
       "required": [
         "path",
         "key"
+      ],
+      "additionalProperties": false
+    },
+    "PreparationResultV1": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "preparation"
+        },
+        "operation": {
+          "enum": [
+            "validate",
+            "catalog_sync",
+            "catalog_sync_check"
+          ]
+        },
+        "source_snapshot_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "catalog_fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "certificate_fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "registrations": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "$ref": "#/$defs/Count"
+            },
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "$ref": "#/$defs/DiagnosticText"
+                  },
+                  "id": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/Uuid"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "path",
+                  "id"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 64,
+              "minItems": 0
+            }
+          },
+          "required": [
+            "total",
+            "entries"
+          ],
+          "additionalProperties": false
+        },
+        "unchanged": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "$ref": "#/$defs/Count"
+            },
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "$ref": "#/$defs/DiagnosticText"
+                  },
+                  "id": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/Uuid"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "path",
+                  "id"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 64,
+              "minItems": 0
+            }
+          },
+          "required": [
+            "total",
+            "entries"
+          ],
+          "additionalProperties": false
+        },
+        "absent_producers": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "$ref": "#/$defs/Count"
+            },
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "$ref": "#/$defs/DiagnosticText"
+                  },
+                  "id": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/Uuid"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "path",
+                  "id"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 64,
+              "minItems": 0
+            }
+          },
+          "required": [
+            "total",
+            "entries"
+          ],
+          "additionalProperties": false
+        },
+        "deferred_checks": {
+          "$ref": "#/$defs/Count"
+        }
+      },
+      "required": [
+        "kind",
+        "operation",
+        "source_snapshot_id",
+        "catalog_fingerprint",
+        "certificate_fingerprint",
+        "registrations",
+        "unchanged",
+        "absent_producers",
+        "deferred_checks"
       ],
       "additionalProperties": false
     }

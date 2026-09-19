@@ -29,3 +29,12 @@ jobs:
         run: cargo fetch --locked
       - name: Check boundaries, formatting, build, lints and tests
         run: bash tools/check-rust.sh
+      - name: Prepare hash-locked Python tooling for CLI integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv target/python/ci
+          target/python/ci/bin/python -m pip install --require-hashes --only-binary=:all: -r python/dev-py314.lock
+      - name: Test CLI with the installed matched worker
+        shell: bash
+        run: PYTHON_CHECK="$PWD/target/python/ci/bin/python" bash tools/check-cli.sh

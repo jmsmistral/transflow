@@ -2,6 +2,7 @@
 //! Help/version require no workspace I/O. Application services remain later work.
 mod env;
 mod init;
+mod preparation;
 /// Registry durability and recovery application service.
 pub mod reconcile;
 use std::{
@@ -34,7 +35,7 @@ fn command() -> clap::Command {
     use clap::{Arg, ArgAction};
     clap::Command::new("transflow")
         .about("A local build system for dataframe datasets (development scaffold)")
-        .after_help("Help, version, workspace initialization and explicit environment commands are available. Dataset builds and the coordinator are not implemented yet.")
+        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Dataset builds and the coordinator are not implemented yet.")
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
         .subcommand(clap::Command::new("env").disable_help_flag(true).about("Explicit environment lock, sync and drift verification")
             .arg(Arg::new("python").long("python").global(true).value_name("EXECUTABLE"))
@@ -44,6 +45,11 @@ fn command() -> clap::Command {
             .subcommand(clap::Command::new("lock").disable_help_flag(true).about("Resolve exact hashed dependencies using qualified tooling"))
             .subcommand(clap::Command::new("sync").disable_help_flag(true).about("Install locked wheels and the explicit matched Transflow wheel"))
             .subcommand(clap::Command::new("check").disable_help_flag(true).about("Reject interpreter, lock or installed-file drift without installation")))
+        .subcommand(clap::Command::new("validate").disable_help_flag(true).about("Validate all captured declarations without persistent changes").arg(Arg::new("python").long("python").value_name("EXECUTABLE")))
+        .subcommand(clap::Command::new("catalog").disable_help_flag(true).subcommand_required(true).about("Manage durable catalogue identities")
+            .subcommand(clap::Command::new("sync").disable_help_flag(true).about("Validate and register additive producer identities")
+                .arg(Arg::new("check").long("check").action(ArgAction::SetTrue).help("Report additions without changing workspace files"))
+                .arg(Arg::new("python").long("python").value_name("EXECUTABLE"))))
         .subcommand(clap::Command::new("init").disable_help_flag(true).about("Initialize a workspace without Git, Python or package installation").arg(Arg::new("directory").value_name("DIRECTORY")))
         .arg(Arg::new("help").global(true).long("help").short('h').action(ArgAction::SetTrue).help("Show implemented commands and options"))
         .arg(Arg::new("version").long("version").short('V').action(ArgAction::SetTrue).help("Show product version"))
@@ -174,6 +180,91 @@ pub fn run(
     let version = redactor.text(env!("CARGO_PKG_VERSION"))?;
     match command().try_get_matches_from(args) {
         Ok(matches) => {
+            if !matches.get_flag("help") && !matches.get_flag("version") {
+                let selected = match matches.subcommand() {
+                    Some(("validate", args)) => Some((preparation::Operation::Validate, args)),
+                    Some(("catalog", catalog)) => catalog.subcommand_matches("sync").map(|args| {
+                        (
+                            if args.get_flag("check") {
+                                preparation::Operation::Check
+                            } else {
+                                preparation::Operation::Sync
+                            },
+                            args,
+                        )
+                    }),
+                    _ => None,
+                };
+                if let Some((operation, args)) = selected {
+                    match preparation::execute(
+                        operation,
+                        args.get_one::<String>("python"),
+                        matches.get_one::<String>("workspace"),
+                    ) {
+                        Ok(report) => {
+                            let errors = if report.changes_required {
+                                vec![Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Catalogue additions are required")?,redactor.text("The complete graph is structurally valid, but new producer paths need durable identities.")?,redactor.text("Run transflow catalog sync to register the reported additions.")?)]
+                            } else {
+                                vec![]
+                            };
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::preparation(
+                                            &version,
+                                            &context,
+                                            report.value.clone(),
+                                            &errors,
+                                        )?
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                writeln!(stdout, "{}", report.human()?)
+                                    .map_err(CliError::Stdout)?;
+                            }
+                            return Ok(if report.changes_required {
+                                ExitCode::FAILURE
+                            } else {
+                                ExitCode::SUCCESS
+                            });
+                        }
+                        Err(error) => {
+                            let diagnostic = if let preparation::Error::Validation(error) = error {
+                                error.diagnostic(&redactor)?
+                            } else {
+                                Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Workspace preparation could not finish")?,redactor.text(&error.to_string())?,redactor.text("Correct the reported input and retry. Use explicit env lock/sync for dependencies. A sync interrupted after registration retains its identities for recovery; no data version is published.")?)
+                            };
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::failure(
+                                            &version,
+                                            ExitStatus::Failure,
+                                            &context,
+                                            &[diagnostic],
+                                        )?
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                stderr
+                                    .write_all(
+                                        render_diagnostic(
+                                            &diagnostic,
+                                            &context,
+                                            intent.verbose,
+                                            false,
+                                        )
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stderr)?;
+                            }
+                            return Ok(ExitCode::FAILURE);
+                        }
+                    }
+                }
+            }
             if let Some(("env", environment)) = matches.subcommand()
                 && !matches.get_flag("help")
                 && !matches.get_flag("version")

@@ -194,3 +194,8 @@ character predicates perform no I/O. The native probe now exercises Unicode
 letters, continuation digits and invalid punctuation. The crate boundary/pin
 allowlist and both lock inventories record this narrow use; no package version
 was added or upgraded. Python NFKC/source-module rules remain enforced by the SDK.
+
+T033 promotes the already qualified serde_json pin into the application composition
+root and adds the permitted tf-exec → tf-protocol edge. No dependency version changes.
+The native Rust CI jobs now also run the installed Python 3.14 worker/CLI lifecycle
+bridge; independent Python jobs retain the 3.13/3.14 matrix.

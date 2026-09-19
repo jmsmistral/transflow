@@ -1,6 +1,7 @@
 # CLI diagnostics and result envelopes
 
-The native executable currently implements help and version. It also accepts
+The native executable implements help/version, init, explicit environment commands,
+and [validate/catalog sync](PREPARATION.md). It also accepts
 `--json`, `--verbose`, `--color auto|always|never`, and root `--workspace DIRECTORY`.
 Help/version do not discover/open a workspace, run Python or start a coordinator.
 Unavailable commands and invalid options return usage status 2 with an explanation.
@@ -14,15 +15,14 @@ cargo run --locked --offline -- --workspace ./analysis --json build orders
 
 The last example intentionally fails: build is not implemented. Its envelope
 contains the explicitly selected consumer workspace; a later subcommand's
-`--workspace` cannot replace that root context. Nearest-workspace discovery belongs
-to later workspace commands. Unknown contexts are null, not guessed.
+`--workspace` cannot replace that root context. Workspace commands use nearest-workspace discovery unless a root is explicit. Unknown contexts are null, not guessed.
 
 `--json` writes exactly one newline-terminated `CliEnvelopeV1` object to stdout,
 with format/product versions, implemented capabilities, outcome, matching exit
 status, request context, result and diagnostics. It emits no stderr/progress/ANSI
 on these paths, even with `--color always`. The generated standalone schema is
 [cli-result-v1.schema.json](../../schemas/generated/cli-result-v1.schema.json).
-Success currently carries help or version; the domain envelope also supports
+Success carries an informational or preparation result; the domain envelope also supports
 operational failures and explicit user cancellation for later services. No
 asynchronous acceptance or dataset execution is advertised.
 
@@ -66,4 +66,4 @@ secrets and never attach raw sensitive payloads as diagnostics.
 The shared contract corpus includes invalid ANSI/bidi text, version/code/exit
 mismatches and missing diagnostics. Actual executable tests verify stream separation,
 context, flags and safe usage errors. A synthetic cycle exercises the same domain
-model/renderer; graph detection and full A46/A65 command workflows remain later work.
+model/renderer; real validate/sync integration tests now cover graph detection and A46/A65 preparation workflows.

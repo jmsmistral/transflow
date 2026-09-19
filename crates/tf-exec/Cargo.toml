@@ -10,6 +10,7 @@ description = "Process supervision, resource admission, validation phases and pu
 workspace = true
 
 [dependencies]
+tf-protocol = { path = "../tf-protocol" }
 tf-domain = { path = "../tf-domain" }
 tf-store = { path = "../tf-store" }
 serde = { workspace = true, features = ["derive"] }

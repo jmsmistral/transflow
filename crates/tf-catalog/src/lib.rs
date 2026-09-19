@@ -16,3 +16,6 @@ pub mod editor;
 
 /// Complete local structural validation and immutable context-bound certificates.
 pub mod validation;
+
+/// Persisted structural evidence, never an execution fallback.
+pub mod graph_cache;

@@ -156,3 +156,8 @@ def validate_DiscoveryDiagnosticV1(value: object) -> None:
 def validate_CatalogAliasV1(value: object) -> None:
     """Assert the CatalogAliasV1 contract, including custom formats."""
     validate_document("CatalogAliasV1", value)
+
+
+def validate_PreparationResultV1(value: object) -> None:
+    """Assert the PreparationResultV1 contract, including custom formats."""
+    validate_document("PreparationResultV1", value)

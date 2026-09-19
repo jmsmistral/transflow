@@ -74,13 +74,77 @@ pub fn run(
     python: &Path,
     request: &EnvironmentRequest,
 ) -> Result<String, EnvironmentError> {
+    let result = invoke(owner.workspace_root(), python, request)?;
+    let action = result["action"]
+        .as_str()
+        .ok_or(EnvironmentError::Protocol)?;
+    let packages = result["packages"]
+        .as_u64()
+        .ok_or(EnvironmentError::Protocol)?;
+    let digest = result
+        .get("fingerprint")
+        .or_else(|| result.get("lock_sha256"))
+        .and_then(|v| v.as_str())
+        .ok_or(EnvironmentError::Protocol)?;
+    Ok(format!(
+        "Environment {action} completed: {packages} packages; fingerprint {digest}"
+    ))
+}
+/// Read-only verified managed interpreter; preparation never installs dependencies.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ManagedEnvironment {
+    /// Verified interpreter entry point in this workspace's managed environment.
+    pub interpreter: PathBuf,
+    /// Actual installed bytes/configuration identity.
+    pub fingerprint: String,
+    /// Matched installed SDK/worker version.
+    pub runtime_version: String,
+}
+/// Inspect with the explicit base interpreter recorded at env sync, without runtime writes.
+pub fn inspect(
+    root: &Path,
+    python: &Path,
+    request: &EnvironmentRequest,
+) -> Result<ManagedEnvironment, EnvironmentError> {
+    if !matches!(request.action, EnvironmentAction::Check) {
+        return Err(EnvironmentError::Protocol);
+    }
+    let result = invoke(root, python, request)?;
+    let interpreter = PathBuf::from(
+        result["interpreter"]
+            .as_str()
+            .ok_or(EnvironmentError::Protocol)?,
+    );
+    let version = result["runtime_version"]
+        .as_str()
+        .ok_or(EnvironmentError::Protocol)?;
+    if !interpreter.is_absolute()
+        || !interpreter.starts_with(root.join(".transflow/runtime/environments"))
+        || version != request.runtime_version
+    {
+        return Err(EnvironmentError::Protocol);
+    }
+    Ok(ManagedEnvironment {
+        interpreter,
+        fingerprint: result["fingerprint"]
+            .as_str()
+            .ok_or(EnvironmentError::Protocol)?
+            .into(),
+        runtime_version: version.into(),
+    })
+}
+fn invoke(
+    root: &Path,
+    python: &Path,
+    request: &EnvironmentRequest,
+) -> Result<serde_json::Value, EnvironmentError> {
     let mut value = serde_json::to_value(request).map_err(|_| EnvironmentError::Protocol)?;
     value
         .as_object_mut()
         .ok_or(EnvironmentError::Protocol)?
         .insert(
             "root".into(),
-            serde_json::Value::String(owner.workspace_root().to_string_lossy().into_owned()),
+            serde_json::Value::String(root.to_string_lossy().into_owned()),
         );
     let json = serde_json::to_string(&value).map_err(|_| EnvironmentError::Protocol)?;
     if json.len() > 64 * 1024 {
@@ -88,7 +152,7 @@ pub fn run(
     }
     let mut child = Command::new(python)
         .args(["-I", "-B", "-c", SERVICE, &json])
-        .current_dir(owner.workspace_root())
+        .current_dir(root)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -157,7 +221,6 @@ pub fn run(
     {
         return Err(EnvironmentError::Protocol);
     }
-    Ok(format!(
-        "Environment {action} completed: {packages} packages; fingerprint {digest}"
-    ))
+    let _ = packages;
+    Ok(result)
 }

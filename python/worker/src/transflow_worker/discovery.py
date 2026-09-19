@@ -296,6 +296,7 @@ def collect(request: dict[str, Any]) -> dict[str, object]:
             "environment_fingerprint": request["environment_fingerprint"],
             "definitions": definitions,
             "imported_modules": imported,
+            "module_index": {e.name: e.path for e in index.modules},
         }
         # JSON serialization normalizes dataclass tuple carriers before schema validation.
         result = json.loads(json.dumps(result, allow_nan=False))

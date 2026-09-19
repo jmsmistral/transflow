@@ -36,7 +36,7 @@ EXTERNAL = {
     "tf-schedule": {"chrono", "chrono-tz", "serde", "thiserror"},
     "tf-api": {"axum", "tower", "serde", "serde_json", "tokio", "tracing", "thiserror"},
     "tf-lsp": {"serde", "serde_json", "tokio", "tracing", "thiserror"},
-    "transflow": {"clap", "thiserror", "tokio", "tracing"},
+    "transflow": {"clap", "thiserror", "tokio", "tracing", "serde_json"},
 }
 
 # T007's real SQLite integration fixture needs an executor, only in tests.

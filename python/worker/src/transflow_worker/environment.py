@@ -522,6 +522,8 @@ def check_environment(root: Path, requirements: str, lock: str, minor: str) -> d
         "action": "check",
         "fingerprint": actual["fingerprint"],
         "packages": len(cast(dict[str, str], actual["packages"])),
+        "interpreter": str(environment / "bin/python"),
+        "runtime_version": cast(dict[str, str], actual["packages"])["transflow"],
     }
 
 

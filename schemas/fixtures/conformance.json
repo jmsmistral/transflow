@@ -2169,7 +2169,10 @@
         "workspace.init",
         "env.lock",
         "env.sync",
-        "env.check"
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2220,7 +2223,10 @@
         "workspace.init",
         "env.lock",
         "env.sync",
-        "env.check"
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2271,7 +2277,10 @@
         "workspace.init",
         "env.lock",
         "env.sync",
-        "env.check"
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2322,7 +2331,10 @@
         "workspace.init",
         "env.lock",
         "env.sync",
-        "env.check"
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2373,7 +2385,10 @@
         "workspace.init",
         "env.lock",
         "env.sync",
-        "env.check"
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2424,7 +2439,10 @@
         "workspace.init",
         "env.lock",
         "env.sync",
-        "env.check"
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2475,7 +2493,10 @@
         "workspace.init",
         "env.lock",
         "env.sync",
-        "env.check"
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2526,7 +2547,10 @@
         "workspace.init",
         "env.lock",
         "env.sync",
-        "env.check"
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2577,7 +2601,10 @@
         "workspace.init",
         "env.lock",
         "env.sync",
-        "env.check"
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2604,7 +2631,10 @@
         "workspace.init",
         "env.lock",
         "env.sync",
-        "env.check"
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -3244,5 +3274,376 @@
       ]
     },
     "valid": false
+  },
+  {
+    "name": "preparation-result-empty",
+    "schema": "PreparationResultV1",
+    "valid": true,
+    "value": {
+      "kind": "preparation",
+      "operation": "validate",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "certificate_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "deferred_checks": "0",
+      "registrations": {
+        "total": "0",
+        "entries": []
+      },
+      "unchanged": {
+        "total": "0",
+        "entries": []
+      },
+      "absent_producers": {
+        "total": "0",
+        "entries": []
+      }
+    }
+  },
+  {
+    "name": "preparation-result-pending",
+    "schema": "PreparationResultV1",
+    "valid": true,
+    "value": {
+      "kind": "preparation",
+      "operation": "validate",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "certificate_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "deferred_checks": "0",
+      "registrations": {
+        "total": "1",
+        "entries": [
+          {
+            "path": "raw/orders",
+            "id": null
+          }
+        ]
+      },
+      "unchanged": {
+        "total": "0",
+        "entries": []
+      },
+      "absent_producers": {
+        "total": "0",
+        "entries": []
+      }
+    }
+  },
+  {
+    "name": "preparation-result-invalid-identity",
+    "schema": "PreparationResultV1",
+    "valid": false,
+    "value": {
+      "kind": "preparation",
+      "operation": "validate",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "certificate_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "deferred_checks": "0",
+      "registrations": {
+        "total": "1",
+        "entries": [
+          {
+            "path": "raw/orders",
+            "id": "not-a-uuid"
+          }
+        ]
+      },
+      "unchanged": {
+        "total": "0",
+        "entries": []
+      },
+      "absent_producers": {
+        "total": "0",
+        "entries": []
+      }
+    }
+  },
+  {
+    "name": "preparation-result-too-many-entries",
+    "schema": "PreparationResultV1",
+    "valid": false,
+    "value": {
+      "kind": "preparation",
+      "operation": "validate",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "certificate_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "deferred_checks": "0",
+      "registrations": {
+        "total": "1",
+        "entries": [
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          },
+          {
+            "path": "raw/orders",
+            "id": null
+          }
+        ]
+      },
+      "unchanged": {
+        "total": "0",
+        "entries": []
+      },
+      "absent_producers": {
+        "total": "0",
+        "entries": []
+      }
+    }
   }
 ]

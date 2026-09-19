@@ -1,0 +1,45 @@
+{
+  "task": "T033",
+  "date": "2026-09-20",
+  "platform": "macOS arm64",
+  "commands": [
+    "bash tools/check.sh",
+    "bash tools/check-rust.sh (review fixes)",
+    "bash tools/check-cli.sh (review fixes)"
+  ],
+  "result": "pass",
+  "rust_tests": 174,
+  "rust_documentation_tests": 1,
+  "python_tests": 617,
+  "web_tests": 241,
+  "cli_integration_tests": 9,
+  "document_tests": 44,
+  "safety_tests": 27,
+  "boundary_tests": 12,
+  "coverage": [
+    "Read-only validate/check preserve all workspace file contents",
+    "Additive sync, exact retained IDs, repeat sync and absent producers",
+    "Forward string references and bound C rebinding without duplicate imports",
+    "Whole-graph cycle rejection, retained last-valid display evidence",
+    "Syntax/import diagnostics without raw exception messages",
+    "Installed environment drift before imports and live source edits before registration",
+    "Helper edits invalidate structural certificates",
+    "Partial frame deadline, bounded frames, private scratch cleanup"
+  ],
+  "dependencies": {
+    "locked_versions": 640,
+    "new_versions": 0,
+    "advisory_matches": 0,
+    "boundary_changes": [
+      "transflow uses existing qualified serde_json at runtime",
+      "tf-exec uses internal tf-protocol"
+    ]
+  },
+  "limits": [
+    "No build execution or data publication",
+    "Native VS Code/Emacs completion remains pending under T031/T108",
+    "Trusted imports may cause arbitrary side effects",
+    "Persistent coordinator and broader cancellation/process supervisor remain later tasks",
+    "CLI integration CI uses Python 3.14; independent worker/SDK CI covers 3.13 and 3.14"
+  ]
+}

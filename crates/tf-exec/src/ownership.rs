@@ -299,7 +299,8 @@ impl RuntimeOwner {
             registration,
         })
     }
-    fn validate_paths(&self) -> Result<()> {
+    /// Verify that this live writer still owns the same workspace, runtime and lock inode.
+    pub fn validate_paths(&self) -> Result<()> {
         let root = Location::inspect(&self.registration.root.path)?;
         let runtime = Location::inspect(&self.registration.root.path.join(".transflow/runtime"))?;
         let file = open_at(&self.directory, "lock", OFlags::RDONLY)?;

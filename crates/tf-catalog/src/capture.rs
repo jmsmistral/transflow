@@ -184,6 +184,38 @@ impl SourceSnapshot {
     ) -> Result<Self, CaptureError> {
         Self::capture_internal(workspace, limits, None, None, observer)
     }
+    /// Capture into an exclusively owned temporary directory outside workspace runtime state.
+    /// The caller removes that directory after inspection, including worker failures.
+    pub fn temporary(
+        workspace: &Workspace,
+        destination: &Path,
+        limits: CaptureLimits,
+    ) -> Result<Self, CaptureError> {
+        Self::capture_internal(workspace, limits, None, Some(destination), |_| Ok(()))
+    }
+    /// Captured source-root file metadata for the discovery request. Authoring/lock files stay private.
+    pub fn discovery_files(&self) -> serde_json::Value {
+        serde_json::Value::Array(self.manifest.files.iter().filter(|e| self.manifest.source_roots.iter().any(|root| Path::new(&e.path).starts_with(root))).map(|e|serde_json::json!({"path":e.path,"sha256":e.sha256,"byte_length":e.bytes.to_string()})).collect())
+    }
+    /// Compare all captured inputs except the explicitly reconciled registry bytes.
+    pub fn same_inputs_except_registry(&self, other: &Self) -> bool {
+        self.manifest.workspace_id == other.manifest.workspace_id
+            && self.manifest.source_roots == other.manifest.source_roots
+            && self
+                .manifest
+                .files
+                .iter()
+                .filter(|e| e.path != ".transflow/catalog.toml")
+                .eq(other
+                    .manifest
+                    .files
+                    .iter()
+                    .filter(|e| e.path != ".transflow/catalog.toml"))
+    }
+    /// Exact captured import roots; never inferred from the process working directory.
+    pub fn source_roots(&self) -> &[String] {
+        &self.manifest.source_roots
+    }
     pub(crate) fn capture_internal(
         workspace: &Workspace,
         limits: CaptureLimits,

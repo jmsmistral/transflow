@@ -122,7 +122,8 @@ cargo run --locked --offline -p transflow -- --help
 cargo run --locked --offline -p transflow -- --version
 ```
 
-Only help and version are available. Other commands fail with a diagnostic.
+Help, version, workspace initialization, explicit environment preparation,
+`validate`, and `catalog sync [--check]` are available. Dataset builds remain upcoming.
 The built executable works outside either checkout without Python or Git.
 `bash tools/check-rust.sh` runs the Rust checks without the sibling specification.
 
@@ -156,7 +157,7 @@ T013 passes [local verification](docs/development/evidence/t013-macos-arm64.json
 and all five [CI workflows](docs/development/evidence/t013-ci.json).
 
 CLI options and the current JSON/error contract are documented in the
-[CLI guide](crates/transflow/README.md). `--json` is available for help/version;
+[CLI guide](crates/transflow/README.md). `--json` is available for implemented commands;
 unavailable commands still fail clearly without starting work.
 
 ### Python declarations
@@ -178,4 +179,5 @@ complete DSL, build execution and publication remain later tasks.
 
 Workspace-local [catalogue editor generations](crates/tf-catalog/EDITOR.md) now have a Rust renderer and atomic refresh service (T031 implementation). Installed-SDK mypy qualification is automated; native VS Code/Emacs qualification is still pending.
 
-The shared [structural validation service](crates/tf-catalog/VALIDATION.md) (T032) checks the complete captured local graph and issues context-bound certificates. Invalid submissions preserve the previous graph for display but block reuse; runtime schema/data checks remain explicitly deferred. Public validate/build orchestration remains upcoming work.
+The shared [structural validation service](crates/tf-catalog/VALIDATION.md) (T032) checks the complete captured local graph and issues context-bound certificates. Invalid submissions preserve the previous graph for display but block reuse; runtime schema/data checks remain explicitly deferred. Public validation and additive synchronization are available through the
+[preparation lifecycle](crates/transflow/PREPARATION.md). Build orchestration remains upcoming work.

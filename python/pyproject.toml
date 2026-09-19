@@ -8,7 +8,7 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["python/sdk/src", "python/worker/src", "python/tests", "python/tools"]
+files = ["python/sdk/src", "python/worker/src", "python/tests", "python/tools", "python/integration"]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/sdk/src", "$MYPY_CONFIG_FILE_DIR/worker/src", "$MYPY_CONFIG_FILE_DIR/tools", "$MYPY_CONFIG_FILE_DIR/tests"]
 warn_unreachable = true
 
