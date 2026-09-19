@@ -383,3 +383,131 @@ def test_lifecycle_active_runtime_references_are_blocking(
     )
     assert result["exit_status"] == 1 and result["result"]["blockers"]
     assert (workspace / ".transflow/catalog.toml").read_bytes() == before
+
+
+def parquet_input(workspace: Path, name: str = "input.parquet", empty: bool = False) -> Path:
+    root = workspace.parent / "data"
+    root.mkdir(exist_ok=True)
+    path = root / name
+    fixture = "empty.parquet" if empty else "two-rows.parquet"
+    path.write_bytes((REPOSITORY / "tests/fixtures/import" / fixture).read_bytes())
+    return path
+
+
+def prepare_import(
+    workspace: Path, path: Path, target: str = "raw/imported", *, ok: bool = True
+) -> dict[str, Any]:
+    return cli(
+        workspace,
+        "dataset",
+        "import",
+        target,
+        "--path",
+        str(path),
+        "--prepare-only",
+        "--python",
+        sys.executable,
+        ok=ok,
+    )
+
+
+@pytest.mark.parametrize("bound", [False, True])
+def test_import_registers_explicit_input_without_publication(workspace: Path, bound: bool) -> None:
+    path = parquet_input(workspace)
+    reference = "C.raw.imported" if bound else '"raw/imported"'
+    source(
+        workspace,
+        "consumer.py",
+        f"""from transflow import transform, Input, Output
+from transflow.catalog import C
+@transform(data=Input({reference}), output=Output("curated/output"))
+def consumer(data): raise AssertionError("Import preparation must not call producers")
+""",
+    )
+    result = prepare_import(workspace, path)["result"]
+    assert result["status"] == "prepared" and result["published"] is False
+    assert result["registered"] and result["row_count"] == "2"
+    assert result["schema_normalization"] == "pending"
+    staging = workspace / result["staging_path"]
+    manifest = json.loads((staging / "prepared.json").read_text())
+    validate_document("ImportStagingManifestV1", manifest)
+    assert manifest["source_files"] == ["input.parquet"]
+    assert (staging / "part-00000.parquet").read_bytes() == path.read_bytes()
+    assert (staging / "part-00000.parquet").stat().st_ino != path.stat().st_ino
+    with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db:
+        assert db.execute("SELECT count(*) FROM dataset_versions").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM data_branches").fetchone()[0] == 0
+    assert (
+        cli(workspace, "catalog", "show", "raw/imported")["result"]["entries"][0]["kind"]
+        == "imported"
+    )
+    again = prepare_import(workspace, path, f"dataset:{result['dataset_id']}")["result"]
+    assert not again["registered"] and again["dataset_id"] == result["dataset_id"]
+    path.write_bytes(b"source replaced after preparation")
+    assert (staging / "part-00000.parquet").read_bytes() != path.read_bytes()
+
+
+def test_zero_row_parquet_and_frozen_sorted_multifile_import(workspace: Path) -> None:
+    empty = parquet_input(workspace, "a.parquet", empty=True)
+    assert prepare_import(workspace, empty)["result"]["row_count"] == "0"
+    parquet_input(workspace, "b.parquet")
+    result = prepare_import(workspace, empty.parent / "*.parquet")["result"]
+    assert result["file_count"] == "2" and result["row_count"] == "2"
+    manifest = json.loads((workspace / result["staging_path"] / "prepared.json").read_text())
+    assert manifest["source_files"] == ["a.parquet", "b.parquet"]
+    assert [f["row_count"] for f in manifest["files"]] == ["0", "2"]
+
+
+@pytest.mark.parametrize("invalid", ["empty_glob", "empty_file", "symlink"])
+def test_invalid_import_sources_do_not_register(workspace: Path, invalid: str) -> None:
+    original = parquet_input(workspace)
+    if invalid == "empty_glob":
+        path = original.parent / "*.absent"
+    elif invalid == "empty_file":
+        path = original
+        path.write_bytes(b"")
+    else:
+        path = original.parent / "link.parquet"
+        path.symlink_to(original)
+    before = (workspace / ".transflow/catalog.toml").read_bytes()
+    assert prepare_import(workspace, path, ok=False)["exit_status"] == 1
+    assert (workspace / ".transflow/catalog.toml").read_bytes() == before
+
+
+@pytest.mark.parametrize("registered", [False, True])
+def test_import_cannot_take_over_a_python_producer(workspace: Path, registered: bool) -> None:
+    source(workspace, "orders.py", DECLARATION)
+    if registered:
+        cli(workspace, "catalog", "sync", "--python", sys.executable)
+    before = (workspace / ".transflow/catalog.toml").read_bytes()
+    assert (
+        prepare_import(workspace, parquet_input(workspace), "raw/orders", ok=False)["exit_status"]
+        == 1
+    )
+    assert (workspace / ".transflow/catalog.toml").read_bytes() == before
+
+
+def test_source_mutation_during_preparation_is_caught(workspace: Path) -> None:
+    path = parquet_input(workspace)
+    source(
+        workspace,
+        "change.py",
+        f"""from pathlib import Path
+Path({str(path)!r}).write_bytes(b"changed while preparing")
+""",
+    )
+    before = (workspace / ".transflow/catalog.toml").read_bytes()
+    failed = prepare_import(workspace, path, ok=False)
+    assert failed["exit_status"] == 1
+    assert (workspace / ".transflow/catalog.toml").read_bytes() == before
+    assert not list((workspace / ".transflow/runtime/import-staging").iterdir())
+
+
+def test_import_requires_explicit_preparation_mode(workspace: Path) -> None:
+    before = files(workspace)
+    result = cli(
+        workspace, "dataset", "import", "raw/input", "--path", "anything.parquet", ok=False
+    )
+    assert result["exit_status"] == 1
+    assert "--prepare-only" in json.dumps(result)
+    assert files(workspace) == before

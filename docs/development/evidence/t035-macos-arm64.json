@@ -1,0 +1,36 @@
+{
+  "task": "T035",
+  "date": "2026-09-20",
+  "platform": "macOS arm64",
+  "commands": [
+    "bash tools/check.sh",
+    "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+    "cargo test --locked --offline -p tf-catalog --test candidate"
+  ],
+  "result": "pass",
+  "rust_tests": 182,
+  "rust_documentation_tests": 1,
+  "python_tests": 635,
+  "web_tests": 250,
+  "cli_integration_tests": 27,
+  "document_tests": 44,
+  "safety_tests": 27,
+  "boundary_tests": 12,
+  "coverage": [
+    "Frozen sorted contained file/glob selection and root replacement detection",
+    "Independent copies, full Parquet decoding and valid zero-row imports",
+    "Source mutation, symlink, corrupted input, physical schema mismatch and staged byte/membership rejection",
+    "Provisional full graph validation supports both string and C references to a new explicit imported identity",
+    "Existing imported UUID reuse and registered/unregistered producer collision rejection",
+    "No version or data branch publication; mandatory explicit preparation mode",
+    "196 shared schema conformance cases across Rust, Python and TypeScript"
+  ],
+  "limits": [
+    "Atomic producer snapshots remain necessary for strong multi-file consistency against concurrent in-place writers",
+    "Physical Arrow schemas must agree; logical normalization remains T036",
+    "Preparation files are private staging; quality checks and publication remain T036\u2013T038/T064",
+    "Interrupted staging cleanup remains later runtime work; unexpected files are preserved",
+    "Committed imported identity survives a later preparation failure",
+    "T033 task closure remains gated on T031 native editor qualification"
+  ]
+}

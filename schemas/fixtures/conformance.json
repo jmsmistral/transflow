@@ -2176,7 +2176,8 @@
         "catalog.list",
         "catalog.show",
         "catalog.rename",
-        "catalog.remove"
+        "catalog.remove",
+        "dataset.import.prepare"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2234,7 +2235,8 @@
         "catalog.list",
         "catalog.show",
         "catalog.rename",
-        "catalog.remove"
+        "catalog.remove",
+        "dataset.import.prepare"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2292,7 +2294,8 @@
         "catalog.list",
         "catalog.show",
         "catalog.rename",
-        "catalog.remove"
+        "catalog.remove",
+        "dataset.import.prepare"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2350,7 +2353,8 @@
         "catalog.list",
         "catalog.show",
         "catalog.rename",
-        "catalog.remove"
+        "catalog.remove",
+        "dataset.import.prepare"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2408,7 +2412,8 @@
         "catalog.list",
         "catalog.show",
         "catalog.rename",
-        "catalog.remove"
+        "catalog.remove",
+        "dataset.import.prepare"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2466,7 +2471,8 @@
         "catalog.list",
         "catalog.show",
         "catalog.rename",
-        "catalog.remove"
+        "catalog.remove",
+        "dataset.import.prepare"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2524,7 +2530,8 @@
         "catalog.list",
         "catalog.show",
         "catalog.rename",
-        "catalog.remove"
+        "catalog.remove",
+        "dataset.import.prepare"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2582,7 +2589,8 @@
         "catalog.list",
         "catalog.show",
         "catalog.rename",
-        "catalog.remove"
+        "catalog.remove",
+        "dataset.import.prepare"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2640,7 +2648,8 @@
         "catalog.list",
         "catalog.show",
         "catalog.rename",
-        "catalog.remove"
+        "catalog.remove",
+        "dataset.import.prepare"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2674,7 +2683,8 @@
         "catalog.list",
         "catalog.show",
         "catalog.rename",
-        "catalog.remove"
+        "catalog.remove",
+        "dataset.import.prepare"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -3754,6 +3764,164 @@
       "previous_path": "raw/orders",
       "new_path": null,
       "alias_retained": false
+    }
+  },
+  {
+    "name": "import-prepared-empty",
+    "schema": "ImportPreparationResultV1",
+    "valid": true,
+    "value": {
+      "import_id": "00000000-0000-4000-8000-000000000001",
+      "workspace_id": "00000000-0000-4000-8000-000000000002",
+      "dataset_id": "00000000-0000-4000-8000-000000000003",
+      "path": "raw/orders",
+      "branch": "main",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
+      "schema_normalization": "pending",
+      "source_snapshot_limitation": true,
+      "kind": "import_preparation",
+      "status": "prepared",
+      "published": false,
+      "registered": true,
+      "file_count": "1",
+      "row_count": "0",
+      "byte_count": "256",
+      "staging_path": ".transflow/runtime/import-staging/00000000-0000-4000-8000-000000000001"
+    }
+  },
+  {
+    "name": "import-staging-manifest",
+    "schema": "ImportStagingManifestV1",
+    "valid": true,
+    "value": {
+      "import_id": "00000000-0000-4000-8000-000000000001",
+      "workspace_id": "00000000-0000-4000-8000-000000000002",
+      "dataset_id": "00000000-0000-4000-8000-000000000003",
+      "path": "raw/orders",
+      "branch": "main",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
+      "schema_normalization": "pending",
+      "source_snapshot_limitation": true,
+      "format_version": 1,
+      "kind": "import_staging",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "validation_certificate_fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "source_root": "/data/snapshot",
+      "source_files": [
+        "empty.parquet"
+      ],
+      "files": [
+        {
+          "path": "part-00000.parquet",
+          "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "byte_length": "256",
+          "row_count": "0"
+        }
+      ]
+    }
+  },
+  {
+    "name": "import-cannot-claim-published",
+    "schema": "ImportPreparationResultV1",
+    "valid": false,
+    "value": {
+      "import_id": "00000000-0000-4000-8000-000000000001",
+      "workspace_id": "00000000-0000-4000-8000-000000000002",
+      "dataset_id": "00000000-0000-4000-8000-000000000003",
+      "path": "raw/orders",
+      "branch": "main",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
+      "schema_normalization": "pending",
+      "source_snapshot_limitation": true,
+      "kind": "import_preparation",
+      "status": "prepared",
+      "published": true,
+      "registered": true,
+      "file_count": "1",
+      "row_count": "0",
+      "byte_count": "256",
+      "staging_path": ".transflow/runtime/import-staging/00000000-0000-4000-8000-000000000001"
+    }
+  },
+  {
+    "name": "import-cannot-claim-normalized",
+    "schema": "ImportPreparationResultV1",
+    "valid": false,
+    "value": {
+      "import_id": "00000000-0000-4000-8000-000000000001",
+      "workspace_id": "00000000-0000-4000-8000-000000000002",
+      "dataset_id": "00000000-0000-4000-8000-000000000003",
+      "path": "raw/orders",
+      "branch": "main",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
+      "schema_normalization": "complete",
+      "source_snapshot_limitation": true,
+      "kind": "import_preparation",
+      "status": "prepared",
+      "published": false,
+      "registered": true,
+      "file_count": "1",
+      "row_count": "0",
+      "byte_count": "256",
+      "staging_path": ".transflow/runtime/import-staging/00000000-0000-4000-8000-000000000001"
+    }
+  },
+  {
+    "name": "import-must-report-snapshot-limit",
+    "schema": "ImportStagingManifestV1",
+    "valid": false,
+    "value": {
+      "import_id": "00000000-0000-4000-8000-000000000001",
+      "workspace_id": "00000000-0000-4000-8000-000000000002",
+      "dataset_id": "00000000-0000-4000-8000-000000000003",
+      "path": "raw/orders",
+      "branch": "main",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
+      "schema_normalization": "pending",
+      "source_snapshot_limitation": false,
+      "format_version": 1,
+      "kind": "import_staging",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "validation_certificate_fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "source_root": "/data/snapshot",
+      "source_files": [
+        "empty.parquet"
+      ],
+      "files": [
+        {
+          "path": "part-00000.parquet",
+          "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "byte_length": "256",
+          "row_count": "0"
+        }
+      ]
+    }
+  },
+  {
+    "name": "import-must-have-files",
+    "schema": "ImportStagingManifestV1",
+    "valid": false,
+    "value": {
+      "import_id": "00000000-0000-4000-8000-000000000001",
+      "workspace_id": "00000000-0000-4000-8000-000000000002",
+      "dataset_id": "00000000-0000-4000-8000-000000000003",
+      "path": "raw/orders",
+      "branch": "main",
+      "source_snapshot_id": "00000000-0000-4000-8000-000000000004",
+      "schema_normalization": "pending",
+      "source_snapshot_limitation": true,
+      "format_version": 1,
+      "kind": "import_staging",
+      "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "validation_certificate_fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "source_root": "/data/snapshot",
+      "source_files": [
+        "empty.parquet"
+      ],
+      "files": []
     }
   }
 ]

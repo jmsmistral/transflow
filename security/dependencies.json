@@ -1,6 +1,6 @@
 {
   "locks": {
-    "Cargo.lock": "8b5cf94fcba180d61e0caf0bcfba01a9f2fe65bf2913a9aaf7fc3c7c6a55f276",
+    "Cargo.lock": "c80f6f88d3bd4508fbb5d7f9338ec086741c0c2303c2fb64cd579530838c6fcc",
     "python/dev-py313.lock": "70e9c67f810e843334c39b4d47c1a23c30e7a982a1da144b87fc86c844227ddc",
     "python/dev-py314.lock": "70e9c67f810e843334c39b4d47c1a23c30e7a982a1da144b87fc86c844227ddc",
     "tools/qualification/python/py313.lock": "cd008e118c8e66bda4e999a67be7d869a1fa62ada37ca19246e42a00f7014be3",
@@ -405,6 +405,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "ahash",
@@ -432,6 +433,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "android_system_properties",
@@ -511,6 +513,7 @@
         "Apache-2.0 AND MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "arrow-array",
@@ -524,6 +527,7 @@
         "Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "arrow-buffer",
@@ -537,6 +541,7 @@
         "Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "arrow-cmp",
@@ -550,6 +555,7 @@
         "Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "arrow-data",
@@ -563,6 +569,7 @@
         "Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "arrow-ipc",
@@ -576,6 +583,7 @@
         "Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "arrow-schema",
@@ -589,6 +597,7 @@
         "Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "arrow-select",
@@ -683,6 +692,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "base64",
@@ -724,6 +734,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "bumpalo",
@@ -792,6 +803,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "chrono",
@@ -873,6 +885,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "const-random-macro",
@@ -886,6 +899,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "const-random",
@@ -899,6 +913,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "core-foundation-sys",
@@ -982,6 +997,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "crunchy",
@@ -1134,6 +1150,7 @@
         "Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "flatbuffers",
@@ -1328,6 +1345,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "getrandom",
@@ -1341,6 +1359,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "getrandom",
@@ -1354,6 +1373,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "getrandom",
@@ -1367,6 +1387,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "half",
@@ -1541,6 +1562,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "iana-time-zone-haiku",
@@ -1554,6 +1576,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "iana-time-zone",
@@ -1734,6 +1757,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "jobserver",
@@ -1747,6 +1771,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "js-sys",
@@ -1774,6 +1799,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "libm",
@@ -1911,6 +1937,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "num-bigint",
@@ -1924,6 +1951,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "num-complex",
@@ -1937,6 +1965,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "num-integer",
@@ -2033,6 +2062,7 @@
         "Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "parquet",
@@ -2156,6 +2186,7 @@
         "MIT OR Apache-2.0 OR LGPL-2.1-or-later"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "r-efi",
@@ -2169,6 +2200,7 @@
         "MIT OR Apache-2.0 OR LGPL-2.1-or-later"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "r-efi",
@@ -2222,6 +2254,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "rustc_version",
@@ -2249,6 +2282,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "rustversion",
@@ -2302,6 +2336,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "semver",
@@ -2315,6 +2350,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "seq-macro",
@@ -2493,6 +2529,7 @@
         "BSD-3-Clause"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "snap",
@@ -2714,6 +2751,7 @@
         "CC0-1.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "tiny-keccak",
@@ -2919,6 +2957,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "twox-hash",
@@ -3043,6 +3082,7 @@
         "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "wasip2",
@@ -3056,6 +3096,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "wasm-bindgen-macro-support",
@@ -3069,6 +3110,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "wasm-bindgen-macro",
@@ -3082,6 +3124,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "wasm-bindgen-shared",
@@ -3095,6 +3138,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "wasm-bindgen",
@@ -3108,6 +3152,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "windows-core",
@@ -3121,6 +3166,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "windows-implement",
@@ -3134,6 +3180,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "windows-interface",
@@ -3161,6 +3208,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "windows-result",
@@ -3174,6 +3222,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "windows-strings",
@@ -3215,6 +3264,7 @@
         "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "wit-bindgen",
@@ -3270,6 +3320,7 @@
         "BSD-2-Clause OR Apache-2.0 OR MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "zerocopy-derive",
@@ -3283,6 +3334,7 @@
         "BSD-2-Clause OR Apache-2.0 OR MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "zerocopy",
@@ -3380,6 +3432,7 @@
         "BSD-3-Clause"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "zstd-safe",
@@ -3393,6 +3446,7 @@
         "BSD-3-Clause"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "zstd-sys",
@@ -3406,6 +3460,7 @@
         "BSD-3-Clause"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "zstd",

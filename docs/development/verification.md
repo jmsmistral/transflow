@@ -224,3 +224,14 @@ renamed-checkout document test preserves links to the intra-repository CLI crate
 [CI workflows](evidence/t016-ci.json) pass at `492ebc3a72ebe79afb6785e59eeaea6dbc26b4b4`;
 specification progress `62c7d0b5a498ea503c14250825852d88d91d3a4f` is pushed. Browser verification
 was used while the public API was rate-limited. T016 is complete.
+
+## T035 local import preparation verification (2026-09-20)
+
+The full contributor aggregate passes: 182 Rust tests plus one documentation test,
+635 Python tests, 250 web tests, 27 installed-worker CLI tests, 44 document,
+27 safety and twelve boundary regressions. The subsequent readability refactor
+also passes workspace Clippy and all nine candidate tests. The dependency inventory
+remains 640 versions, with no new versions and zero advisory matches after refresh.
+The shared contract corpus now contains 196 cases. See the [local evidence](evidence/t035-macos-arm64.json)
+and [import guide](../../crates/transflow/IMPORTS.md). CI qualification is pending;
+no normalization, quality-check PASS, artifact or dataset publication is claimed.

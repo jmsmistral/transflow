@@ -308,3 +308,6 @@ impl Reader {
         Ok(())
     }
 }
+
+/// Guarded copy-only local Parquet import preparation.
+pub mod imports;

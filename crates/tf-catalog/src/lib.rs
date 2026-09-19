@@ -22,3 +22,6 @@ pub mod graph_cache;
 
 /// Exact catalogue pages and retained identity lookup.
 pub mod browse;
+
+/// Explicit local-file selection for import preparation.
+pub mod local_files;

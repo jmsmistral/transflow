@@ -121,7 +121,7 @@ fn limits() -> CaptureLimits {
 fn text(capture: &SourceSnapshot, path: &str) -> Result<String, Error> {
     String::from_utf8(capture.read(Path::new(path), 16 * 1024 * 1024)?).map_err(|_| Error::Context)
 }
-fn validate(
+pub(crate) fn validate(
     registry: &RegistrySnapshot,
     capture: &SourceSnapshot,
     result: &Value,
@@ -141,7 +141,7 @@ fn validate(
         check_semantics: validation::CHECK_SEMANTICS,
     })?)
 }
-fn rebind(value: &mut Value, fingerprint: &str) {
+pub(crate) fn rebind(value: &mut Value, fingerprint: &str) {
     fn reference(value: &mut Value, fingerprint: &str) {
         if value["form"] == "bound" {
             value["catalog_fingerprint"] = fingerprint.into();
@@ -178,6 +178,16 @@ pub(crate) fn inspect(
     python: Option<&String>,
     persistent: bool,
 ) -> Result<Inspection, Error> {
+    inspect_overlay(workspace, python, persistent, None)
+}
+/// Explicit import registration may supply a validated pending registry overlay before imports.
+/// The captured original registry must match its exact expected-old bytes.
+pub(crate) fn inspect_overlay(
+    workspace: &Workspace,
+    python: Option<&String>,
+    persistent: bool,
+    overlay: Option<(&RegistrySnapshot, &RegistrySnapshot)>,
+) -> Result<Inspection, Error> {
     let current = std::env::current_dir()?;
     let config = workspace.config();
     let python = python
@@ -211,6 +221,16 @@ pub(crate) fn inspect(
     };
     let registry =
         RegistrySnapshot::parse(config.id(), &text(&capture, ".transflow/catalog.toml")?)?;
+    let registry = if let Some((original, proposed)) = overlay {
+        if registry.raw_digest() != original.raw_digest()
+            || registry.workspace() != proposed.workspace()
+        {
+            return Err(Error::Context);
+        }
+        proposed.clone()
+    } else {
+        registry
+    };
     let result = discovery::discover(
         &env.interpreter,
         &scratch,

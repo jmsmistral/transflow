@@ -2,6 +2,7 @@
 //! Help/version require no workspace I/O. Application services remain later work.
 mod catalog;
 mod env;
+mod import;
 mod init;
 mod preparation;
 /// Registry durability and recovery application service.
@@ -46,6 +47,13 @@ fn command() -> clap::Command {
             .subcommand(clap::Command::new("lock").disable_help_flag(true).about("Resolve exact hashed dependencies using qualified tooling"))
             .subcommand(clap::Command::new("sync").disable_help_flag(true).about("Install locked wheels and the explicit matched Transflow wheel"))
             .subcommand(clap::Command::new("check").disable_help_flag(true).about("Reject interpreter, lock or installed-file drift without installation")))
+        .subcommand(clap::Command::new("dataset").disable_help_flag(true).subcommand_required(true).about("Dataset operations")
+            .subcommand(clap::Command::new("import").disable_help_flag(true).about("Prepare copied local Parquet files; publication is not available yet")
+                .arg(Arg::new("reference").required(true))
+                .arg(Arg::new("path").long("path").required(true).value_name("FILE_OR_GLOB"))
+                .arg(Arg::new("branch").long("branch"))
+                .arg(Arg::new("python").long("python"))
+                .arg(Arg::new("prepare-only").long("prepare-only").action(ArgAction::SetTrue))))
         .subcommand(clap::Command::new("validate").disable_help_flag(true).about("Validate all captured declarations without persistent changes").arg(Arg::new("python").long("python").value_name("EXECUTABLE")))
         .subcommand(clap::Command::new("catalog").disable_help_flag(true).subcommand_required(true).about("Manage durable catalogue identities")
             .subcommand(clap::Command::new("list").disable_help_flag(true).about("Browse exact identities with revision-bound pagination")
@@ -196,6 +204,62 @@ pub fn run(
     match command().try_get_matches_from(args) {
         Ok(matches) => {
             if !matches.get_flag("help") && !matches.get_flag("version") {
+                if let Some(("dataset", args)) = matches.subcommand() {
+                    let imported = args.subcommand_matches("import").ok_or(CliError::Protocol(
+                        tf_protocol::ProtocolError::InvalidDocument,
+                    ))?;
+                    match import::execute(imported, matches.get_one::<String>("workspace")) {
+                        Ok(value) => {
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::import_preparation(&version, &context, value)?
+                                            .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                writeln!(stdout,"Prepared {} file(s), {} rows, {} bytes for {} on branch {}.\nStaging: {}\nNo data version or branch head was published. Schema normalization and data checks remain pending. Use a producer-provided atomic snapshot for strong consistency against concurrent external writers.",value["file_count"].as_str().unwrap_or(""),value["row_count"].as_str().unwrap_or(""),value["byte_count"].as_str().unwrap_or(""),redactor.text(value["path"].as_str().unwrap_or("unknown"))?.as_str(),redactor.text(value["branch"].as_str().unwrap_or("unknown"))?.as_str(),value["staging_path"].as_str().unwrap_or("")).map_err(CliError::Stdout)?;
+                            }
+                            return Ok(ExitCode::SUCCESS);
+                        }
+                        Err(error) => {
+                            let diagnostic = if let import::Error::Preparation(
+                                preparation::Error::Validation(error),
+                            ) = error
+                            {
+                                error.diagnostic(&redactor)?
+                            } else {
+                                Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Import preparation could not finish")?,redactor.text(&error.to_string())?,redactor.text("Use an explicit stable local Parquet selection and a prepared matched environment. Producer/external identities cannot be replaced. An identity committed before a later staging failure remains registered; no data is published.")?)
+                            };
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::failure(
+                                            &version,
+                                            ExitStatus::Failure,
+                                            &context,
+                                            &[diagnostic],
+                                        )?
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                stderr
+                                    .write_all(
+                                        render_diagnostic(
+                                            &diagnostic,
+                                            &context,
+                                            intent.verbose,
+                                            false,
+                                        )
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stderr)?;
+                            }
+                            return Ok(ExitCode::FAILURE);
+                        }
+                    }
+                }
                 if let Some(("catalog", args)) = matches.subcommand()
                     && args.subcommand_name() != Some("sync")
                 {

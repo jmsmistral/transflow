@@ -183,3 +183,12 @@ The shared [structural validation service](crates/tf-catalog/VALIDATION.md) (T03
 [preparation lifecycle](crates/transflow/PREPARATION.md). Build orchestration remains upcoming work.
 
 [Catalogue browsing and lifecycle commands](crates/transflow/CATALOG.md) provide revision-bound pages, exact retained identity lookup, rename previews/aliases and explicit guarded tombstones.
+
+## Local import preparation
+
+T035 adds `dataset import <path-or-id> --path <file-or-glob> --prepare-only`.
+It copies and validates local Parquet files, registers an explicit imported
+identity after graph validation, and retains preparation metadata. It accepts
+valid zero-row files and detects observable source changes. This is staging only;
+no dataset version, branch head or quality certificate is published. See the
+[import preparation guide](crates/transflow/IMPORTS.md) for setup and limitations.

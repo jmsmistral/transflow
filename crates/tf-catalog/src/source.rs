@@ -329,7 +329,7 @@ fn tokens(pattern: &str) -> Result<Vec<Token>, SourceError> {
     }
     Ok(result)
 }
-fn validate_glob(pattern: &str) -> Result<(), SourceError> {
+pub(crate) fn validate_glob(pattern: &str) -> Result<(), SourceError> {
     for part in pattern.trim_end_matches('/').split('/') {
         tokens(part)?;
     }
@@ -361,7 +361,7 @@ fn segment_matches(pattern: &str, text: &str) -> bool {
     }
     previous[t.len()]
 }
-fn glob_matches(pattern: &str, path: &str) -> bool {
+pub(crate) fn glob_matches(pattern: &str, path: &str) -> bool {
     let pattern = pattern.trim_end_matches('/');
     let p: Vec<_> = pattern.split('/').collect();
     let t: Vec<_> = path.split('/').collect();

@@ -344,6 +344,55 @@ pub struct RegistryProposal {
     lifecycle: bool,
 }
 impl RegistryProposal {
+    /// Explicit local import registration, never a producer/external replacement.
+    pub fn imported(
+        registry: &RegistrySnapshot,
+        source: SourceSnapshotId,
+        path: &DatasetPath,
+        id: DatasetId,
+    ) -> Result<Self, CandidateError> {
+        let assignments = match registry.resolve_output(path.as_str()) {
+            Ok(existing)
+                if existing.kind() == DatasetKind::Imported
+                    && existing.key().dataset_id() == id =>
+            {
+                vec![]
+            }
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    RegistryErrorKind::Missing | RegistryErrorKind::Namespace
+                ) =>
+            {
+                vec![(path.clone(), id, DatasetKind::Imported)]
+            }
+            _ => {
+                return Err(error(
+                    "An import cannot replace a producer, external registration or tombstone",
+                    vec![],
+                ));
+            }
+        };
+        let replacement = registry
+            .render_additions(&assignments)
+            .map_err(|_| error("Imported identity conflicts with the registry", vec![]))?;
+        let projection = registry
+            .sdk_projection(source)
+            .map_err(|_| error("Catalogue projection is invalid", vec![]))?;
+        let catalog_fingerprint = projection["catalog_fingerprint"]
+            .as_str()
+            .ok_or_else(|| error("Catalogue fingerprint is invalid", vec![]))?
+            .to_owned();
+        Ok(Self {
+            workspace: registry.workspace(),
+            source,
+            expected_old: *registry.raw_digest(),
+            catalog_fingerprint,
+            assignments,
+            replacement,
+            lifecycle: false,
+        })
+    }
     /// Explicit lifecycle mutation; preserves every existing identity and kind.
     /// Caller separately validates live producer/reference impact and confirmation.
     pub fn lifecycle(

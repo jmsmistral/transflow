@@ -6,7 +6,7 @@ use tf_domain::diagnostic::{Diagnostic, ExitStatus, RequestContext, SafeText};
 /// Initial complete-result envelope format, independent of the worker protocol.
 pub const CLI_ENVELOPE_VERSION: u32 = 1;
 /// Implemented CLI operations. This does not advertise dataset/coordinator capabilities.
-pub const CLI_CAPABILITIES: [&str; 14] = [
+pub const CLI_CAPABILITIES: [&str; 15] = [
     "cli.help",
     "cli.version",
     "cli.diagnostics.v1",
@@ -21,6 +21,7 @@ pub const CLI_CAPABILITIES: [&str; 14] = [
     "catalog.show",
     "catalog.rename",
     "catalog.remove",
+    "dataset.import.prepare",
 ];
 /// Successful informational operation.
 #[derive(Clone, Copy, Debug)]
@@ -148,6 +149,15 @@ impl CliEnvelope {
             result,
             errors.iter().map(diagnostic).collect(),
         )
+    }
+    /// Prepared copied local files, explicitly not a publication or successful data check.
+    pub fn import_preparation(
+        version: &SafeText,
+        ctx: &RequestContext,
+        result: Value,
+    ) -> Result<Self, ProtocolError> {
+        validate_document("ImportPreparationResultV1", &result)?;
+        Self::encode(version, ExitStatus::Success, ctx, result, vec![])
     }
     fn encode(
         version: &SafeText,

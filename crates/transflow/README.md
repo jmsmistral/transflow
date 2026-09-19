@@ -67,3 +67,6 @@ The shared contract corpus includes invalid ANSI/bidi text, version/code/exit
 mismatches and missing diagnostics. Actual executable tests verify stream separation,
 context, flags and safe usage errors. A synthetic cycle exercises the same domain
 model/renderer; real validate/sync integration tests now cover graph detection and A46/A65 preparation workflows.
+
+Local Parquet copy staging is available through `dataset import --prepare-only`.
+See [import preparation](IMPORTS.md); normalization and publication remain later tasks.
