@@ -145,3 +145,14 @@ this script. The [task evidence](../../../transflow-spec/TASKS.md) and
 [current verification report](../../../transflow-spec/VERIFICATION.md) record
 what was actually run. Review changes in both repositories before committing;
 record each revision separately when those commits exist.
+
+## T012 completion evidence
+
+On 2026-09-19 the full contributor aggregate passed on macOS arm64, including
+222 Python 3.14.7 tests; the separate Python 3.13.0 runner also passed 222 tests.
+[Local evidence](evidence/t012-macos-arm64.json) records the commands/counts. All
+five [CI workflows and their 19 jobs](evidence/t012-ci.json) passed for implementation
+`e97eee3bb82d4f921745840e259742d7bec06f97`, paired with specification progress
+`22c5f53`. The Rust/web jobs cover all three platforms; Python and native
+qualification cover both Python minor versions on each platform. T012 is complete
+for contract definitions; production domain/transport/hashing work remains T013–T015.

@@ -112,7 +112,7 @@ supervised test children. It does not implement dataset publication or workers.
 The initial source boundaries are [crates/](crates/README.md),
 [python/](python/README.md) and [web/](web/README.md). T003 has pinned the initial
 toolchain/dependency candidates and exercised them on macOS arm64. Native Linux
-qualification now passes; T001–T011 are complete for their bootstrap scope. T009 and T011 probes pass
+qualification now passes; T001–T012 are complete for their bootstrap/definition scope. T009 and T011 probes pass
 the native platform/Python matrix; T010 retains native editor checks for later integration.
 The [catalogue overlay spike](docs/development/catalog-overlay.md) now passes runtime and
 mypy checks on both Python versions; T010 is complete for its prototype scope, with native editor checks retained for later integration.
@@ -120,3 +120,7 @@ Local verification and remote CI results are recorded separately in the task evi
 T007’s [three-platform Rust CI run](https://github.com/jmsmistral/transflow/actions/runs/35410393011) also passes.
 See the [compatibility matrix and setup](docs/development/compatibility.md)
 for the isolated probe environment, measured results and CI workflow.
+
+T012’s [contract definitions](schemas/README.md) pass shared Rust/Python/TypeScript
+fixtures and all five [CI workflows](docs/development/evidence/t012-ci.json).
+T013 is next: production domain IDs, paths and values. Framed transport remains T014.

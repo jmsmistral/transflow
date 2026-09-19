@@ -1,0 +1,139 @@
+{
+  "task": "T012",
+  "verified": "2026-09-19",
+  "implementation_sha": "e97eee3bb82d4f921745840e259742d7bec06f97",
+  "specification_progress_sha": "22c5f53",
+  "workflows": [
+    {
+      "name": "Web application",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045103",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "web (macos-15)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045103/job/105886570060"
+        },
+        {
+          "name": "web (ubuntu-24.04-arm)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045103/job/105886570064"
+        },
+        {
+          "name": "web (ubuntu-24.04)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045103/job/105886570076"
+        }
+      ]
+    },
+    {
+      "name": "Dependency and privacy baseline",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045102",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "safety",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045102/job/105886569988"
+        }
+      ]
+    },
+    {
+      "name": "Python packages",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "packages (macos-15, 3.13.15)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570100"
+        },
+        {
+          "name": "packages (ubuntu-24.04-arm, 3.13.15)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570113"
+        },
+        {
+          "name": "packages (ubuntu-24.04, 3.14.7)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570122"
+        },
+        {
+          "name": "packages (macos-15, 3.14.7)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570124"
+        },
+        {
+          "name": "packages (ubuntu-24.04-arm, 3.14.7)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570140"
+        },
+        {
+          "name": "packages (ubuntu-24.04, 3.13.15)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570182"
+        }
+      ]
+    },
+    {
+      "name": "Rust workspace",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045126",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "workspace (ubuntu-24.04-arm)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045126/job/105886570118"
+        },
+        {
+          "name": "workspace (macos-15)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045126/job/105886570190"
+        },
+        {
+          "name": "workspace (ubuntu-24.04)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045126/job/105886570193"
+        }
+      ]
+    },
+    {
+      "name": "Native dependency qualification",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "native (ubuntu-24.04, 3.13.15)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886569993"
+        },
+        {
+          "name": "native (ubuntu-24.04-arm, 3.13.15)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886570057"
+        },
+        {
+          "name": "native (macos-15, 3.14.7)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886570082"
+        },
+        {
+          "name": "native (ubuntu-24.04-arm, 3.14.7)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886570087"
+        },
+        {
+          "name": "native (ubuntu-24.04, 3.14.7)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886570112"
+        },
+        {
+          "name": "native (macos-15, 3.13.15)",
+          "conclusion": "success",
+          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886570170"
+        }
+      ]
+    }
+  ],
+  "scope": "All five workflows pass; three-platform Rust/web and six-job Python/native matrices. Full application conformance remains later work."
+}
