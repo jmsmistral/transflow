@@ -112,10 +112,10 @@ supervised test children. It does not implement dataset publication or workers.
 The initial source boundaries are [crates/](crates/README.md),
 [python/](python/README.md) and [web/](web/README.md). T003 has pinned the initial
 toolchain/dependency candidates and exercised them on macOS arm64. Native Linux
-qualification now passes; T001–T009 are complete for their bootstrap scope; T009 has local evidence, with
+qualification now passes; T001–T010 are complete for their bootstrap scope; T009 has local evidence, with
 its expanded native CI coverage still pending.
 The [catalogue overlay spike](docs/development/catalog-overlay.md) now passes runtime and
-mypy checks on both Python versions; T010 remains open for native editor completion checks.
+mypy checks on both Python versions; T010 is complete for its prototype scope, with native editor checks retained for later integration.
 Local verification and remote CI results are recorded separately in the task evidence.
 T007’s [three-platform Rust CI run](https://github.com/jmsmistral/transflow/actions/runs/35410393011) also passes.
 See the [compatibility matrix and setup](docs/development/compatibility.md)

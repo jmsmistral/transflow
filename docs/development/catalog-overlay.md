@@ -3,7 +3,8 @@
 T010 now has an executable SDK binding and mypy overlay prototype. Python 3.13.0
 and 3.14.7 pass all 48 package tests on macOS arm64 with mypy 2.3.1. Twenty tests
 were added for this spike. Interactive editor completion is still unverified;
-T010 remains open for that acceptance item. The
+The owner accepted T010 G0 closure on the runtime/mypy evidence and retained
+that acceptance item under T031/T108. The
 [decision and remaining qualification](../../../transflow-spec/docs/adr/ADR-017.md)
 record the boundary between these results and editor/product support. The
 [local evidence snapshot](evidence/t010-macos-arm64.json) records counts and wheel hashes.
@@ -106,7 +107,7 @@ configuration or the later Transflow service. Do not assume two language servers
 compose identically in VS Code and Emacs. Neither native completion UI was tested
 in this session; VS Code is not installed on this host.
 
-Remaining T010 qualification: in both documented editors, open the two synthetic
+Retained T031/T108 qualification: in both documented editors, open the two synthetic
 workspaces simultaneously, inspect `C.raw.` completion, reject a cross-workspace
 typo, verify SDK root completions, switch to a new fingerprint, and confirm stale
 metadata cannot be mistaken for the new context. Record editor, extension/server
@@ -123,3 +124,12 @@ visibility for this test, not crash durability or protection against hostile
 concurrent filesystem mutation. T012/T020/T028/T030/T031 and T107/T108 retain
 those responsibilities. Application/specification versions and dependency locks
 are unchanged; no additional packages, editors or browser drivers were installed.
+
+
+## CI and manual follow-up
+
+The pushed implementation `fcf7977` passed all five workflows, including the
+[six-job Python matrix](https://github.com/jmsmistral/transflow/actions/runs/35436438596).
+The owner approved G0 prototype closure and will perform broader manual testing
+after more features land. The [manual checklist](manual-acceptance.md) retains
+the native editor scenarios; completion of this prototype does not mark them passed.
