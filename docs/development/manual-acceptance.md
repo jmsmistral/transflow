@@ -23,3 +23,21 @@ in the [overlay report](catalog-overlay.md), once editor integration is delivere
 
 Add executable build, validation, publication, history and UI journeys here as
 those features become available, linking each to its implementation task/scenario.
+
+
+## Runtime resources and cancellation — after T058/T067
+
+T011 qualifies helper behavior; these application journeys await the real runtime.
+
+- With memory settings omitted, confirm no Transflow memory-admission gate appears
+  and reported engine defaults are distinguished from application limits.
+- While a long validation is active, time out an interactive query and confirm
+  validation continues under its own budget. Verify the phase/configuration named
+  by an eventual validation timeout.
+- Disable the transform or validation deadline, cancel explicitly, and confirm
+  the managed process group exits while the last published version stays intact.
+- Request a hard process limit on an unsupported backend; expect a clear rejection,
+  not a silently unenforced setting.
+
+Record these alongside the owner's broader manual testing; no application-level
+resource journey is marked passed by the helper probe alone.

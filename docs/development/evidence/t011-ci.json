@@ -1,0 +1,71 @@
+{
+  "task": "T011",
+  "verified": "2026-09-19",
+  "head_sha": "a46aca6e2463fde5687ac06e30023ee26023a75a",
+  "workflows": [
+    {
+      "name": "Native dependency qualification",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35437047654",
+      "conclusion": "success"
+    },
+    {
+      "name": "Python packages",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35437047650",
+      "conclusion": "success"
+    },
+    {
+      "name": "Rust workspace",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35437047625",
+      "conclusion": "success"
+    },
+    {
+      "name": "Web application",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35437047642",
+      "conclusion": "success"
+    },
+    {
+      "name": "Dependency and privacy baseline",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35437047655",
+      "conclusion": "success"
+    }
+  ],
+  "native_jobs": [
+    {
+      "os": "ubuntu-24.04",
+      "python": "3.14.7",
+      "conclusion": "success",
+      "job_id": 105881379921
+    },
+    {
+      "os": "ubuntu-24.04",
+      "python": "3.13.15",
+      "conclusion": "success",
+      "job_id": 105881379968
+    },
+    {
+      "os": "macos-15",
+      "python": "3.14.7",
+      "conclusion": "success",
+      "job_id": 105881379998
+    },
+    {
+      "os": "macos-15",
+      "python": "3.13.15",
+      "conclusion": "success",
+      "job_id": 105881379999
+    },
+    {
+      "os": "ubuntu-24.04-arm",
+      "python": "3.14.7",
+      "conclusion": "success",
+      "job_id": 105881380002
+    },
+    {
+      "os": "ubuntu-24.04-arm",
+      "python": "3.13.15",
+      "conclusion": "success",
+      "job_id": 105881380103
+    }
+  ],
+  "scope": "Ten T011 probes invoked by the successful native runner, alongside existing qualification. No production/runtime or full A61 acceptance claim."
+}

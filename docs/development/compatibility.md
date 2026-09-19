@@ -184,5 +184,6 @@ ten tests to the existing six-job native matrix using unchanged dependency locks
 Local Python 3.13.0/3.14.7 runs pass separate phase deadlines, cancellable disabled
 timers, real POSIX group/child reaping, explicit memory policy and offline
 pip/pip-tools hash resolution with tamper rejection. Engine defaults and peak
-RSS are reported; no universal hard-process memory support is claimed. New native
-CI results are pending until the T011 changes are pushed and checked.
+RSS are reported; no universal hard-process memory support is claimed. All six
+[native jobs](https://github.com/jmsmistral/transflow/actions/runs/35437047654) passed
+at `a46aca6`, using Python 3.13.15/3.14.7 on macOS arm64 and Linux x86_64/arm64.
