@@ -244,5 +244,5 @@ safety 27 and boundary checks twelve. The production-normalizer engine probe
 passes seven groups on both prepared local Python versions using PyArrow 25.0.1,
 Polars 1.44.2 and DuckDB 1.5.5. No dependency version or lock changed.
 See [local evidence](evidence/t036-macos-arm64.json) and the
-[normalization guide](../../crates/tf-store/NORMALIZATION.md). CI qualification is pending.
+[normalization guide](../../crates/tf-store/NORMALIZATION.md). All five [CI workflows and 19 jobs](evidence/t036-ci.json) pass at implementation `c99f4c2517a557f95fdd7ba6ce38797550d10225`, paired with specification progress `13477efd082c7a71ea9d237ef6ed03a3a25d9b42`. The six native jobs also pass the production-normalizer engine probe. T036 is complete.
 Publication and quality evaluation remain later tasks; pandas/SQL transforms remain deferred.
