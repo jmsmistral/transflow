@@ -133,3 +133,8 @@ The pushed implementation `fcf7977` passed all five workflows, including the
 The owner approved G0 prototype closure and will perform broader manual testing
 after more features land. The [manual checklist](manual-acceptance.md) retains
 the native editor scenarios; completion of this prototype does not mark them passed.
+
+T026 adds immutable Input/Output declaration capture for prototype-bound references
+and expands the generated root stub exports to match the SDK. This does not add
+production worker binding, foreign-output resolution or editor qualification.
+See [authoring declarations](../../python/DECLARATIONS.md).
