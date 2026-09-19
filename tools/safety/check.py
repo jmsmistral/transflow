@@ -22,12 +22,27 @@ from contracts import check_contracts
 def main():
     root = Path(__file__).resolve().parents[2]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--spec-root", type=Path, default=root.parent / "transflow-spec")
+    scope = parser.add_mutually_exclusive_group()
+    scope.add_argument(
+        "--spec-root", type=Path, help="Sibling specification checkout for local checks"
+    )
+    scope.add_argument(
+        "--implementation-only",
+        action="store_true",
+        help="Check only this repository without reading private specification files",
+    )
     parser.add_argument("--advisories", type=Path, default=root / "security/advisories.json")
     args = parser.parse_args()
-    names = private_names(args.spec_root)
+    if args.implementation_only:
+        names = set()
+        repositories = (root,)
+        print("Scope: implementation only; spec and mapped screenshot names are not checked.")
+    else:
+        spec_root = args.spec_root or root.parent / "transflow-spec"
+        names = private_names(spec_root)
+        repositories = (root, spec_root)
     total = 0
-    for repo in (root, args.spec_root):
+    for repo in repositories:
         count, secrets = scan_repository(repo, names)
         total += count
         if secrets:

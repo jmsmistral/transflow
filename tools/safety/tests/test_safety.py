@@ -3,6 +3,7 @@
 import copy
 import datetime as dt
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -13,6 +14,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from advisories import query
 from baseline import (
+    LOCKS,
     Failure,
     apply_exceptions,
     check_advisories,
@@ -26,6 +28,63 @@ from contracts import check_contracts
 
 ROOT = Path(__file__).resolve().parents[3]
 TODAY = dt.date(2026, 9, 19)
+
+
+class StandaloneCommandTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory(prefix="transflow-standalone-test-")
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name) / "transflow"
+        self.root.mkdir()
+        subprocess.run(["git", "init", "-q", str(self.root)], check=True)
+        # A complete minimal checkout, deliberately without a sibling specification.
+        paths = [*LOCKS, *[str(p.relative_to(ROOT)) for p in (ROOT / "security").glob("*.json")]]
+        paths.extend(str(p.relative_to(ROOT)) for p in (ROOT / "tools/safety").glob("*.py"))
+        for name in paths:
+            destination = self.root / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / name, destination)
+        # Synthetic fresh provider evidence; this fixture never queries the network.
+        report_path = self.root / "security/advisories.json"
+        report = json.loads(report_path.read_text())
+        report["checked_at"] = dt.datetime.now(dt.UTC).isoformat()
+        report["findings"] = []
+        report_path.write_text(json.dumps(report))
+        policy_path = self.root / "security/policy.json"
+        policy = json.loads(policy_path.read_text())
+        policy["exceptions"] = [
+            item for item in policy["exceptions"] if item["finding"].startswith("deprecated:")
+        ]
+        policy_path.write_text(json.dumps(policy))
+
+    def check(self, *arguments):
+        return subprocess.run(
+            [sys.executable, "-B", "tools/safety/check.py", *arguments],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+
+    def test_implementation_only_passes_without_spec_checkout(self):
+        result = self.check("--implementation-only")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("Scope: implementation only", result.stdout)
+        self.assertIn("Safety baseline passed", result.stdout)
+
+    def test_default_local_check_still_requires_spec_checkout(self):
+        result = self.check()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("SCREENSHOTS.md", result.stderr)
+
+    def test_implementation_only_still_rejects_credentials(self):
+        secret = "ghp_" + "B" * 36
+        (self.root / "example.py").write_text('token = "' + secret + '"')
+        result = self.check("--implementation-only")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("github-token", result.stdout)
+        self.assertNotIn(secret, result.stdout + result.stderr)
 
 
 class RepositoryTests(unittest.TestCase):

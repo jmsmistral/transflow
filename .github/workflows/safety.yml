@@ -16,34 +16,19 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          path: transflow
-          persist-credentials: false
-      - name: Check out the reviewed sibling specification
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: jmsmistral/transflow-spec
-          ref: 6dfb61c83efc8758c0c307b0402fe159628b2bda
-          path: transflow-spec
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.14.7'
-      - name: Check canonical documents and checker regressions
-        working-directory: transflow
-        run: |
-          python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .
-          python -B -m unittest discover -s ../transflow-spec/tools/tests -v
       - name: Query current advisories for the locked public dependencies
-        working-directory: transflow
         run: python -B tools/safety/advisories.py --output target/safety/advisories.json
       - name: Check privacy, inventory, exceptions and generated contracts
-        working-directory: transflow
-        run: bash tools/check-safety.sh --advisories target/safety/advisories.json
+        run: bash tools/check-safety.sh --implementation-only --advisories target/safety/advisories.json
       - name: Preserve dependency audit evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: dependency-audit
-          path: transflow/target/safety/advisories.json
+          path: target/safety/advisories.json
           if-no-files-found: warn
           retention-days: 14

@@ -114,10 +114,12 @@ environment for T003 native dependency probes; the compatibility guide documents
 explicit setup. Checks never fetch external dependencies; Python tests install
 the locally built wheel into disposable environments. Add broader
 integration/release checks as their real manifests and runners become available.
-T008 now runs `bash tools/check-safety.sh` in the aggregate: 23 failure/success
+T008 now runs `bash tools/check-safety.sh` in the aggregate: 26 failure/success
 regressions, credential scanning of both explicit repositories, nine-lock license
 coverage, bounded-age advisory evidence, expiring exceptions and generated-contract
-drift. See [safety setup and limitations](safety.md). Add canonical fixtures,
+drift. CI uses `--implementation-only` and checks no private specification files;
+three standalone CLI regressions cover absent-spec success, retained local-spec
+requirements and credential rejection. See [safety setup and limitations](safety.md). Add canonical fixtures,
 integration/recovery and browser gates with their implementations. A missing required runner must fail,
 not silently count as a pass. Explicit dependency setup remains separate.
 

@@ -79,6 +79,8 @@ Web gates check TypeScript, ESLint, component tests and repeatable production as
 The [safety baseline](docs/development/safety.md) checks credentials, locked dependency
 licenses, advisory evidence, expiring exceptions and registered generated contracts.
 Advisory refresh is explicit and required after seven UTC calendar days; CI queries current data.
+CI checks only this implementation repository. Specification checks remain part of
+the local contributor workflow and do not require CI access to the private spec repo.
 Tests build a wheel and install it into disposable environments without network
 access; external dependency installation remains explicit. See the
 [verification contract](docs/development/verification.md) for scope and limitations.

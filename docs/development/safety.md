@@ -15,10 +15,22 @@ bash tools/check.sh
 ```
 
 Both commands use already prepared dependencies and make no network requests.
-The safety runner itself requires only Python 3.11+ and Git, plus the sibling
-`~/dev/transflow-spec` checkout. It runs synthetic failure tests, scans both
+The safety runner itself requires only Python 3.11+ and Git. Its default local mode
+also requires the sibling `~/dev/transflow-spec` checkout. It runs synthetic failure tests, scans both
 repositories, checks inventory/advisory/exception consistency and verifies
-registered generated contracts. The Python language gate also lints/formats the
+registered generated contracts. CI uses the standalone mode:
+
+```bash
+bash tools/check-safety.sh --implementation-only
+```
+
+This scans only `transflow` and never reads the specification checkout or its
+screenshot-name mapping. Credential patterns, the private reference-directory
+rule, symlink/size guards, dependency/license/advisory policy and generated-contract
+checks still run. Default local checks continue to require the sibling checkout;
+there is no automatic fallback that hides a missing local specification.
+
+The Python language gate also lints/formats the
 safety tooling with the repository's pinned Ruff configuration.
 
 Refresh advisory evidence explicitly when it is older than seven UTC calendar
@@ -93,7 +105,9 @@ vulnerability advisory. No dependency version was changed for T008.
 The scanner uses each explicit repository's tracked and nonignored candidate
 files, including fixtures and examples. It never traverses `~/dev/`. Canonical
 screenshot basenames come from the specification's mapping; private reference
-paths are rejected before reading bytes. Tracked private paths fail even if their
+paths are rejected before reading bytes in local paired checks. CI does not
+load the private mapping; its path checks cover the reference directory and
+Finder metadata, while credential scanning remains enabled. Tracked private paths fail even if their
 working files were deleted. Ignored reference images are neither read nor hashed.
 Symlinks and files larger than 16 MiB fail instead of silently passing.
 
@@ -145,9 +159,10 @@ the same offline policy checks, and retains that public dependency evidence for
 14 days. A failed query fails the job, even if the older committed report exists.
 No source dumps or reference assets are uploaded by this workflow.
 
-CI checks out both repositories as siblings. It pins the canonical checker to
-spec commit `6dfb61c83efc8758c0c307b0402fe159628b2bda` (specification 1.1.1); review and
-advance that pin when later paired specification/checker changes require it.
-Local aggregate checks always use the current sibling working tree. Local verification and remote CI results are recorded separately in the
+CI checks out only `transflow`. At the owner's request, the private specification
+repository remains separate implementation guidance and knowledge: CI does not
+fetch it, run its document checker/regressions or require cross-repository
+credentials. Local aggregate checks still use the current sibling working tree.
+Local verification and remote CI results are recorded separately in the
 [task ledger](../../../transflow-spec/TASKS.md).
 Publishing and credential/account changes remain separate explicit owner actions.
