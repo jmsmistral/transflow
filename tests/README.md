@@ -11,8 +11,8 @@ bash tools/check-rust.sh
 ```
 
 The existing Rust CI matrix runs this target through `cargo test --workspace` on
-macOS arm64 and Linux x86_64/arm64. Native local evidence currently covers macOS
-arm64 only. No browser or new system dependency is installed for these tests.
+macOS arm64 and Linux x86_64/arm64. Local evidence covers macOS arm64; the [three-platform CI run](https://github.com/jmsmistral/transflow/actions/runs/35410393011)
+also passes at `a5191b9`. No browser or new system dependency is installed for these tests.
 
 ## Fixture contracts
 

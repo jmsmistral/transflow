@@ -47,14 +47,18 @@
     "Normal CLI dependency tree is unchanged"
   ],
   "limitations": [
-    "T003/T004/T005 qualification prerequisites remain unchecked pending remote evidence",
     "A20 publication recovery and A37 actual worker framing/log isolation are not implemented",
     "Synthetic SQLite schema is not the production catalogue or publication transaction",
     "No Parquet or durable outbox is implemented by this harness",
     "Controlled fixture children do not spawn descendants; general process groups and PID fencing remain execution-layer work",
     "Ten-second watchdogs bound test synchronization; no production timeouts or memory limits change",
-    "ENOSPC is injected at a labelled I/O boundary; no disk is filled",
-    "Native Linux CI results not inspected",
-    "T007 changes remain uncommitted"
-  ]
+    "ENOSPC is injected at a labelled I/O boundary; no disk is filled"
+  ],
+  "remote_followup": {
+    "implementation_commit": "a5191b957458eda3e35d6dabdb96be3341c48f5a",
+    "rust_ci": "https://github.com/jmsmistral/transflow/actions/runs/35410393011",
+    "result": "success; three jobs completed",
+    "reviewed_on": "2026-09-19",
+    "method": "Public GitHub Actions summary, internal Browser"
+  }
 }

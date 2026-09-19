@@ -1,5 +1,10 @@
 # Transflow
 
+[![Native qualification](https://github.com/jmsmistral/transflow/actions/workflows/qualification.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/qualification.yml)
+[![Rust](https://github.com/jmsmistral/transflow/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/rust.yml)
+[![Python](https://github.com/jmsmistral/transflow/actions/workflows/python.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/python.yml)
+[![Web](https://github.com/jmsmistral/transflow/actions/workflows/web.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/web.yml)
+
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
 **Status:** Contributor foundation implemented (T001–T002). T004 provides the ten-crate Rust scaffold and CLI help/version. T005 adds one locally installable `transflow` wheel containing the typed SDK and worker bootstrap modules. T003 native qualification passes on all three supported platforms. T006 adds a web development preview with theme and dialog controls. T007 adds deterministic integration-test fixtures for future execution and storage work. Transform declarations, dataset builds and the coordinator remain unimplemented; this is not an application release.
@@ -97,6 +102,6 @@ The initial source boundaries are [crates/](crates/README.md),
 [python/](python/README.md) and [web/](web/README.md). T003 has pinned the initial
 toolchain/dependency candidates and exercised them on macOS arm64. Native Linux
 qualification now passes; T001–T007 are complete for their bootstrap scope.
-T007 is locally verified; its remote run will follow its next push.
+T007’s [three-platform Rust CI run](https://github.com/jmsmistral/transflow/actions/runs/35410393011) also passes.
 See the [compatibility matrix and setup](docs/development/compatibility.md)
 for the isolated probe environment, measured results and CI workflow.
