@@ -13,3 +13,6 @@ pub mod registry_write;
 
 /// Workspace-local typing-only catalogue generations and atomic refresh.
 pub mod editor;
+
+/// Complete local structural validation and immutable context-bound certificates.
+pub mod validation;

@@ -1829,6 +1829,7 @@ dependencies = [
  "toml",
  "tower",
  "tracing",
+ "unicode-ident",
 ]
 
 [[package]]

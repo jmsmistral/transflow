@@ -64,6 +64,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
         toml::from_str::<toml::Table>("format_version = 1\nformat_version = 2").is_err(),
         "TOML duplicate keys must fail",
     )?;
+    require(
+        unicode_ident::is_xid_start('δ')
+            && unicode_ident::is_xid_start('é')
+            && unicode_ident::is_xid_continue('9')
+            && !unicode_ident::is_xid_start('9')
+            && !unicode_ident::is_xid_continue('-'),
+        "Unicode identifier capability failed",
+    )?;
     let args = Arguments::parse();
     std::fs::create_dir_all(&args.output_dir)?;
     require(
@@ -183,6 +191,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         sqlite_journal_mode: journal,
         parquet_rows: 3,
         checks: [
+            "unicode_identifiers",
             "sqlite_version",
             "wal_full_foreign_keys",
             "rollback",

@@ -335,3 +335,17 @@ def model(items): return items
     value["catalog"]["aliases"][0]["path"] = "old/changed"
     status, result, _ = run_worker(installed, value)
     assert status == 1 and result["code"] == "catalog"
+
+
+def test_installed_discovery_matches_rust_structural_validation_fixture(
+    installed: Path, tmp_path: Path
+) -> None:
+    fixture = json.loads(
+        (
+            Path(__file__).resolve().parents[2] / "schemas/fixtures/structural-validation-v1.json"
+        ).read_text()
+    )
+    value = request(tmp_path, fixture["sources"])
+    value["catalog"] = fixture["catalog"]
+    code, result, _ = run_worker(installed, value)
+    assert code == 0 and result == fixture["discovery"]

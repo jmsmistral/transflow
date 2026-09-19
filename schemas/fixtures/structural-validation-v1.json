@@ -1,0 +1,123 @@
+{
+  "sources": {
+    "src/helpers.py": "def helper(value): return value\n",
+    "src/source.py": "from transflow import source_transform, Output, Check\nfrom transflow.expectations import primary_key\n@source_transform(output=Output('raw/items', checks=Check(primary_key('id'), 'Primary key')))\ndef source(): raise AssertionError('Producer must never run during discovery')\n",
+    "src/consumer.py": "from transflow import transform, Input, Output, Check\nfrom transflow.expectations import col\nfrom helpers import helper\n@transform(items=Input('raw/items', checks=Check(col('id').non_null(), 'Valid ID')), output=Output('curated/items'))\ndef consumer(items): raise AssertionError('Producer must never run during discovery')\n"
+  },
+  "modules": {
+    "helpers": "src/helpers.py",
+    "source": "src/source.py",
+    "consumer": "src/consumer.py"
+  },
+  "catalog": {
+    "format_version": 1,
+    "workspace_id": "01010101-0101-0101-0101-010101010101",
+    "source_snapshot_id": "02020202-0202-0202-0202-020202020202",
+    "catalog_fingerprint": "3c23d62296e5e28c6ad9582bd47434bbbd9ecb9b10985c7ba5f011e61123c86a",
+    "entries": []
+  },
+  "discovery": {
+    "catalog_fingerprint": "3c23d62296e5e28c6ad9582bd47434bbbd9ecb9b10985c7ba5f011e61123c86a",
+    "definitions": [
+      {
+        "cache": "deterministic",
+        "engine": "polars",
+        "function": "consumer",
+        "inputs": [
+          {
+            "alias": "items",
+            "branch": {
+              "kind": "omitted",
+              "name": null
+            },
+            "checks": [
+              {
+                "description": null,
+                "expectation": {
+                  "columns": [
+                    "id"
+                  ],
+                  "kind": "non_null"
+                },
+                "id": "valid_id",
+                "name": "Valid ID",
+                "null_policy": null,
+                "on_error": "FAIL",
+                "sample_rows": null
+              }
+            ],
+            "ref": {
+              "form": "string",
+              "value": "raw/items"
+            },
+            "role": "data",
+            "stop_branch_fallback": false
+          }
+        ],
+        "line": 4,
+        "lineage_json": null,
+        "module": "consumer",
+        "output": {
+          "checks": [],
+          "ref": {
+            "form": "string",
+            "value": "curated/items"
+          },
+          "schema": null
+        },
+        "parameters": [],
+        "path": "src/consumer.py",
+        "refresh": null,
+        "secret_refs": [],
+        "source": false,
+        "wall_timeout_seconds": null
+      },
+      {
+        "cache": null,
+        "engine": "polars",
+        "function": "source",
+        "inputs": [],
+        "line": 3,
+        "lineage_json": null,
+        "module": "source",
+        "output": {
+          "checks": [
+            {
+              "description": null,
+              "expectation": {
+                "columns": [
+                  "id"
+                ],
+                "kind": "primary_key"
+              },
+              "id": "primary_key",
+              "name": "Primary key",
+              "null_policy": null,
+              "on_error": "FAIL",
+              "sample_rows": null
+            }
+          ],
+          "ref": {
+            "form": "string",
+            "value": "raw/items"
+          },
+          "schema": null
+        },
+        "parameters": [],
+        "path": "src/source.py",
+        "refresh": "always",
+        "secret_refs": [],
+        "source": true,
+        "wall_timeout_seconds": null
+      }
+    ],
+    "environment_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "format_version": 1,
+    "imported_modules": [
+      "consumer",
+      "helpers",
+      "source"
+    ],
+    "source_snapshot_id": "02020202-0202-0202-0202-020202020202"
+  }
+}

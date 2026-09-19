@@ -187,3 +187,10 @@ pip/pip-tools hash resolution with tamper rejection. Engine defaults and peak
 RSS are reported; no universal hard-process memory support is claimed. All six
 [native jobs](https://github.com/jmsmistral/transflow/actions/runs/35437047654) passed
 at `a46aca6`, using Python 3.13.15/3.14.7 on macOS arm64 and Linux x86_64/arm64.
+
+T032 promotes the already-locked `unicode-ident` 1.0.26 library to an explicit
+`tf-catalog` dependency for Python-style XID identifier validation. Its pure
+character predicates perform no I/O. The native probe now exercises Unicode
+letters, continuation digits and invalid punctuation. The crate boundary/pin
+allowlist and both lock inventories record this narrow use; no package version
+was added or upgraded. Python NFKC/source-module rules remain enforced by the SDK.

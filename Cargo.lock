@@ -915,6 +915,7 @@ dependencies = [
  "tf-protocol",
  "thiserror",
  "toml",
+ "unicode-ident",
 ]
 
 [[package]]

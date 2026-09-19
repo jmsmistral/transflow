@@ -29,7 +29,7 @@ INTERNAL = {
 EXTERNAL = {
     "tf-domain": set(),
     "tf-protocol": {"serde", "serde_json", "schemars", "sha2", "thiserror"},
-    "tf-catalog": {"rustix", "toml", "serde", "serde_json", "thiserror"},
+    "tf-catalog": {"unicode-ident", "rustix", "toml", "serde", "serde_json", "thiserror"},
     "tf-plan": {"thiserror"},
     "tf-store": {"rustix", "sqlx", "libsqlite3-sys", "arrow-array", "arrow-schema", "parquet", "fs4", "serde", "serde_json", "thiserror"},
     "tf-exec": {"serde", "serde_json", "rustix", "tokio", "fs4", "tracing", "thiserror"},

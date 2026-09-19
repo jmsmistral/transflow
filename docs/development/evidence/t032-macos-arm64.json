@@ -1,0 +1,57 @@
+{
+  "task": "T032",
+  "date": "2026-09-20",
+  "commands": [
+    "bash tools/check.sh",
+    "cargo run --locked --offline --manifest-path tools/qualification/rust/Cargo.toml -- --output-dir target/qualification/t032-native-final"
+  ],
+  "result": "pass",
+  "platform": "macOS arm64",
+  "rust_tests": 170,
+  "rust_documentation_tests": 1,
+  "python_tests": 609,
+  "web_tests": 237,
+  "document_tests": 44,
+  "safety_tests": 27,
+  "boundary_tests": 12,
+  "structural_validation_tests": 9,
+  "installed_worker_bridge_tests": 1,
+  "native_probe": {
+    "sqlite_version": "3.51.3",
+    "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+    "sqlite_journal_mode": "wal",
+    "parquet_rows": 3,
+    "checks": [
+      "unicode_identifiers",
+      "sqlite_version",
+      "wal_full_foreign_keys",
+      "rollback",
+      "parquet_roundtrip",
+      "advisory_lock",
+      "http_router",
+      "dst_gap",
+      "json_schema",
+      "sha256"
+    ]
+  },
+  "coverage": [
+    "Whole-graph cycles including unrelated and validation-only components",
+    "Last valid display preserved while failed requested validation blocks reuse",
+    "Exact source/registry/config/module/discovery/environment/SDK/check evidence",
+    "Malformed declaration, parameter and inherited check policies",
+    "Known-schema column errors versus deferred unknown/foreign/named-branch checks",
+    "Real installed worker output consumed by Rust validation; producer bodies never called"
+  ],
+  "dependencies": {
+    "locked_versions": 640,
+    "new_versions": 0,
+    "explicit_dependency": "unicode-ident 1.0.26 (already locked)",
+    "advisory_matches": 0
+  },
+  "limits": [
+    "Preparation caller supplies and verifies full capture, module index and environment",
+    "Public validate/build orchestration and durable certificate storage remain later tasks",
+    "Current check declarations are non_null/primary_key; full AST/evaluation remain T059-T062",
+    "Native editor completion remains pending under T031/T108"
+  ]
+}
