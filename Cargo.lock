@@ -906,6 +906,17 @@ version = "0.0.0-dev"
 [[package]]
 name = "tf-exec"
 version = "0.0.0-dev"
+dependencies = [
+ "libsqlite3-sys",
+ "rustix",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tf-domain",
+ "tf-store",
+ "thiserror",
+ "tokio",
+]
 
 [[package]]
 name = "tf-lsp"

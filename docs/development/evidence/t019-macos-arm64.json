@@ -1,0 +1,38 @@
+{
+  "task": "T019",
+  "date": "2026-09-19",
+  "platform": "macOS arm64",
+  "implementation_base": "bd7860c0943d7096b8b758761fd690372504633c",
+  "specification_base": "203826514ab3c5182daaa636d82c69f675ac0561",
+  "commands": [
+    "bash tools/check.sh",
+    "cargo test -p tf-exec --test ownership --locked --offline"
+  ],
+  "result": "passed",
+  "counts": {
+    "document_regressions": 44,
+    "safety_regressions": 27,
+    "rust_boundary_regressions": 11,
+    "rust_tests": 90,
+    "rust_compile_fail_documentation_tests": 1,
+    "python_tests": 462,
+    "web_tests": 220,
+    "ownership_test_entries": 8
+  },
+  "dependencies": {
+    "distinct_versions": 634,
+    "new_distinct_versions": 0,
+    "advisory_matches": 0
+  },
+  "coverage": [
+    "Real child owner contention, kill/reap and fresh session reacquisition.",
+    "Stale and copied clone metadata, wrong process start, versions and endpoint rejection.",
+    "Private files, replaced lock, symlink refusal and owned repository lifetime.",
+    "Temporary and metadata-only modes disable schedules and reject no-wait."
+  ],
+  "limits": [
+    "Discovery returns a candidate; future authenticated API handshake must prove nonce.",
+    "macOS process start record has one-second precision and is not standalone authorization.",
+    "No serve/worker/scheduler dispatch is implemented; explicit async store close is required."
+  ]
+}

@@ -1,3 +1,2 @@
-//! Process supervision, resource admission, validation phases and publication orchestration.
-//!
-//! Crate boundary established by T004. No runtime services are implemented yet.
+//! Coordinator ownership foundations; worker process supervision remains later work.
+pub mod ownership;

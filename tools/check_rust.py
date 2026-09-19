@@ -32,7 +32,7 @@ EXTERNAL = {
     "tf-catalog": {"serde", "serde_json", "thiserror"},
     "tf-plan": {"thiserror"},
     "tf-store": {"rustix", "sqlx", "libsqlite3-sys", "arrow-array", "arrow-schema", "parquet", "fs4", "serde", "serde_json", "thiserror"},
-    "tf-exec": {"tokio", "fs4", "tracing", "thiserror"},
+    "tf-exec": {"serde", "serde_json", "rustix", "tokio", "fs4", "tracing", "thiserror"},
     "tf-schedule": {"chrono", "chrono-tz", "serde", "thiserror"},
     "tf-api": {"axum", "tower", "serde", "serde_json", "tokio", "tracing", "thiserror"},
     "tf-lsp": {"serde", "serde_json", "tokio", "tracing", "thiserror"},
@@ -40,7 +40,7 @@ EXTERNAL = {
 }
 
 # T007's real SQLite integration fixture needs an executor, only in tests.
-DEV_EXTERNAL = {"tf-store": {"tokio"}, "transflow": {"serde_json"}}
+DEV_EXTERNAL = {"tf-exec": {"sqlx", "libsqlite3-sys"}, "tf-store": {"tokio"}, "transflow": {"serde_json"}}
 
 
 def validate_graph(metadata: dict, qualified: dict[str, str]) -> list[str]:
