@@ -119,6 +119,7 @@ explicit setup. That runner now also executes the sixteen-test
 [T009 DuckDB spike](../../tools/qualification/duckdb/README.md) in a supervised
 helper and retains its capability report. The contributor aggregate lints this
 probe but does not run engine tests without their separate qualification environment.
+The native runner also executes the ten-test [T011 resource/resolver spike](../../tools/qualification/resources/README.md) and retains `resource-capabilities.json`. It exercises independent phase clocks, real process-group cleanup and offline hash-lock installs; production supervision remains unimplemented.
 Checks never fetch external dependencies; Python tests install
 the locally built wheel into disposable environments. Add broader
 integration/release checks as their real manifests and runners become available.
