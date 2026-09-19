@@ -233,5 +233,4 @@ The full contributor aggregate passes: 182 Rust tests plus one documentation tes
 also passes workspace Clippy and all nine candidate tests. The dependency inventory
 remains 640 versions, with no new versions and zero advisory matches after refresh.
 The shared contract corpus now contains 196 cases. See the [local evidence](evidence/t035-macos-arm64.json)
-and [import guide](../../crates/transflow/IMPORTS.md). CI qualification is pending;
-no normalization, quality-check PASS, artifact or dataset publication is claimed.
+and [import guide](../../crates/transflow/IMPORTS.md). All five [CI workflows and 19 jobs](evidence/t035-ci.json) pass at implementation `8451e4fa215d0ee1126c1d22c1804bb8af50e75f`, paired with specification progress `ec3ba66530a8c15b89077ce0579d4d7b754f85ff`. T035 preparation is complete; no normalization, quality-check PASS, artifact or dataset publication is claimed.
