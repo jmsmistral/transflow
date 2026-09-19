@@ -8,7 +8,7 @@ contracts are implemented by [tf-protocol](../tf-protocol/README.md) in T014.
 
 | Module | Delivered types |
 |---|---|
-| `identity` | RequestId (T014), WorkspaceId, DatasetId, VersionId, AttemptId, BranchId, SourceSnapshotId, DatasetKey, DatasetScope |
+| `identity` | RequestId (T014), BuildId, JobId, PlanId, CoordinatorSessionId (T017), WorkspaceId, DatasetId, VersionId, AttemptId, BranchId, SourceSnapshotId, DatasetKey, DatasetScope |
 | `path` | DatasetPath with syntax and ownership-scope validation |
 | `branch` | BranchName, BranchSelector and independent FallbackPermission |
 | `schema` | FieldName, Field, unique ordered Fields, LogicalType and LogicalSchema |
@@ -80,3 +80,7 @@ the existing full JSON-shape tests; the projection helpers are not shipped codec
 T016 adds `diagnostic`: stable codes and exit statuses, immutable sanitized text,
 source ranges, request context and bounded safe causes. It performs no I/O.
 The [CLI guide](../transflow/README.md) documents redaction limits and projections.
+
+T017 adds pure `execution` state machines, explicit retry policy, cancellation requests,
+immutable attempt outcomes and fenced publication intent. See the [transition tables
+and caller obligations](EXECUTION.md). Twelve additional tests exercise these APIs.

@@ -69,6 +69,16 @@ id!(
     RequestId,
     "Worker request UUID, independent of execution attempt identity."
 );
+id!(BuildId, "Build request identity.");
+id!(JobId, "Planned producer job identity.");
+id!(
+    PlanId,
+    "Immutable accepted plan identity, binding parameters and exact inputs."
+);
+id!(
+    CoordinatorSessionId,
+    "Coordinator ownership session identity used by fencing."
+);
 id!(WorkspaceId, "Stable owner workspace UUID.");
 id!(
     DatasetId,

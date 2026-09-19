@@ -21,10 +21,13 @@ pub mod value;
 pub use branch::{BranchName, BranchSelector, FallbackPermission};
 pub use error::{DomainError, ErrorKind};
 pub use identity::{
-    AttemptId, BranchId, DatasetId, DatasetKey, DatasetScope, RequestId, SourceSnapshotId,
-    VersionId, WorkspaceId,
+    AttemptId, BranchId, BuildId, CoordinatorSessionId, DatasetId, DatasetKey, DatasetScope, JobId,
+    PlanId, RequestId, SourceSnapshotId, VersionId, WorkspaceId,
 };
 pub use path::DatasetPath;
 
 /// Human-first diagnostics, safe text and the shared exit-status contract.
 pub mod diagnostic;
+
+/// Pure build/job/attempt transitions and publication guards.
+pub mod execution;
