@@ -9,12 +9,12 @@ select = ["E", "F", "I", "UP", "B"]
 python_version = "3.13"
 strict = true
 files = ["python/sdk/src", "python/worker/src", "python/tests", "python/tools"]
-mypy_path = ["$MYPY_CONFIG_FILE_DIR/sdk/src", "$MYPY_CONFIG_FILE_DIR/worker/src"]
+mypy_path = ["$MYPY_CONFIG_FILE_DIR/sdk/src", "$MYPY_CONFIG_FILE_DIR/worker/src", "$MYPY_CONFIG_FILE_DIR/tools"]
 warn_unreachable = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["sdk/src", "worker/src"]
+pythonpath = ["sdk/src", "worker/src", "tools"]
 addopts = "--strict-config --strict-markers -ra"
 filterwarnings = ["error"]
 [build-system]

@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** Contributor foundation implemented (T001–T002). T004 provides the ten-crate Rust scaffold and CLI help/version. T005 adds one locally installable `transflow` wheel containing the typed SDK and worker bootstrap modules. T003 native qualification passes on all three supported platforms. T006 adds a web development preview with theme and dialog controls. T007 adds deterministic integration-test fixtures for future execution and storage work. T008 adds dependency/license audits and repository privacy checks. T009 qualifies DuckDB’s internal validation capabilities and records precision/security boundaries. Transform declarations, dataset builds and the coordinator remain unimplemented; this is not an application release.
+**Status:** Contributor foundation implemented (T001–T002). T004 provides the ten-crate Rust scaffold and CLI help/version. T005 adds one locally installable `transflow` wheel containing the typed SDK and worker bootstrap modules. T003 native qualification passes on all three supported platforms. T006 adds a web development preview with theme and dialog controls. T007 adds deterministic integration-test fixtures for future execution and storage work. T008 adds dependency/license audits and repository privacy checks. T009 qualifies DuckDB’s internal validation capabilities and records precision/security boundaries. T010 adds a snapshot-bound catalogue/mypy prototype; editor completion qualification is pending. Transform declarations, dataset builds and the coordinator remain unimplemented; this is not an application release.
 
 ## Intended experience
 
@@ -114,6 +114,8 @@ The initial source boundaries are [crates/](crates/README.md),
 toolchain/dependency candidates and exercised them on macOS arm64. Native Linux
 qualification now passes; T001–T009 are complete for their bootstrap scope; T009 has local evidence, with
 its expanded native CI coverage still pending.
+The [catalogue overlay spike](docs/development/catalog-overlay.md) now passes runtime and
+mypy checks on both Python versions; T010 remains open for native editor completion checks.
 Local verification and remote CI results are recorded separately in the task evidence.
 T007’s [three-platform Rust CI run](https://github.com/jmsmistral/transflow/actions/runs/35410393011) also passes.
 See the [compatibility matrix and setup](docs/development/compatibility.md)

@@ -20,6 +20,8 @@ VERSION = "0.0.0.dev0"
 
 def run(command: list[str], cwd: Path, *, ok: bool = True) -> subprocess.CompletedProcess[str]:
     environment = dict(os.environ)
+    environment.pop("MYPYPATH", None)
+    environment.pop("PYTHONPATH", None)
     environment.update(
         PIP_NO_INDEX="1", PIP_DISABLE_PIP_VERSION_CHECK="1", PYTHONDONTWRITEBYTECODE="1"
     )
@@ -98,6 +100,7 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
     modules = {"__init__.py", "_version.py", "compatibility.py", "py.typed"}
     expected = {f"transflow/{module}" for module in modules}
     expected |= {f"transflow_worker/{module}" for module in modules | {"__main__.py", "cli.py"}}
+    expected |= {f"transflow/{name}.py" for name in ("_catalog_prototype", "catalog", "testing")}
     metadata_files = {"METADATA", "WHEEL", "RECORD", "top_level.txt", "entry_points.txt"}
     expected |= {f"transflow-{VERSION}.dist-info/{name}" for name in metadata_files}
     with ZipFile(wheel) as archive:
@@ -124,6 +127,9 @@ def audit(event, args):
             raise RuntimeError("Unexpected SDK file read: " + path)
 sys.addaudithook(audit)
 import transflow
+import transflow.catalog
+import transflow.testing
+assert dir(transflow.catalog.C) == []
 assert transflow.__version__ == "0.0.0.dev0"
 assert not ({"transflow_worker", "polars", "pandas", "duckdb", "pyarrow"} & sys.modules.keys())
 print(transflow.__version__)
@@ -217,3 +223,111 @@ def test_installed_sdk_exposes_types(installed: Path, tmp_path: Path) -> None:
     assert result.returncode == 1
     assert "arg-type" in result.stdout
     assert "import-untyped" not in result.stdout
+
+
+def test_workspace_overlays_with_installed_sdk(installed: Path, tmp_path: Path) -> None:
+    """Independent checker processes share one installed SDK, never one mutable overlay."""
+    from concurrent.futures import ThreadPoolExecutor
+    from uuid import UUID
+
+    from catalog_overlay import write_overlay
+    from transflow._catalog_prototype import PrototypeSnapshot
+
+    installed_files = {
+        str(path): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in installed.parent.parent.rglob("*")
+        if path.is_file() and not path.is_symlink()
+    }
+
+    def exercise(index: int, name: str, absent: str) -> None:
+        workspace = tmp_path / name
+        workspace.mkdir()
+        snapshot = PrototypeSnapshot(
+            str(UUID(int=index)),
+            (
+                (f"raw/{name}", str(UUID(int=100))),
+                (f"raw/{name}/daily", str(UUID(int=101))),
+            ),
+        )
+        overlay = write_overlay(workspace, snapshot)
+        config = workspace / "mypy.ini"
+        config.write_text(
+            "[mypy]\nstrict = True\n"
+            f"mypy_path = {overlay}\npython_executable = {installed}\n"
+            "cache_dir = .mypy_cache\n"
+        )
+        consumer = workspace / "consumer.py"
+        consumer.write_text(
+            "from transflow import (PROTOCOL_VERSION, ProtocolCompatibilityError, "
+            "ProtocolVersion, __version__, require_protocol)\n"
+            "from transflow.catalog import C\n"
+            "from transflow._catalog_prototype import resolve_reference\n"
+            "from transflow.testing import catalog_context\n"
+            "from transflow_worker import __version__ as worker_version\n"
+            "require_protocol(ProtocolVersion(0, 0))\n"
+            "assert isinstance(__version__, str)\n"
+            "assert isinstance(PROTOCOL_VERSION, ProtocolVersion)\n"
+            "assert issubclass(ProtocolCompatibilityError, RuntimeError)\n"
+            "assert worker_version == __version__\n"
+            f"resolve_reference(C.raw.{name}, expected_fingerprint={snapshot.fingerprint!r})\n"
+            f"reveal_type(C.raw.{name}.daily)\n"
+        )
+        command = [sys.executable, "-m", "mypy", "--config-file", str(config), str(consumer)]
+        result = run(command, workspace)
+        assert 'Revealed type is "transflow.catalog._Node' in result.stdout
+        consumer.write_text(consumer.read_text() + f"C.raw.{absent}\nProtocolVersion('wrong', 0)\n")
+        result = run(command, workspace, ok=False)
+        assert result.returncode == 1
+        assert "attr-defined" in result.stdout and "arg-type" in result.stdout
+        assert "import-untyped" not in result.stdout and "import-not-found" not in result.stdout
+        # Read actual mypy member tables, the typed candidates behind C.raw completion.
+        probe = """
+import sys
+from mypy.build import build
+from mypy.main import process_options
+sources, options = process_options(["--config-file", sys.argv[1], sys.argv[2]])
+options.preserve_asts = True
+options.incremental = False
+result = build(sources, options)
+module = result.graph["transflow.catalog"].tree
+root = module.names["C"].node.type.type
+raw = root.names["raw"].node.func.type.ret_type.type
+print(",".join(sorted(name for name in raw.names if not name.startswith("_"))))
+"""
+        candidates = run([sys.executable, "-c", probe, str(config), str(consumer)], workspace)
+        assert candidates.stdout.strip() == name
+        # Even a deliberately misplaced typing-only path cannot shadow the installed package.
+        runtime = f"""
+import sys
+sys.path.insert(0, {str(overlay)!r})
+import transflow
+import transflow.catalog
+from pathlib import Path
+from transflow import ProtocolVersion, require_protocol
+from transflow._catalog_prototype import PrototypeSnapshot, resolve_reference
+from transflow.testing import catalog_context
+from transflow.catalog import C
+assert not Path(transflow.__file__).is_relative_to({str(workspace)!r})
+assert not Path(transflow.catalog.__file__).is_relative_to({str(workspace)!r})
+require_protocol(ProtocolVersion(0, 0))
+snapshot = PrototypeSnapshot({snapshot.workspace_id!r}, {snapshot.entries!r})
+with catalog_context(snapshot, expected_fingerprint={snapshot.fingerprint!r}):
+    assert dir(C.raw) == [{name!r}]
+    ref = resolve_reference(C.raw.{name}, expected_fingerprint=snapshot.fingerprint)
+    assert ref.path == "raw/{name}"
+"""
+        run([str(installed), "-I", "-B", "-c", runtime], workspace)
+        assert not list(overlay.rglob("*.py"))
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(exercise, 1, "orders", "invoices"),
+            executor.submit(exercise, 2, "invoices", "orders"),
+        ]
+        for future in futures:
+            future.result(timeout=90)
+    assert installed_files == {
+        str(path): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in installed.parent.parent.rglob("*")
+        if path.is_file() and not path.is_symlink()
+    }

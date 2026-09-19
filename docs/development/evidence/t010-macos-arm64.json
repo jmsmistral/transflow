@@ -1,0 +1,60 @@
+{
+  "task": "T010",
+  "date": "2026-09-19",
+  "status": "Runtime and checker prototype verified; native editor acceptance pending; pre-commit snapshot",
+  "implementation_base": "c4f2c4b95cd96f988482e5f120d966afd9f994c0",
+  "specification_base": "d6aca45477e980b9f98e4d16f4755e7f5d2870b7",
+  "local_runs": [
+    {
+      "python": "3.13.0",
+      "mypy": "2.3.1",
+      "platform": "macOS arm64",
+      "tests": 48,
+      "failures": 0,
+      "errors": 0,
+      "wheel_sha256": {
+        "transflow-0.0.0.dev0-py3-none-any.whl": "e375db4df4985d0042c7378dcd8ce0556d789bd485f2cf91d373d05f64fb2fa2"
+      }
+    },
+    {
+      "python": "3.14.7",
+      "mypy": "2.3.1",
+      "platform": "macOS arm64",
+      "tests": 48,
+      "failures": 0,
+      "errors": 0,
+      "wheel_sha256": {
+        "transflow-0.0.0.dev0-py3-none-any.whl": "924ad3b13918e740f6860b95a22cafcfa4b21d2469adf01b83d323b15da2e789"
+      }
+    }
+  ],
+  "observations": {
+    "concurrent_workspaces": [
+      "orders",
+      "invoices"
+    ],
+    "mypy_member_tables_are_workspace_specific": true,
+    "cross_workspace_names_rejected": true,
+    "root_exports_preserved": true,
+    "installed_environment_bytes_unchanged": true,
+    "runtime_contexts_isolated": true,
+    "stale_fingerprints_rejected": true,
+    "failed_generation_preserves_previous_bytes": true,
+    "symlink_and_tampered_outputs_rejected": true
+  },
+  "aggregate": {
+    "command": "bash tools/check.sh",
+    "result": "passed",
+    "specification_regressions": 43,
+    "safety_regressions": 26,
+    "rust_boundary_regressions": 11,
+    "rust_tests": 21,
+    "python_tests": 48,
+    "web_tests": 6
+  },
+  "not_verified": [
+    "Native VS Code/Pylance and Emacs/lsp-mode completion",
+    "New T010 native Linux or remote CI runs",
+    "Production worker binding, CatalogSnapshotV1, refresh lifecycle and full A53/A69 acceptance"
+  ]
+}

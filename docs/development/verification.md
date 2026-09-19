@@ -92,6 +92,10 @@ engine imports or workspace activity for SDK import. Actual pip installation in
 a clean environment is offline. Downstream mypy checks use installed wheel types;
 invalid argument types fail. Worker tests cover both entry points, unavailable
 operations, protocol mismatch, distribution drift and failed output streams.
+T010 extends the package suite to 48 tests per interpreter: immutable catalogue
+contexts, generation failure paths and concurrent installed-wheel mypy overlays.
+See the [catalogue qualification report](catalog-overlay.md); native editor
+completion is still unverified.
 
 The [Python CI workflow](../../.github/workflows/python.yml) covers both Python
 versions on all three target platforms and preserves wheel hashes and JUnit
