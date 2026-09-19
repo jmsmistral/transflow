@@ -12,8 +12,8 @@ fi
 export PIP_NO_INDEX=1 PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONDONTWRITEBYTECODE=1
 "$python_bin" -B python/tools/check_environment.py
 "$python_bin" -m pip check
-"$python_bin" -m ruff check --config python/pyproject.toml python tools/safety
-"$python_bin" -m ruff format --config python/pyproject.toml --check python tools/safety
+"$python_bin" -m ruff check --config python/pyproject.toml python tools/safety tools/qualification/duckdb
+"$python_bin" -m ruff format --config python/pyproject.toml --check python tools/safety tools/qualification/duckdb
 "$python_bin" -m mypy --config-file python/pyproject.toml
 python_minor="$("$python_bin" -c 'import sys; print(f"py{sys.version_info.major}{sys.version_info.minor}")')"
 mkdir -p "target/python/$python_minor"

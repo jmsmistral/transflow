@@ -111,7 +111,11 @@ Rust-generated types must be registered with their T012/T074 implementation.
 
 Run `bash tools/qualification/check.sh` separately with its prepared Python
 environment for T003 native dependency probes; the compatibility guide documents
-explicit setup. Checks never fetch external dependencies; Python tests install
+explicit setup. That runner now also executes the sixteen-test
+[T009 DuckDB spike](../../tools/qualification/duckdb/README.md) in a supervised
+helper and retains its capability report. The contributor aggregate lints this
+probe but does not run engine tests without their separate qualification environment.
+Checks never fetch external dependencies; Python tests install
 the locally built wheel into disposable environments. Add broader
 integration/release checks as their real manifests and runners become available.
 T008 now runs `bash tools/check-safety.sh` in the aggregate: 26 failure/success

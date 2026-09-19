@@ -160,3 +160,18 @@ to T116 and later gates.
 No A40/A67 end-to-end acceptance result is claimed. The full CI/security/
 license baseline remains T008. Canonical rationale is in
 [ADR-001](../../../transflow-spec/docs/adr/ADR-001.md).
+
+
+## T009 canonical-check feasibility
+
+The [DuckDB capability probe](../../tools/qualification/duckdb/README.md) extends
+native qualification with sixteen tests for restricted helper setup, parsed SQL
+policy, exact aggregates/typed round trips, interruption and physical spill.
+It reuses the existing locked engine environments. Both local Python 3.13.0 and
+3.14.7 runs pass; the native runner now writes `duckdb-capabilities.json` alongside
+its T003 reports. Remote results for the new tests remain pending.
+
+[ADR-008](../../../transflow-spec/docs/adr/ADR-008.md) records engine limitations
+and required guards. Initial authoring is Polars-only; DuckDB remains internal
+validation machinery, while Pandas and SQL transform adapters are deferred.
+The existing cross-engine probes do not implement those adapters.
