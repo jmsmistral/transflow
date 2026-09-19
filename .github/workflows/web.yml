@@ -1,4 +1,4 @@
-name: Web application
+name: Lineage web UI
 
 on:
   push:

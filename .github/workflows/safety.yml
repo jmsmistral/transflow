@@ -1,4 +1,4 @@
-name: Dependency and privacy baseline
+name: Security & license checks
 
 on:
   push:

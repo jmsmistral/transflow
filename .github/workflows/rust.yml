@@ -1,4 +1,4 @@
-name: Rust workspace
+name: Rust backend & CLI
 
 on:
   push:

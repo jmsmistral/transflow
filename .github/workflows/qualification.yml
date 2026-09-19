@@ -1,4 +1,4 @@
-name: Native dependency qualification
+name: Toolchains & dependencies
 
 on:
   push:
