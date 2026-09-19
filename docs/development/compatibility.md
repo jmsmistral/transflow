@@ -1,7 +1,7 @@
 # Dependency qualification — T003
 
-Status on 2026-09-19: native macOS arm64 probes pass; Linux native runs remain
-pending. T003 stays open. This is a dependency baseline, not an application release
+Status on 2026-09-19: native macOS arm64 and Linux x86_64/arm64 qualification
+passes across Python 3.13.15/3.14.7 in CI. T003 is complete. This is a dependency baseline, not an application release
 or a claim that the full G0 gate has passed.
 
 The [retained machine-readable report](evidence/t003-macos-arm64.json) contains
@@ -42,8 +42,8 @@ Transflow was fetched from an index.
 | Target | Python wheels | Native execution |
 |---|---|---|
 | macOS arm64, macOS 15 | 3.13 and 3.14: eight hash-locked wheel candidates each | Pass on macOS 15.3.1 with Python 3.13.0 and 3.14.7 |
-| Linux x86-64, glibc 2.28+ wheel baseline | 3.13 and 3.14: eight candidates each | Pending CI |
-| Linux arm64, glibc 2.28+ wheel baseline | 3.13 and 3.14: eight candidates each | Pending CI |
+| Linux x86-64, glibc 2.28+ wheel baseline | 3.13 and 3.14: eight candidates each | Passed in CI on both pinned interpreters |
+| Linux arm64, glibc 2.28+ wheel baseline | 3.13 and 3.14: eight candidates each | Passed in CI on both pinned interpreters |
 
 Wheel resolution is not native execution, full environment-marker validation or
 an OS support promise. The CI jobs use Ubuntu 24.04 and macOS 15. Earlier macOS,
@@ -148,12 +148,13 @@ together; do not run automatic dependency upgrades during normal checks.
 
 [The native CI workflow](../../.github/workflows/qualification.yml) is prepared for
 six OS/interpreter combinations, with official actions pinned to commit SHAs.
-The owner has pushed it and reported jobs running; results remain unreviewed here.
+The [six-job run](https://github.com/jmsmistral/transflow/actions/runs/35408977731)
+succeeded at `1717a4f` and its public summary was reviewed through the internal Browser.
 CI needs no sibling specification
 checkout to build or run these probes. It uses read-only repository permissions,
 does not publish packages, and uploads measured reports when available.
 
-T003 stays unchecked pending native Linux/CI evidence. T005 now builds the single
+T003 is complete with the reviewed CI evidence. T005 now builds the single
 `transflow` bootstrap wheel with both modules; full release qualification belongs
 to T116 and later gates.
 No A40/A67 end-to-end acceptance result is claimed. The full CI/security/

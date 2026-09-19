@@ -78,6 +78,14 @@ class RustBoundaries(unittest.TestCase):
         self.metadata["workspace_members"].remove(self.packages["tf-store"]["id"])
         self.assertIn("exactly the ten specified crates", self.messages())
 
+    def test_test_executor_permission_does_not_allow_runtime_or_build_dependency(self):
+        dependency = next(d for d in self.packages["tf-store"]["dependencies"] if d["name"] == "tokio")
+        self.assertEqual(dependency["kind"], "dev")
+        self.assertEqual(self.messages(), "")
+        for kind in [None, "build"]:
+            dependency["kind"] = kind
+            self.assertIn("Unapproved external dependency: tf-store -> tokio", self.messages())
+
     def test_toolchain_and_publication_drift(self):
         self.packages["tf-domain"].update(edition="2021", rust_version="1.80", publish=None)
         self.assertIn("edition/MSRV drift", self.messages())

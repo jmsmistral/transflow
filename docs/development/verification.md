@@ -56,7 +56,7 @@ need review and the T008/T120 checks. No private image bytes are loaded.
 ## Extending the aggregate contract
 
 The contributor aggregate runs document validation and 43 tooling regression
-tests, followed by ten Rust dependency-checker tests and the following gates:
+tests, followed by eleven Rust dependency-checker tests and the following gates:
 
 ```bash
 cargo fmt --all -- --check
@@ -73,10 +73,15 @@ explicit architectural and qualification review.
 
 Five Rust tests cover the CLI: help/version and rejected commands in a subprocess
 outside the checkouts with an empty PATH, plus typed stdout/stderr failures.
-The nine other crates contain no runtime implementation or tests yet. The
+The nine other crates contain no runtime implementation. T007 adds sixteen
+`tf-store` integration tests for deterministic providers, labelled barriers, real
+SQLite/filesystem behavior and supervised direct children; see the [fixture
+contracts](../../tests/README.md). The tiny transaction schema is not the product
+publication algorithm. Actual SQLite 3.51.3, WAL/FULL settings and foreign keys
+are checked; no test substitutes an in-memory map for persistence. The
 [Rust CI workflow](../../.github/workflows/rust.yml) runs the same Rust entry point
 on macOS arm64 and Linux x86_64/arm64; it does not need the specification checkout.
-Its remote results are pending.
+Its three-platform CI run at `1717a4f` passed.
 
 The aggregate then invokes Python tooling lock verification, `pip check`, Ruff
 lint/format, strict mypy and pytest. Package tests build one `transflow` wheel from
@@ -90,14 +95,14 @@ operations, protocol mismatch, distribution drift and failed output streams.
 The [Python CI workflow](../../.github/workflows/python.yml) covers both Python
 versions on all three target platforms and preserves wheel hashes and JUnit
 reports. Native local execution uses Python 3.14.7 and the available 3.13.0;
-CI's Python 3.13.15 and Linux results remain pending. Wire protocol `0.0` is only
+CI's Python 3.13.15/3.14.7 matrix passes on all three platforms. Wire protocol `0.0` is only
 bootstrap metadata; no framed transport or execution operation is implemented.
 
 The aggregate also runs `bash tools/check-web.sh`: exact Node/npm versions,
 strict TypeScript, ESLint, Prettier, six Vitest/jsdom component tests and two Vite
 production builds compared byte-for-byte. Reports go to `target/web/`. The
 [web workflow](../../.github/workflows/web.yml) runs this on all three target
-platforms; remote results are pending. Browser checks use only Codex’s internal
+platforms; all three jobs passed at `1717a4f`. Browser checks use only Codex’s internal
 Browser and the [observed checklist](browser-checks.md); no browser driver or
 binaries are installed. The component runner does not verify native dialog focus.
 No API contracts exist yet; Rust-generated types and drift checks follow T012/T074.

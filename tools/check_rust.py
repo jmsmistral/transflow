@@ -39,6 +39,9 @@ EXTERNAL = {
     "transflow": {"clap", "thiserror", "tokio", "tracing"},
 }
 
+# T007's real SQLite integration fixture needs an executor, only in tests.
+DEV_EXTERNAL = {"tf-store": {"tokio"}}
+
 
 def validate_graph(metadata: dict, qualified: dict[str, str]) -> list[str]:
     """Check every declared dependency, including optional/build/dev/target ones."""
@@ -69,7 +72,10 @@ def validate_graph(metadata: dict, qualified: dict[str, str]) -> list[str]:
                 if dependency.get("source") is not None or Path(dependency.get("path", "")).resolve() != expected_path:
                     errors.append(f"{name} -> {target}: must use the local workspace crate")
             else:
-                if target not in EXTERNAL.get(name, set()):
+                allowed = EXTERNAL.get(name, set())
+                if dependency.get("kind") == "dev":
+                    allowed = allowed | DEV_EXTERNAL.get(name, set())
+                if target not in allowed:
                     errors.append(f"Unapproved external dependency: {name} -> {target}")
                 if dependency.get("source") != "registry+https://github.com/rust-lang/crates.io-index":
                     errors.append(f"{name} -> {target}: unqualified dependency source")

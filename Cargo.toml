@@ -24,6 +24,9 @@ publish = false
 [workspace.dependencies]
 clap = { version = "=4.6.7", default-features = false, features = ["std", "help", "usage", "error-context"] }
 thiserror = "=2.0.20"
+sqlx = { version = "=0.9.0", default-features = false, features = ["runtime-tokio", "sqlite-bundled"] }
+libsqlite3-sys = { version = "=0.37.0", features = ["bundled"] }
+tokio = { version = "=1.53.1", features = ["rt", "time"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

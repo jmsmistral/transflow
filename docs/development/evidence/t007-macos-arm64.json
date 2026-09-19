@@ -1,0 +1,60 @@
+{
+  "task": "T007",
+  "date": "2026-09-19",
+  "specification": "1.1.1",
+  "platform": {
+    "os": "macOS",
+    "version": "15.3.1",
+    "architecture": "arm64"
+  },
+  "base_revisions": {
+    "implementation": "1717a4f9964cc5cc1da6e00510b5b4f1382ee23b",
+    "specification": "ea22a89b29c900168261c1deb7e185d0e0ef3466"
+  },
+  "dependencies": {
+    "rust": "1.98.1",
+    "sqlx": "0.9.0",
+    "libsqlite3-sys": "0.37.0",
+    "sqlite": "3.51.3",
+    "tokio": "1.53.1",
+    "scope": "tf-store dev dependencies only; existing T003 exact pins and qualified lock identities"
+  },
+  "checks": {
+    "infrastructure": "16 passed, 0 failed (includes the subprocess fixture entry point)",
+    "boundary_regressions": 11,
+    "existing_rust_tests": 5,
+    "spec_regressions": 43,
+    "python_tests": 28,
+    "web_component_tests": 6,
+    "format_lint_type_build": "passed",
+    "aggregate_command": "bash tools/check.sh"
+  },
+  "observations": [
+    "Virtual clock advances without sleeping and overflow leaves it unchanged",
+    "Seeded random sequence and explicit test IDs are reproducible",
+    "Publication barrier remains paused until explicit channel release",
+    "Lost barrier controller fails closed instead of hanging",
+    "Injected ENOSPC preserves existing file and creates no candidate",
+    "Real create-new filesystem writes reject overwrites",
+    "Owned temporary directories clean up during unwinding",
+    "Actual SQLite 3.51.3, WAL, FULL sync, foreign keys and rollback verified",
+    "Concurrent reader retains last-good head while a transaction is paused",
+    "Cancellation rolls back the synthetic head update",
+    "A direct child commits only after release; cancellation or coordinator stdin loss rolls back",
+    "Killed child releases SQLite locks; reopened DB and original artifact preserve last-good state",
+    "Parent error reaps its direct child and permits later database writes",
+    "Child startup failure before readiness is reported and cleaned up",
+    "Normal CLI dependency tree is unchanged"
+  ],
+  "limitations": [
+    "T003/T004/T005 qualification prerequisites remain unchecked pending remote evidence",
+    "A20 publication recovery and A37 actual worker framing/log isolation are not implemented",
+    "Synthetic SQLite schema is not the production catalogue or publication transaction",
+    "No Parquet or durable outbox is implemented by this harness",
+    "Controlled fixture children do not spawn descendants; general process groups and PID fencing remain execution-layer work",
+    "Ten-second watchdogs bound test synchronization; no production timeouts or memory limits change",
+    "ENOSPC is injected at a labelled I/O boundary; no disk is filled",
+    "Native Linux CI results not inspected",
+    "T007 changes remain uncommitted"
+  ]
+}

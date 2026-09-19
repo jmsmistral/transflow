@@ -1,0 +1,42 @@
+{
+  "reviewed_on": "2026-09-19",
+  "method": "GitHub Actions public run summaries inspected through Codex internal Browser",
+  "implementation_commit": "1717a4f9964cc5cc1da6e00510b5b4f1382ee23b",
+  "specification_base": "ea22a89b29c900168261c1deb7e185d0e0ef3466",
+  "platforms": [
+    "macos-15 (arm64)",
+    "ubuntu-24.04 (x86_64)",
+    "ubuntu-24.04-arm (arm64)"
+  ],
+  "python_versions": [
+    "3.13.15",
+    "3.14.7"
+  ],
+  "runs": {
+    "qualification": {
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35408977731",
+      "status": "success",
+      "completed_jobs": 6
+    },
+    "python": {
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35408977751",
+      "status": "success",
+      "completed_jobs": 6
+    },
+    "rust": {
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35408977727",
+      "status": "success",
+      "completed_jobs": 3
+    },
+    "web": {
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35408977738",
+      "status": "success",
+      "completed_jobs": 3
+    }
+  },
+  "scope": "T003-T006 CI evidence. T007 is a locally verified uncommitted increment and is not part of these runs.",
+  "limitations": [
+    "Public summaries and artifact listings inspected; authenticated logs and artifact contents were not downloaded.",
+    "Successful workflow conclusions establish their committed required checks; full application/release conformance remains future work."
+  ]
+}

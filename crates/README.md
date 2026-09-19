@@ -10,7 +10,9 @@ implementing domain, storage, execution or service behaviour.
 
 [check_rust.py](../tools/check_rust.py) enforces allowed dependency directions,
 cycles, exact qualified dependency versions/sources and workspace lint inheritance.
-The domain crate starts with no dependencies. New external dependencies require
+The domain crate starts with no dependencies. T007 adds SQLx/bundled SQLite
+and Tokio only as `tf-store` dev dependencies for the [integration fixtures](../tests/README.md).
+Tokio is permitted there only for tests; the checker rejects normal/build promotion. New external dependencies require
 an explicit boundary and qualification review; permitted edges do not require
 unused dependencies to be added. All crates forbid unsafe code and inherit Clippy
 rules against panic/unwrap/expect/todo scaffolding.
@@ -18,6 +20,5 @@ rules against panic/unwrap/expect/todo scaffolding.
 Run `bash tools/check-rust.sh` after `cargo fetch --locked`; see the
 [verification contract](../docs/development/verification.md). The root lockfile is
 separate from T003's standalone probe and currently contains a subset of its
-qualified package versions and checksums. T003 qualification remains pending in
-CI; the [compatibility report](../docs/development/compatibility.md) records the
+qualified package versions and checksums. T003 qualification and the T004 Rust CI matrix now pass; the [compatibility report](../docs/development/compatibility.md) records the
 available native evidence.
