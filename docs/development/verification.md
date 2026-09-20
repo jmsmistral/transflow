@@ -327,6 +327,10 @@ last output, and repeated alias/role/version provenance through publication.
 
 See [T042 local evidence](evidence/t042-macos-arm64.json),
 [T043 local evidence](evidence/t043-macos-arm64.json) and the
-[input service guide](../../crates/tf-store/INPUTS.md). CI qualification is pending.
+[input service guide](../../crates/tf-store/INPUTS.md). All five workflows and 19
+jobs pass at `9ec1436a0d9ed2786753752a2a8f203afa8c086e`, paired with specification
+progress `98b85edf9c64f16c2b94d8534b88b1e324ad7c59`; see
+[T042 CI evidence](evidence/t042-ci.json) and [T043 CI evidence](evidence/t043-ci.json).
+Both tasks are complete.
 Full build/plan CLI, provider resolution, freshness and check execution remain
 later tasks; these results qualify the shared local input services.
