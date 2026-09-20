@@ -29,7 +29,7 @@ The claim does not automatically release on drop/crash. Abandon it only if bytes
 have not been deleted. Runtime ownership serializes all callers; these repository
 methods are internal primitives, not worker or unauthenticated client APIs.
 
-No file is deleted by this module. The later GC service (T112) must enforce
+No file is deleted by this module. The later GC service (T111) must enforce
 orphan/quarantine grace periods, dry-run/explicit approval, filesystem deletion
 and interrupted-claim reconciliation. Provider copy/export, planning and full
 worker/query integration remain later tasks. A lease protects identity/lifetime,

@@ -55,7 +55,23 @@ fn head_read_is_pinned_and_renewals_do_not_follow_new_heads() {
         assert_eq!(renewed.expires_at_us(), 250);
         assert!(repo.renew_read(&lease, 151, 100).await.is_err());
         assert!(repo.release_read(&lease).await.is_err());
+        let mut reader =
+            tf_store::Reader::open_existing(&h.root.join(".transflow/runtime/catalog.sqlite"))
+                .await
+                .unwrap();
+        assert_eq!(
+            reader.catalog_lifecycle_blockers(151).await.unwrap(),
+            ["active read leases: 1"]
+        );
         repo.release_read(&renewed).await.unwrap();
+        assert!(
+            reader
+                .catalog_lifecycle_blockers(151)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        reader.close().await.unwrap();
         assert!(repo.renew_read(&renewed, 152, 100).await.is_err());
         store.close().await.unwrap();
     });

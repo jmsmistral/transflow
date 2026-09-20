@@ -234,10 +234,11 @@ async fn lifecycle_blockers(db: &mut sqlx::SqliteConnection, at_us: i64) -> Resu
             blockers.push(format!("{label}: {count}"));
         }
     }
-    let leases: i64 = sqlx::query_scalar("SELECT count(*) FROM read_leases WHERE expires_at_us>?")
-        .bind(at_us)
-        .fetch_one(&mut *db)
-        .await?;
+    let leases: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM read_leases WHERE released=0 AND expires_at_us>?")
+            .bind(at_us)
+            .fetch_one(&mut *db)
+            .await?;
     if leases > 0 {
         blockers.push(format!("active read leases: {leases}"));
     }

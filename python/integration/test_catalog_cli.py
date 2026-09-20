@@ -366,6 +366,7 @@ def test_lifecycle_active_runtime_references_are_blocking(
             db.execute("INSERT INTO artifacts VALUES(?,'{}','[]',0,0,0,'VERIFIED')", ("e" * 64,))
             db.execute(
                 "INSERT INTO read_leases "
+                "(id,version_id,artifact_digest,owner_operation,renewed_at_us,expires_at_us,fence) "
                 "VALUES(?,NULL,?,'synthetic lease',1,9223372036854775807,1)",
                 (str(uuid4()), "e" * 64),
             )
