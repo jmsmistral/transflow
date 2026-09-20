@@ -48,7 +48,7 @@
     "Frozen SQLite snapshots remain stable after later publication and failed attempts.",
     "Installed-worker inspection does not execute producers, register pending outputs, or reuse an invalid current source graph."
   ],
-  "ci": "Pending owner monitoring after push; no workflows were polled for T052.",
+  "ci": "Owner subsequently confirmed push CI passed; see t052-owner-ci.json. No workflows were polled by the agent.",
   "limits": [
     "Internal Rust services; public plan/why commands and UI remain later tasks.",
     "Trusted caller supplies writer/parameter/evaluation/secret-version semantics; omitted or legacy evidence is unknown.",

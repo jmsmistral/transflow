@@ -693,3 +693,6 @@ pub mod output_branch;
 
 /// Shared frozen-context freshness and causal why service.
 pub mod why;
+
+/// Captured, nonexecuting upstream/downstream inspection.
+pub mod graph_query;

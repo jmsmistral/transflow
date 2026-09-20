@@ -438,7 +438,32 @@ and advisory refresh completed for the same 640 package versions, with no report
 advisory matches, and the subsequent aggregate passed. No package version changed.
 Real socket/process fixtures ran with authorized native permissions.
 
-Push CI is pending owner monitoring under the standing handoff preference; no
-T052 workflows have been polled. The owner separately confirmed that the final
+The owner confirmed T052 push CI passed; [the receipt](evidence/t052-owner-ci.json)
+records that report and the paired revisions. No T052 workflows were independently polled. The owner separately confirmed that the final
 T051 documentation-push workflows passed. Public commands and connected UI remain
 later tasks; these tests qualify the shared backend read model and why services.
+
+
+## T053 deterministic graph traversal (2026-09-21)
+
+All local contributor gates pass across the aggregate run and corrected installed-worker
+rerun: 292 Rust tests plus one documentation test, 641 Python, 253 web and 45
+installed-worker journeys; 44 document, 27 safety and twelve boundary regressions.
+Eight new Rust tests cover exact minimum-hop depth sets, diamonds, 1,101-node wide
+and deep graphs, 250 aliases between two nodes, foreign boundaries, deterministic
+ordering and frozen-context pagination. Seeded DAGs are checked against an
+independent topological shortest-distance reference.
+
+The aggregate run's only failures were two new integration assertions that assumed
+inspection creates a runtime database. Graph inspection correctly leaves that
+database absent. After correcting the assertions, `bash tools/check-cli.sh` passes
+all 45 journeys. Final focused traversal tests and workspace Clippy also pass after
+adding malformed/out-of-range/exhausted cursor cases. Final specification and safety
+checks pass after completing T052’s verification-date field. No production correction was
+needed. Worker socket tests used authorized native execution.
+
+See [local evidence](evidence/t053-macos-arm64.json) and the
+[traversal guide](../../crates/tf-catalog/TRAVERSAL.md). Both directions use captured
+source and complete validation without producer calls, registry mutation or dataset
+reads. Public commands remain T054. No dependency/schema/protocol version changed.
+Push CI is pending owner monitoring; no workflows are polled by the agent.

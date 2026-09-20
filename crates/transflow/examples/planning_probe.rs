@@ -15,7 +15,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .enable_all()
         .build()?;
     let result = runtime.block_on(async {
-        if operation == "why" {
+        if matches!(operation.as_str(), "upstream"|"downstream") {
+            let direction=if operation=="upstream"{tf_catalog::traversal::Direction::Upstream}else{tf_catalog::traversal::Direction::Downstream};
+            let depth=args.get(4).map(|v|tf_catalog::traversal::parse_depth(v)).transpose().map_err(|e|e.to_string())?;
+            let completion=transflow::graph_query::inspect(owner,transflow::graph_query::Request{python:Some(python.clone()),branch:"feature".parse().map_err(|_|"invalid branch")?,start:reference.clone(),direction,depth}).await.map_err(|e|e.to_string())?;
+            let traversal=completion.result.map_err(|e|e.to_string())?;
+            let mut cursor=None;let mut nodes=vec![];let mut edges=vec![];let mut pages=0;
+            loop {
+                let page=traversal.page(cursor.as_deref(),1).map_err(|e|e.to_string())?;
+                pages+=1;
+                nodes.extend(page.nodes.iter().map(|n|json!({"identity":format!("{:?}",n.node.identity),"paths":n.node.paths.iter().map(|p|p.as_str()).collect::<Vec<_>>(),"depth":n.depth,"external":n.node.external,"producer":n.node.producer})));
+                edges.extend(page.edges.iter().map(|e|json!({"parent":format!("{:?}",e.parent),"consumer":format!("{:?}",e.consumer),"alias":e.alias,"role":e.role.name()})));
+                cursor=page.next_cursor;
+                if cursor.is_none() {break Ok(json!({"nodes":nodes,"edges":edges,"pages":pages,"source":page.context.source.to_string(),"branch":page.context.branch.as_str(),"certificate":page.context.certificate_fingerprint,"scope_complete":page.scope_complete,"omitted_nodes":page.omitted_nodes,"omitted_edges":page.omitted_edges}));}
+            }
+        } else if operation == "why" {
             let now=i64::try_from(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e|e.to_string())?.as_micros()).map_err(|e|e.to_string())?;
             let completion=transflow::why::inspect(owner,transflow::why::Request{python:Some(python.clone()),branch:"feature".parse().map_err(|_|"invalid branch")?,fallbacks:None,semantics:Default::default(),at_us:now}).await.map_err(|e|e.to_string())?;
             completion.result.map(|r|json!({"source":r.source,"branch":r.branch.as_str(),"datasets":r.datasets.values().map(|s|json!({"materialization":format!("{:?}",s.materialization),"direct_data":format!("{:?}",s.direct_data),"direct_logic":format!("{:?}",s.direct_logic),"reasons":s.reasons.iter().map(|r|json!({"code":r.code,"human":r.human(&Default::default())})).collect::<Vec<_>>()})).collect::<Vec<_>>()})).map_err(|e|e.to_string())

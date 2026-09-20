@@ -30,3 +30,6 @@ pub mod local_files;
 pub mod compute;
 /// Alias-preserving input preparation over the complete validated graph.
 pub mod input_bindings;
+
+/// Context-bound, paginated declared-graph traversal.
+pub mod traversal;

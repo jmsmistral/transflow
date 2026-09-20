@@ -721,3 +721,53 @@ def test_freshness_inspection_keeps_unknowns_and_never_executes_or_registers(
     with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db:
         assert db.execute("SELECT count(*) FROM attempts").fetchone()[0] == 0
         assert db.execute("SELECT count(*) FROM dataset_versions").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("direction", ["upstream", "downstream"])
+def test_captured_graph_traversal_depth_and_pagination_never_execute_producers(
+    workspace: Path, direction: str
+) -> None:
+    source(workspace, "orders.py", DECLARATION)
+    for name, inputs in [
+        ("left", {"rows": "raw/orders"}),
+        ("right", {"rows": "raw/orders"}),
+        ("joined", {"left": "curated/left", "right": "curated/right"}),
+    ]:
+        bindings = ", ".join(f'{alias}=Input("{path}")' for alias, path in inputs.items())
+        source(
+            workspace,
+            f"{name}.py",
+            "from transflow import transform, Input, Output\n"
+            f'@transform({bindings}, output=Output("curated/{name}"))\n'
+            f"def produce({', '.join(inputs)}):\n"
+            '    raise AssertionError("Traversal must not execute producers")\n',
+        )
+    start = "curated/joined" if direction == "upstream" else "raw/orders"
+    registry = (workspace / ".transflow/catalog.toml").read_bytes()
+    for depth, count, omitted in [("0", 1, 3), ("1", 3, 1), ("2", 4, 0), (None, 4, 0)]:
+        result = plan_probe(workspace, direction, start, *([depth] if depth else []))
+        assert result["ok"], result
+        value = result["result"]
+        assert len(value["nodes"]) == count
+        assert len({n["identity"] for n in value["nodes"]}) == count
+        assert value["nodes"][0]["paths"] == [start]
+        assert value["nodes"][0]["depth"] == 0
+        assert value["omitted_nodes"] == omitted
+        assert value["scope_complete"] is (omitted == 0)
+        assert value["branch"] == "feature"
+        assert len(value["certificate"]) == 64
+        if omitted == 0:
+            assert len(value["edges"]) == 4
+            assert value["pages"] == 4
+    assert not plan_probe(workspace, direction, start, "-1")["ok"]
+    assert (workspace / ".transflow/catalog.toml").read_bytes() == registry
+    # A cycle anywhere in the source blocks even a depth-zero request for an unrelated node.
+    source(
+        workspace,
+        "cycle.py",
+        "from transflow import transform, Input, Output\n"
+        '@transform(rows=Input("bad/cycle"), output=Output("bad/cycle"))\n'
+        "def produce(rows): return rows\n",
+    )
+    assert not plan_probe(workspace, direction, start, "0")["ok"]
+    assert not (workspace / ".transflow/runtime/catalog.sqlite").exists()
