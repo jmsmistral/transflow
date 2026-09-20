@@ -84,3 +84,6 @@ The [CLI guide](../transflow/README.md) documents redaction limits and projectio
 T017 adds pure `execution` state machines, explicit retry policy, cancellation requests,
 immutable attempt outcomes and fenced publication intent. See the [transition tables
 and caller obligations](EXECUTION.md). Twelve additional tests exercise these APIs.
+
+`input` contains captured local branch policies, per-consumer input keys, roles
+and read-versus-planned-producer classification. See the [input service guide](../tf-store/INPUTS.md).

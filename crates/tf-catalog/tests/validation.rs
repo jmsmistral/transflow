@@ -345,3 +345,68 @@ fn installed_worker_fixture_validates_without_producer_execution_or_allocations(
     );
     assert_eq!(graph.deferred().len(), 5);
 }
+
+#[test]
+fn input_preparation_preserves_aliases_and_rejects_a_changed_validation_context() {
+    use tf_catalog::{input_bindings::local_bindings, workspace::WorkspaceConfig};
+    use tf_domain::input::{BindingDisposition, InputRole};
+    let raw = DatasetId::from_bytes([10; 16]);
+    let output = DatasetId::from_bytes([11; 16]);
+    let registry=RegistrySnapshot::parse(workspace(),&format!("format_version=1\n[[datasets]]\nid='{raw}'\npath='raw/items'\nkind='transform'\n[[datasets]]\nid='{output}'\npath='curated/items'\nkind='transform'\n")).unwrap();
+    let mut right = input("baseline", "raw/items");
+    right["branch"] = json!({"kind":"named","name":"master"});
+    right["role"] = "validation".into();
+    let mut f = Fixture::with_registry(
+        registry,
+        vec![
+            definition("raw", "raw/items", vec![]),
+            definition(
+                "curated",
+                "curated/items",
+                vec![input("fresh", "raw/items"), right],
+            ),
+        ],
+    );
+    f.config
+        .push_str("[branching]\ndefault_fallbacks=['master']\n[branching.fallbacks]\nmaster=[]\n");
+    let graph = validation::validate(&f.request()).unwrap();
+    let output_branch = "feature".parse().unwrap();
+    let bindings = local_bindings(
+        &graph,
+        &f.request(),
+        &output_branch,
+        Some(&["develop".parse().unwrap()]),
+    )
+    .unwrap();
+    assert_eq!(bindings.len(), 2);
+    let writes = std::collections::BTreeSet::from([tf_domain::DatasetKey::new(workspace(), raw)]);
+    for b in bindings.values() {
+        if b.key.alias() == "fresh" {
+            assert_eq!(b.disposition(&writes), BindingDisposition::PlannedProducer);
+            assert_eq!(b.policy.candidates().len(), 2);
+        } else {
+            assert_eq!(b.role, InputRole::Validation);
+            assert_eq!(b.disposition(&writes), BindingDisposition::OffBranch);
+            assert_eq!(b.policy.candidates().len(), 1);
+        }
+    }
+    let snapshot = WorkspaceConfig::parse(&f.config)
+        .unwrap()
+        .input_policies()
+        .unwrap();
+    f.config = f.config.replace("['master']", "['other']");
+    assert!(local_bindings(&graph, &f.request(), &output_branch, None).is_err());
+    assert_eq!(
+        snapshot
+            .local(
+                &output_branch,
+                tf_domain::BranchSelector::Omitted,
+                tf_domain::FallbackPermission::Allowed,
+                None
+            )
+            .unwrap()
+            .candidates()[1]
+            .as_str(),
+        "master"
+    );
+}

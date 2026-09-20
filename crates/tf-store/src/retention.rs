@@ -73,6 +73,14 @@ pub struct ReadLease {
     expires: i64,
 }
 impl ReadLease {
+    pub(crate) fn same_binding(&self, other: &Self) -> bool {
+        self.id == other.id
+            && self.operation == other.operation
+            && self.version == other.version
+            && self.artifact == other.artifact
+            && other.fence > self.fence
+    }
+
     /// Pinned version, unaffected by later head changes.
     pub fn version(&self) -> Option<VersionId> {
         self.version
@@ -158,7 +166,7 @@ impl CollectionClaim {
         self.digest
     }
 }
-async fn clock(db: &mut SqliteConnection, now: i64) -> Result<()> {
+pub(crate) async fn clock(db: &mut SqliteConnection, now: i64) -> Result<()> {
     let changed =
         sqlx::query("UPDATE retention_clock SET now_us=? WHERE singleton=1 AND now_us<=?")
             .bind(now)
@@ -224,17 +232,10 @@ impl Store {
         clock(&mut self.db, now_us).await?;
         let mut tx = self.db.begin_with("BEGIN IMMEDIATE").await?;
         clock(&mut tx, now_us).await?;
-        let (version, artifact) = resolve(&mut tx, target).await?;
-        sqlx::query("INSERT INTO read_leases(id,version_id,artifact_digest,owner_operation,renewed_at_us,expires_at_us,fence,kind) VALUES(?,?,?,?,?,?,0,?)").bind(id.to_string()).bind(version.map(|v|v.to_string())).bind(if version.is_none(){Some(artifact.hex())}else{None}).bind(operation.to_string()).bind(now_us).bind(expires).bind(kind.name()).execute(&mut *tx).await?;
+        let lease =
+            lease_in_transaction(&mut tx, id, operation, kind, target, now_us, expires).await?;
         tx.commit().await?;
-        Ok(ReadLease {
-            id,
-            operation,
-            fence: 0,
-            version,
-            artifact,
-            expires,
-        })
+        Ok(lease)
     }
     /// Renew the same immutable binding. Expired/released/stale capabilities cannot revive it.
     pub async fn renew_read(
@@ -448,4 +449,30 @@ pub(crate) async fn version_available(db: &mut SqliteConnection, version: Versio
         return Err(RetentionError::Unavailable);
     }
     Ok(())
+}
+
+/// Caller owns an IMMEDIATE transaction and has persisted the sampled clock floor.
+pub(crate) async fn lease_in_transaction(
+    db: &mut SqliteConnection,
+    id: RequestId,
+    operation: RequestId,
+    kind: LeaseKind,
+    target: ReadTarget,
+    now: i64,
+    expires: i64,
+) -> Result<ReadLease> {
+    let (version, artifact) = resolve(db, target).await?;
+    sqlx::query("INSERT INTO read_leases(id,version_id,artifact_digest,owner_operation,renewed_at_us,expires_at_us,fence,kind) VALUES(?,?,?,?,?,?,0,?)")
+        .bind(id.to_string()).bind(version.map(|v| v.to_string()))
+        .bind(if version.is_none() { Some(artifact.hex()) } else { None })
+        .bind(operation.to_string()).bind(now).bind(expires).bind(kind.name())
+        .execute(db).await?;
+    Ok(ReadLease {
+        id,
+        operation,
+        fence: 0,
+        version,
+        artifact,
+        expires,
+    })
 }

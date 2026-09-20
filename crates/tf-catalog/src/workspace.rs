@@ -352,6 +352,26 @@ impl WorkspaceConfig {
             .get(branch)
             .unwrap_or(&self.raw.branching.default_fallbacks)
     }
+    /// Capture authored local branch rules, preserving explicit empty tails.
+    pub fn input_policies(
+        &self,
+    ) -> Result<tf_domain::input::BranchPolicySnapshot, tf_domain::input::InputError> {
+        use tf_domain::input::{BranchPolicySnapshot, InputError};
+        let parse = |names: &[String]| {
+            names
+                .iter()
+                .map(|n| n.parse().map_err(|_| InputError))
+                .collect::<Result<Vec<_>, _>>()
+        };
+        let rules = self
+            .raw
+            .branching
+            .fallbacks
+            .iter()
+            .map(|(n, tail)| Ok((n.parse().map_err(|_| InputError)?, parse(tail)?)))
+            .collect::<Result<_, InputError>>()?;
+        BranchPolicySnapshot::new(parse(&self.raw.branching.default_fallbacks)?, rules)
+    }
     /// Configured Python minor version.
     pub fn python_version(&self) -> &str {
         &self.raw.python.version

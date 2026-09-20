@@ -326,3 +326,6 @@ pub mod retention;
 
 /// Read-only output previews and guarded lazy branch creation.
 pub mod branches;
+
+/// Atomic local input fallback resolution with exact renewable read leases.
+pub mod input_resolution;

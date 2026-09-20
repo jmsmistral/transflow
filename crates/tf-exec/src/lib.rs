@@ -7,3 +7,6 @@ pub mod discovery;
 
 /// Owner-held durable object publication and startup reconciliation.
 pub mod publication;
+
+/// Exact selected-input integrity verification without fallback on data errors.
+pub mod input_read;

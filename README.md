@@ -222,3 +222,9 @@ T041 adds output-branch selection and validated lazy creation. Read-only preview
 leave missing branches absent; valid mutating preparation can create an empty
 branch without copying heads or reviving a deleted name. See the
 [output-branch foundation](crates/transflow/BRANCHES.md).
+
+T042–T043 add per-input branch fallback and alias-preserving exact reads. Named
+inputs retain their own policy; strict inputs never fall back. Selected heads are
+leased before reading, and corrupt data or failed input checks cannot be hidden
+by another branch. Repeated dataset aliases retain separate versions and roles.
+These are shared service foundations; public build/plan commands remain later work.

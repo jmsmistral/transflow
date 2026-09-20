@@ -89,3 +89,6 @@ Output branch previews are available on the read-only `Reader`. Guarded lazy
 creation atomically records an empty branch and audit evidence; the
 [composition service](../transflow/BRANCHES.md) requires current complete validation
 and a writable runtime owner before invoking it.
+
+`input_resolution` chooses and leases exact published heads atomically, with
+per-alias fallback evidence and publication provenance. See [INPUTS.md](INPUTS.md).

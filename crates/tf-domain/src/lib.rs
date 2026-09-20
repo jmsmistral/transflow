@@ -31,3 +31,6 @@ pub mod diagnostic;
 
 /// Pure build/job/attempt transitions and publication guards.
 pub mod execution;
+
+/// Alias-qualified input policy normalization and read/producer boundaries.
+pub mod input;

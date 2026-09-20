@@ -59,22 +59,8 @@ pub struct InputProvenance {
     /// Bounded resolution explanation retained from planning.
     pub resolution: Value,
 }
-/// Dependency role retained with version lineage.
-#[derive(Clone, Copy, Debug)]
-pub enum InputRole {
-    /// Function input.
-    Data,
-    /// Validation-only input.
-    Validation,
-}
-impl InputRole {
-    fn name(self) -> &'static str {
-        match self {
-            Self::Data => "data",
-            Self::Validation => "validation",
-        }
-    }
-}
+/// Dependency role shared with alias-qualified planning bindings.
+pub use tf_domain::input::InputRole;
 impl InputProvenance {
     fn value(&self) -> Value {
         json!({"alias":self.alias,"workspace":self.dataset.workspace_id().to_string(),"dataset":self.dataset.dataset_id().to_string(),"version":self.version.to_string(),"artifact":self.artifact.hex(),"declared_branch":self.declared_branch,"starting_branch":self.starting_branch.as_str(),"resolved_branch":self.resolved_branch.as_str(),"role":self.role.name(),"resolution":self.resolution})

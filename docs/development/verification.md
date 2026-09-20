@@ -312,3 +312,21 @@ requirements. See [local evidence](evidence/t041-macos-arm64.json) and the
 pass at `fe65878a151ab34d9c6ebcaf17bff85159289fd2`, paired with specification
 progress `48a54a4004e6bf68825d9656acb49db38acb2dde`; see
 [CI evidence](evidence/t041-ci.json). T041 is complete.
+
+
+## T042–T043 input resolution verification (2026-09-20)
+
+`bash tools/check.sh` passes: 234 Rust tests plus one documentation test,
+635 Python, 250 web and 28 CLI tests; 44 document, 27 safety and twelve boundary
+regressions. The final strengthened fingerprint assertions also pass the seven
+input integration tests and targeted Clippy; rustfmt passes. Twelve new tests
+cover all six selector cases, nonrecursive/empty policy rules, captured validation
+context, planned/off-branch boundaries, exact pins through head advances, corrupt
+heads with a healthy fallback, collection conflict, failed checks preserving the
+last output, and repeated alias/role/version provenance through publication.
+
+See [T042 local evidence](evidence/t042-macos-arm64.json),
+[T043 local evidence](evidence/t043-macos-arm64.json) and the
+[input service guide](../../crates/tf-store/INPUTS.md). CI qualification is pending.
+Full build/plan CLI, provider resolution, freshness and check execution remain
+later tasks; these results qualify the shared local input services.
