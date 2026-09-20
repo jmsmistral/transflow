@@ -68,3 +68,7 @@ A20/A39 crash recovery, backup/restore and full publication remain later tasks.
 [Logical normalization](NORMALIZATION.md) projects Arrow/Parquet schemas, validates
 actual values, emits bounded typed cells and exposes per-adapter schema guards.
 The import service retains this evidence without publishing artifacts or heads.
+
+[Artifact storage](ARTIFACTS.md) supplies private staging, canonical ordered
+manifests, strict Parquet/hash verification and immutable no-replace installation.
+It does not expose a head or version before the publication service commits one.

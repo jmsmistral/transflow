@@ -1,0 +1,20 @@
+{
+  "task": "T037",
+  "date": "2026-09-20",
+  "platform": "macOS arm64",
+  "command": "bash tools/check.sh",
+  "result": "passed",
+  "rust_tests": 196,
+  "rust_doc_tests": 1,
+  "python_tests": 635,
+  "web_tests": 250,
+  "cli_tests": 28,
+  "artifact_tests": 6,
+  "document_regressions": 44,
+  "safety_regressions": 27,
+  "rust_boundary_regressions": 12,
+  "limits": [
+    "Process and filesystem checks do not qualify hardware power-loss behavior.",
+    "No version or head publication in T037."
+  ]
+}

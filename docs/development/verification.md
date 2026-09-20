@@ -246,3 +246,12 @@ Polars 1.44.2 and DuckDB 1.5.5. No dependency version or lock changed.
 See [local evidence](evidence/t036-macos-arm64.json) and the
 [normalization guide](../../crates/tf-store/NORMALIZATION.md). All five [CI workflows and 19 jobs](evidence/t036-ci.json) pass at implementation `c99f4c2517a557f95fdd7ba6ce38797550d10225`, paired with specification progress `13477efd082c7a71ea9d237ef6ed03a3a25d9b42`. The six native jobs also pass the production-normalizer engine probe. T036 is complete.
 Publication and quality evaluation remain later tasks; pandas/SQL transforms remain deferred.
+
+## T037 immutable artifact verification (2026-09-20)
+
+`bash tools/check.sh` passes: 196 Rust tests plus one documentation test,
+635 Python, 250 web and 28 CLI tests; 44 document, 27 safety and twelve
+boundary regressions. Six new artifact tests cover ordered/empty files,
+no-replace deduplication, corruption, containment and durability-boundary errors.
+See [local evidence](evidence/t037-macos-arm64.json) and the
+[artifact guide](../../crates/tf-store/ARTIFACTS.md). CI is pending.

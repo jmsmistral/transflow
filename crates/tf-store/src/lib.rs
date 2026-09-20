@@ -314,3 +314,6 @@ pub mod imports;
 
 /// Logical schema normalization, precision guards and bounded typed cells.
 pub mod normalization;
+
+/// Immutable, strictly verified multi-file artifact installation.
+pub mod artifacts;
