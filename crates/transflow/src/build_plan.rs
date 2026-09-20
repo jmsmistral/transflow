@@ -55,7 +55,7 @@ pub struct Request {
 #[derive(Debug, thiserror::Error)]
 #[error("Build preparation failed: {0}")]
 pub struct Error(String);
-fn failure(e: impl std::fmt::Display) -> Error {
+pub(crate) fn failure(e: impl std::fmt::Display) -> Error {
     Error(e.to_string())
 }
 fn id<T: std::str::FromStr>() -> Result<T, Error> {

@@ -26,8 +26,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .map_err(|e| e.to_string())
         } else {
             let mode = match operation.as_str() {
-                "full" => tf_plan::scope::Mode::Full,
-                "selected" => tf_plan::scope::Mode::Selected,
+                "full" | "cache-full" => tf_plan::scope::Mode::Full,
+                "selected" | "cache" | "cache-force" => tf_plan::scope::Mode::Selected,
                 "between" => tf_plan::scope::Mode::Between,
                 _ => return Err("invalid probe mode".into()),
             };
@@ -43,16 +43,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     refresh_sources: vec![],
                     pins: vec![],
                     fallbacks: None,
-                    force: false,
+                    force: operation == "cache-force",
                     parameters: json!({}),
                 },
             )
             .await
             .map_err(|e| e.to_string())?;
-            completion
-                .result
-                .map(|plan| json!({"plan":plan}))
-                .map_err(|e| e.to_string())
+            if operation.starts_with("cache") {
+                let plan = completion.result.map_err(|e| e.to_string())?;
+                let accepted = build_plan::accept(completion.owner, plan.id.parse().map_err(|_| "invalid plan ID")?).await.map_err(|e|e.to_string())?;
+                let value = accepted.result.map_err(|e|e.to_string())?;
+                let job = value.plan.writes.last().ok_or("missing job")?.job.parse().map_err(|_|"invalid job")?;
+                let now = i64::try_from(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e|e.to_string())?.as_micros()).map_err(|e|e.to_string())?;
+                let prepared = transflow::cache::prepare(accepted.owner, value.build, job, transflow::cache::Semantics { writer: json!({"normalization":"v1"}), evaluation_us: None, secret_versions: Default::default(), checks: vec![] }, now).await.map_err(|e|e.to_string())?;
+                let result = prepared.result.map_err(|e|e.to_string())?;
+                match result {
+                    transflow::cache::Decision::Pending => Ok(json!({"decision":"pending"})),
+                    transflow::cache::Decision::Execute { reason, request } => Ok(json!({"decision":"execute","reason":reason,"compute":request.contract.compute_fingerprint})),
+                    transflow::cache::Decision::Ready(request) => {
+                        let key = request.contract.compute_fingerprint.clone();
+                        let reused = tf_exec::cache::reuse(prepared.owner, *request, tf_domain::RequestId::from_bytes(*job.as_bytes()), move || Ok(now)).await.map_err(|e|e.to_string())?;
+                        let result = reused.result.map_err(|e|e.to_string())?;
+                        Ok(json!({"decision":"ready","compute":key,"hit":result.is_some()}))
+                    }
+                }
+            } else {
+                completion.result.map(|plan| json!({"plan":plan})).map_err(|e|e.to_string())
+            }
         }
     });
     match result {

@@ -402,3 +402,18 @@ See the [T050 CI receipt](evidence/t050-ci.json); T046–T049 retain matching re
 
 The services are local preparation foundations; public dispatch/execution, cache
 adoption, provider replication and boundary currentness retain subsequent tasks.
+
+## T051 branch-scoped cache reuse (2026-09-21)
+
+Full `bash tools/check.sh` passes: 273 Rust tests plus one documentation test,
+641 Python tests, 253 web tests, 41 installed-worker CLI journeys and 44/27/12
+document/safety/boundary regressions. Ten new real SQLite/Parquet tests cover
+unchanged reuse, older-head adoption, original WARN/input-alias evidence, branch
+isolation, guard/expiry/integrity refusals, SQL failure rollback, recovery and
+publication receipt readback after adoption. Five installed-worker journeys cover
+accepted-context finalization, pending parents and force/source/cache-never rules.
+The initial sandbox-only cache run could not bind the existing coordinator socket;
+the authorized native rerun and final aggregate pass. No dependency versions changed.
+See [local evidence](evidence/t051-macos-arm64.json) and the [cache guide](../../crates/tf-store/CACHE.md).
+Remote CI remains pending at this local verification point. No public build or
+canonical evaluator execution is claimed.

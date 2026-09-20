@@ -10,3 +10,6 @@ pub mod publication;
 
 /// Exact selected-input integrity verification without fallback on data errors.
 pub mod input_read;
+
+/// Owner-held cache artifact verification and atomic reuse.
+pub mod cache;

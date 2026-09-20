@@ -647,3 +647,48 @@ def test_source_policies_plan_new_sources_without_running_them(
         decision = next(iter(draft["context"]["source_decisions"].values()))
         assert decision["executes"]
         assert decision["reason"] == ("Always" if policy == '"always"' else "Missing")
+
+
+@pytest.mark.parametrize("case", ["ready", "force", "never", "source", "pending"])
+def test_accepted_cache_preparation_uses_frozen_context_and_actual_parents(
+    workspace: Path, case: str
+) -> None:
+    declaration = DECLARATION
+    operation = "cache-force" if case == "force" else "cache"
+    target = "raw/orders"
+    if case == "never":
+        declaration = declaration.replace("@transform(output=", '@transform(cache="never", output=')
+    elif case == "source":
+        declaration = declaration.replace("transform", "source_transform")
+    source(workspace, "orders.py", declaration)
+    if case == "pending":
+        operation = "cache-full"
+        target = "curated/orders"
+        source(
+            workspace,
+            "consumer.py",
+            "from transflow import transform, Input, Output\n"
+            '@transform(rows=Input("raw/orders"), output=Output("curated/orders"))\n'
+            'def consumer(rows): raise AssertionError("must not execute")\n',
+        )
+    result = plan_probe(workspace, operation, target)
+    assert result["ok"], result
+    outcome = result["result"]
+    if case == "ready":
+        assert outcome["decision"] == "ready"
+        assert not outcome["hit"]
+    elif case == "pending":
+        assert outcome["decision"] == "pending"
+    else:
+        assert outcome["decision"] == "execute"
+        assert (
+            outcome["reason"]
+            == {"force": "forced", "never": "cache_never", "source": "source_refresh"}[case]
+        )
+    with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db:
+        assert db.execute("SELECT count(*) FROM attempts").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM dataset_versions").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM cached_jobs").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM publication_contracts").fetchone()[0] == (
+            0 if case == "pending" else 1
+        )

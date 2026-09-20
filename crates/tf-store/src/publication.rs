@@ -168,7 +168,7 @@ pub struct PublicationReceipt {
     /// Stable durable event identity, reused on notification retry.
     pub event: RequestId,
 }
-async fn authority(
+pub(crate) async fn authority(
     db: &mut SqliteConnection,
     workspace: WorkspaceId,
     session: CoordinatorSessionId,
@@ -544,7 +544,7 @@ impl Store {
         Ok(())
     }
 }
-async fn validate_inputs(
+pub(crate) async fn validate_inputs(
     db: &mut SqliteConnection,
     workspace: WorkspaceId,
     c: &PublicationContract,
@@ -648,21 +648,36 @@ async fn guards(
     validate_inputs(db, t.dataset.workspace_id(), &r.contract).await
 }
 async fn check_results(db: &mut SqliteConnection, r: &PublicationRequest) -> Result<Vec<String>> {
+    validation_results(
+        db,
+        r.intent.attempt(),
+        r.intent.artifact().hex().as_str(),
+        &r.contract,
+        r.at_us,
+    )
+    .await
+}
+pub(crate) async fn validation_results(
+    db: &mut SqliteConnection,
+    attempt: tf_domain::AttemptId,
+    artifact: &str,
+    contract: &PublicationContract,
+    at_us: i64,
+) -> Result<Vec<String>> {
     let mut ids = vec![];
     let count: i64 = sqlx::query_scalar("SELECT count(*) FROM check_results WHERE attempt_id=?")
-        .bind(r.intent.attempt().to_string())
+        .bind(attempt.to_string())
         .fetch_one(&mut *db)
         .await?;
-    if count != num(r.contract.checks.len() as u64)? {
+    if count != num(contract.checks.len() as u64)? {
         return Err(PublicationError::Evidence);
     }
-    for check in &r.contract.checks {
+    for check in &contract.checks {
         validate_definition(db, check).await?;
         let subject = match &check.subject {
-            CheckSubject::Output => json!({"artifact_digest":r.intent.artifact().hex()}),
+            CheckSubject::Output => json!({"artifact_digest":artifact}),
             CheckSubject::Input(a) => {
-                let i = r
-                    .contract
+                let i = contract
                     .inputs
                     .iter()
                     .find(|i| &i.alias == a)
@@ -670,7 +685,7 @@ async fn check_results(db: &mut SqliteConnection, r: &PublicationRequest) -> Res
                 json!({"alias":a,"artifact_digest":i.artifact.hex(),"version_id":i.version.to_string()})
             }
         };
-        let rows=sqlx::query("SELECT id,subject_json,outcome,finished_at_us,started_at_us FROM check_results WHERE attempt_id=? AND definition_fingerprint=? LIMIT 2").bind(r.intent.attempt().to_string()).bind(&check.definition).fetch_all(&mut *db).await?;
+        let rows=sqlx::query("SELECT id,subject_json,outcome,finished_at_us,started_at_us FROM check_results WHERE attempt_id=? AND definition_fingerprint=? LIMIT 2").bind(attempt.to_string()).bind(&check.definition).fetch_all(&mut *db).await?;
         if rows.len() != 1 {
             return Err(PublicationError::Evidence);
         }
@@ -681,7 +696,7 @@ async fn check_results(db: &mut SqliteConnection, r: &PublicationRequest) -> Res
         let finish: Option<i64> = row.try_get(3)?;
         let started: i64 = row.try_get(4)?;
         if stored != subject
-            || finish.is_none_or(|t| t < started || t > r.at_us)
+            || finish.is_none_or(|t| t < started || t > at_us)
             || !(outcome == "PASS" || (!check.required && outcome == "VIOLATION"))
         {
             return Err(PublicationError::Evidence);
@@ -695,7 +710,7 @@ async fn committed(
     r: &PublicationRequest,
 ) -> Result<Option<PublicationReceipt>> {
     let i = &r.intent;
-    let row=sqlx::query("SELECT v.id,v.artifact_digest,h.generation,h.event_id,c.contract_json FROM publication_intents p JOIN dataset_versions v ON v.id=p.planned_version_id AND v.attempt_id=p.attempt_id JOIN head_changes h ON h.new_version_id=v.id JOIN publication_contracts c ON c.job_id=? WHERE p.attempt_id=? AND p.state='COMMITTED' AND p.session_id=? AND p.fence=? AND p.expected_head_generation=? AND h.branch_id=? AND v.dataset_id=? AND v.source_snapshot_id=? AND EXISTS(SELECT 1 FROM attempts a JOIN jobs j ON j.id=a.job_id JOIN builds b ON b.id=j.build_id WHERE a.id=p.attempt_id AND j.id=? AND b.id=? AND b.plan_id=?)").bind(i.job().to_string()).bind(i.attempt().to_string()).bind(i.fence().session.to_string()).bind(num(i.fence().generation)?).bind(num(i.target().expected_generation)?).bind(i.target().branch.to_string()).bind(i.target().dataset.dataset_id().to_string()).bind(i.binding().source.to_string()).bind(i.job().to_string()).bind(i.build().to_string()).bind(i.binding().plan.to_string()).fetch_optional(db).await?;
+    let row=sqlx::query("SELECT v.id,v.artifact_digest,h.generation,h.event_id,c.contract_json FROM publication_intents p JOIN dataset_versions v ON v.id=p.planned_version_id AND v.attempt_id=p.attempt_id JOIN head_changes h ON h.new_version_id=v.id AND h.cause='publication' JOIN publication_contracts c ON c.job_id=? WHERE p.attempt_id=? AND p.state='COMMITTED' AND p.session_id=? AND p.fence=? AND p.expected_head_generation=? AND h.branch_id=? AND v.dataset_id=? AND v.source_snapshot_id=? AND EXISTS(SELECT 1 FROM attempts a JOIN jobs j ON j.id=a.job_id JOIN builds b ON b.id=j.build_id WHERE a.id=p.attempt_id AND j.id=? AND b.id=? AND b.plan_id=?)").bind(i.job().to_string()).bind(i.attempt().to_string()).bind(i.fence().session.to_string()).bind(num(i.fence().generation)?).bind(num(i.target().expected_generation)?).bind(i.target().branch.to_string()).bind(i.target().dataset.dataset_id().to_string()).bind(i.binding().source.to_string()).bind(i.job().to_string()).bind(i.build().to_string()).bind(i.binding().plan.to_string()).fetch_optional(db).await?;
     let Some(row) = row else {
         return Ok(None);
     };

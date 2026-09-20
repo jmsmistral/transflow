@@ -97,3 +97,8 @@ T044 adds audited branch lifecycle and immutable source-indexed authored policy
 snapshots; see the [branch guide](../transflow/BRANCHES.md). T045 adds exact historical
 overrides and schema-5 retained replay manifests with atomic boundary leases;
 see [pins and replay](REPLAY.md).
+
+[T051 cache reuse](CACHE.md) adds schema 6 and immutable cached-job evidence.
+Branch-scoped candidates retain original check results; audited head adoption
+emits head changes without new materializations. There are now 46 logical tables
+plus the migration ledger.

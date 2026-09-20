@@ -3,6 +3,8 @@
 mod branch;
 /// Shared guarded local draft and acceptance pipeline.
 pub mod build_plan;
+/// Accepted-job cache key finalization.
+pub mod cache;
 mod catalog;
 mod env;
 mod import;

@@ -394,6 +394,7 @@ async fn roots(
  UNION SELECT id FROM dataset_versions WHERE published_at_us>=?
  UNION SELECT version_id FROM live_build_inputs
  UNION SELECT id FROM contract_inputs
+ UNION SELECT c.version_id FROM cached_jobs c JOIN jobs j ON j.id=c.job_id JOIN builds b ON b.id=j.build_id WHERE b.state IN ('QUEUED','RUNNING')
  UNION SELECT v.id FROM version_inputs i JOIN retained r ON r.id=i.output_version_id JOIN dataset_versions v ON v.id=i.origin_version_id AND v.dataset_id=i.origin_dataset_id WHERE i.origin_workspace_id=(SELECT id FROM workspaces))
  SELECT id FROM retained LIMIT 100001"#).bind(now).bind(now).bind(i64::from(policy.latest)).bind(cutoff).fetch_all(&mut *db).await?;
     if versions.len() > 100_000 {
@@ -475,4 +476,18 @@ pub(crate) async fn lease_in_transaction(
         artifact,
         expires,
     })
+}
+
+pub(crate) async fn check_live_lease(
+    db: &mut SqliteConnection,
+    lease: &ReadLease,
+    now: i64,
+) -> Result<()> {
+    let valid:i64=sqlx::query_scalar("SELECT count(*) FROM read_leases WHERE id=? AND owner_operation=? AND fence=? AND version_id=? AND expires_at_us>? AND released=0")
+        .bind(lease.id.to_string()).bind(lease.operation.to_string()).bind(lease.fence)
+        .bind(lease.version.map(|v|v.to_string())).bind(now).fetch_one(db).await?;
+    if valid != 1 {
+        return Err(RetentionError::Lease);
+    }
+    Ok(())
 }

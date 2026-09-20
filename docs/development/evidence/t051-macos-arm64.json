@@ -1,0 +1,41 @@
+{
+  "task": "T051",
+  "date": "2026-09-21",
+  "platform": "macOS arm64",
+  "result": "passed",
+  "implementation_base": "cec03859357db502ad56c74446bf87fe3e003972",
+  "specification_base": "842f6bbe5d2197b8b4ed47d627199b582f9a404a",
+  "commands": [
+    {
+      "command": "cargo test -p tf-exec --test cache --locked --offline",
+      "result": "Initial sandbox run refused local socket binding; authorized native rerun passed eight initial tests. Final aggregate includes ten cache tests."
+    },
+    {
+      "command": "bash tools/check.sh",
+      "result": "passed; real socket/process tests ran outside the filesystem/network sandbox"
+    },
+    {
+      "command": "python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "passed after documentation changes"
+    }
+  ],
+  "rust_tests": 273,
+  "rust_doc_tests": 1,
+  "python_tests": 641,
+  "web_tests": 253,
+  "cli_tests": 41,
+  "document_regressions": 44,
+  "safety_regressions": 27,
+  "rust_boundary_regressions": 12,
+  "new_cache_tests": 10,
+  "new_cli_tests": 5,
+  "runtime_schema": 6,
+  "limits": [
+    "Internal accepted-job preparation and cache services; no public build execution.",
+    "Cache transaction tests use production SQLite, Parquet and publication services with explicit synthetic planner/check records.",
+    "Installed-worker journeys verify accepted-plan finalization, deferred parents and force/source/cache-never policy without executing transforms.",
+    "Trusted normalized check obligations are supplied by later check compilation/evaluation integration (T059\u2013T064).",
+    "Cross-branch adoption and check-only revalidation are not implemented; hidden external I/O is not certified deterministic.",
+    "Native CI evidence will be recorded separately at the exact implementation commit."
+  ]
+}

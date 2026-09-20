@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** Contributor foundation implemented (T001–T002). T004 provides the ten-crate Rust scaffold and CLI help/version. T005 adds one locally installable `transflow` wheel containing the typed SDK and worker bootstrap modules. T003 native qualification passes on all three supported platforms. T006 adds a web development preview with theme and dialog controls. T007 adds deterministic integration-test fixtures for future execution and storage work. T008 adds dependency/license audits and repository privacy checks. T009 qualifies DuckDB’s internal validation capabilities and records precision/security boundaries. T010 adds a snapshot-bound catalogue/mypy prototype; editor completion qualification is retained for later integration. T011 adds resource, cancellation and offline resolver probes. T012 defines versioned wire schemas and shared Rust/Python/TypeScript compatibility fixtures. T013 adds validated Rust domain identities, paths, branches, schemas and values. T014 adds generated contracts and bounded Rust/Python worker framing with session guards. T015 adds canonical JSON and separate content fingerprints with cross-language golden vectors. T016 adds safe human diagnostics and versioned CLI JSON output for help/version and usage errors. T017 adds pure build/job/attempt state machines, retry history and guarded publication intent. T018 adds the bundled SQLite store, checksummed migrations and bounded repository operations. T019 adds OS-held runtime ownership and validated local coordinator discovery metadata. T020 adds immutable durable catalogue parsing, exact ID/path lookup, aliases/tombstones and foreign read-boundary records. T021 adds workspace initialization and strict configuration/root resolution. T022 adds bounded source allowlists and pre-import module conflict checks. T023 adds Git-free immutable source captures and retained integrity checks. T024 adds optional Git provenance and isolated ref captures without checkout changes. T025 adds explicit hash locking, managed environment synchronization and installed-byte drift checks. T026 adds immutable Python declarations and decorators with explicit return validation. T027 adds isolated captured-source discovery and structured import diagnostics. T028 adds nonpersistent candidate resolution and validated additive registry proposals. T029 adds guarded registry commits and exact-ID crash recovery. T030 adds production snapshot-bound C references and explicit testing contexts. Dataset builds and the coordinator service remain unimplemented; this is not an application release.
+**Status:** T001–T050 are implemented for their recorded scopes, except T031/T033 task closure remains gated by native editor qualification. Current capabilities include workspace/environment preparation, catalogue validation/lifecycle, source capture, durable storage/publication foundations, branch lifecycle, retained reads/replay identities, and internal planning/acceptance services. T051 adds internal branch-scoped cache reuse and audited adoption. Dataset build execution, the coordinator service and the connected lineage interface remain upcoming; this is not an application release.
 
 ## Intended experience
 
@@ -256,3 +256,11 @@ conservative compute/check keys. New outputs can be planned without editing the
 registry; acceptance preserves their exact proposed IDs and refuses stale context.
 See the [planning service guide](crates/transflow/PLANNING.md). Public build execution
 and cache adoption remain subsequent work.
+
+### Retained version reuse
+
+T051 adds [internal branch-scoped cache services](crates/tf-store/CACHE.md).
+Accepted jobs finalize keys after their parents bind, verify retained Parquet,
+and reuse original versions/check evidence. Older matching versions can be adopted
+through audited head changes. Force, source refresh and `cache="never"` require
+execution; public build execution remains upcoming work.
