@@ -197,7 +197,7 @@ T036 now normalizes imported Arrow/Parquet schemas, validates exact value ranges
 and retains logical schema fingerprints in preparation manifests. It preserves
 null/NaN, integer/decimal precision, timestamp units/timezones and nested values,
 with explicit unsupported-adapter errors. See [normalization and capabilities](crates/tf-store/NORMALIZATION.md).
-Data-quality checks and publication remain later work.
+Public build/import publication and quality-check execution remain later work.
 
 The T037 storage foundation now supports ordered multi-file immutable artifacts,
 strict integrity verification and durable installation with safe byte deduplication.

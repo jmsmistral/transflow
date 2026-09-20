@@ -19,10 +19,11 @@ workspace initialization and robust ownership/path protection remain separate ta
 
 ## Schema and migrations
 
-Two additive migrations install all 40 logical tables: source/catalogue projections,
+Three additive migrations install 42 logical tables: source/catalogue projections,
 versions/heads, builds/jobs/attempts, checks, scheduling, events/outbox, pins/audit,
-registry mutation journals and foreign replicas/leases. These tables are foundations,
-not delivered scheduler, publication, retention or replica-copy services.
+registry mutation journals, foreign replicas/leases and frozen publication/check
+links. Publication is implemented below; scheduler, retention and replica-copy
+services remain later work.
 
 The database has an application ID, `user_version` and monotonic checksum ledger.
 Migration checksums are SHA-256 of exact embedded SQL bytes. Open rejects unrelated
@@ -36,8 +37,8 @@ STRICT tables, foreign keys, compound head/version identity, unique input aliase
 attempt numbers and occurrence evidence constrain writes. Immutable snapshots,
 versions and declarations reject updates; terminal attempts cannot be rewritten.
 Events, head changes and audit evidence are append-only. Head generations must
-increase. A version's producing attempt must belong to that dataset. Service-level
-rules and atomic head/event/publication operations remain later work.
+increase. A version's producing attempt must belong to that dataset. The publication service adds atomic head/event/version transitions and session,
+reservation, evidence, cancellation and generation guards.
 
 Each store indexes one workspace; its singleton constraint allows local dataset IDs
 to be primary keys. Foreign versions use the complete workspace/dataset/version tuple,
@@ -58,12 +59,13 @@ display a fixed summary. No generic SQL/transaction escape hatch is public.
 Explicit `close().await` completes shutdown. A dropped SQLx transaction queues its
 rollback before the connection can service another operation. Caller cancellation
 after a commit starts may have an uncertain result; read the durable identity/event
-before retrying. This foundation does not implement coordinator cancellation semantics.
+before retrying. The publication service serializes cancellation against its visibility commit.
 
-Nine real-file tests cover fresh/reopen/upgrade, compatibility/checksum refusal,
+The initial nine real-file tests cover fresh/reopen/upgrade, compatibility/checksum refusal,
 foreign keys and identity constraints, injected migration/audit failure, bounded
 contention, concurrent WAL snapshots, immutable evidence and symlink refusal.
-A20/A39 crash recovery, backup/restore and full publication remain later tasks.
+Publication crash recovery is now qualified separately under T039; backup/restore
+and public build composition remain later tasks.
 
 [Logical normalization](NORMALIZATION.md) projects Arrow/Parquet schemas, validates
 actual values, emits bounded typed cells and exposes per-adapter schema guards.
@@ -75,6 +77,5 @@ It does not expose a head or version before the publication service commits one.
 
 [Per-dataset publication](PUBLICATION.md) now supplies guarded visibility,
 immutable provenance/check linkage and persisted outbox replay. Schema 3 adds two
-publication tables (42 logical tables plus the migration ledger). This supersedes
-the earlier foundation-only publication status above. The coordinator execution
+publication tables (42 logical tables plus the migration ledger). The coordinator execution
 lifecycle and public build composition remain subsequent tasks.

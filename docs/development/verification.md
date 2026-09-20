@@ -279,4 +279,6 @@ and twelve boundary regressions. Six recovery test entrypoints cover nine real
 SIGKILL boundaries, eighteen returned-I/O-error cases, corruption, async ownership
 and same-build partial success. Replay succeeds after original sources are removed.
 See [local evidence](evidence/t039-macos-arm64.json) and the
-[recovery report](publication-recovery.md). CI qualification is pending.
+[recovery report](publication-recovery.md). All five workflows and 19 jobs
+pass at `b8a60ad4055ff37ed9c6b81d1adcf769cea7f55c`, paired with specification
+progress `8bb90f4`; see [CI evidence](evidence/t039-ci.json). T039 is complete.
