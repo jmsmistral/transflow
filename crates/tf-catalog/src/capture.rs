@@ -197,6 +197,15 @@ impl SourceSnapshot {
     pub fn discovery_files(&self) -> serde_json::Value {
         serde_json::Value::Array(self.manifest.files.iter().filter(|e| self.manifest.source_roots.iter().any(|root| Path::new(&e.path).starts_with(root))).map(|e|serde_json::json!({"path":e.path,"sha256":e.sha256,"byte_length":e.bytes.to_string()})).collect())
     }
+    /// All captured file metadata, suitable for retained source evidence.
+    pub fn manifest_files(&self) -> serde_json::Value {
+        serde_json::Value::Array(self.manifest.files.iter().map(|e|serde_json::json!({"path":e.path,"sha256":e.sha256,"byte_length":e.bytes.to_string()})).collect())
+    }
+    /// Conservative compute bundle excludes the registry and separately normalized config.
+    /// Helpers, SQL/resources and dependency input/lock files remain included.
+    pub fn computation_files(&self) -> serde_json::Value {
+        serde_json::Value::Array(self.manifest.files.iter().filter(|e| e.path != ".transflow/catalog.toml" && e.path != "workspace.toml").map(|e|serde_json::json!({"path":e.path,"sha256":e.sha256,"byte_length":e.bytes.to_string()})).collect())
+    }
     /// Compare all captured inputs except the explicitly reconciled registry bytes.
     pub fn same_inputs_except_registry(&self, other: &Self) -> bool {
         self.manifest.workspace_id == other.manifest.workspace_id

@@ -368,3 +368,33 @@ plus one documentation test after the fix; full native qualification also passes
 with the existing `target/qualification/py314` environment. Initial attempts with
 the SDK-only Python environments stopped on missing DuckDB; no dependencies were
 installed. Replacement-commit CI passes; see the task evidence above.
+
+
+## T046–T050 planning and compute keys (2026-09-20)
+
+All local component gates pass: 263 Rust tests plus one documentation test,
+641 Python, 253 web and 36 installed-worker integration journeys. The document,
+safety and Rust-boundary suites pass 44, 27 and twelve regressions respectively.
+Thirteen new Rust tests include exhaustive four-node DAG selection, refresh clock
+and force boundaries, real SQLite/Parquet guarded acceptance and rollback, atomic
+replay retention, and conservative fingerprint invalidation. Eight new integration
+journeys use actual captured imports and managed environments without running
+producer functions. Unknown/missing inputs, source/registry/environment drift,
+proposed IDs, symbolic parents and source policies are covered.
+
+The initial aggregate stopped at formatting/type errors in the new Python probe
+helper. These were corrected; `bash tools/check-python.sh`, `bash tools/check-web.sh`
+and `bash tools/check-cli.sh` then passed. Previously passing Rust/document/safety
+gates did not need repetition for the Python annotation fix. The local evidence
+records that distinction. The lockfile adds only the existing planner crate to
+application composition; no dependency version changed. Inventory/advisory evidence
+was refreshed: zero OSV matches across 640 locked package versions.
+
+See [T046 local evidence](evidence/t046-macos-arm64.json),
+[T047 local evidence](evidence/t047-macos-arm64.json),
+[T048 local evidence](evidence/t048-macos-arm64.json),
+[T049 local evidence](evidence/t049-macos-arm64.json),
+[T050 local evidence](evidence/t050-macos-arm64.json), and the
+[planning guide](../../crates/transflow/PLANNING.md). Pushed CI is pending.
+The services are local preparation foundations; public dispatch/execution, cache
+adoption, provider replication and boundary currentness retain subsequent tasks.

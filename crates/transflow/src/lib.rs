@@ -1,6 +1,8 @@
 //! CLI argument handling, human diagnostics and versioned JSON results.
 //! Help/version require no workspace I/O. Application services remain later work.
 mod branch;
+/// Shared guarded local draft and acceptance pipeline.
+pub mod build_plan;
 mod catalog;
 mod env;
 mod import;

@@ -11,6 +11,7 @@ tf-domain = { path = "../tf-domain" }
 tf-protocol = { path = "../tf-protocol" }
 tf-catalog = { path = "../tf-catalog" }
 tf-exec = { path = "../tf-exec" }
+tf-plan = { path = "../tf-plan" }
 tf-store = { path = "../tf-store" }
 tokio.workspace = true
 clap.workspace = true

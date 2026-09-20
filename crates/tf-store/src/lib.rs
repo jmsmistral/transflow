@@ -333,5 +333,7 @@ pub mod input_resolution;
 /// Audited data-branch lifecycle and immutable source-indexed policy snapshots.
 pub mod branch_lifecycle;
 
+/// Immutable draft persistence and atomic guarded acceptance.
+pub mod planning;
 /// Retained original replay identity and exact-boundary leases.
 pub mod replay;

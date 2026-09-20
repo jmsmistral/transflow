@@ -330,7 +330,7 @@ impl ValidatedGraph {
         &self.deferred
     }
 }
-fn parameter(logical: &Value, value: &Value) -> bool {
+pub(crate) fn parameter(logical: &Value, value: &Value) -> bool {
     if logical["type"] != value["type"] || logical["type"] == "binary" {
         return false;
     }

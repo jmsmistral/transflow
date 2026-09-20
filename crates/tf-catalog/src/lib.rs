@@ -26,5 +26,7 @@ pub mod browse;
 /// Explicit local-file selection for import preparation.
 pub mod local_files;
 
+/// Complete conservative computation and check fingerprints.
+pub mod compute;
 /// Alias-preserving input preparation over the complete validated graph.
 pub mod input_bindings;

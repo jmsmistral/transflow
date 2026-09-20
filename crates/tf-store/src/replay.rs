@@ -376,3 +376,9 @@ impl Store {
         })
     }
 }
+
+/// Reuse the closed replay validator for the acceptance transaction's original evidence.
+pub(crate) fn encode_value(value: Value) -> Result<String, Error> {
+    let manifest = ReplayManifest(serde_json::from_value(value).map_err(|_| Error::Evidence)?);
+    encode(&manifest)
+}

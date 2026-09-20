@@ -300,3 +300,12 @@ pub async fn recover(owner: &mut RuntimeOwner, at_us: i64) -> Result<Vec<Recover
     store.close().await?;
     Ok(outcomes)
 }
+
+/// Run reconciliation on a caller-owned blocking worker, retaining the actual owner.
+/// This is restricted to composition code already dispatched by spawn_blocking.
+pub(crate) async fn execute_owned(
+    owner: &mut RuntimeOwner,
+    request: ReconcileRequest,
+) -> Result<ReconcileOutcome> {
+    execute(owner, request, |_| Ok(())).await
+}

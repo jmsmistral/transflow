@@ -248,3 +248,11 @@ T045 adds internal exact-pin qualification and retained replay manifests. Histor
 reads preserve the requested version and report missing original data explicitly.
 Public `plan`, `build` and `build replay` commands remain upcoming work; see the
 [pin and replay foundation](crates/tf-store/REPLAY.md).
+
+
+T046–T050 add internal full/selected/between planning, source refresh decisions,
+immutable saved drafts, guarded acceptance with complete write reservations, and
+conservative compute/check keys. New outputs can be planned without editing the
+registry; acceptance preserves their exact proposed IDs and refuses stale context.
+See the [planning service guide](crates/transflow/PLANNING.md). Public build execution
+and cache adoption remain subsequent work.

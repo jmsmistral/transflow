@@ -519,3 +519,131 @@ def test_import_requires_explicit_preparation_mode(workspace: Path) -> None:
     assert result["exit_status"] == 1
     assert "--prepare-only" in json.dumps(result)
     assert files(workspace) == before
+
+
+def plan_probe(root: Path, operation: str, reference: str, *args: str) -> dict[str, Any]:
+    probe = CLI.parent / "examples/planning_probe"
+    result = run([str(probe), str(root), sys.executable, operation, reference, *args], root)
+    value: dict[str, Any] = json.loads(result.stdout)
+    return value
+
+
+def test_saved_plan_proposed_ids_symbolic_parents_and_exact_acceptance(workspace: Path) -> None:
+    source(workspace, "orders.py", DECLARATION)
+    source(
+        workspace,
+        "consumer.py",
+        "from transflow import transform, Input, Output\n"
+        '@transform(rows=Input("raw/orders"), output=Output("curated/orders"))\n'
+        'def consumer(rows): raise AssertionError("must not execute")\n',
+    )
+    registry = workspace / ".transflow/catalog.toml"
+    before = registry.read_bytes()
+    prepared = plan_probe(workspace, "full", "curated/orders")
+    assert prepared["ok"], prepared
+    draft = prepared["result"]["plan"]
+    assert registry.read_bytes() == before
+    assert len(draft["writes"]) == 2
+    assert draft["reads"] == []
+    assert draft["writes"][1]["bindings"][0]["kind"] == "planned"
+    with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db:
+        assert db.execute("SELECT count(*) FROM datasets").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM data_branches").fetchone()[0] == 0
+    accepted = plan_probe(workspace, "accept", draft["id"])
+    assert accepted["ok"], accepted
+    assert accepted["result"]["plan"] == draft
+    assert registry.read_text() == draft["replacement"]
+    with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db:
+        assert db.execute("SELECT count(*) FROM jobs").fetchone()[0] == 2
+        assert db.execute("SELECT count(*) FROM write_reservations").fetchone()[0] == 2
+        assert db.execute("SELECT count(*) FROM dataset_versions").fetchone()[0] == 0
+    assert not plan_probe(workspace, "accept", draft["id"])["ok"]
+
+
+@pytest.mark.parametrize("changed", ["source", "registry", "environment"])
+def test_saved_plan_conflicts_preserve_registry_and_start_no_jobs(
+    workspace: Path, changed: str
+) -> None:
+    source(workspace, "orders.py", DECLARATION)
+    prepared = plan_probe(workspace, "full", "raw/orders")
+    assert prepared["ok"], prepared
+    draft = prepared["result"]["plan"]
+    if changed == "source":
+        source(workspace, "orders.py", DECLARATION + "# changed after planning\n")
+    elif changed == "registry":
+        registry = workspace / ".transflow/catalog.toml"
+        registry.write_text(registry.read_text() + "# owner edit\n")
+    else:
+        package = (
+            active(workspace)
+            / "lib"
+            / f"python{MINOR}"
+            / "site-packages/transflow_fixture_leaf/__init__.py"
+        )
+        package.write_text("VALUE='changed'\n")
+    before = (workspace / ".transflow/catalog.toml").read_bytes()
+    assert not plan_probe(workspace, "accept", draft["id"])["ok"]
+    assert (workspace / ".transflow/catalog.toml").read_bytes() == before
+    with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db:
+        assert db.execute("SELECT count(*) FROM jobs").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM data_branches").fetchone()[0] == 0
+
+
+def test_selected_missing_input_and_invalid_complete_graph_never_register(workspace: Path) -> None:
+    source(workspace, "orders.py", DECLARATION)
+    source(
+        workspace,
+        "consumer.py",
+        "from transflow import transform, Input, Output\n"
+        '@transform(rows=Input("raw/orders"), output=Output("curated/orders"))\n'
+        "def consumer(rows): return rows\n",
+    )
+    before = (workspace / ".transflow/catalog.toml").read_bytes()
+    selected = plan_probe(workspace, "selected", "curated/orders")
+    assert not selected["ok"], selected
+    assert "head" in selected["error"] or "metadata" in selected["error"]
+    source(
+        workspace,
+        "broken.py",
+        "from transflow import transform, Input, Output\n"
+        '@transform(rows=Input("unknown/typo"), output=Output("bad/output"))\n'
+        "def broken(rows): return rows\n",
+    )
+    assert not plan_probe(workspace, "full", "raw/orders")["ok"]
+    assert (workspace / ".transflow/catalog.toml").read_bytes() == before
+
+
+@pytest.mark.parametrize("policy", ['"always"', '{"ttl_seconds": 60}', '"manual"'])
+def test_source_policies_plan_new_sources_without_running_them(
+    workspace: Path, policy: str
+) -> None:
+    source(
+        workspace,
+        "orders.py",
+        f"from transflow import source_transform, Output\n"
+        f'@source_transform(output=Output("raw/orders"), refresh={policy})\n'
+        f'def orders(): raise AssertionError("source must not execute")\n',
+    )
+    source(
+        workspace,
+        "consumer.py",
+        "from transflow import transform, Input, Output\n"
+        '@transform(rows=Input("raw/orders"), output=Output("curated/orders"))\n'
+        "def consumer(rows): return rows\n",
+    )
+    result = plan_probe(workspace, "full", "curated/orders")
+    if policy == '"manual"':
+        assert not result["ok"], result
+        result = plan_probe(workspace, "full", "raw/orders")
+        assert result["ok"], result
+        assert (
+            next(iter(result["result"]["plan"]["context"]["source_decisions"].values()))["reason"]
+            == "Explicit"
+        )
+    else:
+        assert result["ok"], result
+        draft = result["result"]["plan"]
+        assert len(draft["writes"]) == 2
+        decision = next(iter(draft["context"]["source_decisions"].values()))
+        assert decision["executes"]
+        assert decision["reason"] == ("Always" if policy == '"always"' else "Missing")
