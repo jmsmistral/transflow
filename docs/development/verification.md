@@ -353,7 +353,7 @@ matches across 640 locked versions. No dependency version changed.
 See [T044 local evidence](evidence/t044-macos-arm64.json),
 [T045 local evidence](evidence/t045-macos-arm64.json), the
 [branch guide](../../crates/transflow/BRANCHES.md) and
-[pin/replay guide](../../crates/tf-store/REPLAY.md). Remote CI qualification is pending.
+[pin/replay guide](../../crates/tf-store/REPLAY.md). All five workflows and 19 jobs pass at `08c81b95fb099c3eb482b7b72d780c86c0ceef4b`, paired with specification progress `0446b4647956c7af4b7c4f0b093525a56f5515b3`. See [T044 CI evidence](evidence/t044-ci.json) and [T045 CI evidence](evidence/t045-ci.json). Both tasks are complete.
 Public branch lifecycle is available; public plan/build/replay execution remains
 later work. Replay metadata is distinct from source/environment execution readiness.
 
@@ -367,4 +367,4 @@ standalone normalization example. `bash tools/check-rust.sh` passes all 250 test
 plus one documentation test after the fix; full native qualification also passes
 with the existing `target/qualification/py314` environment. Initial attempts with
 the SDK-only Python environments stopped on missing DuckDB; no dependencies were
-installed. Replacement-commit CI remains required before completion.
+installed. Replacement-commit CI passes; see the task evidence above.
