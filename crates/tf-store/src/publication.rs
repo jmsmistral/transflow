@@ -564,6 +564,14 @@ async fn validate_inputs(
     c: &PublicationContract,
 ) -> Result<()> {
     for input in &c.inputs {
+        if input.dataset.workspace_id() == workspace {
+            crate::retention::version_available(db, input.version)
+                .await
+                .map_err(|_| PublicationError::Evidence)?;
+        }
+        crate::retention::available(db, input.artifact)
+            .await
+            .map_err(|_| PublicationError::Evidence)?;
         let valid: i64 = if input.dataset.workspace_id() == workspace {
             sqlx::query_scalar("SELECT count(*) FROM dataset_versions WHERE dataset_id=? AND id=? AND artifact_digest=?").bind(input.dataset.dataset_id().to_string()).bind(input.version.to_string()).bind(input.artifact.hex()).fetch_one(&mut *db).await?
         } else {
@@ -604,6 +612,15 @@ async fn guards(
 ) -> Result<()> {
     let i = &r.intent;
     let t = i.target();
+    let collecting: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM artifact_gc_claims WHERE digest=?")
+            .bind(i.artifact().hex())
+            .fetch_one(&mut *db)
+            .await?;
+    if collecting != 0 {
+        return Err(PublicationError::Evidence);
+    }
+
     authority(db, t.dataset.workspace_id(), i.fence().session).await?;
     let row=sqlx::query("SELECT b.cancel_requested,b.state,a.state,j.state,p.source_snapshot_id,p.disposition,c.contract_json FROM attempts a JOIN jobs j ON j.id=a.job_id JOIN builds b ON b.id=j.build_id JOIN build_plans p ON p.id=b.plan_id JOIN publication_contracts c ON c.job_id=j.id JOIN data_branches d ON d.id=j.branch_id JOIN datasets ds ON ds.id=j.dataset_id WHERE a.id=? AND j.id=? AND b.id=? AND p.id=? AND j.branch_id=? AND j.dataset_id=? AND a.session_id=? AND a.fence=? AND d.deleted_at_us IS NULL AND ds.tombstoned_at_us IS NULL").bind(i.attempt().to_string()).bind(i.job().to_string()).bind(i.build().to_string()).bind(i.binding().plan.to_string()).bind(t.branch.to_string()).bind(t.dataset.dataset_id().to_string()).bind(i.fence().session.to_string()).bind(num(i.fence().generation)?).fetch_optional(&mut *db).await?.ok_or(PublicationError::Fence)?;
     if row.try_get::<i64, _>(0)? == 1 {

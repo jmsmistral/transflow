@@ -1,0 +1,17 @@
+{
+  "task": "T040",
+  "date": "2026-09-20",
+  "platform": "macOS arm64",
+  "commands": [
+    "bash tools/check-rust.sh"
+  ],
+  "result": "passed",
+  "rust_tests": 217,
+  "rust_doc_tests": 1,
+  "retention_tests": 6,
+  "rust_boundary_regressions": 12,
+  "limits": [
+    "No physical garbage collection or provider transport yet.",
+    "Callers retain actual runtime ownership and verify pinned bytes before use."
+  ]
+}

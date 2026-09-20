@@ -79,3 +79,8 @@ It does not expose a head or version before the publication service commits one.
 immutable provenance/check linkage and persisted outbox replay. Schema 3 adds two
 publication tables (42 logical tables plus the migration ledger). The coordinator execution
 lifecycle and public build composition remain subsequent tasks.
+
+[Read leases and retention](RETENTION.md) add schema 4: a persisted retention clock
+and exclusive collection claims, plus lease kind/release state. Root snapshots
+cover history, leases/pins, active builds and transitive local/foreign provenance.
+There are now 44 logical tables plus the migration ledger. Physical GC is later work.

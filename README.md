@@ -212,3 +212,8 @@ still pending; see the [publication foundation](crates/tf-store/PUBLICATION.md).
 The [T039 recovery suite](docs/development/publication-recovery.md) now exercises
 real process crashes around artifact installation, publication and notification,
 plus disk-full/permission errors and corrupted candidates.
+
+T040 adds exact renewable read leases and retention roots. A reader stays on its
+pinned version as heads advance, while collection claims exclude new readers and
+publication. See the [retention foundation](crates/tf-store/RETENTION.md); this does
+not yet expose a user-facing garbage-collection command.

@@ -13,7 +13,7 @@ use std::{
 use tf_domain::{DatasetId, WorkspaceId};
 
 /// Latest supported runtime schema. Authoring registry versions are independent.
-pub const SCHEMA_VERSION: i64 = 3;
+pub const SCHEMA_VERSION: i64 = 4;
 /// Default maximum wait for an externally held SQLite writer lock.
 pub const BUSY_TIMEOUT: Duration = Duration::from_millis(250);
 /// Storage failure with safe summary and retained technical source.
@@ -320,3 +320,6 @@ pub mod artifacts;
 
 /// Fenced per-dataset visibility transactions and durable replay.
 pub mod publication;
+
+/// Exact renewable read pins and fenced retention roots.
+pub mod retention;

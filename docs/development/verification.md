@@ -282,3 +282,11 @@ See [local evidence](evidence/t039-macos-arm64.json) and the
 [recovery report](publication-recovery.md). All five workflows and 19 jobs
 pass at `b8a60ad4055ff37ed9c6b81d1adcf769cea7f55c`, paired with specification
 progress `8bb90f4`; see [CI evidence](evidence/t039-ci.json). T039 is complete.
+
+## T040 read-lease verification (2026-09-20)
+
+`bash tools/check-rust.sh` passes: 217 Rust tests plus one documentation test
+and twelve boundary regressions. Six retention tests cover exact head pins,
+renewal/release fencing, provider-owner restart, expiry/clock rollback, transitive
+roots and collection/publication exclusion. See [local evidence](evidence/t040-macos-arm64.json)
+and the [retention guide](../../crates/tf-store/RETENTION.md). CI is pending.
