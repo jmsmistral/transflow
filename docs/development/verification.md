@@ -289,7 +289,11 @@ progress `8bb90f4`; see [CI evidence](evidence/t039-ci.json). T039 is complete.
 and twelve boundary regressions. Six retention tests cover exact head pins,
 renewal/release fencing, provider-owner restart, expiry/clock rollback, transitive
 roots and collection/publication exclusion. See [local evidence](evidence/t040-macos-arm64.json)
-and the [retention guide](../../crates/tf-store/RETENTION.md). CI is pending.
+and the [retention guide](../../crates/tf-store/RETENTION.md). After correcting the
+CLI fixture and released-lease lifecycle integration (see T041 below), all five
+workflows and 19 jobs pass at `fe65878a151ab34d9c6ebcaf17bff85159289fd2`, paired
+with specification progress `48a54a4004e6bf68825d9656acb49db38acb2dde`; see
+[CI evidence](evidence/t040-ci.json). T040 is complete.
 
 
 ## T041 output-branch verification (2026-09-20)
@@ -304,4 +308,7 @@ Final full Rust checks also pass, including a regression that released leases no
 longer block catalogue lifecycle changes. Five new branch tests cover selection priority and actual Git states, nonmutating
 preview, tombstones/revisions, empty creation, audit rollback and validation/owner
 requirements. See [local evidence](evidence/t041-macos-arm64.json) and the
-[branch guide](../../crates/transflow/BRANCHES.md). CI qualification is pending.
+[branch guide](../../crates/transflow/BRANCHES.md). All five workflows and 19 jobs
+pass at `fe65878a151ab34d9c6ebcaf17bff85159289fd2`, paired with specification
+progress `48a54a4004e6bf68825d9656acb49db38acb2dde`; see
+[CI evidence](evidence/t041-ci.json). T041 is complete.

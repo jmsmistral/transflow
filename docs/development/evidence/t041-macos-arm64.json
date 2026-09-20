@@ -18,7 +18,6 @@
   "safety_regressions": 27,
   "rust_boundary_regressions": 12,
   "limits": [
-    "Output-branch foundation only; public build preparation and branch lifecycle remain later tasks.",
-    "CI qualification pending."
+    "Output-branch foundation only; public build preparation and branch lifecycle remain later tasks."
   ]
 }
