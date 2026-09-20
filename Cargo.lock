@@ -1322,6 +1322,10 @@ version = "0.0.0-dev"
 [[package]]
 name = "tf-plan"
 version = "0.0.0-dev"
+dependencies = [
+ "tf-catalog",
+ "tf-domain",
+]
 
 [[package]]
 name = "tf-protocol"
@@ -1346,6 +1350,7 @@ dependencies = [
  "libsqlite3-sys",
  "parquet",
  "rustix",
+ "serde",
  "serde_json",
  "sqlx",
  "tf-domain",

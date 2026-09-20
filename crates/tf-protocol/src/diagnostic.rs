@@ -6,7 +6,7 @@ use tf_domain::diagnostic::{Diagnostic, ExitStatus, RequestContext, SafeText};
 /// Initial complete-result envelope format, independent of the worker protocol.
 pub const CLI_ENVELOPE_VERSION: u32 = 1;
 /// Implemented CLI operations. This does not advertise dataset/coordinator capabilities.
-pub const CLI_CAPABILITIES: [&str; 15] = [
+pub const CLI_CAPABILITIES: [&str; 19] = [
     "cli.help",
     "cli.version",
     "cli.diagnostics.v1",
@@ -22,6 +22,10 @@ pub const CLI_CAPABILITIES: [&str; 15] = [
     "catalog.rename",
     "catalog.remove",
     "dataset.import.prepare",
+    "branch.list",
+    "branch.create",
+    "branch.rename",
+    "branch.delete",
 ];
 /// Successful informational operation.
 #[derive(Clone, Copy, Debug)]
@@ -138,6 +142,26 @@ impl CliEnvelope {
         errors: &[Diagnostic],
     ) -> Result<Self, ProtocolError> {
         validate_document("CatalogResultV1", &result)?;
+        Self::encode(
+            version,
+            if errors.is_empty() {
+                ExitStatus::Success
+            } else {
+                ExitStatus::Failure
+            },
+            ctx,
+            result,
+            errors.iter().map(diagnostic).collect(),
+        )
+    }
+    /// Audited data-branch lifecycle/inspection report.
+    pub fn branch(
+        version: &SafeText,
+        ctx: &RequestContext,
+        result: Value,
+        errors: &[Diagnostic],
+    ) -> Result<Self, ProtocolError> {
+        validate_document("BranchResultV1", &result)?;
         Self::encode(
             version,
             if errors.is_empty() {

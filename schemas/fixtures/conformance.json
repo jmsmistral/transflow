@@ -2177,7 +2177,11 @@
         "catalog.show",
         "catalog.rename",
         "catalog.remove",
-        "dataset.import.prepare"
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2236,7 +2240,11 @@
         "catalog.show",
         "catalog.rename",
         "catalog.remove",
-        "dataset.import.prepare"
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2295,7 +2303,11 @@
         "catalog.show",
         "catalog.rename",
         "catalog.remove",
-        "dataset.import.prepare"
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2354,7 +2366,11 @@
         "catalog.show",
         "catalog.rename",
         "catalog.remove",
-        "dataset.import.prepare"
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2413,7 +2429,11 @@
         "catalog.show",
         "catalog.rename",
         "catalog.remove",
-        "dataset.import.prepare"
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2472,7 +2492,11 @@
         "catalog.show",
         "catalog.rename",
         "catalog.remove",
-        "dataset.import.prepare"
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2531,7 +2555,11 @@
         "catalog.show",
         "catalog.rename",
         "catalog.remove",
-        "dataset.import.prepare"
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2590,7 +2618,11 @@
         "catalog.show",
         "catalog.rename",
         "catalog.remove",
-        "dataset.import.prepare"
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2649,7 +2681,11 @@
         "catalog.show",
         "catalog.rename",
         "catalog.remove",
-        "dataset.import.prepare"
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2684,7 +2720,11 @@
         "catalog.show",
         "catalog.rename",
         "catalog.remove",
-        "dataset.import.prepare"
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -3962,5 +4002,76 @@
       },
       "schema_fingerprint": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     }
+  },
+  {
+    "name": "branch-empty-list",
+    "schema": "BranchResultV1",
+    "value": {
+      "kind": "branch",
+      "operation": "list",
+      "applied": false,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "entries": [],
+      "impacts": [],
+      "next_cursor": null,
+      "confirmation_required": false,
+      "policy_source": "workspace.toml",
+      "git_independent": true,
+      "requested_name": null,
+      "new_name": null
+    },
+    "valid": true
+  },
+  {
+    "name": "branch-rename-preview",
+    "schema": "BranchResultV1",
+    "value": {
+      "kind": "branch",
+      "operation": "rename",
+      "applied": false,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "entries": [
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "name": "feature/\u0394\u202e",
+          "revision": "0",
+          "deleted": false,
+          "heads": "9007199254740993",
+          "fallbacks": [
+            "master"
+          ]
+        }
+      ],
+      "impacts": [
+        "saved view: example"
+      ],
+      "next_cursor": null,
+      "confirmation_required": false,
+      "policy_source": "workspace.toml",
+      "git_independent": true,
+      "requested_name": "feature/\u0394\u202e",
+      "new_name": "analysis"
+    },
+    "valid": true
+  },
+  {
+    "name": "branch-unknown-field",
+    "schema": "BranchResultV1",
+    "value": {
+      "kind": "branch",
+      "operation": "list",
+      "applied": false,
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "entries": [],
+      "impacts": [],
+      "next_cursor": null,
+      "confirmation_required": false,
+      "policy_source": "workspace.toml",
+      "git_independent": true,
+      "requested_name": null,
+      "new_name": null,
+      "unknown": true
+    },
+    "valid": false
   }
 ]

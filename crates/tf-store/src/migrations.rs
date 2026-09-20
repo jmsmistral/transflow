@@ -1,11 +1,12 @@
 use crate::{Result, SCHEMA_VERSION, StoreError};
 use sqlx::{Connection, Row, SqliteConnection};
 const APP_ID: i64 = 0x5452464c;
-const MIGRATIONS: [&str; 4] = [
+const MIGRATIONS: [&str; 5] = [
     include_str!("../migrations/001_core.sql"),
     include_str!("../migrations/002_catalog_foreign.sql"),
     include_str!("../migrations/003_publication.sql"),
     include_str!("../migrations/004_retention.sql"),
+    include_str!("../migrations/005_replay.sql"),
 ];
 pub(crate) async fn preflight(db: &mut SqliteConnection) -> Result<()> {
     let version: i64 = sqlx::query_scalar("PRAGMA user_version")
@@ -58,7 +59,7 @@ pub(crate) async fn apply(db: &mut SqliteConnection) -> Result<()> {
                 .await?;
         }
     }
-    sqlx::raw_sql("PRAGMA application_id=1414678092; PRAGMA user_version=4;")
+    sqlx::raw_sql("PRAGMA application_id=1414678092; PRAGMA user_version=5;")
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;

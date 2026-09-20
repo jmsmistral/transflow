@@ -13,7 +13,7 @@ use std::{
 use tf_domain::{DatasetId, WorkspaceId};
 
 /// Latest supported runtime schema. Authoring registry versions are independent.
-pub const SCHEMA_VERSION: i64 = 4;
+pub const SCHEMA_VERSION: i64 = 5;
 /// Default maximum wait for an externally held SQLite writer lock.
 pub const BUSY_TIMEOUT: Duration = Duration::from_millis(250);
 /// Storage failure with safe summary and retained technical source.
@@ -329,3 +329,9 @@ pub mod branches;
 
 /// Atomic local input fallback resolution with exact renewable read leases.
 pub mod input_resolution;
+
+/// Audited data-branch lifecycle and immutable source-indexed policy snapshots.
+pub mod branch_lifecycle;
+
+/// Retained original replay identity and exact-boundary leases.
+pub mod replay;

@@ -92,3 +92,8 @@ and a writable runtime owner before invoking it.
 
 `input_resolution` chooses and leases exact published heads atomically, with
 per-alias fallback evidence and publication provenance. See [INPUTS.md](INPUTS.md).
+
+T044 adds audited branch lifecycle and immutable source-indexed authored policy
+snapshots; see the [branch guide](../transflow/BRANCHES.md). T045 adds exact historical
+overrides and schema-5 retained replay manifests with atomic boundary leases;
+see [pins and replay](REPLAY.md).

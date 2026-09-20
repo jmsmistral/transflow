@@ -52,3 +52,6 @@ and provider transport remain their own tasks. Freshness or check refusal must f
 the selected binding, never re-enter fallback. Tests use real SQLite, published
 Parquet objects and owner guards; they also confirm failed required input evidence
 preserves the prior output head and keeps the exact input binding.
+
+Explicit historical overrides and original replay context are described in the
+[pin and replay guide](REPLAY.md); they never re-enter branch fallback.

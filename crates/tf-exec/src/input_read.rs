@@ -52,3 +52,48 @@ pub async fn verify(owner: RuntimeOwner, read: ResolvedRead) -> Result<Completio
     })
     .await?)
 }
+
+/// Replay scan result retains all leases even when one original object fails verification.
+pub struct ReplayCompletion {
+    /// Runtime owner retained through blocking I/O.
+    pub owner: RuntimeOwner,
+    /// Immutable metadata and renewable exact tickets.
+    pub read: tf_store::replay::ReplayRead,
+    /// Verified original artifacts in boundary order; source/environment checks remain required.
+    pub result: Result<Vec<VerifiedArtifact>, Error>,
+}
+/// Verify the original replay objects without consulting current branch heads.
+pub async fn verify_replay(
+    owner: RuntimeOwner,
+    read: tf_store::replay::ReplayRead,
+) -> Result<ReplayCompletion, Error> {
+    Ok(tokio::task::spawn_blocking(move || {
+        let result = (|| {
+            owner.validate_paths()?;
+            let boundaries = read.manifest.boundaries().map_err(|_| Error::Context)?;
+            if boundaries.len() != read.leases.len() {
+                return Err(Error::Context);
+            }
+            let artifacts = ArtifactStore::open(owner.workspace_root())?;
+            boundaries
+                .iter()
+                .zip(&read.leases)
+                .map(|(b, lease)| {
+                    if owner.workspace_id()? != b.input.dataset.workspace_id()
+                        || lease.version() != Some(b.input.version)
+                        || lease.artifact() != b.input.artifact
+                    {
+                        return Err(Error::Context);
+                    }
+                    Ok(artifacts.verify(lease.artifact())?)
+                })
+                .collect()
+        })();
+        ReplayCompletion {
+            owner,
+            read,
+            result,
+        }
+    })
+    .await?)
+}

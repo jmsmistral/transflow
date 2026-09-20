@@ -1329,7 +1329,11 @@
                 "catalog.show",
                 "catalog.rename",
                 "catalog.remove",
-                "dataset.import.prepare"
+                "dataset.import.prepare",
+                "branch.list",
+                "branch.create",
+                "branch.rename",
+                "branch.delete"
               ]
             },
             "context": {
@@ -1374,6 +1378,9 @@
                 },
                 {
                   "$ref": "#/$defs/ImportPreparationResultV1"
+                },
+                {
+                  "$ref": "#/$defs/BranchResultV1"
                 }
               ]
             },
@@ -1423,7 +1430,11 @@
                 "catalog.show",
                 "catalog.rename",
                 "catalog.remove",
-                "dataset.import.prepare"
+                "dataset.import.prepare",
+                "branch.list",
+                "branch.create",
+                "branch.rename",
+                "branch.delete"
               ]
             },
             "context": {
@@ -1448,6 +1459,9 @@
                 },
                 {
                   "$ref": "#/$defs/CatalogResultV1"
+                },
+                {
+                  "$ref": "#/$defs/BranchResultV1"
                 }
               ]
             },
@@ -1497,7 +1511,11 @@
                 "catalog.show",
                 "catalog.rename",
                 "catalog.remove",
-                "dataset.import.prepare"
+                "dataset.import.prepare",
+                "branch.list",
+                "branch.create",
+                "branch.rename",
+                "branch.delete"
               ]
             },
             "context": {
@@ -2702,6 +2720,132 @@
         "files",
         "logical_schema",
         "schema_fingerprint"
+      ],
+      "additionalProperties": false
+    },
+    "BranchResultV1": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "branch"
+        },
+        "operation": {
+          "enum": [
+            "list",
+            "create",
+            "rename",
+            "delete"
+          ]
+        },
+        "applied": {
+          "type": "boolean"
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "revision": {
+                "$ref": "#/$defs/Count"
+              },
+              "deleted": {
+                "type": "boolean"
+              },
+              "heads": {
+                "$ref": "#/$defs/Count"
+              },
+              "fallbacks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 0,
+                "maxItems": 1024
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "revision",
+              "deleted",
+              "heads",
+              "fallbacks"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 100
+        },
+        "impacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DiagnosticText"
+          },
+          "minItems": 0,
+          "maxItems": 2048
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "confirmation_required": {
+          "type": "boolean"
+        },
+        "policy_source": {
+          "const": "workspace.toml"
+        },
+        "git_independent": {
+          "const": true
+        },
+        "requested_name": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "new_name": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "operation",
+        "applied",
+        "workspace_id",
+        "entries",
+        "impacts",
+        "next_cursor",
+        "confirmation_required",
+        "policy_source",
+        "git_independent",
+        "requested_name",
+        "new_name"
       ],
       "additionalProperties": false
     }

@@ -1,0 +1,31 @@
+{
+  "task": "T044",
+  "date": "2026-09-20",
+  "platform": "macOS arm64",
+  "commands": [
+    "bash tools/check.sh",
+    "cargo test -p transflow --test branches -p tf-protocol --test contracts --test transport --locked --offline",
+    "python -B tools/safety/advisories.py --output security/advisories.json"
+  ],
+  "result": "passed",
+  "rust_tests": 250,
+  "rust_doc_tests": 1,
+  "new_batch_tests": 16,
+  "branch_integration_tests": 7,
+  "pin_qualification_tests": 4,
+  "pin_replay_integration_tests": 5,
+  "python_tests": 641,
+  "web_tests": 253,
+  "cli_tests": 28,
+  "document_regressions": 44,
+  "safety_regressions": 27,
+  "rust_boundary_regressions": 12,
+  "shared_contract_cases": 199,
+  "advisory_packages": 640,
+  "advisory_matches": 0,
+  "limits": [
+    "Saved view/schedule JSON matching is conservative; it may report unrelated same-valued metadata.",
+    "Public lifecycle uses a temporary runtime owner; persistent coordinator RPC dispatch remains later work.",
+    "Source-indexed policy persistence is ready for T049 preparation integration."
+  ]
+}

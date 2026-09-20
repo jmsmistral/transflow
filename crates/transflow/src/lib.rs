@@ -1,5 +1,6 @@
 //! CLI argument handling, human diagnostics and versioned JSON results.
 //! Help/version require no workspace I/O. Application services remain later work.
+mod branch;
 mod catalog;
 mod env;
 mod import;
@@ -37,8 +38,19 @@ fn command() -> clap::Command {
     use clap::{Arg, ArgAction};
     clap::Command::new("transflow")
         .about("A local build system for dataframe datasets (development scaffold)")
-        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Dataset builds and the coordinator are not implemented yet.")
+        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Explicit data-branch lifecycle commands are also available. Dataset builds and the coordinator are not implemented yet.")
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
+        .subcommand(clap::Command::new("branch").disable_help_flag(true).subcommand_required(true).about("List and manage data branches independently of Git")
+            .subcommand(clap::Command::new("list").disable_help_flag(true)
+                .arg(Arg::new("limit").long("limit").default_value("50").value_parser(clap::value_parser!(u16).range(1..=100)))
+                .arg(Arg::new("cursor").long("cursor")))
+            .subcommand(clap::Command::new("create").disable_help_flag(true).arg(Arg::new("name").required(true))
+                .arg(Arg::new("dry-run").long("dry-run").action(ArgAction::SetTrue)))
+            .subcommand(clap::Command::new("rename").disable_help_flag(true).arg(Arg::new("name").required(true)).arg(Arg::new("new-name").required(true))
+                .arg(Arg::new("dry-run").long("dry-run").action(ArgAction::SetTrue)))
+            .subcommand(clap::Command::new("delete").disable_help_flag(true).arg(Arg::new("name").required(true))
+                .arg(Arg::new("yes").long("yes").action(ArgAction::SetTrue))
+                .arg(Arg::new("dry-run").long("dry-run").action(ArgAction::SetTrue))))
         .subcommand(clap::Command::new("env").disable_help_flag(true).about("Explicit environment lock, sync and drift verification")
             .arg(Arg::new("python").long("python").global(true).value_name("EXECUTABLE"))
             .arg(Arg::new("runtime-wheel").long("runtime-wheel").global(true).value_name("WHEEL"))
@@ -259,6 +271,62 @@ pub fn run(
                             return Ok(ExitCode::FAILURE);
                         }
                     }
+                }
+                if let Some(("branch", args)) = matches.subcommand() {
+                    let (envelope, status) = match branch::execute(
+                        args,
+                        matches.get_one::<String>("workspace"),
+                    ) {
+                        Ok(report) => {
+                            let errors = if report.blocked {
+                                vec![Diagnostic::new(
+                                DiagnosticCode::OperationFailed, redactor.text("Data branch change is blocked")?,
+                                redactor.text("Active operations or authored/saved references still use this branch.")?,
+                                redactor.text("Review the impact report and update references or finish active operations before retrying.")?,
+                            )]
+                            } else {
+                                vec![]
+                            };
+                            if !intent.json {
+                                writeln!(stdout, "{}", report.human()?)
+                                    .map_err(CliError::Stdout)?;
+                            }
+                            (
+                                CliEnvelope::branch(&version, &context, report.value, &errors)?,
+                                if report.blocked {
+                                    ExitStatus::Failure
+                                } else {
+                                    ExitStatus::Success
+                                },
+                            )
+                        }
+                        Err(error) => {
+                            let d=Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Data branch operation could not finish")?,redactor.text(&error.to_string())?,redactor.text("Inspect branch list and workspace.toml. Use --dry-run to preview; no Git or authored policy is changed.")?);
+                            if !intent.json {
+                                stderr
+                                    .write_all(
+                                        render_diagnostic(&d, &context, intent.verbose, false)
+                                            .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stderr)?;
+                            }
+                            (
+                                CliEnvelope::failure(
+                                    &version,
+                                    ExitStatus::Failure,
+                                    &context,
+                                    &[d],
+                                )?,
+                                ExitStatus::Failure,
+                            )
+                        }
+                    };
+                    if intent.json {
+                        stdout
+                            .write_all(envelope.as_bytes())
+                            .map_err(CliError::Stdout)?;
+                    }
+                    return Ok(ExitCode::from(status.code()));
                 }
                 if let Some(("catalog", args)) = matches.subcommand()
                     && args.subcommand_name() != Some("sync")

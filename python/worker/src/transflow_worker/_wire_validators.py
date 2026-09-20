@@ -176,3 +176,8 @@ def validate_ImportPreparationResultV1(value: object) -> None:
 def validate_ImportStagingManifestV1(value: object) -> None:
     """Assert the ImportStagingManifestV1 contract, including custom formats."""
     validate_document("ImportStagingManifestV1", value)
+
+
+def validate_BranchResultV1(value: object) -> None:
+    """Assert the BranchResultV1 contract, including custom formats."""
+    validate_document("BranchResultV1", value)

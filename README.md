@@ -228,3 +228,23 @@ inputs retain their own policy; strict inputs never fall back. Selected heads ar
 leased before reading, and corrupt data or failed input checks cannot be hidden
 by another branch. Repeated dataset aliases retain separate versions and roles.
 These are shared service foundations; public build/plan commands remain later work.
+
+
+T044 adds explicit data-branch management:
+
+```bash
+cargo run --locked -- --workspace /path/to/new-analysis branch list
+cargo run --locked -- --workspace /path/to/new-analysis branch create analysis
+cargo run --locked -- --workspace /path/to/new-analysis branch rename analysis experiment --dry-run
+cargo run --locked -- --workspace /path/to/new-analysis branch rename analysis experiment
+cargo run --locked -- --workspace /path/to/new-analysis branch delete experiment --yes
+```
+
+Rename preserves branch identity. Deletion keeps history and requires `--yes`;
+active uses and policy/view/schedule references block changes with an impact report.
+Git and authored policy stay unchanged. See [branch lifecycle](crates/transflow/BRANCHES.md).
+
+T045 adds internal exact-pin qualification and retained replay manifests. Historical
+reads preserve the requested version and report missing original data explicitly.
+Public `plan`, `build` and `build replay` commands remain upcoming work; see the
+[pin and replay foundation](crates/tf-store/REPLAY.md).

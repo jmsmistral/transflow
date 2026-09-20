@@ -334,3 +334,25 @@ progress `98b85edf9c64f16c2b94d8534b88b1e324ad7c59`; see
 Both tasks are complete.
 Full build/plan CLI, provider resolution, freshness and check execution remain
 later tasks; these results qualify the shared local input services.
+
+
+## T044–T045 branch lifecycle and historical reads (2026-09-20)
+
+`bash tools/check.sh` passes: 250 Rust tests plus one documentation test,
+641 Python, 253 web and 28 CLI tests; 44 document, 27 safety and twelve boundary
+regressions. Sixteen new Rust tests cover audited lifecycle/tombstones, policy
+snapshots, active references, actual Git merge/deletion independence, full-length
+names and safe terminal display, exact selector overrides, alias ambiguity,
+wrong-version/write conflicts, replay immutability, all-or-none leases and corrupt
+original data with a healthy current head. The shared contract matrix has 199 cases.
+
+Earlier runs caught stale inventory/advisory/generation records and the fixture
+count assertion; all are synchronized and final checks pass. OSV reports zero
+matches across 640 locked versions. No dependency version changed.
+
+See [T044 local evidence](evidence/t044-macos-arm64.json),
+[T045 local evidence](evidence/t045-macos-arm64.json), the
+[branch guide](../../crates/transflow/BRANCHES.md) and
+[pin/replay guide](../../crates/tf-store/REPLAY.md). Remote CI qualification is pending.
+Public branch lifecycle is available; public plan/build/replay execution remains
+later work. Replay metadata is distinct from source/environment execution readiness.

@@ -1,3 +1,3 @@
 //! Build selection, boundaries, fingerprints, freshness and explanations. No process launching.
-//!
-//! Crate boundary established by T004. No runtime services are implemented yet.
+/// Pure exact-pin syntax and binding qualification.
+pub mod pins;

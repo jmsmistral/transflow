@@ -72,8 +72,13 @@ pub struct ResolvedRead {
     version: VersionId,
     missing: Vec<MissingCandidate>,
     lease: ReadLease,
+    exact: bool,
 }
 impl ResolvedRead {
+    /// True for a historical override; no branch-head lookup or fallback occurred.
+    pub fn is_exact_pin(&self) -> bool {
+        self.exact
+    }
     /// Original independent alias and normalized policy.
     pub fn binding(&self) -> &InputBinding {
         &self.binding
@@ -90,7 +95,7 @@ impl ResolvedRead {
     pub fn version(&self) -> VersionId {
         self.version
     }
-    /// Zero means the starting branch; a named override alone does not make fallback nonzero.
+    /// Only meaningful for a non-exact read. Zero means the starting branch; a named override alone does not make fallback nonzero.
     pub fn fallback_index(&self) -> usize {
         self.missing.len()
     }
@@ -128,16 +133,18 @@ impl ResolvedRead {
             resolved_branch: self.resolved.clone(),
             role: self.binding.role,
             resolution: json!({
+                "kind": if self.exact { "exact_pin" } else { "branch_head" },
+                "selector_override": self.exact,
                 "output_branch": policy.output().as_str(),
                 "policy_origin": origin,
                 "stop_branch_fallback": policy.permission() == tf_domain::FallbackPermission::Prohibited,
                 "candidates": policy.candidates().iter().map(BranchName::as_str).collect::<Vec<_>>(),
-                "attempted": self.missing.iter().map(|m| json!({
+                "attempted": if self.exact { vec![] } else { self.missing.iter().map(|m| json!({
                     "branch": m.branch.as_str(), "absence": m.reason.name()
                 })).chain(std::iter::once(json!({
                     "branch": self.resolved.as_str(), "version": self.version.to_string()
-                }))).collect::<Vec<_>>(),
-                "fallback_index": self.fallback_index(),
+                }))).collect::<Vec<_>>() },
+                "fallback_index": if self.exact { Value::Null } else { json!(self.fallback_index()) },
                 "branch_id": self.branch_id.to_string()
             }),
         }
@@ -269,8 +276,70 @@ impl Store {
                 version,
                 missing,
                 lease,
+                exact: false,
             });
         }
         Err(ResolutionError::Missing(missing))
+    }
+}
+
+impl Store {
+    /// Pin one local historical version, independent of live/deleted branches and head movement.
+    /// Ownership and availability are checked in the same transaction as the lease. Byte integrity
+    /// still requires tf-exec's strict input verification before the consumer is allowed to run.
+    pub async fn resolve_pin(
+        &mut self,
+        binding: InputBinding,
+        version: VersionId,
+        writes: &BTreeSet<tf_domain::DatasetKey>,
+        request: ReadRequest,
+    ) -> Result<ResolvedRead, ResolutionError> {
+        match binding.disposition(writes) {
+            BindingDisposition::PlannedProducer => return Err(ResolutionError::PlannedProducer),
+            BindingDisposition::ForeignWorkspace => return Err(ResolutionError::Context),
+            _ => (),
+        }
+        let expires = request
+            .now_us
+            .checked_add(request.ttl_us)
+            .filter(|_| request.ttl_us > 0)
+            .ok_or(ResolutionError::Context)?;
+        retention::clock(&mut self.db, request.now_us).await?;
+        let mut tx = self.db.begin_with("BEGIN IMMEDIATE").await?;
+        retention::clock(&mut tx, request.now_us).await?;
+        // Immutable publication history supplies origin, never a current head. Imports and
+        // executions both publish a head-change event; later adoption does not change this origin.
+        let row = sqlx::query("SELECT b.id,b.name FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id JOIN head_changes h ON h.new_version_id=v.id JOIN data_branches b ON b.id=h.branch_id JOIN events e ON e.id=h.event_id WHERE v.id=? AND d.id=? AND d.workspace_id=? ORDER BY e.sequence LIMIT 1")
+            .bind(version.to_string()).bind(binding.dataset.dataset_id().to_string())
+            .bind(binding.dataset.workspace_id().to_string()).fetch_optional(&mut *tx).await?
+            .ok_or(ResolutionError::Context)?;
+        let branch_id = row
+            .try_get::<String, _>(0)?
+            .parse()
+            .map_err(|_| ResolutionError::Context)?;
+        let resolved = row
+            .try_get::<String, _>(1)?
+            .parse()
+            .map_err(|_| ResolutionError::Context)?;
+        let lease = retention::lease_in_transaction(
+            &mut tx,
+            request.lease,
+            request.operation,
+            request.kind,
+            ReadTarget::Version(version),
+            request.now_us,
+            expires,
+        )
+        .await?;
+        tx.commit().await?;
+        Ok(ResolvedRead {
+            binding,
+            branch_id,
+            resolved,
+            version,
+            missing: vec![],
+            lease,
+            exact: true,
+        })
     }
 }

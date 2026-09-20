@@ -32,6 +32,15 @@ fn bounded(names: &[BranchName]) -> bool {
     names.len() <= 1024 && names.iter().all(|n| n.as_str().len() <= 4096)
 }
 impl BranchPolicySnapshot {
+    /// Authored default tail, independent of any request override.
+    pub fn defaults(&self) -> &[BranchName] {
+        &self.defaults
+    }
+    /// Explicit rules, including meaningful empty tails.
+    pub fn rules(&self) -> &BTreeMap<BranchName, Vec<BranchName>> {
+        &self.rules
+    }
+
     /// Reject excessive policy input before allocating normalized candidate lists.
     pub fn new(
         defaults: Vec<BranchName>,
