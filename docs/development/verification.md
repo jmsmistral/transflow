@@ -257,3 +257,13 @@ See [local evidence](evidence/t037-macos-arm64.json) and the
 [artifact guide](../../crates/tf-store/ARTIFACTS.md). All five workflows and 19 jobs
 pass at `c1c4513c8ac58cb9e427945dfeea3b6aeea02c75`, paired with specification
 progress `7520ba5`; see [CI evidence](evidence/t037-ci.json). T037 is complete.
+
+## T038 publication verification (2026-09-20)
+
+`bash tools/check-rust.sh` passes: 205 Rust tests plus one documentation test
+and twelve boundary regressions. Nine new publication integration tests exercise
+actual SQLite, Parquet and runtime ownership. They cover atomic readers/rollback,
+exact input/check evidence, WARN/error handling, cancellation/head conflicts,
+complete reservations, deduplicated bytes with distinct versions, recovery and
+stable outbox replay. See [local evidence](evidence/t038-macos-arm64.json) and
+the [service guide](../../crates/tf-store/PUBLICATION.md). CI is pending.

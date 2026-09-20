@@ -1,0 +1,21 @@
+{
+  "task": "T038",
+  "date": "2026-09-20",
+  "platform": "macOS arm64",
+  "command": "bash tools/check-rust.sh",
+  "result": "passed",
+  "rust_tests": 205,
+  "rust_doc_tests": 1,
+  "publication_tests": 9,
+  "rust_boundary_regressions": 12,
+  "scenarios": [
+    "A05",
+    "A20",
+    "A21",
+    "A68"
+  ],
+  "limits": [
+    "Public planning/worker/evaluator composition remains later tasks.",
+    "SIGKILL publication boundary qualification follows in T039."
+  ]
+}

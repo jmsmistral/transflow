@@ -203,3 +203,8 @@ The T037 storage foundation now supports ordered multi-file immutable artifacts,
 strict integrity verification and durable installation with safe byte deduplication.
 See the [artifact guide](crates/tf-store/ARTIFACTS.md). This internal service does
 not yet make imported data or transform outputs publicly buildable.
+
+T038 adds the internal per-dataset publication transaction: owner fencing,
+reservation/head guards, exact check linkage and durable event replay. Failed or
+canceled publications preserve the last good version. Public build execution is
+still pending; see the [publication foundation](crates/tf-store/PUBLICATION.md).

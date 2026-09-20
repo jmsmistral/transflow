@@ -72,3 +72,9 @@ The import service retains this evidence without publishing artifacts or heads.
 [Artifact storage](ARTIFACTS.md) supplies private staging, canonical ordered
 manifests, strict Parquet/hash verification and immutable no-replace installation.
 It does not expose a head or version before the publication service commits one.
+
+[Per-dataset publication](PUBLICATION.md) now supplies guarded visibility,
+immutable provenance/check linkage and persisted outbox replay. Schema 3 adds two
+publication tables (42 logical tables plus the migration ledger). This supersedes
+the earlier foundation-only publication status above. The coordinator execution
+lifecycle and public build composition remain subsequent tasks.
