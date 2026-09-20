@@ -208,3 +208,7 @@ T038 adds the internal per-dataset publication transaction: owner fencing,
 reservation/head guards, exact check linkage and durable event replay. Failed or
 canceled publications preserve the last good version. Public build execution is
 still pending; see the [publication foundation](crates/tf-store/PUBLICATION.md).
+
+The [T039 recovery suite](docs/development/publication-recovery.md) now exercises
+real process crashes around artifact installation, publication and notification,
+plus disk-full/permission errors and corrupted candidates.

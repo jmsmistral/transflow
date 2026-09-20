@@ -266,4 +266,17 @@ actual SQLite, Parquet and runtime ownership. They cover atomic readers/rollback
 exact input/check evidence, WARN/error handling, cancellation/head conflicts,
 complete reservations, deduplicated bytes with distinct versions, recovery and
 stable outbox replay. See [local evidence](evidence/t038-macos-arm64.json) and
-the [service guide](../../crates/tf-store/PUBLICATION.md). CI is pending.
+the [service guide](../../crates/tf-store/PUBLICATION.md). All five workflows
+and 19 jobs pass at `b541b1545c9fd605fe3435616f310af30187f8f7`, paired with
+specification progress `67b10d0`; see [CI evidence](evidence/t038-ci.json).
+T038 is complete.
+
+## T039 crash/recovery verification (2026-09-20)
+
+The full contributor aggregate and final Rust checks pass: 211 Rust tests plus one
+documentation test, 635 Python, 250 web and 28 CLI tests; 44 document, 27 safety
+and twelve boundary regressions. Six recovery test entrypoints cover nine real
+SIGKILL boundaries, eighteen returned-I/O-error cases, corruption, async ownership
+and same-build partial success. Replay succeeds after original sources are removed.
+See [local evidence](evidence/t039-macos-arm64.json) and the
+[recovery report](publication-recovery.md). CI qualification is pending.

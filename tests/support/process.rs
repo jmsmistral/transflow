@@ -19,14 +19,14 @@ pub struct TestChild {
 
 impl TestChild {
     pub fn spawn(root: &Path) -> io::Result<Self> {
+        Self::spawn_named(root, "infrastructure_child", None)
+    }
+    /// Reuse bounded readiness/control/reaping for an actual service crash fixture.
+    pub fn spawn_named(root: &Path, entry: &str, boundary: Option<&str>) -> io::Result<Self> {
         let mut child = Command::new(std::env::current_exe()?)
-            .args([
-                "--exact",
-                "infrastructure_child",
-                "--nocapture",
-                "--format=terse",
-            ])
+            .args(["--exact", entry, "--nocapture", "--format=terse"])
             .env("TRANSFLOW_TEST_CHILD_ROOT", root)
+            .env("TRANSFLOW_TEST_CHILD_BOUNDARY", boundary.unwrap_or(""))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(std::fs::File::create(root.join("child.stderr"))?)

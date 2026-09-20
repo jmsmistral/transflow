@@ -57,3 +57,7 @@ import-publication command yet. The test fixture seeds those future planner/work
 records explicitly, then runs the actual artifact/publication/ownership services.
 Recovery tests prove process-crash behavior on actual local filesystems, not power
 loss, malicious owner writes or filesystem/device flush reliability.
+
+[T039 recovery qualification](../../docs/development/publication-recovery.md)
+now kills real publication subprocesses at nine boundaries and checks persisted
+heads, immutable objects, interrupted/successful attempts and exact event replay.
