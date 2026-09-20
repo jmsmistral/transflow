@@ -1,0 +1,187 @@
+{
+  "task": "T051",
+  "date": "2026-09-21",
+  "implementation_commit": "6ea3ce24eb64cdb6b80d7ef7224e97942a66d577",
+  "specification_progress_commit": "f63a59e062808c3d3df3c85b47fc94bbe70142b7",
+  "verification_method": "GitHub Actions API exact head SHA and every job conclusion",
+  "workflows": [
+    {
+      "name": "Lineage web UI",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35535180480",
+      "id": 35535180480,
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "web (macos-15)",
+          "id": 106142816513,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "web (ubuntu-24.04-arm)",
+          "id": 106142816621,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "web (ubuntu-24.04)",
+          "id": 106142816704,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        }
+      ]
+    },
+    {
+      "name": "Security & license checks",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35535180410",
+      "id": 35535180410,
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "safety",
+          "id": 106142816365,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        }
+      ]
+    },
+    {
+      "name": "Python packages",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35535180445",
+      "id": 35535180445,
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "packages (ubuntu-24.04-arm, 3.14.7)",
+          "id": 106142816591,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "packages (ubuntu-24.04, 3.13.15)",
+          "id": 106142816729,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "packages (ubuntu-24.04-arm, 3.13.15)",
+          "id": 106142816741,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "packages (ubuntu-24.04, 3.14.7)",
+          "id": 106142816769,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "packages (macos-15, 3.13.15)",
+          "id": 106142816813,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "packages (macos-15, 3.14.7)",
+          "id": 106142816866,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        }
+      ]
+    },
+    {
+      "name": "Toolchains & dependencies",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35535180407",
+      "id": 35535180407,
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "native (ubuntu-24.04, 3.14.7)",
+          "id": 106142816632,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "native (ubuntu-24.04-arm, 3.14.7)",
+          "id": 106142816672,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "native (ubuntu-24.04, 3.13.15)",
+          "id": 106142816682,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "native (macos-15, 3.13.15)",
+          "id": 106142816684,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "native (ubuntu-24.04-arm, 3.13.15)",
+          "id": 106142816699,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "native (macos-15, 3.14.7)",
+          "id": 106142816702,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        }
+      ]
+    },
+    {
+      "name": "Rust backend & CLI",
+      "url": "https://github.com/jmsmistral/transflow/actions/runs/35535180413",
+      "id": 35535180413,
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "workspace (ubuntu-24.04)",
+          "id": 106142816500,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "workspace (macos-15)",
+          "id": 106142816588,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        },
+        {
+          "name": "workspace (ubuntu-24.04-arm)",
+          "id": 106142816653,
+          "status": "completed",
+          "conclusion": "success",
+          "steps": []
+        }
+      ]
+    }
+  ]
+}

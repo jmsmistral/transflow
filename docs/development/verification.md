@@ -415,5 +415,8 @@ accepted-context finalization, pending parents and force/source/cache-never rule
 The initial sandbox-only cache run could not bind the existing coordinator socket;
 the authorized native rerun and final aggregate pass. No dependency versions changed.
 See [local evidence](evidence/t051-macos-arm64.json) and the [cache guide](../../crates/tf-store/CACHE.md).
-Remote CI remains pending at this local verification point. No public build or
-canonical evaluator execution is claimed.
+All five workflows and 19 jobs pass for implementation
+`6ea3ce24eb64cdb6b80d7ef7224e97942a66d577`, paired with specification progress
+`f63a59e062808c3d3df3c85b47fc94bbe70142b7`. The [CI receipt](evidence/t051-ci.json)
+records every job conclusion across macOS arm64 and Linux x86_64/arm64.
+No public build or canonical evaluator execution is claimed.

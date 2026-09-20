@@ -36,6 +36,6 @@
     "Installed-worker journeys verify accepted-plan finalization, deferred parents and force/source/cache-never policy without executing transforms.",
     "Trusted normalized check obligations are supplied by later check compilation/evaluation integration (T059\u2013T064).",
     "Cross-branch adoption and check-only revalidation are not implemented; hidden external I/O is not certified deterministic.",
-    "Native CI evidence will be recorded separately at the exact implementation commit."
+    "Native CI evidence is recorded separately in t051-ci.json at the exact implementation commit."
   ]
 }
