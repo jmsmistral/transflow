@@ -1,0 +1,24 @@
+{
+  "task": "T041",
+  "date": "2026-09-20",
+  "platform": "macOS arm64",
+  "commands": [
+    "bash tools/check.sh",
+    "bash tools/check-cli.sh",
+    "bash tools/check-rust.sh"
+  ],
+  "result": "Passed after fixture correction: aggregate stages through web passed; CLI rerun passed all 28 tests, and final full Rust checks passed 222 tests plus one documentation test.",
+  "rust_tests": 222,
+  "rust_doc_tests": 1,
+  "output_branch_tests": 5,
+  "python_tests": 635,
+  "web_tests": 250,
+  "cli_tests": 28,
+  "document_regressions": 44,
+  "safety_regressions": 27,
+  "rust_boundary_regressions": 12,
+  "limits": [
+    "Output-branch foundation only; public build preparation and branch lifecycle remain later tasks.",
+    "CI qualification pending."
+  ]
+}

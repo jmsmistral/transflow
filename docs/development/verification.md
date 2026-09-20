@@ -290,3 +290,18 @@ and twelve boundary regressions. Six retention tests cover exact head pins,
 renewal/release fencing, provider-owner restart, expiry/clock rollback, transitive
 roots and collection/publication exclusion. See [local evidence](evidence/t040-macos-arm64.json)
 and the [retention guide](../../crates/tf-store/RETENTION.md). CI is pending.
+
+
+## T041 output-branch verification (2026-09-20)
+
+Contributor checks pass through Rust, Python and web: 222 Rust tests plus one
+documentation test, 635 Python and 250 web tests; 44 document, 27 safety and twelve
+boundary regressions. The CLI stage exposed an older positional lease fixture
+that no longer matched schema 4; naming its columns fixes it, and the complete
+CLI rerun passes all 28 tests. The same fixture failed the T040 Rust CI workflow;
+this failure is retained here rather than reported as a successful aggregate.
+Final full Rust checks also pass, including a regression that released leases no
+longer block catalogue lifecycle changes. Five new branch tests cover selection priority and actual Git states, nonmutating
+preview, tombstones/revisions, empty creation, audit rollback and validation/owner
+requirements. See [local evidence](evidence/t041-macos-arm64.json) and the
+[branch guide](../../crates/transflow/BRANCHES.md). CI qualification is pending.

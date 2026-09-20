@@ -217,3 +217,8 @@ T040 adds exact renewable read leases and retention roots. A reader stays on its
 pinned version as heads advance, while collection claims exclude new readers and
 publication. See the [retention foundation](crates/tf-store/RETENTION.md); this does
 not yet expose a user-facing garbage-collection command.
+
+T041 adds output-branch selection and validated lazy creation. Read-only previews
+leave missing branches absent; valid mutating preparation can create an empty
+branch without copying heads or reviving a deleted name. See the
+[output-branch foundation](crates/transflow/BRANCHES.md).

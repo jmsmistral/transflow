@@ -333,27 +333,67 @@ pub fn output_branch(
     explicit: Option<&BranchName>,
     explicit_ref: bool,
 ) -> Result<BranchName, GitError> {
-    if let Some(branch) = explicit {
-        return Ok(branch.clone());
-    }
-    if explicit_ref {
+    Ok(select_output_branch(config, git, explicit, None, explicit_ref)?.name)
+}
+/// Why this output name was selected; distinct from input fallback provenance.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum OutputBranchOrigin {
+    /// Explicit CLI/API data-branch override.
+    Explicit,
+    /// Frozen accepted request or schedule revision.
+    Recorded,
+    /// Attached or unborn symbolic Git HEAD.
+    Git,
+    /// Non-Git or follow-Git-disabled workspace default.
+    Default,
+}
+/// Once-selected output context. It performs no branch creation or head copying.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct OutputBranchSelection {
+    /// Exact opaque data-branch name.
+    pub name: BranchName,
+    /// Selection rule used by this request.
+    pub origin: OutputBranchOrigin,
+}
+/// Select explicit, recorded, attached/unborn Git, or configured default in that order.
+/// Git inspection failures must propagate from `inspect`; never convert them to absence.
+/// A recorded request need not inspect the operator's current checkout at all.
+pub fn select_output_branch(
+    config: &WorkspaceConfig,
+    git: Option<&GitProvenance>,
+    explicit: Option<&BranchName>,
+    recorded: Option<&BranchName>,
+    explicit_ref: bool,
+) -> Result<OutputBranchSelection, GitError> {
+    let (name, origin) = if let Some(name) = explicit {
+        (name.clone(), OutputBranchOrigin::Explicit)
+    } else if let Some(name) = recorded {
+        (name.clone(), OutputBranchOrigin::Recorded)
+    } else if explicit_ref {
         return Err(GitError::BranchRequired);
-    }
-    if config.follow_git_branch()
+    } else if config.follow_git_branch()
         && let Some(git) = git
     {
-        return git
-            .branch
-            .as_ref()
-            .ok_or(GitError::BranchRequired)?
-            .parse()
-            .map_err(|_| GitError::Repository);
-    }
-    config
-        .default_branch()
-        .parse()
-        .map_err(|_| GitError::Source)
+        (
+            git.branch
+                .as_ref()
+                .ok_or(GitError::BranchRequired)?
+                .parse()
+                .map_err(|_| GitError::Repository)?,
+            OutputBranchOrigin::Git,
+        )
+    } else {
+        (
+            config
+                .default_branch()
+                .parse()
+                .map_err(|_| GitError::Source)?,
+            OutputBranchOrigin::Default,
+        )
+    };
+    Ok(OutputBranchSelection { name, origin })
 }
+
 /// Capture the current working tree with optional pre-command Git provenance.
 pub fn capture_working_tree(
     workspace: &Workspace,

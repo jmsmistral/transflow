@@ -323,3 +323,6 @@ pub mod publication;
 
 /// Exact renewable read pins and fenced retention roots.
 pub mod retention;
+
+/// Read-only output previews and guarded lazy branch creation.
+pub mod branches;

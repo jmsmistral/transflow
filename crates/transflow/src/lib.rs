@@ -615,3 +615,6 @@ mod tests {
         assert!(matches!(result, Err(CliError::Stderr(_))));
     }
 }
+
+/// Validated lazy output-branch preparation.
+pub mod output_branch;

@@ -84,3 +84,8 @@ lifecycle and public build composition remain subsequent tasks.
 and exclusive collection claims, plus lease kind/release state. Root snapshots
 cover history, leases/pins, active builds and transitive local/foreign provenance.
 There are now 44 logical tables plus the migration ledger. Physical GC is later work.
+
+Output branch previews are available on the read-only `Reader`. Guarded lazy
+creation atomically records an empty branch and audit evidence; the
+[composition service](../transflow/BRANCHES.md) requires current complete validation
+and a writable runtime owner before invoking it.

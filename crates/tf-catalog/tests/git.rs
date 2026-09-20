@@ -243,3 +243,69 @@ fn no_git_and_follow_disabled_do_not_require_an_output_override() {
         "master"
     );
 }
+
+#[test]
+fn output_priority_freezes_recorded_branches_and_keeps_git_ref_independent() {
+    use git::{OutputBranchOrigin as Origin, select_output_branch};
+    let tree = Tree::new(false);
+    let workspace = tree.load();
+    let default = select_output_branch(workspace.config(), None, None, None, false).unwrap();
+    assert_eq!(default.name.as_str(), "master");
+    assert_eq!(default.origin, Origin::Default);
+    assert!(select_output_branch(workspace.config(), None, None, None, true).is_err());
+    tree.init();
+    let git = git::inspect(&workspace).unwrap();
+    let attached =
+        select_output_branch(workspace.config(), git.as_ref(), None, None, false).unwrap();
+    assert_eq!(attached.name.as_str(), "develop");
+    assert_eq!(attached.origin, Origin::Git);
+    let recorded = "scheduled/Δ".parse().unwrap();
+    let explicit = "chosen branch".parse().unwrap();
+    let selected = select_output_branch(
+        workspace.config(),
+        git.as_ref(),
+        None,
+        Some(&recorded),
+        true,
+    )
+    .unwrap();
+    assert_eq!(selected.name, recorded);
+    assert_eq!(selected.origin, Origin::Recorded);
+    let selected = select_output_branch(
+        workspace.config(),
+        git.as_ref(),
+        Some(&explicit),
+        Some(&recorded),
+        true,
+    )
+    .unwrap();
+    assert_eq!(selected.name, explicit);
+    assert_eq!(selected.origin, Origin::Explicit);
+    let commit = tree.commit();
+    tree.git(&["checkout", "--quiet", "--detach", &commit]);
+    let detached = git::inspect(&workspace).unwrap();
+    assert!(
+        select_output_branch(workspace.config(), detached.as_ref(), None, None, false).is_err()
+    );
+    assert_eq!(
+        select_output_branch(
+            workspace.config(),
+            detached.as_ref(),
+            None,
+            Some(&recorded),
+            false
+        )
+        .unwrap()
+        .name,
+        recorded
+    );
+    tree.put("workspace.toml","format_version=1\nworkspace_id='1837c4ad-54ed-4ea9-8301-cde739093271'\ndefault_data_branch='stable'\n[branching]\nfollow_git_branch=false\n");
+    let configured = tree.load();
+    assert_eq!(
+        select_output_branch(configured.config(), detached.as_ref(), None, None, false)
+            .unwrap()
+            .name
+            .as_str(),
+        "stable"
+    );
+}

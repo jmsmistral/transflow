@@ -35,3 +35,8 @@ Plumbing formats are based on the official [ls-tree](https://git-scm.com/docs/gi
 [cat-file](https://git-scm.com/docs/git-cat-file),
 [symbolic-ref](https://git-scm.com/docs/git-symbolic-ref) and
 [rev-parse](https://git-scm.com/docs/git-rev-parse) contracts.
+
+T041 adds an explicit selection-origin result and recorded request/schedule branch
+priority. Recorded names remain fixed across operator checkout changes. Existing
+`output_branch` callers retain their behavior. Lazy database creation belongs to
+[validated preparation](../transflow/BRANCHES.md), never Git inspection or planning.
