@@ -36,7 +36,7 @@ fn fresh_reopen_pragmas_and_durable_repositories() -> Result {
         let path = dir.path().join("runtime.sqlite");
         let mut store = Store::open(&path).await?;
         assert_eq!(store.info().sqlite_version, "3.51.3");
-        assert_eq!(store.info().schema_version, 6);
+        assert_eq!(store.info().schema_version, 7);
         assert!(store.info().foreign_keys);
         assert_eq!(store.info().synchronous, 2);
         assert_eq!(store.info().busy_timeout_ms, 250);
@@ -91,7 +91,7 @@ fn fresh_reopen_pragmas_and_durable_repositories() -> Result {
             )
             .fetch_one(&mut db)
             .await?,
-            47
+            48
         );
         assert_eq!(
             sqlx::query_scalar::<_, i64>("SELECT created_at_us FROM datasets")
@@ -151,7 +151,7 @@ fn upgrade_preserves_existing_rows_and_is_idempotent() -> Result {
             sqlx::query_scalar::<_, i64>("SELECT count(*) FROM schema_migrations")
                 .fetch_one(&mut db)
                 .await?,
-            6
+            7
         );
         db.close().await?;
         Ok(())

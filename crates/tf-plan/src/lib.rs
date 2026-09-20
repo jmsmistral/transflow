@@ -5,3 +5,6 @@ pub mod pins;
 pub mod refresh;
 /// Full, selected and between scope over validated candidates.
 pub mod scope;
+
+/// Independent freshness facts and shared causal explanations.
+pub mod freshness;

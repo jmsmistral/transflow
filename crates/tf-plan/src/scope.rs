@@ -34,16 +34,16 @@ pub struct Request {
     pub refresh_sources: BTreeSet<Id>,
 }
 #[derive(Clone, Debug)]
-struct Edge {
-    alias: String,
-    parent: Id,
-    off_branch: bool,
+pub(crate) struct Edge {
+    pub(crate) alias: String,
+    pub(crate) parent: Id,
+    pub(crate) off_branch: bool,
 }
 /// Immutable complete graph; only a matching structural certificate constructs it.
 #[derive(Clone, Debug)]
 pub struct Graph {
-    order: Vec<Id>,
-    inputs: BTreeMap<Id, Vec<Edge>>,
+    pub(crate) order: Vec<Id>,
+    pub(crate) inputs: BTreeMap<Id, Vec<Edge>>,
     sources: BTreeMap<Id, RefreshPolicy>,
     known: BTreeSet<Id>,
 }
@@ -376,5 +376,205 @@ mod tests {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, reason = "Synthetic frozen graph assertions")]
+mod freshness_tests {
+    use super::*;
+    use crate::freshness::*;
+    use tf_catalog::compute::Evidence;
+    fn id(n: u8) -> Id {
+        Id::Pending(format!("node/n{n}").parse().unwrap())
+    }
+    fn graph(edges: &[(u8, u8)]) -> Graph {
+        let mut inputs: BTreeMap<_, Vec<Edge>> = (1..=4).map(|n| (id(n), vec![])).collect();
+        for (parent, child) in edges {
+            inputs.get_mut(&id(*child)).unwrap().push(Edge {
+                alias: format!("p{parent}"),
+                parent: id(*parent),
+                off_branch: false,
+            });
+        }
+        Graph {
+            order: (1..=4).map(id).collect(),
+            inputs,
+            sources: BTreeMap::new(),
+            known: (1..=4).map(id).collect(),
+        }
+    }
+    fn facts() -> BTreeMap<Id, Facts> {
+        let e = Evidence {
+            format_version: 1,
+            compute: "a".repeat(64),
+            reusable: true,
+            components: ["code", "environment", "parameters", "checks", "execution"]
+                .into_iter()
+                .map(|k| (k.into(), "b".repeat(64)))
+                .collect(),
+            inputs: BTreeMap::from([("rows".into(), "v1".into())]),
+            files: BTreeMap::new(),
+        };
+        (1..=4)
+            .map(|n| {
+                (
+                    id(n),
+                    Facts {
+                        version: Some(tf_domain::VersionId::from_bytes([1; 16])),
+                        materialization: Materialization::Available,
+                        retained: Some(e.clone()),
+                        current: Some(e.clone()),
+                        published_us: Some(10),
+                        latest_attempt: Some(AttemptState::Succeeded),
+                        output_quality: Quality::NoChecks,
+                        input_quality: BTreeMap::new(),
+                        boundaries: BTreeSet::new(),
+                        policies: BTreeMap::new(),
+                        input_artifacts: BTreeMap::new(),
+                        fallbacks: BTreeMap::new(),
+                    },
+                )
+            })
+            .collect()
+    }
+    #[test]
+    fn failed_retry_preserves_good_output_with_independent_data_and_logic() {
+        let g = graph(&[]);
+        let mut f = facts();
+        let one = f.get_mut(&id(1)).unwrap();
+        one.latest_attempt = Some(AttemptState::Failed);
+        one.output_quality = Quality::Warning;
+        one.current
+            .as_mut()
+            .unwrap()
+            .inputs
+            .insert("rows".into(), "v2".into());
+        one.policies.insert("rows".into(), "strict master".into());
+        one.input_quality
+            .insert("rows".into(), InputQuality::Failed);
+        let r = evaluate(&g, &f, 20).unwrap();
+        let s = &r[&id(1)];
+        assert_eq!(
+            (s.direct_data, s.direct_logic, s.materialization),
+            (
+                Freshness::Stale,
+                Freshness::Current,
+                Materialization::Available
+            )
+        );
+        assert_eq!(s.latest_attempt, Some(AttemptState::Failed));
+        assert_eq!(s.output_quality, Quality::Warning);
+        let cause = &s.reasons[0];
+        assert_eq!(cause.code, "INPUT_VERSION_CHANGED");
+        assert_eq!(cause.before.as_deref(), Some("v1"));
+        assert_eq!(cause.after.as_deref(), Some("v2"));
+        assert!(cause.human(&BTreeMap::new()).contains("strict master"));
+    }
+    #[test]
+    fn diamond_retains_shortest_cause_while_immediate_version_is_unchanged() {
+        let g = graph(&[(1, 2), (2, 3), (3, 4), (1, 4)]);
+        let mut f = facts();
+        f.get_mut(&id(1))
+            .unwrap()
+            .current
+            .as_mut()
+            .unwrap()
+            .components
+            .insert("parameters".into(), "c".repeat(64));
+        let r = evaluate(&g, &f, 20).unwrap();
+        let s = &r[&id(4)];
+        assert_eq!(
+            (s.direct_data, s.direct_logic, s.inherited),
+            (Freshness::Current, Freshness::Current, Freshness::Stale)
+        );
+        assert_eq!(s.reasons.len(), 1);
+        assert_eq!(s.reasons[0].path, vec![id(1), id(4)]);
+        assert_eq!(s.reasons[0].aliases, vec!["p1"]);
+        assert!(s.reasons[0].subject.contains("PARAMETERS_CHANGED"));
+    }
+    #[test]
+    fn old_metadata_and_unknown_ancestors_never_become_current() {
+        let g = graph(&[(1, 2)]);
+        let mut f = facts();
+        f.get_mut(&id(1)).unwrap().retained = None;
+        let r = evaluate(&g, &f, 20).unwrap();
+        assert_eq!(r[&id(1)].direct_logic, Freshness::Unknown);
+        assert_eq!(r[&id(2)].inherited, Freshness::Unknown);
+        assert!(r[&id(2)].reasons.iter().all(|r| r.code != "CACHE_MATCH"));
+        f.remove(&id(1));
+        assert!(evaluate(&g, &f, 20).is_err());
+        assert!(evaluate(&g, &facts(), -1).is_err());
+    }
+    #[test]
+    fn boundaries_do_not_borrow_selected_branch_ancestor_staleness() {
+        let g = graph(&[(1, 2)]);
+        let mut f = facts();
+        f.get_mut(&id(1)).unwrap().materialization = Materialization::Corrupt;
+        let child = f.get_mut(&id(2)).unwrap();
+        child.boundaries.insert("p1".into());
+        child
+            .fallbacks
+            .insert("p1".into(), ("feature".into(), "master".into()));
+        let r = evaluate(&g, &f, 20).unwrap();
+        assert_eq!(r[&id(2)].inherited, Freshness::Unknown);
+        assert_eq!(r[&id(2)].reasons[0].code, "BOUNDARY_FALLBACK");
+        f.get_mut(&id(2))
+            .unwrap()
+            .input_artifacts
+            .insert("p1".into(), Materialization::Missing);
+        let r = evaluate(&g, &f, 20).unwrap();
+        assert_eq!(r[&id(2)].direct_data, Freshness::Stale);
+        assert!(r[&id(2)].reasons.iter().any(|r| r.code == "BOUNDARY_STALE"));
+    }
+    #[test]
+    fn source_ttl_uses_original_publication_and_cache_never_is_uncertain() {
+        let mut g = graph(&[(1, 2)]);
+        g.sources.insert(
+            id(1),
+            RefreshPolicy::Ttl(std::num::NonZeroU64::new(1).unwrap()),
+        );
+        let mut f = facts();
+        let r = evaluate(&g, &f, 1_000_010).unwrap();
+        assert_eq!(r[&id(1)].direct_data, Freshness::Stale);
+        assert_eq!(r[&id(2)].inherited, Freshness::Stale);
+        assert_eq!(
+            evaluate(&g, &f, 1_000_009).unwrap()[&id(1)].direct_data,
+            Freshness::Current
+        );
+        f.get_mut(&id(3))
+            .unwrap()
+            .current
+            .as_mut()
+            .unwrap()
+            .reusable = false;
+        assert_eq!(
+            evaluate(&g, &f, 20).unwrap()[&id(3)].direct_logic,
+            Freshness::Unknown
+        );
+        f.get_mut(&id(3))
+            .unwrap()
+            .current
+            .as_mut()
+            .unwrap()
+            .components
+            .insert("code".into(), "c".repeat(64));
+        assert_eq!(
+            evaluate(&g, &f, 20).unwrap()[&id(3)].direct_logic,
+            Freshness::Stale
+        );
+    }
+    #[test]
+    fn absent_corrupt_and_partial_observations_have_no_cache_match() {
+        let g = graph(&[]);
+        let mut f = facts();
+        f.get_mut(&id(1)).unwrap().materialization = Materialization::Missing;
+        f.get_mut(&id(2)).unwrap().materialization = Materialization::Corrupt;
+        f.get_mut(&id(3)).unwrap().materialization = Materialization::Unknown;
+        let r = evaluate(&g, &f, 20).unwrap();
+        for n in 1..=3 {
+            assert!(r[&id(n)].reasons.iter().all(|r| r.code != "CACHE_MATCH"));
+        }
+        assert_eq!(r[&id(4)].reasons[0].code, "CACHE_MATCH");
     }
 }

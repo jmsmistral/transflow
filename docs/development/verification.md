@@ -420,3 +420,25 @@ All five workflows and 19 jobs pass for implementation
 `f63a59e062808c3d3df3c85b47fc94bbe70142b7`. The [CI receipt](evidence/t051-ci.json)
 records every job conclusion across macOS arm64 and Linux x86_64/arm64.
 No public build or canonical evaluator execution is claimed.
+
+
+## T052 freshness and causal explanations (2026-09-21)
+
+`bash tools/check.sh` passes: 284 Rust tests plus one documentation test, 641 Python,
+253 web and 43 installed-worker tests; 44 document, 27 safety and twelve dependency
+boundary regressions. A final `bash tools/check-rust.sh` passes after tightening
+source/workspace and exact consumer-certificate guards. The final cache-never
+staleness refinement also passes the focused planning tests and workspace Clippy.
+The updated specification validator passes. See [local evidence](evidence/t052-macos-arm64.json)
+and the [freshness service guide](../../crates/transflow/FRESHNESS.md).
+
+The initial aggregate check identified a stale lockfile-bound inventory after the
+existing SQLx dependency was added to composition tests. The prescribed inventory
+and advisory refresh completed for the same 640 package versions, with no reported
+advisory matches, and the subsequent aggregate passed. No package version changed.
+Real socket/process fixtures ran with authorized native permissions.
+
+Push CI is pending owner monitoring under the standing handoff preference; no
+T052 workflows have been polled. The owner separately confirmed that the final
+T051 documentation-push workflows passed. Public commands and connected UI remain
+later tasks; these tests qualify the shared backend read model and why services.

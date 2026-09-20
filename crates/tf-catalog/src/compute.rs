@@ -43,8 +43,48 @@ pub struct ComputeKey {
     digest: ContentDigest,
     checks: ContentDigest,
     reusable: bool,
+    evidence: Evidence,
+}
+/// Versioned, non-secret comparison evidence derived from exactly the cache-key carrier.
+/// Absence on older publications means unknown, never equality.
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Evidence {
+    /// Comparison format, independent of the compute-key format.
+    pub format_version: u32,
+    /// Complete key, unchanged by the addition of comparison evidence.
+    pub compute: String,
+    /// Declared deterministic cache policy; hidden I/O cannot be certified.
+    pub reusable: bool,
+    /// Independently comparable logical dimensions.
+    pub components: BTreeMap<String, String>,
+    /// Exact per-alias canonical carriers, including branch, role, version and artifact.
+    pub inputs: BTreeMap<String, String>,
+    /// Captured file hashes for concrete helper/SQL/lock-file explanations.
+    pub files: BTreeMap<String, String>,
+}
+impl Evidence {
+    /// Reject incompatible or incomplete evidence rather than treating it as current.
+    pub fn valid(&self) -> bool {
+        self.format_version == 1
+            && self
+                .components
+                .keys()
+                .map(String::as_str)
+                .collect::<BTreeSet<_>>()
+                == BTreeSet::from(["code", "environment", "parameters", "checks", "execution"])
+            && std::iter::once(&self.compute)
+                .chain(self.components.values())
+                .chain(self.files.values())
+                .all(|v| ContentDigest::from_hex(DigestKind::Compute, v).is_ok())
+    }
 }
 impl ComputeKey {
+    /// Comparison facts for retained publication and freshness explanations.
+    pub fn evidence(&self) -> &Evidence {
+        &self.evidence
+    }
+
     /// Version-one purpose-separated identity.
     pub fn digest(&self) -> ContentDigest {
         self.digest
@@ -209,8 +249,63 @@ pub fn finalize(
     }
     let config = WorkspaceConfig::parse(context.config_toml).map_err(|_| Error::Context)?;
     let semantic = json!({"key_version":1,"output":{"workspace":execution.output.workspace_id().to_string(),"dataset":execution.output.dataset_id().to_string()},"source_files":capture.computation_files(),"source_roots":capture.source_roots(),"configuration":{"python_minor":config.python_version(),"validation_null_policy":config.null_policy()},"environment":context.environment_fingerprint,"sdk_worker":context.sdk_version,"check_semantics":context.check_semantics,"declaration":declaration,"parameters":normalized_parameters,"inputs":inputs,"writer":execution.writer,"evaluation_us":execution.evaluation_us.map(|v|v.to_string()),"secret_versions":execution.secret_versions});
+    let digest = content_digest(DigestKind::Compute, &semantic).map_err(|_| Error::Semantics)?;
+    let mut components = BTreeMap::new();
+    for (name, value) in [
+        (
+            "code",
+            json!({"files":semantic["source_files"],"roots":semantic["source_roots"],"declaration":semantic["declaration"]}),
+        ),
+        (
+            "environment",
+            json!({"environment":semantic["environment"],"sdk_worker":semantic["sdk_worker"],"python_minor":semantic["configuration"]["python_minor"]}),
+        ),
+        ("parameters", semantic["parameters"].clone()),
+        (
+            "checks",
+            json!({"checks":checks,"null_policy":semantic["configuration"]["validation_null_policy"]}),
+        ),
+        (
+            "execution",
+            json!({"writer":semantic["writer"],"evaluation_us":semantic["evaluation_us"],"secret_versions":semantic["secret_versions"]}),
+        ),
+    ] {
+        components.insert(
+            name.into(),
+            content_digest(
+                DigestKind::Compute,
+                &json!({"comparison_version":1,"dimension":name,"value":value}),
+            )
+            .map_err(|_| Error::Semantics)?
+            .hex(),
+        );
+    }
+    let files = capture
+        .computation_files()
+        .as_array()
+        .ok_or(Error::Semantics)?
+        .iter()
+        .map(|v| {
+            Ok((
+                v["path"].as_str().ok_or(Error::Semantics)?.to_owned(),
+                v["sha256"].as_str().ok_or(Error::Semantics)?.to_owned(),
+            ))
+        })
+        .collect::<Result<_, Error>>()?;
+    let evidence = Evidence {
+        format_version: 1,
+        compute: digest.hex(),
+        reusable: d.declaration["cache"] == "deterministic",
+        components,
+        inputs: inputs
+            .into_iter()
+            .map(|(k, v)| (k.to_owned(), v.to_string()))
+            .collect(),
+        files,
+    };
     Ok(ComputeKey {
-        digest: content_digest(DigestKind::Compute, &semantic).map_err(|_| Error::Semantics)?,
+        digest,
+        evidence,
         checks: content_digest(
             DigestKind::Compute,
             &json!({"check_key_version":1,"checks":checks}),

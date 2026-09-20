@@ -19,10 +19,10 @@ workspace initialization and robust ownership/path protection remain separate ta
 
 ## Schema and migrations
 
-Three additive migrations install 42 logical tables: source/catalogue projections,
+Seven additive migrations install 47 logical tables: source/catalogue projections,
 versions/heads, builds/jobs/attempts, checks, scheduling, events/outbox, pins/audit,
-registry mutation journals, foreign replicas/leases and frozen publication/check
-links. Publication is implemented below; scheduler, retention and replica-copy
+registry mutation journals, foreign replicas/leases, frozen publication/check
+links, read retention, replay, cache associations and computation comparison evidence. Publication is implemented below; scheduler, retention and replica-copy
 services remain later work.
 
 The database has an application ID, `user_version` and monotonic checksum ledger.
@@ -102,3 +102,9 @@ see [pins and replay](REPLAY.md).
 Branch-scoped candidates retain original check results; audited head adoption
 emits head changes without new materializations. There are now 46 logical tables
 plus the migration ledger.
+
+
+[T052 freshness](../transflow/FRESHNESS.md) adds schema 7, immutable computation
+comparison evidence, and a single-transaction head/attempt/check snapshot. There
+are now 47 logical tables plus the migration ledger. Existing publications remain
+unchanged; absent comparison metadata is explicitly unknown.

@@ -266,7 +266,13 @@ async fn prepare_inner(
         contract,
         at_us,
     };
-    store.freeze_cache_contract(&request).await.map_err(fail)?;
+    store
+        .freeze_computation_evidence(
+            &request,
+            &serde_json::to_value(key.evidence()).map_err(fail)?,
+        )
+        .await
+        .map_err(fail)?;
     let reason = if plan.context["force"] == true {
         Some("forced")
     } else if plan.context["source_decisions"][&write.dataset]["executes"] == true {

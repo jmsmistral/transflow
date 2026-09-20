@@ -15,7 +15,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .enable_all()
         .build()?;
     let result = runtime.block_on(async {
-        if operation == "accept" {
+        if operation == "why" {
+            let now=i64::try_from(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e|e.to_string())?.as_micros()).map_err(|e|e.to_string())?;
+            let completion=transflow::why::inspect(owner,transflow::why::Request{python:Some(python.clone()),branch:"feature".parse().map_err(|_|"invalid branch")?,fallbacks:None,semantics:Default::default(),at_us:now}).await.map_err(|e|e.to_string())?;
+            completion.result.map(|r|json!({"source":r.source,"branch":r.branch.as_str(),"datasets":r.datasets.values().map(|s|json!({"materialization":format!("{:?}",s.materialization),"direct_data":format!("{:?}",s.direct_data),"direct_logic":format!("{:?}",s.direct_logic),"reasons":s.reasons.iter().map(|r|json!({"code":r.code,"human":r.human(&Default::default())})).collect::<Vec<_>>()})).collect::<Vec<_>>()})).map_err(|e|e.to_string())
+        } else if operation == "accept" {
             let completion =
                 build_plan::accept(owner, reference.parse().map_err(|_| "invalid plan ID")?)
                     .await

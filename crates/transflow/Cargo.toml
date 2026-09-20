@@ -20,3 +20,7 @@ thiserror.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+# Real SQLite publication/freshness integration fixtures only.
+sqlx.workspace = true

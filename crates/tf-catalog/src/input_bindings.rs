@@ -24,6 +24,25 @@ pub fn local_bindings(
     output: &BranchName,
     build_override: Option<&[BranchName]>,
 ) -> Result<BTreeMap<InputBindingKey, InputBinding>, BindingError> {
+    prepare(graph, context, output, build_override, false)
+}
+/// Read models may retain pending outputs and foreign boundaries as unknown. This returns only
+/// registered local bindings; it never substitutes consumer policy for a foreign workspace.
+pub fn local_read_bindings(
+    graph: &ValidatedGraph,
+    context: &ValidationRequest<'_>,
+    output: &BranchName,
+    build_override: Option<&[BranchName]>,
+) -> Result<BTreeMap<InputBindingKey, InputBinding>, BindingError> {
+    prepare(graph, context, output, build_override, true)
+}
+fn prepare(
+    graph: &ValidatedGraph,
+    context: &ValidationRequest<'_>,
+    output: &BranchName,
+    build_override: Option<&[BranchName]>,
+    read_model: bool,
+) -> Result<BTreeMap<InputBindingKey, InputBinding>, BindingError> {
     if !graph.certificate().matches(context) {
         return Err(BindingError);
     }
@@ -32,6 +51,9 @@ pub fn local_bindings(
     let mut bindings = BTreeMap::new();
     for definition in graph.candidate().definitions() {
         let CandidateIdentity::Registered(consumer) = definition.output else {
+            if read_model {
+                continue;
+            }
             return Err(BindingError);
         };
         for input in &definition.inputs {
@@ -39,9 +61,15 @@ pub fn local_bindings(
                 return Err(BindingError);
             }
             let CandidateIdentity::Registered(dataset) = input.identity else {
+                if read_model {
+                    continue;
+                }
                 return Err(BindingError);
             };
             if dataset.workspace_id() != consumer.workspace_id() {
+                if read_model {
+                    continue;
+                }
                 return Err(BindingError);
             }
             let value = &input.declaration;

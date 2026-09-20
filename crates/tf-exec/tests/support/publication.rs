@@ -176,6 +176,17 @@ impl Harness {
         generation: u64,
         c: PublicationContract,
     ) -> PublicationRequest {
+        self.start_with_evidence(n, dataset, generation, c, None)
+            .await
+    }
+    pub async fn start_with_evidence(
+        &mut self,
+        n: u8,
+        dataset: u8,
+        generation: u64,
+        c: PublicationContract,
+        evidence: Option<serde_json::Value>,
+    ) -> PublicationRequest {
         let mut job = self.seed(n, dataset).await;
         let target = OutputTarget {
             dataset: DatasetKey::new(workspace(), DatasetId::from_bytes([dataset; 16])),
@@ -202,6 +213,22 @@ impl Harness {
         repo.freeze_publication_contract(workspace(), session, job.id(), &c)
             .await
             .unwrap();
+        if let Some(evidence) = evidence {
+            repo.freeze_computation_evidence(
+                &tf_store::cache::Request {
+                    build: job.build(),
+                    job: job.id(),
+                    binding: job.binding(),
+                    target,
+                    fence: job.fence(),
+                    contract: c.clone(),
+                    at_us: 2,
+                },
+                &evidence,
+            )
+            .await
+            .unwrap();
+        }
         store.close().await.unwrap();
         let attempt = AttemptId::from_bytes([n; 16]);
         job.queue(job.fence(), EventTime(1)).unwrap();

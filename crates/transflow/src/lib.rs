@@ -690,3 +690,6 @@ mod tests {
 
 /// Validated lazy output-branch preparation.
 pub mod output_branch;
+
+/// Shared frozen-context freshness and causal why service.
+pub mod why;

@@ -692,3 +692,32 @@ def test_accepted_cache_preparation_uses_frozen_context_and_actual_parents(
         assert db.execute("SELECT count(*) FROM publication_contracts").fetchone()[0] == (
             0 if case == "pending" else 1
         )
+        assert db.execute("SELECT count(*) FROM computation_evidence").fetchone()[0] == (
+            0 if case == "pending" else 1
+        )
+
+
+@pytest.mark.parametrize("registered", [False, True])
+def test_freshness_inspection_keeps_unknowns_and_never_executes_or_registers(
+    workspace: Path, registered: bool
+) -> None:
+    source(workspace, "orders.py", DECLARATION)
+    if registered:
+        cli(workspace, "catalog", "sync", "--python", sys.executable)
+    registry = (workspace / ".transflow/catalog.toml").read_bytes()
+    result = plan_probe(workspace, "why", "raw/orders")
+    assert result["ok"], result
+    status = result["result"]["datasets"][0]
+    assert status["materialization"] == "NeverBuilt"
+    assert status["direct_logic"] == "Unknown"
+    codes = {r["code"] for r in status["reasons"]}
+    assert "NEVER_BUILT" in codes
+    assert ("CATALOG_ADDITION_PENDING" in codes) is not registered
+    assert "CACHE_MATCH" not in codes
+    assert (workspace / ".transflow/catalog.toml").read_bytes() == registry
+    # Invalid current source cannot fall back to a previously discovered graph.
+    source(workspace, "orders.py", "this is invalid Python !!!")
+    assert not plan_probe(workspace, "why", "raw/orders")["ok"]
+    with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db:
+        assert db.execute("SELECT count(*) FROM attempts").fetchone()[0] == 0
+        assert db.execute("SELECT count(*) FROM dataset_versions").fetchone()[0] == 0

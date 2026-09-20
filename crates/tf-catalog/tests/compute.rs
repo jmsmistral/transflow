@@ -219,3 +219,39 @@ fn typed_parameter_defaults_and_external_io_cache_opt_in_are_explicit() {
     f.definition["cache"] = json!("never");
     assert!(!f.key().unwrap().reusable());
 }
+
+#[test]
+fn comparison_evidence_uses_same_semantic_inputs_and_survives_roundtrip() {
+    let mut f = Fixture::new();
+    let first = f.key().unwrap();
+    let baseline = first.evidence();
+    assert!(baseline.valid());
+    assert_eq!(baseline.compute, first.digest().hex());
+    let encoded = serde_json::to_value(baseline).unwrap();
+    let restored: compute::Evidence = serde_json::from_value(encoded).unwrap();
+    assert_eq!(&restored, baseline);
+    f.parameters = json!({"limit":{"type":"i64","value":"2"}});
+    let changed = f.key().unwrap();
+    assert_ne!(
+        baseline.components["parameters"],
+        changed.evidence().components["parameters"]
+    );
+    assert_eq!(
+        baseline.components["code"],
+        changed.evidence().components["code"]
+    );
+    f.inputs[0]["version"] = json!(VersionId::from_bytes([8; 16]).to_string());
+    let changed = f.key().unwrap();
+    assert_ne!(baseline.inputs["rows"], changed.evidence().inputs["rows"]);
+    assert_eq!(baseline.files, changed.evidence().files);
+    fs::write(f.root.join("src/helpers.py"), "VALUE=2\n").unwrap();
+    let changed = f.key().unwrap();
+    assert_ne!(
+        baseline.files["src/helpers.py"],
+        changed.evidence().files["src/helpers.py"]
+    );
+    assert_ne!(
+        baseline.components["code"],
+        changed.evidence().components["code"]
+    );
+}

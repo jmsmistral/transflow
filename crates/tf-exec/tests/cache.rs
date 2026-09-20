@@ -374,3 +374,23 @@ fn exact_input_alias_certificates_are_reused_and_cannot_be_silently_omitted() {
         assert_eq!(h.scalar("SELECT count(*) FROM cached_jobs").await,1);
     });
 }
+
+#[test]
+fn comparison_evidence_refuses_wrong_keys_and_is_immutable_and_idempotent() {
+    runtime().block_on(async {
+        let mut h=Harness::new().await;
+        let r=request(&mut h,20,0,contract()).await;
+        let mut evidence=json!({"format_version":1,"compute":"f".repeat(64),"reusable":true,"components":{},"inputs":{},"files":{}});
+        let mut owned=h.owner.as_mut().unwrap().open_store().await.unwrap();
+        let store=owned.repository().unwrap();
+        assert!(store.freeze_computation_evidence(&r,&evidence).await.is_err());
+        evidence["compute"]=json!(r.contract.compute_fingerprint);
+        store.freeze_computation_evidence(&r,&evidence).await.unwrap();
+        store.freeze_computation_evidence(&r,&evidence).await.unwrap();
+        evidence["files"]=json!({"src/helper.py":"e".repeat(64)});
+        assert!(store.freeze_computation_evidence(&r,&evidence).await.is_err());
+        owned.close().await.unwrap();
+        assert_eq!(h.scalar("SELECT count(*) FROM computation_evidence").await,1);
+        assert!(sqlx::query("DELETE FROM computation_evidence").execute(&mut h.db).await.is_err());
+    });
+}

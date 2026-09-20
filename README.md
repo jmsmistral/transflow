@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** T001–T050 are implemented for their recorded scopes, except T031/T033 task closure remains gated by native editor qualification. Current capabilities include workspace/environment preparation, catalogue validation/lifecycle, source capture, durable storage/publication foundations, branch lifecycle, retained reads/replay identities, and internal planning/acceptance services. T051 adds internal branch-scoped cache reuse and audited adoption. Dataset build execution, the coordinator service and the connected lineage interface remain upcoming; this is not an application release.
+**Status:** T001–T051 are implemented for their recorded scopes, except T031/T033 task closure remains gated by native editor qualification. Current capabilities include workspace/environment preparation, catalogue validation/lifecycle, source capture, durable storage/publication foundations, branch lifecycle, retained reads/replay identities, and internal planning/acceptance services. T052 adds an internal freshness read model and causal explanations; push CI is pending owner monitoring. Dataset build execution, the coordinator service and the connected lineage interface remain upcoming; this is not an application release.
 
 ## Intended experience
 
@@ -255,7 +255,7 @@ immutable saved drafts, guarded acceptance with complete write reservations, and
 conservative compute/check keys. New outputs can be planned without editing the
 registry; acceptance preserves their exact proposed IDs and refuses stale context.
 See the [planning service guide](crates/transflow/PLANNING.md). Public build execution
-and cache adoption remain subsequent work.
+remains subsequent work.
 
 ### Retained version reuse
 
@@ -264,3 +264,12 @@ Accepted jobs finalize keys after their parents bind, verify retained Parquet,
 and reuse original versions/check evidence. Older matching versions can be adopted
 through audited head changes. Force, source refresh and `cache="never"` require
 execution; public build execution remains upcoming work.
+
+
+### Freshness explanations
+
+T052 adds [internal freshness and why services](crates/transflow/FRESHNESS.md).
+They compare captured source and one frozen head snapshot, reporting data, logic
+and ancestor staleness separately from the latest attempt and original output
+quality. A failed retry can coexist with usable stale data. Missing comparison
+metadata stays unknown. Public `why`/`plan` commands remain upcoming work.
