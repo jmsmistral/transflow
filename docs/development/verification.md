@@ -395,6 +395,10 @@ See [T046 local evidence](evidence/t046-macos-arm64.json),
 [T048 local evidence](evidence/t048-macos-arm64.json),
 [T049 local evidence](evidence/t049-macos-arm64.json),
 [T050 local evidence](evidence/t050-macos-arm64.json), and the
-[planning guide](../../crates/transflow/PLANNING.md). Pushed CI is pending.
+[planning guide](../../crates/transflow/PLANNING.md).
+All five CI workflows and 19 jobs passed at `3e89b3118d897f95e8b6880d09da6abff364720d`,
+paired with specification progress `44b914c8418c88ff304075cb3427df8dad8e72b0`.
+See the [T050 CI receipt](evidence/t050-ci.json); T046–T049 retain matching receipts.
+
 The services are local preparation foundations; public dispatch/execution, cache
 adoption, provider replication and boundary currentness retain subsequent tasks.
