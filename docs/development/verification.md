@@ -254,4 +254,6 @@ Publication and quality evaluation remain later tasks; pandas/SQL transforms rem
 boundary regressions. Six new artifact tests cover ordered/empty files,
 no-replace deduplication, corruption, containment and durability-boundary errors.
 See [local evidence](evidence/t037-macos-arm64.json) and the
-[artifact guide](../../crates/tf-store/ARTIFACTS.md). CI is pending.
+[artifact guide](../../crates/tf-store/ARTIFACTS.md). All five workflows and 19 jobs
+pass at `c1c4513c8ac58cb9e427945dfeea3b6aeea02c75`, paired with specification
+progress `7520ba5`; see [CI evidence](evidence/t037-ci.json). T037 is complete.
