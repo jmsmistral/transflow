@@ -22,6 +22,8 @@ run_rust_check() {
 }
 run_rust_check formatting cargo fmt --all -- --check
 run_rust_check compilation cargo check --workspace --locked --offline
+# The native engine probe builds tf-store alone; do not inherit other crates' Serde features.
+run_rust_check standalone-storage cargo check -p tf-store --example normalization_probe --locked --offline
 run_rust_check linting cargo clippy --workspace --all-targets --locked --offline -- -D warnings
 mkdir -p target
 if ! cargo test --workspace --locked --offline 2>&1 | tee target/rust-tests.log; then

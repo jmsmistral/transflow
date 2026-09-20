@@ -356,3 +356,15 @@ See [T044 local evidence](evidence/t044-macos-arm64.json),
 [pin/replay guide](../../crates/tf-store/REPLAY.md). Remote CI qualification is pending.
 Public branch lifecycle is available; public plan/build/replay execution remains
 later work. Replay metadata is distinct from source/environment execution readiness.
+
+
+The initial native CI at `5211253ff92aa94d766d5442392a8606e27e1e99` failed
+with exit 101 in the [native probe step](https://github.com/jmsmistral/transflow/actions/runs/35514068655).
+A local standalone `tf-store` build reproduced missing Serde derive macros:
+workspace feature unification had hidden its undeclared feature requirement.
+The crate now enables `derive` explicitly, and normal Rust checks include the
+standalone normalization example. `bash tools/check-rust.sh` passes all 250 tests
+plus one documentation test after the fix; full native qualification also passes
+with the existing `target/qualification/py314` environment. Initial attempts with
+the SDK-only Python environments stopped on missing DuckDB; no dependencies were
+installed. Replacement-commit CI remains required before completion.

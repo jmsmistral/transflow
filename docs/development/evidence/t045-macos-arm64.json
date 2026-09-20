@@ -5,7 +5,9 @@
   "commands": [
     "bash tools/check.sh",
     "cargo test -p transflow --test branches -p tf-protocol --test contracts --test transport --locked --offline",
-    "python -B tools/safety/advisories.py --output security/advisories.json"
+    "python -B tools/safety/advisories.py --output security/advisories.json",
+    "bash tools/check-rust.sh",
+    "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh"
   ],
   "result": "passed",
   "rust_tests": 250,
@@ -27,5 +29,6 @@
     "Local pin/replay service foundation; public plan/build/replay CLI is T048/T067.",
     "Source/environment execution verification and complete acceptance wiring remain T049; consumer checks and full fingerprints remain their own later gates.",
     "Foreign replay is deferred to T072; retained metadata does not guarantee permanent artifact availability."
-  ]
+  ],
+  "post_ci_fix_verification": "Standalone storage build, full Rust suite and native qualification pass after explicitly enabling Serde derive for tf-store."
 }
