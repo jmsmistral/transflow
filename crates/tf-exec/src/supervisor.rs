@@ -48,6 +48,9 @@ pub enum Failure {
     /// Explicit coordinator operation deadline, not a phase timeout.
     #[error("Worker exceeded the caller's operation deadline")]
     Deadline,
+    /// A phase exhausted its independent configured budget.
+    #[error("Worker exceeded its phase deadline; inspect the phase timeout evidence")]
+    PhaseDeadline,
     /// Caller explicitly canceled or dropped its waiting future.
     #[error("Worker was canceled and its process group was stopped")]
     Canceled,
@@ -115,6 +118,12 @@ pub struct Launch {
     /// Known credential byte values, redacted even across read boundaries.
     /// At most 64 values, each 1..=4096 bytes. This is best-effort secret hygiene.
     pub redact: Vec<Vec<u8>>,
+    /// Optional attempt timers. A timed launch cannot also impose an overall deadline.
+    pub timing: Option<crate::timing::Work>,
+    /// Exclusive reservation retained until child cleanup, including after caller drop.
+    pub reservation: Option<crate::admission::WorkerPermit>,
+    /// Thread limit for standalone discovery; an admitted worker uses its reservation.
+    pub threads: u32,
 }
 /// Thread-safe, idempotent cooperative request to the owner; it never signals PIDs.
 #[derive(Clone, Default)]
@@ -149,6 +158,12 @@ pub struct Report {
     pub exit_code: Option<i32>,
     /// Both streams reached EOF. False identifies escaped/inherited descriptors.
     pub logs_complete: bool,
+    /// Blocking phase timeout, with subject/check and effective setting provenance.
+    pub timeout: Option<crate::timing::Timeout>,
+    /// Actual thread policy installed before interpreter/engine imports.
+    pub threads: Option<u32>,
+    /// Time spent terminating and draining the worker, outside its phase budget.
+    pub cleanup_elapsed: Duration,
 }
 impl Default for Report {
     fn default() -> Self {
@@ -162,6 +177,9 @@ impl Default for Report {
             pid: None,
             exit_code: None,
             logs_complete: false,
+            timeout: None,
+            threads: None,
+            cleanup_elapsed: Duration::ZERO,
         }
     }
 }
@@ -279,6 +297,10 @@ fn operation_name(op: Operation) -> &'static str {
 fn valid(launch: &Launch) -> bool {
     let policy = &launch.policy;
     launch.request.is_object()
+        && launch.threads > 0
+        && launch.timing.as_ref().is_none_or(|work| {
+            work.valid_for(launch.operation) && policy.operation_timeout.is_none()
+        })
         && launch.python.is_absolute()
         && policy.log_bytes >= logs::MARKER.len()
         && policy.log_bytes <= policy.workspace_log_cap
@@ -396,6 +418,18 @@ fn run_inner(
     let listener = UnixListener::bind(&socket_path)?;
     listener.set_nonblocking(true)?;
     let (out_file, err_file) = log_files(launch.log_directory.as_deref())?;
+    if let Some(work) = &launch.timing {
+        work.budget
+            .enter(work.phase)
+            .map_err(|_| Failure::Configuration)?;
+    }
+    check_phase(launch, report)?;
+    let threads = launch
+        .reservation
+        .as_ref()
+        .map(|p| p.threads())
+        .unwrap_or(launch.threads);
+    report.threads = Some(threads);
     let child = Command::new(&launch.python)
         .args([
             "-I",
@@ -411,6 +445,12 @@ fn run_inner(
         .current_dir(scratch.path())
         .env_remove("PYTHONPATH")
         .env_remove("PYTHONHOME")
+        .env("POLARS_MAX_THREADS", threads.to_string())
+        .env("OMP_NUM_THREADS", threads.to_string())
+        .env("OPENBLAS_NUM_THREADS", threads.to_string())
+        .env("MKL_NUM_THREADS", threads.to_string())
+        .env("NUMEXPR_MAX_THREADS", threads.to_string())
+        .env("VECLIB_MAXIMUM_THREADS", threads.to_string())
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -453,6 +493,7 @@ fn run_inner(
             if cancel.requested() {
                 return Err(Failure::Canceled);
             }
+            check_phase(launch, report)?;
             let now = Instant::now();
             if launch
                 .policy
@@ -520,7 +561,15 @@ fn run_inner(
                         if frame.message_type() == MessageType::Heartbeat {
                             last_heartbeat = now;
                         }
+                        check_phase(launch, report)?;
+                        let phase = frame.as_json()["message"]["phase"]
+                            .as_str()
+                            .map(str::to_owned);
                         guard.accept(frame)?;
+                        if let (Some(work), Some(phase)) = (&launch.timing, phase) {
+                            work.message(launch.operation, &phase)
+                                .map_err(|_| Failure::Protocol)?;
+                        }
                         if guard.terminal.is_some() {
                             terminal_seen.get_or_insert(now);
                         }
@@ -557,6 +606,8 @@ fn run_inner(
     })();
     // Even success must close descendants. Keep leader waitable until the last
     // group signal so PID reuse cannot redirect cleanup. No process handle escapes.
+    let cleanup_start = Instant::now();
+    let _phase_cleanup = launch.timing.as_ref().map(|work| work.budget.cleanup());
     let mut cleanup = owned.signal(rustix::process::Signal::TERM);
     let grace_start = Instant::now();
     while grace_start.elapsed() < launch.policy.termination_grace {
@@ -590,6 +641,7 @@ fn run_inner(
         }
         thread::sleep(Duration::from_millis(2));
     }
+    report.cleanup_elapsed = cleanup_start.elapsed();
     report.logs_complete = stdout.eof && stderr.eof;
     report.stdout = stdout.finish()?;
     report.stderr = stderr.finish()?;
@@ -611,6 +663,15 @@ fn run_inner(
     }
     if report.terminal.is_none() {
         return Err(Failure::Protocol);
+    }
+    Ok(())
+}
+fn check_phase(launch: &Launch, report: &mut Report) -> Result<(), Failure> {
+    if let Some(work) = &launch.timing
+        && let Some(timeout) = work.budget.expired().map_err(|_| Failure::Configuration)?
+    {
+        report.timeout = Some(timeout);
+        return Err(Failure::PhaseDeadline);
     }
     Ok(())
 }

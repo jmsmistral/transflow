@@ -3,7 +3,7 @@ use serde_json::{Value, json};
 use std::{
     collections::{BTreeMap, BTreeSet},
     path::{Path, PathBuf},
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{SystemTime, UNIX_EPOCH},
 };
 use tf_catalog::{
     DatasetKind, RegistrySnapshot,
@@ -31,6 +31,8 @@ pub(crate) enum Error {
     Store(#[from] tf_store::StoreError),
     #[error(transparent)]
     Config(#[from] tf_catalog::workspace::ConfigError),
+    #[error(transparent)]
+    Resources(#[from] crate::resources::Error),
     #[error(transparent)]
     Git(#[from] tf_catalog::git::GitError),
     #[error(transparent)]
@@ -255,11 +257,18 @@ pub(crate) fn inspect_selected(
     } else {
         registry
     };
+    let resource_policy = config.execution_policy(
+        &Default::default(),
+        &Default::default(),
+        &Default::default(),
+    )?;
+    let resolved_resources = crate::resources::Resolved::new(&resource_policy)?;
     let result = discovery::discover(
         &env.interpreter,
         &scratch,
         json!({"format_version":1,"protocol":{"major":1,"minor":0},"request_id":request.to_string(),"attempt_id":discovery::random_id()?,"capture_root":capture.files_root(),"source_roots":capture.source_roots(),"files":capture.discovery_files(),"catalog":registry.sdk_projection(capture.id()?)?,"environment_fingerprint":env.fingerprint}),
-        Duration::from_secs(300),
+        resolved_resources.timers,
+        resolved_resources.worker_threads,
     )?;
     let graph = validate(&registry, &capture, &result, &env)?;
     verify_selection(&capture, workspace, false)?;

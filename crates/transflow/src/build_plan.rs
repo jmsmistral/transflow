@@ -310,7 +310,11 @@ pub(crate) async fn prepare_captured(
         let policy = selected_config
             .execution_policy(
                 &tf_catalog::workspace::DefinitionOverrides {
-                    transform_seconds: definition.declaration["wall_timeout_seconds"].as_u64(),
+                    transform_seconds: definition.declaration["wall_timeout_seconds"]
+                        .as_str()
+                        .map(str::parse::<u64>)
+                        .transpose()
+                        .map_err(failure)?,
                 },
                 &Default::default(),
                 &tf_catalog::workspace::BuildOverrides {
@@ -320,7 +324,12 @@ pub(crate) async fn prepare_captured(
                 },
             )
             .map_err(failure)?;
-        resources.insert(registered(&definition.output)?.dataset_id().to_string(), json!({"timeout_seconds":policy.transform_seconds.value.to_string(),"timeout_origin":format!("{:?}",policy.transform_seconds.origin),"validation_timeout_seconds":policy.validation_seconds.value.to_string(),"validation_timeout_origin":format!("{:?}",policy.validation_seconds.origin)}));
+        resources.insert(
+            registered(&definition.output)?.dataset_id().to_string(),
+            crate::resources::Resolved::new(&policy)
+                .map_err(failure)?
+                .json(&policy),
+        );
     }
     let now = preparation::now().map_err(failure)?;
     let expires = now

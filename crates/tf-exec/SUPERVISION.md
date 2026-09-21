@@ -1,4 +1,4 @@
-# Worker supervision (T055)
+# Worker supervision (T055–T056)
 
 `tf_exec::supervisor` owns one fresh process group per attempt. `Launch` takes an
 absolute, already verified interpreter, an operation enum, a schema-validated
@@ -26,9 +26,9 @@ metric and heartbeat floods cannot grow an event queue. Data remains in files.
 30-second heartbeat-silence diagnostic threshold, five-second termination grace,
 and 10 MiB retained per stream. Heartbeat silence is evidence, not a failure
 inference. There is no default whole-operation timeout or memory cap. The caller
-can supply an explicit operation deadline; discovery retains its existing
-300-second preparation limit. These are not the independent execution/validation
-timers or resource admission delivered by T056. After a terminal message, the
+can supply an explicit operation deadline only when no phase budget is attached.
+[Independent phase timers and admission](RESOURCES.md) now compose with this owner.
+Discovery uses the workspace execution-derived timer, defaulting to 3600 seconds. After a terminal message, the
 process must exit within the termination grace (at least one second); this bounds
 shutdown only, not user work.
 
@@ -52,8 +52,8 @@ to publish a dataset or update a head.
 The blocking `run` owner keeps its child alive as an owned resource until cleanup.
 `run_async` uses a blocking executor and requires persistent log paths. Dropping
 or aborting its future requests cancellation; the owner continues to TERM, wait
-its grace, KILL, reap and flush logs. Caller admission must bound concurrent owners
-(T056); no detached fire-and-forget child handle is returned. Explicit cancellation
+its grace, KILL, reap and flush logs. An attached worker permit remains owned until
+cleanup finishes, bounding admitted concurrency; no detached child handle is returned. Explicit cancellation
 is idempotent. Synchronous discovery shares this owner, retains logs in failure
 evidence and keeps import output separate from CLI stdout/stderr. Public log
 inspection and durable attempt/event composition remain later tasks.
@@ -82,3 +82,8 @@ secret/header redaction, private paths, TERM-resistant descendants and dropped
 async callers. Installed-worker tests cover mutual authentication before imports
 and coordinator disconnect during a slow import. CI runs the same suite on the
 supported macOS/Linux matrix; local evidence records only platforms actually run.
+
+T056 reports typed phase timeout evidence, the actual pre-import thread limit and
+cleanup duration. Phase timers exclude cleanup/grace. POLARS, OpenMP and common
+BLAS/NumExpr/Accelerate environment limits are set before Python starts. DuckDB
+connection thread/buffer/spill configuration remains the adapter responsibility.

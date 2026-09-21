@@ -425,6 +425,12 @@ impl WorkspaceConfig {
             },
         };
         let mut p = EffectivePolicy {
+            discovery_seconds: value(
+                "execution",
+                "wall_timeout_seconds",
+                self.raw.execution.wall_timeout_seconds,
+            ),
+            cpu_origin: value("execution", "cpu_tokens", 0).origin,
             transform_seconds: value(
                 "execution",
                 "wall_timeout_seconds",
@@ -490,28 +496,8 @@ impl WorkspaceConfig {
         Ok(p)
     }
 }
-/// Source of a resolved computation setting.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Origin {
-    /// Built-in default.
-    Default,
-    /// Workspace authoring policy.
-    Workspace,
-    /// Producer definition.
-    Definition,
-    /// Accepted build or schedule policy.
-    Build,
-    /// Explicit CLI/API override.
-    Explicit,
-}
-/// A resolved integer and its provenance.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct Setting {
-    /// Effective value (zero timeout disables its deadline).
-    pub value: u64,
-    /// Winning layer.
-    pub origin: Origin,
-}
+/// Shared domain provenance for effective resource settings.
+pub use tf_domain::resources::{Origin, Setting};
 /// Only the producer's transform deadline may be overridden at definition level here.
 #[derive(Default)]
 pub struct DefinitionOverrides {
@@ -531,6 +517,10 @@ pub struct BuildOverrides {
 /// Resolved execution settings. Branch and pin precedence remain separate services.
 #[derive(Debug)]
 pub struct EffectivePolicy {
+    /// Discovery uses workspace execution policy before producer overrides are known.
+    pub discovery_seconds: Setting,
+    /// Provenance of the resolved CPU count (including auto resolution).
+    pub cpu_origin: Origin,
     /// Transformation deadline.
     pub transform_seconds: Setting,
     /// Independent input/output validation deadline.

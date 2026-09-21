@@ -5,7 +5,6 @@ use std::{
     io::Read,
     os::unix::fs::{DirBuilderExt, OpenOptionsExt},
     path::{Path, PathBuf},
-    time::Duration,
 };
 use tf_protocol::{Operation, canonical::file_digest, validate_document};
 
@@ -99,7 +98,8 @@ pub fn discover(
     python: &Path,
     scratch: &Scratch,
     mut request: Value,
-    timeout: Duration,
+    limits: crate::timing::Limits,
+    threads: u32,
 ) -> Result<Value, DiscoveryError> {
     if !request.is_object() {
         return Err(DiscoveryError::Protocol);
@@ -111,12 +111,16 @@ pub fn discover(
             operation: Operation::Discover,
             request_schema: "DiscoveryRequestV1",
             request,
-            policy: crate::supervisor::Policy {
-                operation_timeout: Some(timeout),
-                ..Default::default()
-            },
+            policy: crate::supervisor::Policy::default(),
             log_directory: None,
             redact: Vec::new(),
+            timing: Some(crate::timing::Work {
+                budget: crate::timing::Budget::new(limits, "workspace declarations".into())
+                    .map_err(|_| DiscoveryError::Protocol)?,
+                phase: crate::timing::Phase::Discovery,
+            }),
+            reservation: None,
+            threads,
         },
         crate::supervisor::Cancellation::default(),
     );
@@ -142,7 +146,11 @@ pub fn discover(
             });
         }
         return Err(DiscoveryError::Supervised {
-            message: failure.to_string(),
+            message: report
+                .timeout
+                .as_ref()
+                .map(ToString::to_string)
+                .unwrap_or_else(|| failure.to_string()),
             report: Box::new(report),
         });
     }

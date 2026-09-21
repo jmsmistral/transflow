@@ -48,7 +48,8 @@ def send(message, **changes):
     channel.sendall(struct.pack(">I", len(payload)) + payload)
     sequence += 1
 
-hello = {"type": "hello", "operation": "discover", "capabilities": ["discovery.v1"]}
+operation = sys.argv[sys.argv.index("transflow_worker") + 1]
+hello = {"type": "hello", "operation": operation, "capabilities": ["discovery.v1"]}
 if mode == "wrong_session":
     send(hello, attempt_id="00000000-0000-4000-8000-000000000099")
 elif mode == "wrong_major":
@@ -62,7 +63,17 @@ elif mode == "invalid":
     channel.sendall(struct.pack(">I", 1) + b"{")
 else:
     send(hello)
-    send({"type": "phase", "phase": "running" if mode == "wrong_phase" else "discovering"})
+    phase = "validating_inputs" if operation == "evaluate_checks" else "discovering"
+    send({"type": "phase", "phase": "running" if mode == "wrong_phase" else phase})
+    if mode == "budget":
+        keys = ["POLARS_MAX_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+                "MKL_NUM_THREADS", "NUMEXPR_MAX_THREADS", "VECLIB_MAXIMUM_THREADS"]
+        (root / "threads.json").write_text(json.dumps({key: os.environ[key] for key in keys}))
+        os.write(1, b"budget stdout\n")
+        os.write(2, b"budget stderr\n")
+        (root / "ready").touch()
+        while not (root / "release").exists():
+            time.sleep(0.005)
     if mode == "phase_regression":
         send({"type": "phase", "phase": "setup"})
     if mode in {"descendant", "quiet_descendant", "cancel"}:
@@ -115,7 +126,9 @@ else:
     if mode == "worker_error":
         send({"type": "error", "code": "synthetic", "message": "synthetic worker failure", "retryable": False})
         sys.exit(1)
-    if mode != "missing_result":
+    if operation == "evaluate_checks":
+        send({"type": "check_results", "results_path": "checks.json", "results_digest": "a" * 64})
+    elif mode != "missing_result":
         send({"type": "discovery_ready", "result_path": "discovery.json", "result_digest": "a" * 64})
     if mode == "duplicate_result":
         send({"type": "discovery_ready", "result_path": "discovery.json", "result_digest": "a" * 64})

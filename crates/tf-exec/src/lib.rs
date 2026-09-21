@@ -16,3 +16,9 @@ pub mod cache;
 
 /// Owned worker groups, authenticated control and bounded log retention.
 pub mod supervisor;
+
+/// Bounded atomic job/CPU and optional memory/disk reservations.
+pub mod admission;
+
+/// Monotonic execution, validation, interactive and discovery budgets.
+pub mod timing;

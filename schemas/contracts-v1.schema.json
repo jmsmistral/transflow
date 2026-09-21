@@ -3469,28 +3469,7 @@
                 }
               },
               "resources": {
-                "type": "object",
-                "properties": {
-                  "timeout_seconds": {
-                    "$ref": "#/$defs/Count"
-                  },
-                  "timeout_origin": {
-                    "type": "string"
-                  },
-                  "validation_timeout_seconds": {
-                    "$ref": "#/$defs/Count"
-                  },
-                  "validation_timeout_origin": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "timeout_seconds",
-                  "timeout_origin",
-                  "validation_timeout_seconds",
-                  "validation_timeout_origin"
-                ],
-                "additionalProperties": false
+                "$ref": "#/$defs/ResourcePolicyV1"
               }
             },
             "required": [
@@ -3694,6 +3673,125 @@
         "status",
         "plan",
         "planning_error"
+      ],
+      "additionalProperties": false
+    },
+    "ResourcePolicyV1": {
+      "type": "object",
+      "properties": {
+        "timeout_seconds": {
+          "$ref": "#/$defs/Count"
+        },
+        "timeout_origin": {
+          "type": "string"
+        },
+        "validation_timeout_seconds": {
+          "$ref": "#/$defs/Count"
+        },
+        "validation_timeout_origin": {
+          "type": "string"
+        },
+        "discovery_timeout_seconds": {
+          "$ref": "#/$defs/Count"
+        },
+        "interactive_timeout_seconds": {
+          "$ref": "#/$defs/Count"
+        },
+        "max_jobs": {
+          "$ref": "#/$defs/Count"
+        },
+        "cpu_tokens": {
+          "$ref": "#/$defs/Count"
+        },
+        "worker_threads": {
+          "$ref": "#/$defs/Count"
+        },
+        "discovery_timeout_origin": {
+          "enum": [
+            "Default",
+            "Workspace",
+            "Definition",
+            "Build",
+            "Explicit"
+          ]
+        },
+        "interactive_timeout_origin": {
+          "enum": [
+            "Default",
+            "Workspace",
+            "Definition",
+            "Build",
+            "Explicit"
+          ]
+        },
+        "max_jobs_origin": {
+          "enum": [
+            "Default",
+            "Workspace",
+            "Definition",
+            "Build",
+            "Explicit"
+          ]
+        },
+        "cpu_origin": {
+          "enum": [
+            "Default",
+            "Workspace",
+            "Definition",
+            "Build",
+            "Explicit"
+          ]
+        },
+        "memory_budget_mib": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Count"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "memory_origin": {
+          "oneOf": [
+            {
+              "enum": [
+                "Default",
+                "Workspace",
+                "Definition",
+                "Build",
+                "Explicit"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "memory_enforcement": {
+          "enum": [
+            "none",
+            "estimated_reservation"
+          ]
+        }
+      },
+      "required": [
+        "timeout_seconds",
+        "timeout_origin",
+        "validation_timeout_seconds",
+        "validation_timeout_origin",
+        "discovery_timeout_seconds",
+        "interactive_timeout_seconds",
+        "max_jobs",
+        "cpu_tokens",
+        "worker_threads",
+        "discovery_timeout_origin",
+        "interactive_timeout_origin",
+        "max_jobs_origin",
+        "cpu_origin",
+        "memory_budget_mib",
+        "memory_origin",
+        "memory_enforcement"
       ],
       "additionalProperties": false
     }

@@ -811,3 +811,6 @@ pub mod why;
 
 /// Captured, nonexecuting upstream/downstream inspection.
 pub mod graph_query;
+
+/// Shared configuration-to-runtime resource policy and frozen plan projection.
+pub mod resources;

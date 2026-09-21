@@ -54,3 +54,8 @@ C ownership, separate print output, policy serialization and unchanged producer
 counters. Shared fixtures exercise Rust, Python and TypeScript schema readers.
 
 T030 binds the verified catalogue once for the worker lifetime, including its threads. Explicit aliases participate in the fingerprint; testing contexts cannot replace that binding. See the [catalogue guide](CATALOG.md).
+
+T056 preparation supplies the workspace execution-derived discovery timer (3600
+seconds by default; zero disables it) and resolved worker thread limits before
+imports. Discovery no longer carries an implicit five-minute deadline. Its label
+and diagnostics are distinct from transform, validation and interactive phases.

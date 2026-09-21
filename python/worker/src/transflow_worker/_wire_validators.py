@@ -211,3 +211,8 @@ def validate_PlanResultV1(value: object) -> None:
 def validate_WhyResultV1(value: object) -> None:
     """Assert the WhyResultV1 contract, including custom formats."""
     validate_document("WhyResultV1", value)
+
+
+def validate_ResourcePolicyV1(value: object) -> None:
+    """Assert the ResourcePolicyV1 contract, including custom formats."""
+    validate_document("ResourcePolicyV1", value)

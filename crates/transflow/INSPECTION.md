@@ -111,3 +111,11 @@ has exit status one. Neither command accepts `--wait` or `--no-wait`.
 See [verification evidence](../../docs/development/verification.md) for actual checks
 and CI status. The synthetic publication example is contributor-only test support;
 it is not an installed command or a public build interface.
+
+T056 plans include resolved job/CPU/thread capacity, optional estimated memory
+budget, independent validation/interactive/discovery timers and winning origins.
+Omitted memory is JSON null with enforcement `none`. Per-producer
+`wall_timeout_seconds` is honored before explicit CLI overrides. Discovery uses
+the workspace execution timeout before declarations exist; compute CLI flags do
+not override discovery. Counts remain exact decimal strings. These fields extend
+the unreleased initial draft contract; prepare old development drafts again.

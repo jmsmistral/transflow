@@ -4295,5 +4295,51 @@
       "producer_execution": true,
       "authoring_changed": false
     }
+  },
+  {
+    "name": "resource-policy-disabled-compute-no-memory",
+    "schema": "ResourcePolicyV1",
+    "valid": true,
+    "value": {
+      "timeout_seconds": "0",
+      "timeout_origin": "Explicit",
+      "validation_timeout_seconds": "3600",
+      "validation_timeout_origin": "Default",
+      "discovery_timeout_seconds": "3600",
+      "discovery_timeout_origin": "Default",
+      "interactive_timeout_seconds": "30",
+      "interactive_timeout_origin": "Default",
+      "max_jobs": "2",
+      "max_jobs_origin": "Default",
+      "cpu_tokens": "8",
+      "cpu_origin": "Workspace",
+      "worker_threads": "4",
+      "memory_budget_mib": null,
+      "memory_origin": null,
+      "memory_enforcement": "none"
+    }
+  },
+  {
+    "name": "resource-policy-lossy-memory-carrier",
+    "schema": "ResourcePolicyV1",
+    "valid": false,
+    "value": {
+      "timeout_seconds": "0",
+      "timeout_origin": "Explicit",
+      "validation_timeout_seconds": "3600",
+      "validation_timeout_origin": "Default",
+      "discovery_timeout_seconds": "3600",
+      "discovery_timeout_origin": "Default",
+      "interactive_timeout_seconds": "30",
+      "interactive_timeout_origin": "Default",
+      "max_jobs": "2",
+      "max_jobs_origin": "Default",
+      "cpu_tokens": "8",
+      "cpu_origin": "Workspace",
+      "worker_threads": "4",
+      "memory_budget_mib": 128,
+      "memory_origin": null,
+      "memory_enforcement": "none"
+    }
   }
 ]

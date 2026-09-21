@@ -34,3 +34,6 @@ pub mod execution;
 
 /// Alias-qualified input policy normalization and read/producer boundaries.
 pub mod input;
+
+/// Resolved resource-setting provenance.
+pub mod resources;

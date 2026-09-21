@@ -118,7 +118,8 @@ def test_public_parameters_resources_and_selection(workspace: Path) -> None:
         "root.py",
         "from transflow import transform, Output, Parameter\n"
         '@transform(output=Output("raw/orders"), params={"limit":Parameter('
-        '{"type":"i64"}, {"type":"i64","value":"1"})})\n'
+        '{"type":"i64"}, {"type":"i64","value":"1"})}, '
+        'resources={"wall_timeout_seconds":90})\n'
         'def produce(*, ctx): raise AssertionError("must not execute")\n',
     )
     p = inspect(
@@ -138,6 +139,29 @@ def test_public_parameters_resources_and_selection(workspace: Path) -> None:
     assert p["writes"][0]["parameters"]["limit"] == {"type": "i64", "value": "7"}
     assert p["writes"][0]["resources"]["timeout_seconds"] == "0"
     assert p["writes"][0]["resources"]["validation_timeout_seconds"] == "12"
+    assert p["writes"][0]["resources"]["timeout_origin"] == "Explicit"
+    defaults = inspect(workspace, "plan", "raw/orders")["writes"][0]["resources"]
+    assert defaults["timeout_seconds"] == "90" and defaults["timeout_origin"] == "Definition"
+    assert defaults["validation_timeout_seconds"] == "3600"
+    assert defaults["interactive_timeout_seconds"] == "30"
+    assert defaults["discovery_timeout_seconds"] == "3600"
+    assert defaults["memory_budget_mib"] is None and defaults["memory_origin"] is None
+    assert defaults["memory_enforcement"] == "none"
+    assert 1 <= int(defaults["worker_threads"]) <= int(defaults["cpu_tokens"])
+    with (workspace / "workspace.toml").open("a") as config:
+        config.write(
+            "\n[execution]\nwall_timeout_seconds=0\nmax_jobs=2\ncpu_tokens=6\n"
+            "memory_budget_mib=128\n"
+        )
+    configured = inspect(workspace, "plan", "raw/orders")["writes"][0]["resources"]
+    assert configured["discovery_timeout_seconds"] == "0"
+    assert configured["discovery_timeout_origin"] == "Workspace"
+    assert (
+        configured["timeout_seconds"] == "90"
+    )  # Definition overrides execution workspace default.
+    assert configured["memory_budget_mib"] == "128"
+    assert configured["memory_enforcement"] == "estimated_reservation"
+    assert configured["cpu_origin"] == "Workspace" and configured["worker_threads"] == "3"
     assert p["fallback_override"] == []
     assert (
         inspect(

@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** T001–T052 are implemented for their recorded scopes, except T031/T033 task closure remains gated by native editor qualification. Current capabilities include workspace/environment preparation, catalogue validation/lifecycle, source capture, durable storage/publication foundations, branch lifecycle, retained reads/replay identities, and internal planning/acceptance services. T053 adds deterministic graph traversal; T054 exposes public `plan`, `why`, `upstream` and `downstream` commands. The owner confirmed CI success through T054. T055 adds shared worker supervision, authenticated control and bounded retained logs; local checks pass and push CI awaits owner monitoring. Dataset build execution, the coordinator service and the connected lineage interface remain upcoming; this is not an application release.
+**Status:** T001–T052 are implemented for their recorded scopes, except T031/T033 task closure remains gated by native editor qualification. Current capabilities include workspace/environment preparation, catalogue validation/lifecycle, source capture, durable storage/publication foundations, branch lifecycle, retained reads/replay identities, and internal planning/acceptance services. T053 adds deterministic graph traversal; T054 exposes public `plan`, `why`, `upstream` and `downstream` commands. The owner confirmed CI success through T055, including shared worker supervision, authenticated control and bounded retained logs. T056 adds resource admission and independent phase timers; local checks pass and push CI awaits owner monitoring. Dataset build execution, the coordinator service and the connected lineage interface remain upcoming; this is not an application release.
 
 ## Intended experience
 
@@ -169,7 +169,7 @@ metadata. See the [authoring guide](python/DECLARATIONS.md) for examples and lim
 The initial expectation constructors cover primary keys and non-null columns; the
 complete DSL, build execution and publication remain later tasks.
 
-[Isolated discovery](python/DISCOVERY.md) collects declarations in fresh workers, without invoking producer functions. [Worker supervision](crates/tf-exec/SUPERVISION.md) separates authenticated control from bounded stdout/stderr logs and owns process-group cleanup.
+[Isolated discovery](python/DISCOVERY.md) collects declarations in fresh workers, without invoking producer functions. [Worker supervision](crates/tf-exec/SUPERVISION.md) separates authenticated control from bounded stdout/stderr logs and owns process-group cleanup. [Resource admission and phase budgets](crates/tf-exec/RESOURCES.md) provide bounded job/CPU reservations, optional estimated memory admission and independent one-hour transform/input/output validation budgets; interactive work defaults to 30 seconds. Discovery uses the workspace execution timeout, including zero-disable. Plans expose resolved resource settings and provenance; dataset execution remains upcoming.
 
 [Candidate reconciliation](crates/tf-catalog/CANDIDATES.md) resolves same-pass outputs and rejects graph conflicts before registry mutation.
 

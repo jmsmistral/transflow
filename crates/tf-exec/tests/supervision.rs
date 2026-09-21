@@ -6,6 +6,10 @@ use std::{
     os::unix::fs::PermissionsExt,
     path::Path,
     process::Command,
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
     thread,
     time::{Duration, Instant},
 };
@@ -47,6 +51,9 @@ fn launch(root: &Path, mode: &str) -> Launch {
         },
         log_directory: Some(root.to_owned()),
         redact: vec![b"synthetic-credential".to_vec()],
+        timing: None,
+        reservation: None,
+        threads: 1,
     }
 }
 fn stopped(pid: u32) -> bool {
@@ -190,18 +197,36 @@ fn heartbeat_silence_is_diagnostic_and_success_cleans_descendants() {
 #[test]
 fn dropping_async_future_cancels_group_reaps_leader_and_flushes_logs() {
     let root = Scratch::create().unwrap();
-    let request = launch(root.path(), "cancel");
+    let mut request = launch(root.path(), "cancel");
+    let pool = tf_exec::admission::Admission::new(tf_exec::admission::Capacity {
+        jobs: 1,
+        cpu: 1,
+        ..Default::default()
+    })
+    .unwrap();
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_time()
         .build()
         .unwrap();
     runtime.block_on(async {
+        let job = pool.request(Default::default()).unwrap().await.unwrap();
+        request.reservation = Some(job.worker().unwrap());
+        request.policy.operation_timeout = None;
+        request.policy.termination_grace = Duration::from_millis(250);
+        let mut limits = tf_exec::timing::Limits::default();
+        limits.discovery.value = 0;
+        request.timing = Some(tf_exec::timing::Work {
+            budget: tf_exec::timing::Budget::new(limits, "cancel fixture".into()).unwrap(),
+            phase: tf_exec::timing::Phase::Discovery,
+        });
+        drop(job);
         let task = tokio::spawn(supervisor::run_async(request, Cancellation::default()));
         let start = Instant::now();
         while !root.path().join("pulse").exists() {
             assert!(start.elapsed() < Duration::from_secs(5));
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
+        assert_eq!(pool.usage().unwrap().jobs, 1);
         task.abort();
         assert!(task.await.unwrap_err().is_cancelled());
         let leader = fs::read_to_string(root.path().join("leader.pid"))
@@ -212,6 +237,11 @@ fn dropping_async_future_cancels_group_reaps_leader_and_flushes_logs() {
             .unwrap()
             .parse()
             .unwrap();
+        // A slow CI scheduler may resume us after cleanup already finished.
+        // Capacity may only be free once both real processes have stopped.
+        if pool.usage().unwrap().jobs == 0 {
+            assert!(stopped(leader) && stopped(descendant));
+        }
         while !(stopped(leader) && stopped(descendant)) {
             assert!(start.elapsed() < Duration::from_secs(5));
             tokio::time::sleep(Duration::from_millis(10)).await;
@@ -219,6 +249,7 @@ fn dropping_async_future_cancels_group_reaps_leader_and_flushes_logs() {
     });
     // Runtime shutdown joins the blocking cleanup owner before files are inspected.
     drop(runtime);
+    assert_eq!(pool.usage().unwrap(), Default::default());
     assert!(!fs::read(root.path().join("stdout.log")).unwrap().is_empty());
     assert!(!fs::read(root.path().join("stderr.log")).unwrap().is_empty());
     let pulse = fs::read(root.path().join("pulse")).unwrap();
@@ -272,4 +303,80 @@ fn log_paths_and_requests_are_rejected_before_spawning_or_overwriting() {
         Err(Failure::Configuration)
     );
     assert!(!root.path().join("leader.pid").exists());
+}
+
+#[derive(Default)]
+struct ManualClock(AtomicU64);
+impl tf_exec::timing::Clock for ManualClock {
+    fn now(&self) -> Duration {
+        Duration::from_secs(self.0.load(Ordering::SeqCst))
+    }
+}
+#[test]
+fn real_validation_helpers_share_one_hour_and_one_reservation() {
+    use tf_exec::{
+        admission::{Admission, Capacity},
+        timing::{Budget, Limits, Phase, Work},
+    };
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_time()
+        .build()
+        .unwrap();
+    let pool = Admission::new(Capacity {
+        jobs: 1,
+        cpu: 3,
+        ..Default::default()
+    })
+    .unwrap();
+    let clock = Arc::new(ManualClock::default());
+    let budget =
+        Budget::with_clock(Limits::default(), "curated/orders".into(), clock.clone()).unwrap();
+    runtime.block_on(async {
+        let job = pool.request(pool.default_demand()).unwrap().await.unwrap();
+        for (seconds, success) in [(301, true), (3599, true), (3600, false)] {
+            let root = Scratch::create().unwrap();
+            let mut request = launch(root.path(), "budget");
+            // Synthetic peer uses a discovery-shaped payload only to locate its fixture files.
+            request.operation = Operation::EvaluateChecks;
+            request.policy.operation_timeout = None;
+            request.timing = Some(Work {
+                budget: budget.clone(),
+                phase: Phase::InputValidation,
+            });
+            request.reservation = Some(job.worker().unwrap());
+            let task = tokio::spawn(supervisor::run_async(request, Cancellation::default()));
+            let start = Instant::now();
+            while !root.path().join("ready").exists() {
+                assert!(start.elapsed() < Duration::from_secs(5));
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            }
+            budget.check(Some("order_key".into())).unwrap();
+            clock.0.store(seconds, Ordering::SeqCst);
+            if success {
+                fs::write(root.path().join("release"), b"").unwrap();
+            }
+            let report = task.await.unwrap();
+            assert_eq!(report.threads, Some(3));
+            let env: serde_json::Value =
+                serde_json::from_slice(&fs::read(root.path().join("threads.json")).unwrap())
+                    .unwrap();
+            assert!(env.as_object().unwrap().values().all(|v| v == "3"));
+            assert!(report.logs_complete);
+            assert!(stopped(report.pid.unwrap()));
+            assert_eq!(pool.usage().unwrap().jobs, 1);
+            if success {
+                assert_eq!(report.outcome, Ok(()), "{report:?}");
+            } else {
+                assert_eq!(report.outcome, Err(Failure::PhaseDeadline), "{report:?}");
+                let timeout = report.timeout.unwrap();
+                assert_eq!(timeout.phase, Phase::InputValidation);
+                assert_eq!(timeout.elapsed, Duration::from_secs(3600));
+                assert_eq!(timeout.check.as_deref(), Some("order_key"));
+                assert!(String::from_utf8_lossy(&report.stdout.bytes).contains("budget stdout"));
+                assert!(String::from_utf8_lossy(&report.stderr.bytes).contains("budget stderr"));
+            }
+        }
+        drop(job);
+        assert_eq!(pool.usage().unwrap(), Default::default());
+    });
 }

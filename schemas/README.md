@@ -165,7 +165,13 @@ also enforce source ordering and aggregate cause/text budgets; the schema descri
 the wire shape. CLI envelope version 1 is independent of worker protocol 1.0.
 
 T054 adds closed `GraphResultV1`, `PlanResultV1`, `FreshnessStatusV1` and `WhyResultV1`
-shapes and four inspection capabilities. The shared corpus now contains 205 cases.
+shapes and four inspection capabilities, bringing the T054 shared corpus to 205 cases.
 Complete inspection envelopes have no extra 1 MiB output cap; source/discovery
 admission and worker-frame limits are unchanged. CLI version 1, worker protocol
 1.0 and runtime schema 7 remain unchanged. All language exports are regenerated.
+
+T056 extracts `ResourcePolicyV1` for public/accepted plan writes, with resolved
+job/CPU/thread/memory and discovery/interactive timeout values and provenance.
+Memory absence uses null; counts use exact decimal strings. Two fixtures bring
+the shared corpus to 207 cases. This extends the initial unreleased contract;
+old development drafts need re-preparation. Version baselines remain unchanged.

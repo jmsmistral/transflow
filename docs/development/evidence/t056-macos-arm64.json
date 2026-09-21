@@ -1,0 +1,64 @@
+{
+  "task": "T056",
+  "date": "2026-09-21",
+  "platform": "macOS arm64",
+  "result": "passed",
+  "implementation_base": "22ece0de94794cbd585ca3f574539f79e667b396",
+  "specification_base": "02c0a031464a0ee843164da0fc4db279c23688d5",
+  "commands": [
+    {
+      "command": "bash tools/check.sh",
+      "result": "Passed in /private/tmp/t056-check.log: 314 Rust tests plus one doc test, 658 Python, 261 web, 51 installed-worker tests; 44 document, 27 safety and 12 Rust-boundary regressions."
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed after final cleanup-clock and cancellation-fixture refinements; /private/tmp/t056-final-clippy.log."
+    },
+    {
+      "command": "cargo test -p tf-exec --lib --test resources --test supervision -p transflow --test resources --locked --offline",
+      "result": "27 tests passed on final code, including all ten native supervisor tests and ten admission/timer tests; /private/tmp/t056-final-resources.log."
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "result": "Passed in aggregate; final edits formatted with cargo fmt."
+    },
+    {
+      "command": "python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Passed after documentation updates; final receipt checked again before committing."
+    }
+  ],
+  "rust_tests": 314,
+  "rust_doc_tests": 1,
+  "python_tests": 658,
+  "web_tests": 261,
+  "installed_worker_tests": 51,
+  "conformance_cases": 207,
+  "document_regressions": 44,
+  "safety_regressions": 27,
+  "boundary_regressions": 12,
+  "coverage": [
+    "Atomic bounded FIFO admission enforces jobs, CPU, optional estimated memory/disk; canceled waiters and released permits wake successors without partial accounting.",
+    "No default memory gate; explicit estimates required only with a configured gate; unsupported hard memory limits and overflow are rejected.",
+    "Validation helpers exclusively reuse their owning job reservation even when all job slots are occupied; worker ownership outlives caller abandonment.",
+    "Injected monotonic clocks verify setup/materialization accumulation, independent input/output budgets, 30-second interactive budget, zero-disable, provenance, queue/grace exclusion and clock regression refusal.",
+    "Real sequential validation helpers survive simulated 301 and 3599 seconds, then share the original 3600-second timeout with phase/check evidence and both logs.",
+    "Native worker receives all six thread environment limits before imports; disabled-deadline async cancellation stops real TERM-resistant descendants, reaps the leader and releases resources after cleanup.",
+    "Installed plan CLI honors string-encoded producer deadlines, explicit overrides, default absent memory, configured estimated memory, CPU/thread resolution and zero-disabled discovery."
+  ],
+  "corrected_failures": [
+    "Generator rejected unsupported anyOf unions; schema uses its supported oneOf form.",
+    "Clippy identified collapsible conditionals and fixture-only panic/default initialization style; final lint passes.",
+    "The first CLI regression supplied timeout as a decorator keyword instead of the SDK resources mapping; corrected fixture passes.",
+    "T055 task closure initially lacked the required Documentation updated evidence label; corrected.",
+    "A focused run accidentally included an existing native ownership test inside the sandbox; it failed with PermissionDenied. Authorized native rerun passed."
+  ],
+  "limits": [
+    "Only macOS arm64 ran locally; existing supported platform/Python CI matrix is handed to the owner.",
+    "Coordinator dispatch and durable queue/attempt composition remain T064; persisted identity and publication/recovery races remain T057/T066.",
+    "SQL engine connection/thread/buffer/spill integration remains T058/T061. Memory estimates are admission reservations, not RSS enforcement; optional disk service reservations are not filesystem quotas.",
+    "Read-only discovery receives resolved thread/timer policy but does not join a coordinator producer pool.",
+    "Initial unreleased ResourcePolicyV1 expands plan resource fields; old development drafts need re-preparation. No dependency, protocol, CLI envelope, runtime schema or specification version changes."
+  ],
+  "ci": "pending_owner_monitoring",
+  "agent_polled_workflows": false
+}

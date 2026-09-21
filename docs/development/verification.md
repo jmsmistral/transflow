@@ -518,3 +518,33 @@ durable cancellation/publication/restart composition remain subsequent tasks.
 The [owner receipt](evidence/t054-owner-ci.json) records successful CI through T054,
 including T053 traversal. T055 push CI remains with the owner; no workflows were
 polled by the agent.
+
+
+## T056 resource admission and independent budgets (2026-09-21)
+
+`bash tools/check.sh` passes on macOS arm64: 314 Rust tests plus one doc test,
+658 Python, 261 web and 51 installed-worker tests; 44/27/12 document/safety/boundary
+regressions. Final workspace Clippy and 27 service tests pass after tightening
+cleanup-clock regression handling and removing a scheduler-speed assumption from
+the cancellation assertion. The generated contract corpus has 207 cases.
+See [local evidence](evidence/t056-macos-arm64.json) and the
+[resource guide](../../crates/tf-exec/RESOURCES.md).
+
+Tests cover atomic FIFO admission, optional memory/disk estimates, CPU capacity,
+helper reuse, canceled waiters and waking futures, independent hour-long phase
+budgets, separate interactive limits, zero-disable, queue/grace exclusion and
+winning provenance. Real supervised helpers survive simulated 301/3599 seconds
+and exhaust their shared budget at 3600, retaining logs and timeout context.
+Async cancellation keeps capacity until cleanup even with a disabled deadline.
+Installed CLI tests verify producer-declaration precedence and complete resolved
+resource projection, including explicit no-memory defaults and discovery zero.
+
+Development corrections included a generator union form, lint style, a test
+fixture's SDK resource syntax and T055's required evidence field. A sandbox-only
+focused run included an existing native ownership test; the authorized native
+rerun passed. The evidence file records these separately from successful gates.
+
+The [owner receipt](evidence/t055-owner-ci.json) records T055 push CI success.
+T056 push CI is pending owner monitoring; no workflows were polled. Durable
+runtime dispatch, process identity/publication races and SQL adapter limits remain
+later tasks. No browser journey applies to this backend-only change.
