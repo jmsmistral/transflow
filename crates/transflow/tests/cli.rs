@@ -56,3 +56,36 @@ fn unavailable_commands_and_invalid_flags_fail() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
+
+#[test]
+fn inspection_help_and_invalid_options_need_no_workspace() -> Result<(), Box<dyn Error>> {
+    for name in ["plan", "why", "upstream", "downstream"] {
+        let output = invoke(&[name, "--help"])?;
+        assert!(output.status.success());
+        let help = String::from_utf8(output.stdout)?;
+        assert!(help.contains("--git-ref"));
+        assert!(help.contains("--branch"));
+    }
+    for args in [
+        vec!["plan", "x", "--wait"],
+        vec!["why", "x", "--no-wait"],
+        vec!["why", "x", "--target", "y"],
+        vec!["plan", "x", "--fallback", "master", "--no-fallback"],
+        vec!["plan", "x", "--git-ref", "HEAD"],
+        vec!["plan", "x", "--pin", "x=bad"],
+        vec!["plan", "x", "--param", "count=invalid"],
+        vec!["upstream", "x", "--depth", "-1"],
+        vec!["downstream", "x", "--depth", "1.5"],
+        vec!["upstream", "x", "--force"],
+    ] {
+        let mut args = args;
+        args.push("--json");
+        let output = invoke(&args)?;
+        assert_eq!(output.status.code(), Some(2), "{args:?}");
+        assert!(output.stderr.is_empty());
+        let value: serde_json::Value = serde_json::from_slice(&output.stdout)?;
+        tf_protocol::validate_document("CliEnvelopeV1", &value)?;
+        assert_eq!(value["exit_status"], 2);
+    }
+    Ok(())
+}

@@ -163,3 +163,9 @@ shared conformance cases. `transflow-diagnostic-text` asserts nonempty scalar UT
 up to 32768 bytes without C0/C1, bidi or line-separator controls. Domain constructors
 also enforce source ordering and aggregate cause/text budgets; the schema describes
 the wire shape. CLI envelope version 1 is independent of worker protocol 1.0.
+
+T054 adds closed `GraphResultV1`, `PlanResultV1`, `FreshnessStatusV1` and `WhyResultV1`
+shapes and four inspection capabilities. The shared corpus now contains 205 cases.
+Complete inspection envelopes have no extra 1 MiB output cap; source/discovery
+admission and worker-frame limits are unchanged. CLI version 1, worker protocol
+1.0 and runtime schema 7 remain unchanged. All language exports are regenerated.

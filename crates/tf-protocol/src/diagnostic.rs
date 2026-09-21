@@ -6,7 +6,7 @@ use tf_domain::diagnostic::{Diagnostic, ExitStatus, RequestContext, SafeText};
 /// Initial complete-result envelope format, independent of the worker protocol.
 pub const CLI_ENVELOPE_VERSION: u32 = 1;
 /// Implemented CLI operations. This does not advertise dataset/coordinator capabilities.
-pub const CLI_CAPABILITIES: [&str; 19] = [
+pub const CLI_CAPABILITIES: [&str; 23] = [
     "cli.help",
     "cli.version",
     "cli.diagnostics.v1",
@@ -26,6 +26,10 @@ pub const CLI_CAPABILITIES: [&str; 19] = [
     "branch.create",
     "branch.rename",
     "branch.delete",
+    "plan",
+    "why",
+    "graph.upstream",
+    "graph.downstream",
 ];
 /// Successful informational operation.
 #[derive(Clone, Copy, Debug)]
@@ -183,6 +187,23 @@ impl CliEnvelope {
         validate_document("ImportPreparationResultV1", &result)?;
         Self::encode(version, ExitStatus::Success, ctx, result, vec![])
     }
+    /// Complete captured inspection. Graph delivery has no extra semantic byte/node cap;
+    /// source/graph admission remains bounded by the validated capture service.
+    pub fn inspection(
+        version: &SafeText,
+        ctx: &RequestContext,
+        result: Value,
+    ) -> Result<Self, ProtocolError> {
+        let schema = if result["kind"] == "graph" {
+            "GraphResultV1"
+        } else if result["kind"] == "why" {
+            "WhyResultV1"
+        } else {
+            "PlanResultV1"
+        };
+        validate_document(schema, &result)?;
+        Self::encode(version, ExitStatus::Success, ctx, result, vec![])
+    }
     fn encode(
         version: &SafeText,
         status: ExitStatus,
@@ -190,12 +211,22 @@ impl CliEnvelope {
         result: Value,
         diagnostics: Vec<Value>,
     ) -> Result<Self, ProtocolError> {
+        let complete_inspection = matches!(result["kind"].as_str(), Some("graph" | "plan" | "why"));
         let value = json!({"format_version":CLI_ENVELOPE_VERSION,"product_version":version.as_str(),
             "capabilities":CLI_CAPABILITIES,"outcome":match status {ExitStatus::Success=>"success",ExitStatus::Interrupted=>"canceled",_=>"failure"},
             "exit_status":status.code(),"context":context(ctx),"result":result,"diagnostics":diagnostics});
         validate_document("CliEnvelopeV1", &value)?;
-        let mut bytes = serde_json::to_vec(&value).map_err(|_| ProtocolError::Json)?;
-        if bytes.len() >= 1024 * 1024 {
+        let encoded = serde_json::to_string(&value).map_err(|_| ProtocolError::Json)?;
+        // Escape visual control characters in JSON bytes without changing parsed values.
+        let mut bytes = Vec::with_capacity(encoded.len());
+        for ch in encoded.chars() {
+            if tf_domain::diagnostic::unsafe_character(ch) {
+                bytes.extend_from_slice(format!("\\u{:04x}", u32::from(ch)).as_bytes());
+            } else {
+                bytes.extend_from_slice(ch.encode_utf8(&mut [0; 4]).as_bytes());
+            }
+        }
+        if !complete_inspection && bytes.len() >= 1024 * 1024 {
             return Err(ProtocolError::Size);
         }
         bytes.push(b'\n');

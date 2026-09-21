@@ -12,7 +12,7 @@ use tf_catalog::{
     editor::{EditorCache, EditorError, Overlay},
     registry_write::WriteContext,
     validation::{self, ValidatedGraph, ValidationRequest},
-    workspace::Workspace,
+    workspace::{Workspace, WorkspaceConfig},
 };
 use tf_domain::{DatasetId, RequestId};
 use tf_exec::{
@@ -31,6 +31,8 @@ pub(crate) enum Error {
     Store(#[from] tf_store::StoreError),
     #[error(transparent)]
     Config(#[from] tf_catalog::workspace::ConfigError),
+    #[error(transparent)]
+    Git(#[from] tf_catalog::git::GitError),
     #[error(transparent)]
     Capture(#[from] tf_catalog::capture::CaptureError),
     #[error(transparent)]
@@ -188,8 +190,36 @@ pub(crate) fn inspect_overlay(
     persistent: bool,
     overlay: Option<(&RegistrySnapshot, &RegistrySnapshot)>,
 ) -> Result<Inspection, Error> {
+    inspect_selected(workspace, python, persistent, overlay, None)
+}
+/// Explicit source selection never changes the caller checkout.
+pub(crate) fn inspect_selected(
+    workspace: &Workspace,
+    python: Option<&String>,
+    persistent: bool,
+    overlay: Option<(&RegistrySnapshot, &RegistrySnapshot)>,
+    selected: Option<(&str, &tf_domain::BranchName)>,
+) -> Result<Inspection, Error> {
     let current = std::env::current_dir()?;
-    let config = workspace.config();
+    let scratch = Scratch::create()?;
+    let capture = if let Some((reference, branch)) = selected {
+        tf_catalog::git::capture_ref(workspace, reference, Some(branch), limits())?
+    } else if persistent {
+        tf_catalog::git::capture_working_tree(workspace, limits())?
+    } else {
+        tf_catalog::git::capture_temporary(workspace, scratch.path(), limits())?
+    };
+    let config = WorkspaceConfig::parse(&text(&capture, "workspace.toml")?)?;
+    // The installed environment must match the selected source dependencies.
+    if selected.is_some() {
+        for path in [config.dependency_paths().0, config.dependency_paths().1] {
+            if capture.read(Path::new(path), 16 * 1024 * 1024)?
+                != std::fs::read(workspace.root().join(path))?
+            {
+                return Err(Error::Context);
+            }
+        }
+    }
     let python = python
         .map(PathBuf::from)
         .or_else(|| workspace.local().interpreter().map(Path::to_owned))
@@ -210,15 +240,9 @@ pub(crate) fn inspect_overlay(
         offline: true,
     };
     let env = environment::inspect(workspace.root(), &python, &environment_request)?;
-    let scratch = Scratch::create()?;
     let request: RequestId = discovery::random_id()?
         .parse()
         .map_err(|_| Error::Context)?;
-    let capture = if persistent {
-        SourceSnapshot::capture(workspace, limits())?
-    } else {
-        SourceSnapshot::temporary(workspace, scratch.path(), limits())?
-    };
     let registry =
         RegistrySnapshot::parse(config.id(), &text(&capture, ".transflow/catalog.toml")?)?;
     let registry = if let Some((original, proposed)) = overlay {
@@ -238,7 +262,7 @@ pub(crate) fn inspect_overlay(
         Duration::from_secs(300),
     )?;
     let graph = validate(&registry, &capture, &result, &env)?;
-    capture.verify_working_copy(workspace, false)?;
+    verify_selection(&capture, workspace, false)?;
     if environment::inspect(workspace.root(), &python, &environment_request)? != env {
         return Err(Error::Context);
     }
@@ -253,6 +277,32 @@ pub(crate) fn inspect_overlay(
         request,
         scratch,
     })
+}
+pub(crate) fn verify_selection(
+    capture: &SourceSnapshot,
+    workspace: &Workspace,
+    registry_replaced: bool,
+) -> Result<(), Error> {
+    if capture.git().is_some_and(|g| g.requested_ref().is_some()) {
+        let verified = SourceSnapshot::open(
+            &workspace.root().join(".transflow/runtime/source-snapshots"),
+            capture.id()?,
+        )?;
+        if verified.digest() != capture.digest() {
+            return Err(Error::Context);
+        }
+        let config = WorkspaceConfig::parse(&text(capture, "workspace.toml")?)?;
+        for path in [config.dependency_paths().0, config.dependency_paths().1] {
+            if capture.read(Path::new(path), 16 * 1024 * 1024)?
+                != std::fs::read(workspace.root().join(path))?
+            {
+                return Err(Error::Context);
+            }
+        }
+        Ok(())
+    } else {
+        Ok(capture.verify_working_copy(workspace, registry_replaced)?)
+    }
 }
 pub(crate) fn execute(
     operation: Operation,

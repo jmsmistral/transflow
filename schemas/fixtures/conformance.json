@@ -2181,7 +2181,11 @@
         "branch.list",
         "branch.create",
         "branch.rename",
-        "branch.delete"
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2244,7 +2248,11 @@
         "branch.list",
         "branch.create",
         "branch.rename",
-        "branch.delete"
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2307,7 +2315,11 @@
         "branch.list",
         "branch.create",
         "branch.rename",
-        "branch.delete"
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2370,7 +2382,11 @@
         "branch.list",
         "branch.create",
         "branch.rename",
-        "branch.delete"
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2433,7 +2449,11 @@
         "branch.list",
         "branch.create",
         "branch.rename",
-        "branch.delete"
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2496,7 +2516,11 @@
         "branch.list",
         "branch.create",
         "branch.rename",
-        "branch.delete"
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2559,7 +2583,11 @@
         "branch.list",
         "branch.create",
         "branch.rename",
-        "branch.delete"
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2622,7 +2650,11 @@
         "branch.list",
         "branch.create",
         "branch.rename",
-        "branch.delete"
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2685,7 +2717,11 @@
         "branch.list",
         "branch.create",
         "branch.rename",
-        "branch.delete"
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2724,7 +2760,11 @@
         "branch.list",
         "branch.create",
         "branch.rename",
-        "branch.delete"
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -4073,5 +4113,187 @@
       "unknown": true
     },
     "valid": false
+  },
+  {
+    "name": "graph-depth-zero",
+    "schema": "GraphResultV1",
+    "valid": true,
+    "value": {
+      "kind": "graph",
+      "direction": "upstream",
+      "workspace": "01010101-0101-0101-0101-010101010101",
+      "source": "01010101-0101-0101-0101-010101010101",
+      "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "registry_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "certificate_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "branch": "master",
+      "start": "pending:raw/input",
+      "depth": "0",
+      "nodes": [
+        {
+          "identity": "pending:raw/input",
+          "paths": [
+            "raw/input"
+          ],
+          "depth": "0",
+          "external": false,
+          "producer": true
+        }
+      ],
+      "edges": [],
+      "total_nodes": "1",
+      "total_edges": "0",
+      "omitted_nodes": "0",
+      "omitted_edges": "0",
+      "scope_complete": true,
+      "delivery_complete": true,
+      "external_expanded": false
+    }
+  },
+  {
+    "name": "graph-invalid-depth",
+    "schema": "GraphResultV1",
+    "valid": false,
+    "value": {
+      "kind": "graph",
+      "direction": "upstream",
+      "workspace": "01010101-0101-0101-0101-010101010101",
+      "source": "01010101-0101-0101-0101-010101010101",
+      "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "registry_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "certificate_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "branch": "master",
+      "start": "pending:raw/input",
+      "depth": "-1",
+      "nodes": [
+        {
+          "identity": "pending:raw/input",
+          "paths": [
+            "raw/input"
+          ],
+          "depth": "0",
+          "external": false,
+          "producer": true
+        }
+      ],
+      "edges": [],
+      "total_nodes": "1",
+      "total_edges": "0",
+      "omitted_nodes": "0",
+      "omitted_edges": "0",
+      "scope_complete": true,
+      "delivery_complete": true,
+      "external_expanded": false
+    }
+  },
+  {
+    "name": "graph-invalid-delivery_complete",
+    "schema": "GraphResultV1",
+    "valid": false,
+    "value": {
+      "kind": "graph",
+      "direction": "upstream",
+      "workspace": "01010101-0101-0101-0101-010101010101",
+      "source": "01010101-0101-0101-0101-010101010101",
+      "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "registry_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "certificate_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "branch": "master",
+      "start": "pending:raw/input",
+      "depth": "0",
+      "nodes": [
+        {
+          "identity": "pending:raw/input",
+          "paths": [
+            "raw/input"
+          ],
+          "depth": "0",
+          "external": false,
+          "producer": true
+        }
+      ],
+      "edges": [],
+      "total_nodes": "1",
+      "total_edges": "0",
+      "omitted_nodes": "0",
+      "omitted_edges": "0",
+      "scope_complete": true,
+      "delivery_complete": false,
+      "external_expanded": false
+    }
+  },
+  {
+    "name": "graph-invalid-external_expanded",
+    "schema": "GraphResultV1",
+    "valid": false,
+    "value": {
+      "kind": "graph",
+      "direction": "upstream",
+      "workspace": "01010101-0101-0101-0101-010101010101",
+      "source": "01010101-0101-0101-0101-010101010101",
+      "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "registry_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "certificate_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "branch": "master",
+      "start": "pending:raw/input",
+      "depth": "0",
+      "nodes": [
+        {
+          "identity": "pending:raw/input",
+          "paths": [
+            "raw/input"
+          ],
+          "depth": "0",
+          "external": false,
+          "producer": true
+        }
+      ],
+      "edges": [],
+      "total_nodes": "1",
+      "total_edges": "0",
+      "omitted_nodes": "0",
+      "omitted_edges": "0",
+      "scope_complete": true,
+      "delivery_complete": true,
+      "external_expanded": true
+    }
+  },
+  {
+    "name": "why-foreign-boundary",
+    "schema": "WhyResultV1",
+    "valid": true,
+    "value": {
+      "kind": "why",
+      "workspace": "01010101-0101-0101-0101-010101010101",
+      "source": "01010101-0101-0101-0101-010101010101",
+      "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "branch": "master",
+      "target": "external/demo/value",
+      "freshness_context": "selected_branch_heads",
+      "status": null,
+      "plan": null,
+      "planning_error": "Provider resolution is unavailable",
+      "producer_execution": false,
+      "authoring_changed": false
+    }
+  },
+  {
+    "name": "why-cannot-execute",
+    "schema": "WhyResultV1",
+    "valid": false,
+    "value": {
+      "kind": "why",
+      "workspace": "01010101-0101-0101-0101-010101010101",
+      "source": "01010101-0101-0101-0101-010101010101",
+      "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "branch": "master",
+      "target": "external/demo/value",
+      "freshness_context": "selected_branch_heads",
+      "status": null,
+      "plan": null,
+      "planning_error": "Provider resolution is unavailable",
+      "producer_execution": true,
+      "authoring_changed": false
+    }
   }
 ]

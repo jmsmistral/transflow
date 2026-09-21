@@ -1,7 +1,7 @@
 # Frozen freshness and why services
 
-T052 adds an internal read model. Public `why`/`plan` commands and UI adapters
-remain T054 and later work; no transform is run by this service.
+T052 adds the shared read model. T054 exposes [public `why`/`plan` commands](INSPECTION.md);
+UI adapters remain later work. No transform is run by this service.
 
 `tf-catalog::compute` derives versioned comparison evidence from the same
 normalized carrier as the existing compute key. Adding evidence does not change
@@ -68,3 +68,9 @@ that neither execute producers nor register pending outputs. Test-only SQLx in
 the composition crate reuses the already-qualified version and shared publication
 fixture; production dependency boundaries are unchanged. See the repository
 verification report for actual results and CI handoff status.
+
+T054 `inspect_selection` retains target status even when a selection cannot be
+planned. It shares the immutable capture with the preview and returns a separate
+planning refusal. CLI freshness describes selected-branch heads; exact historical
+pins belong to the accompanying selection. Missing writer/clock/secret semantics
+remain unknown rather than inferred from old publications.

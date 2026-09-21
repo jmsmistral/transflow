@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** T001–T052 are implemented for their recorded scopes, except T031/T033 task closure remains gated by native editor qualification. Current capabilities include workspace/environment preparation, catalogue validation/lifecycle, source capture, durable storage/publication foundations, branch lifecycle, retained reads/replay identities, and internal planning/acceptance services. T053 adds internal deterministic upstream/downstream traversal; local checks pass and push CI is pending owner monitoring. Dataset build execution, the coordinator service and the connected lineage interface remain upcoming; this is not an application release.
+**Status:** T001–T052 are implemented for their recorded scopes, except T031/T033 task closure remains gated by native editor qualification. Current capabilities include workspace/environment preparation, catalogue validation/lifecycle, source capture, durable storage/publication foundations, branch lifecycle, retained reads/replay identities, and internal planning/acceptance services. T053 adds deterministic graph traversal; T054 exposes public `plan`, `why`, `upstream` and `downstream` commands. Local checks pass; T053/T054 push CI remain pending owner confirmation. Dataset build execution, the coordinator service and the connected lineage interface remain upcoming; this is not an application release.
 
 ## Intended experience
 
@@ -272,7 +272,7 @@ T052 adds [internal freshness and why services](crates/transflow/FRESHNESS.md).
 They compare captured source and one frozen head snapshot, reporting data, logic
 and ancestor staleness separately from the latest attempt and original output
 quality. A failed retry can coexist with usable stale data. Missing comparison
-metadata stays unknown. Public `why`/`plan` commands remain upcoming work.
+metadata stays unknown. Public `why`/`plan` commands are exposed by T054; unassessable freshness stays unknown.
 
 
 ### Declared lineage traversal
@@ -281,4 +281,20 @@ T053 adds [internal upstream/downstream traversal](crates/tf-catalog/TRAVERSAL.m
 Depth is the shortest edge-hop distance, with the starting dataset at zero.
 Omitted depth includes every reachable local node and registered foreign boundary.
 Context-bound pagination preserves unique nodes and every input alias, including
-validation-only and named-branch edges. Public graph commands remain T054 work.
+validation-only and named-branch edges. The public graph commands are available through T054.
+
+### Plan and inspect without execution
+
+```bash
+transflow plan curated/customer_orders --json
+transflow why curated/customer_orders
+transflow upstream curated/customer_orders
+transflow downstream raw/orders --depth 2 --json
+```
+
+`plan` saves a guarded draft with prospective writes and registrations; it calls no
+producer and changes no authoring registry or data head. `why` explains the target
+and reports a blocked selection without hiding available freshness evidence.
+See the [inspection guide](crates/transflow/INSPECTION.md) for branch/Git context,
+selection modes, exact pins, parameters, timeouts, JSON output and current limits.
+Build execution remains upcoming work.

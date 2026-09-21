@@ -51,12 +51,48 @@ pub struct Request {
     /// Typed parameter overrides keyed by exact dataset path/UUID reference; defaults are frozen.
     pub parameters: Value,
 }
+/// Additional public planning context, shared with command/API adapters.
+#[derive(Clone, Debug, Default)]
+pub struct Options {
+    /// Explicit immutable Git source selector, requiring a separately selected data branch.
+    pub git_ref: Option<String>,
+    /// Reject any boundary whose currentness cannot be established.
+    pub require_current: bool,
+    /// Explicit transform timeout; zero disables the phase deadline.
+    pub timeout_seconds: Option<u64>,
+    /// Explicit independent validation timeout.
+    pub validation_timeout_seconds: Option<u64>,
+    /// JSON or lossless parameter overrides, optionally qualified as dataset#name.
+    pub parameters: Vec<(String, Value)>,
+    /// Attach the shared freshness read model for public explanations.
+    pub explain: bool,
+}
 /// Safe diagnostic retains internal errors without emitting user source or environment paths.
 #[derive(Debug, thiserror::Error)]
-#[error("Build preparation failed: {0}")]
-pub struct Error(String);
+#[error("Build preparation failed: {message}")]
+pub struct Error {
+    message: String,
+    validation: Option<validation::ValidationError>,
+}
+impl Error {
+    pub(crate) fn validation(&self) -> Option<&validation::ValidationError> {
+        self.validation.as_ref()
+    }
+}
+pub(crate) fn preparation_failure(error: preparation::Error) -> Error {
+    match error {
+        preparation::Error::Validation(validation) => Error {
+            message: validation.to_string(),
+            validation: Some(validation),
+        },
+        error => failure(error),
+    }
+}
 pub(crate) fn failure(e: impl std::fmt::Display) -> Error {
-    Error(e.to_string())
+    Error {
+        message: e.to_string(),
+        validation: None,
+    }
 }
 fn id<T: std::str::FromStr>() -> Result<T, Error> {
     discovery::random_id()
@@ -84,6 +120,14 @@ pub async fn prepare(
     owner: RuntimeOwner,
     request: Request,
 ) -> Result<Completion<DraftPlan>, Error> {
+    prepare_with_options(owner, request, Options::default()).await
+}
+/// Prepare with explicit source, resource, boundary and explanation options.
+pub async fn prepare_with_options(
+    owner: RuntimeOwner,
+    request: Request,
+    options: Options,
+) -> Result<Completion<DraftPlan>, Error> {
     tokio::task::spawn_blocking(move || {
         let mut owner = owner;
         let result = (|| {
@@ -91,14 +135,18 @@ pub async fn prepare(
                 .enable_all()
                 .build()
                 .map_err(failure)?;
-            runtime.block_on(prepare_inner(&mut owner, request))
+            runtime.block_on(prepare_inner(&mut owner, request, options))
         })();
         Completion { owner, result }
     })
     .await
     .map_err(failure)
 }
-async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<DraftPlan, Error> {
+async fn prepare_inner(
+    owner: &mut RuntimeOwner,
+    request: Request,
+    options: Options,
+) -> Result<DraftPlan, Error> {
     owner.validate_paths().map_err(failure)?;
     if owner.registration().mode() == tf_exec::ownership::CoordinatorMode::MetadataOnly {
         return Err(failure(
@@ -107,17 +155,38 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
     }
     let workspace =
         Workspace::load(owner.workspace_root(), Some(owner.workspace_root())).map_err(failure)?;
-    let Inspection {
-        capture,
-        registry: _,
-        mut result,
-        graph,
-        env,
-        python,
-        environment_request,
-        scratch: _scratch,
-        ..
-    } = preparation::inspect(&workspace, request.python.as_ref(), true).map_err(failure)?;
+    if owner.workspace_id().map_err(failure)? != workspace.config().id() {
+        return Err(failure("workspace identity changed during inspection"));
+    }
+    let inspection = preparation::inspect_selected(
+        &workspace,
+        request.python.as_ref(),
+        true,
+        None,
+        options.git_ref.as_deref().map(|r| (r, &request.branch)),
+    )
+    .map_err(crate::build_plan::preparation_failure)?;
+    prepare_captured(owner, request, options, &inspection).await
+}
+/// Reuse an already inspected source for a why selection preview, including blocked plans.
+pub(crate) async fn prepare_captured(
+    owner: &mut RuntimeOwner,
+    request: Request,
+    options: Options,
+    inspection: &Inspection,
+) -> Result<DraftPlan, Error> {
+    owner.validate_paths().map_err(failure)?;
+    let workspace =
+        Workspace::load(owner.workspace_root(), Some(owner.workspace_root())).map_err(failure)?;
+    if owner.workspace_id().map_err(failure)? != workspace.config().id() {
+        return Err(failure("workspace identity changed during inspection"));
+    }
+    let capture = &inspection.capture;
+    let mut result = inspection.result.clone();
+    let graph = &inspection.graph;
+    let env = &inspection.env;
+    let python = &inspection.python;
+    let environment_request = &inspection.environment_request;
     let proposal = graph
         .candidate()
         .propose(|| {
@@ -139,7 +208,8 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
         .ok_or_else(|| failure("missing catalogue fingerprint"))?
         .to_owned();
     preparation::rebind(&mut result, &fingerprint);
-    let graph = preparation::validate(&proposed, &capture, &result, &env).map_err(failure)?;
+    let graph = preparation::validate(&proposed, capture, &result, env)
+        .map_err(crate::build_plan::preparation_failure)?;
     let config = String::from_utf8(
         capture
             .read(Path::new("workspace.toml"), 16 * 1024 * 1024)
@@ -159,7 +229,7 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
         check_semantics: validation::CHECK_SEMANTICS,
     };
     let graph_scope = Graph::validated(&graph, &context, &request.branch).map_err(failure)?;
-    let bindings = tf_catalog::input_bindings::local_bindings(
+    let bindings = tf_catalog::input_bindings::local_read_bindings(
         &graph,
         &context,
         &request.branch,
@@ -195,8 +265,14 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
             .collect(),
     };
     let mut scope = graph_scope.select(&scope_request).map_err(failure)?;
-    let overrides = request
-        .parameters
+    let supplied = crate::plan_parameters::overrides(
+        &graph,
+        &proposed,
+        &scope.writes,
+        &request.parameters,
+        &options.parameters,
+    )?;
+    let overrides = supplied
         .as_object()
         .ok_or_else(|| failure("parameter overrides must be keyed by dataset reference"))?;
     let mut by_dataset = BTreeMap::new();
@@ -223,12 +299,56 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
             parameters.insert(key.dataset_id().to_string(), normalized);
         }
     }
+    let selected_config = WorkspaceConfig::parse(&config).map_err(failure)?;
+    let mut resources = serde_json::Map::new();
+    for definition in graph
+        .candidate()
+        .definitions()
+        .iter()
+        .filter(|d| scope.writes.contains(&d.output))
+    {
+        let policy = selected_config
+            .execution_policy(
+                &tf_catalog::workspace::DefinitionOverrides {
+                    transform_seconds: definition.declaration["wall_timeout_seconds"].as_u64(),
+                },
+                &Default::default(),
+                &tf_catalog::workspace::BuildOverrides {
+                    transform_seconds: options.timeout_seconds,
+                    validation_seconds: options.validation_timeout_seconds,
+                    ..Default::default()
+                },
+            )
+            .map_err(failure)?;
+        resources.insert(registered(&definition.output)?.dataset_id().to_string(), json!({"timeout_seconds":policy.transform_seconds.value.to_string(),"timeout_origin":format!("{:?}",policy.transform_seconds.origin),"validation_timeout_seconds":policy.validation_seconds.value.to_string(),"validation_timeout_origin":format!("{:?}",policy.validation_seconds.origin)}));
+    }
     let now = preparation::now().map_err(failure)?;
     let expires = now
         .checked_add(900_000_000)
         .ok_or_else(|| failure("draft clock overflow"))?;
     let plan_id: RequestId = id()?;
     let workspace_id = workspace.config().id();
+    let explanation = if options.explain || options.require_current {
+        Some(
+            crate::why::inspect_captured(
+                owner,
+                &graph,
+                &context,
+                capture,
+                plan_id,
+                &crate::why::Request {
+                    python: request.python.clone(),
+                    branch: request.branch.clone(),
+                    fallbacks: request.fallbacks.clone(),
+                    semantics: BTreeMap::new(),
+                    at_us: now,
+                },
+            )
+            .await?,
+        )
+    } else {
+        None
+    };
     let mut owned = owner.open_store().await.map_err(failure)?;
     let store = owned.repository().map_err(failure)?;
     store
@@ -303,7 +423,7 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
             .map_err(failure)?;
         let binding = bindings
             .get(&key)
-            .ok_or_else(|| failure("missing validated alias"))?
+            .ok_or_else(|| failure(format!("Foreign read boundary {}#{} requires provider resolution, which is not available yet; provider code is never executed", proposed.resolve_output(&format!("dataset:{}", key.consumer().dataset_id())).map(|d| d.path().to_string()).unwrap_or_else(|_| key.consumer().dataset_id().to_string()), key.alias())))?
             .clone();
         let lease: RequestId = id()?;
         let read_request = ReadRequest {
@@ -353,6 +473,26 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
             .map_err(failure)?
             .verify(read.lease().artifact())
             .map_err(failure)?;
+        if options.require_current {
+            use tf_plan::freshness::{Freshness, Materialization};
+            let status = explanation.as_ref().and_then(|r| {
+                r.datasets
+                    .get(&CandidateIdentity::Registered(read.binding().dataset))
+            });
+            if read.is_exact_pin()
+                || read.resolved_branch() != &request.branch
+                || status.is_none_or(|s| {
+                    s.materialization != Materialization::Available
+                        || s.direct_data != Freshness::Current
+                        || s.direct_logic != Freshness::Current
+                        || s.inherited != Freshness::Current
+                })
+            {
+                return Err(failure(
+                    "Boundary currentness is stale or unassessable; require_current does not execute boundary producers. Inspect why or explicitly use require_available",
+                ));
+            }
+        }
         let p = read.provenance();
         reads.push(PlannedRead{consumer:key.consumer().dataset_id().to_string(),alias:key.alias().into(),dataset:read.binding().dataset.dataset_id().to_string(),version:read.version().to_string(),artifact:read.lease().artifact().hex(),lease:lease.to_string(),semantic:read.semantic_value(),provenance:json!({"alias":p.alias,"workspace":p.dataset.workspace_id().to_string(),"dataset":p.dataset.dataset_id().to_string(),"version":p.version.to_string(),"artifact":p.artifact.hex(),"declared_branch":p.declared_branch,"starting_branch":p.starting_branch.as_str(),"resolved_branch":p.resolved_branch.as_str(),"role":p.role.name(),"resolution":p.resolution})});
     }
@@ -375,7 +515,7 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
             bindings: json!(input_values),
         });
     }
-    let policies = workspace.config().input_policies().map_err(failure)?;
+    let policies = selected_config.input_policies().map_err(failure)?;
     let mut policy_json = BTreeMap::from([(
         String::new(),
         json!(
@@ -392,7 +532,10 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
             json!(tail.iter().map(BranchName::as_str).collect::<Vec<_>>()),
         );
     }
-    let plan = DraftPlan {
+    let freshness = explanation
+        .as_ref()
+        .map(|r| crate::why::freshness_value(r, &proposed));
+    let mut plan = DraftPlan {
         format_version: 1,
         id: plan_id.to_string(),
         workspace: workspace_id.to_string(),
@@ -407,7 +550,7 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
         replacement: proposal.replacement().into(),
         discovery: result,
         environment: json!({"fingerprint":env.fingerprint,"runtime_version":env.runtime_version,"interpreter":env.interpreter,"base_python":python}),
-        source_evidence: json!({"selector":{"kind":"working_tree"},"git":capture.git(),"files":capture.manifest_files()}),
+        source_evidence: json!({"selector":options.git_ref.as_ref().map(|r|json!({"kind":"git_ref","ref":r})).unwrap_or_else(||json!({"kind":"working_tree"})),"git":capture.git(),"files":capture.manifest_files()}),
         output,
         guards,
         writes,
@@ -416,11 +559,15 @@ async fn prepare_inner(owner: &mut RuntimeOwner, request: Request) -> Result<Dra
         created_us: now,
         expires_us: expires,
     };
-    capture
-        .verify_working_copy(&workspace, false)
-        .map_err(failure)?;
-    if environment::inspect(workspace.root(), &python, &environment_request).map_err(failure)?
-        != env
+    plan.context["resources"] = json!(resources);
+    plan.context["boundary_policy"] = json!(if options.require_current {
+        "require_current"
+    } else {
+        "require_available"
+    });
+    plan.context["freshness"] = freshness.unwrap_or(Value::Null);
+    preparation::verify_selection(capture, &workspace, false).map_err(failure)?;
+    if environment::inspect(workspace.root(), python, environment_request).map_err(failure)? != *env
     {
         return Err(failure("environment changed during planning"));
     }
@@ -491,9 +638,7 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
     if capture.digest() != plan.source_digest {
         return Err(failure("saved source identity changed"));
     }
-    capture
-        .verify_working_copy(&workspace, true)
-        .map_err(failure)?;
+    preparation::verify_selection(&capture, &workspace, true).map_err(failure)?;
     let current_registry = std::fs::read(root.join(".transflow/catalog.toml")).map_err(failure)?;
     if current_registry != plan.registry.as_bytes()
         && current_registry != plan.replacement.as_bytes()
@@ -542,8 +687,8 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
         .ok_or_else(|| failure("missing saved catalogue context"))?
         .to_owned();
     preparation::rebind(&mut original_discovery, &fingerprint);
-    let graph =
-        preparation::validate(&original, &capture, &original_discovery, &env).map_err(failure)?;
+    let graph = preparation::validate(&original, &capture, &original_discovery, &env)
+        .map_err(crate::build_plan::preparation_failure)?;
     let mut ids = graph.candidate().pending().keys().map(|p| {
         proposed
             .resolve_output(p.as_str())
@@ -567,7 +712,8 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
     if proposal.replacement() != plan.replacement {
         return Err(failure("saved additive registry proposal changed"));
     }
-    preparation::validate(&proposed, &capture, &plan.discovery, &env).map_err(failure)?;
+    preparation::validate(&proposed, &capture, &plan.discovery, &env)
+        .map_err(crate::build_plan::preparation_failure)?;
     // Registry durability shares its existing recovery-journal pipeline. No new UUID allocation.
     if current_registry != plan.replacement.as_bytes() {
         crate::reconcile::execute_owned(

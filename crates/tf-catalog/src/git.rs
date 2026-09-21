@@ -408,6 +408,20 @@ pub fn capture_working_tree(
         |_| Ok(()),
     )?)
 }
+/// Capture working-tree provenance in an exclusively owned temporary directory.
+pub fn capture_temporary(
+    workspace: &Workspace,
+    destination: &Path,
+    limits: CaptureLimits,
+) -> Result<SourceSnapshot, GitError> {
+    Ok(SourceSnapshot::capture_internal(
+        workspace,
+        limits,
+        inspect(workspace)?,
+        Some(destination),
+        |_| Ok(()),
+    )?)
+}
 #[derive(Clone)]
 struct Blob {
     mode: String,

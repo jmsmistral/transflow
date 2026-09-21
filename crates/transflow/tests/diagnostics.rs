@@ -151,3 +151,33 @@ fn output_intent_respects_option_values_and_end_of_options() {
     assert!(serde_json::from_slice::<Value>(&out).is_ok());
     assert!(err.is_empty());
 }
+
+#[test]
+fn complete_graph_json_has_no_small_result_cap_and_escapes_visual_controls() {
+    let cases: Value =
+        serde_json::from_str(include_str!("../../../schemas/fixtures/conformance.json")).unwrap();
+    let mut graph = cases
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["name"] == "graph-depth-zero")
+        .unwrap()["value"]
+        .clone();
+    graph["depth"] = Value::Null;
+    graph["branch"] = serde_json::json!("review\u{202e}branch");
+    graph["nodes"] = serde_json::json!((0..4000).map(|n|serde_json::json!({"identity":format!("pending:data/{n}"),"paths":[format!("data/{n}/{}","x".repeat(200))],"depth":n.to_string(),"external":false,"producer":true})).collect::<Vec<_>>());
+    graph["total_nodes"] = serde_json::json!("4000");
+    let redactor = Redactor::default();
+    let result = CliEnvelope::inspection(
+        &redactor.text("test").unwrap(),
+        &RequestContext::default(),
+        graph,
+    )
+    .unwrap();
+    assert!(result.as_bytes().len() > 1024 * 1024);
+    let text = std::str::from_utf8(result.as_bytes()).unwrap();
+    assert!(!text.contains('\u{202e}'));
+    let value: Value = serde_json::from_str(text).unwrap();
+    assert_eq!(value["result"]["nodes"].as_array().unwrap().len(), 4000);
+    assert_eq!(value["result"]["branch"], "review\u{202e}branch");
+}

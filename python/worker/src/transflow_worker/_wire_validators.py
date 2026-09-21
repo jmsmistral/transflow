@@ -181,3 +181,33 @@ def validate_ImportStagingManifestV1(value: object) -> None:
 def validate_BranchResultV1(value: object) -> None:
     """Assert the BranchResultV1 contract, including custom formats."""
     validate_document("BranchResultV1", value)
+
+
+def validate_GraphNodeV1(value: object) -> None:
+    """Assert the GraphNodeV1 contract, including custom formats."""
+    validate_document("GraphNodeV1", value)
+
+
+def validate_GraphEdgeV1(value: object) -> None:
+    """Assert the GraphEdgeV1 contract, including custom formats."""
+    validate_document("GraphEdgeV1", value)
+
+
+def validate_GraphResultV1(value: object) -> None:
+    """Assert the GraphResultV1 contract, including custom formats."""
+    validate_document("GraphResultV1", value)
+
+
+def validate_FreshnessStatusV1(value: object) -> None:
+    """Assert the FreshnessStatusV1 contract, including custom formats."""
+    validate_document("FreshnessStatusV1", value)
+
+
+def validate_PlanResultV1(value: object) -> None:
+    """Assert the PlanResultV1 contract, including custom formats."""
+    validate_document("PlanResultV1", value)
+
+
+def validate_WhyResultV1(value: object) -> None:
+    """Assert the WhyResultV1 contract, including custom formats."""
+    validate_document("WhyResultV1", value)

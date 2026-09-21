@@ -467,3 +467,31 @@ See [local evidence](evidence/t053-macos-arm64.json) and the
 source and complete validation without producer calls, registry mutation or dataset
 reads. Public commands remain T054. No dependency/schema/protocol version changed.
 Push CI is pending owner monitoring; no workflows are polled by the agent.
+
+
+## T054 public planning and inspection (2026-09-21)
+
+`bash tools/check.sh` passes: 294 Rust tests plus one documentation test, 653 Python,
+259 web and 51 installed-worker journeys; 44 document, 27 safety and twelve boundary
+regressions. Final workspace Clippy and eight CLI/diagnostic tests pass after retaining
+structured validation errors. The six new installed-worker journeys also pass after
+adding 1,104-node traversal and cycle-source diagnostics. Final Python typing, lint
+and formatting pass. Final specification and safety validation also pass.
+See [local evidence](evidence/t054-macos-arm64.json) and the
+[command guide](../../crates/transflow/INSPECTION.md).
+
+The public commands cover guarded nonexecuting drafts, blocked-plan explanations,
+source/branch selection, modes/boundaries/exclusions, exact historical pins, fallback
+controls, typed parameters and resolved resource deadlines. Graph output drains all
+pages, including 2,200 aliases; a Rust envelope test proves output above 1 MiB remains
+complete. Real retained Parquet fixtures exercise boundary reads and conservative
+require-current refusal. Invalid current Python does not prevent explicit Git-ref
+inspection, and the checkout stays unchanged. Generated contracts have 205 shared
+conformance cases. No dependency version or runtime schema changed.
+
+Development checks caught a help-path requirement, incomplete schema array metadata,
+and missing Git provenance in shared capture preparation. Fixture corrections covered
+SDK signatures, one producer per module and the synthetic stored root. The first
+aggregate stopped at a test-helper return annotation; the corrected aggregate passed.
+Native worker/socket checks ran with authorized permissions. Push CI is pending owner
+monitoring; T053 also awaits its owner's CI confirmation. No workflows were polled.

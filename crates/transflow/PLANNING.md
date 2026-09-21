@@ -1,8 +1,7 @@
 # Local planning services
 
-T046–T051 provide shared internal planning and acceptance services. Public `plan`
-and `build` commands, dispatch and worker execution remain
-later tasks. The contributor `planning_probe` example exercises these services;
+T046–T051 provide shared planning and acceptance services. T054 exposes public
+`plan` and `why` adapters; `build`, dispatch and worker execution remain later tasks. The contributor `planning_probe` example exercises these services;
 it is not an installed command.
 
 `tf_plan::scope::Graph::validated` requires the complete matching structural
@@ -62,10 +61,12 @@ settings are excluded explicitly. There is no recursive removal of user keys.
 Source comments/docstrings can conservatively invalidate code. A deterministic
 cache declaration is an author promise, not certification of hidden external I/O.
 
-The current composition service accepts explicit local output branches and the
-working-tree source selector. General source-selector/CLI dispatch, provider replica
-resolution, freshness classification/require-current boundary policy, execution retain their later tasks. Boundary reads use the existing available
-head policy with recorded fallback evidence; they are not reported as current.
+T054 adds [public inspection](INSPECTION.md), shared Git-ref capture, typed CLI
+parameter normalization and saved timeout precedence. Branch selection follows the
+shared explicit/Git/default rule. Provider replica resolution and execution remain
+later work. Boundary reads use available-head policy with recorded fallback
+evidence and explicit unknown-currentness warnings. Require-current refuses stale
+or unassessable boundaries without hidden execution.
 Installed applications will not need the specification repository.
 
 [T051 cache preparation and adoption](../tf-store/CACHE.md) finalize child keys only

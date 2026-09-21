@@ -31,6 +31,14 @@ pub async fn inspect(
     owner: RuntimeOwner,
     request: Request,
 ) -> Result<Completion<Traversal>, Error> {
+    inspect_source(owner, request, None).await
+}
+/// Inspect an explicit Git source while retaining its separately selected branch.
+pub async fn inspect_source(
+    owner: RuntimeOwner,
+    request: Request,
+    git_ref: Option<String>,
+) -> Result<Completion<Traversal>, Error> {
     tokio::task::spawn_blocking(move || {
         let owner = owner;
         let result = (|| {
@@ -45,8 +53,14 @@ pub async fn inspect(
                     "workspace identity changed during graph inspection",
                 ));
             }
-            let inspected =
-                preparation::inspect(&workspace, request.python.as_ref(), true).map_err(failure)?;
+            let inspected = preparation::inspect_selected(
+                &workspace,
+                request.python.as_ref(),
+                true,
+                None,
+                git_ref.as_deref().map(|r| (r, &request.branch)),
+            )
+            .map_err(crate::build_plan::preparation_failure)?;
             let config = String::from_utf8(
                 inspected
                     .capture

@@ -1,8 +1,8 @@
 # Declared lineage traversal
 
-T053 supplies `tf-catalog::traversal` and `transflow::graph_query::inspect` for future
-CLI/API adapters. Public upstream/downstream commands remain T054. No new public
-wire contract, database schema or dependency is introduced.
+T053 supplies `tf-catalog::traversal` and `transflow::graph_query::inspect` for shared
+CLI/API adapters. T054 exposes public upstream/downstream commands and closed JSON
+results; T053 itself introduced no public wire contract, database schema or dependency.
 
 `Graph::validated` accepts only a complete graph with a matching validation
 certificate. It freezes active registered datasets, pending outputs, registered

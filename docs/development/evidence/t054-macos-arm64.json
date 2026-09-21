@@ -1,0 +1,81 @@
+{
+  "task": "T054",
+  "date": "2026-09-21",
+  "platform": "macOS arm64",
+  "result": "passed",
+  "implementation_base": "7d42518e7b22704c2d332c78815e16fa85d199af",
+  "specification_base": "dc761eaba2b9e9ee4122a2f7d585d007701ee8e8",
+  "commands": [
+    {
+      "command": "bash tools/check.sh",
+      "result": "Passed after correcting a test-helper return annotation. 294 Rust plus one documentation test, 653 Python, 259 web and 51 installed-worker tests; 44/27/12 document/safety/boundary regressions."
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed after preserving typed structural-validation diagnostics."
+    },
+    {
+      "command": "cargo test -p transflow --test cli --test diagnostics --locked --offline",
+      "result": "Eight tests passed on final CLI code, including complete output above 1 MiB and visual-control escaping."
+    },
+    {
+      "command": "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/integration/test_inspection_cli.py -x",
+      "result": "Final six journeys passed after extending the wide graph to 1,104 nodes and checking cycle diagnostics; authorized native sockets were used."
+    },
+    {
+      "command": "target/python/py314/bin/python -m mypy --config-file python/pyproject.toml",
+      "result": "Final 43-source-file type check passed; Ruff format and lint pass."
+    },
+    {
+      "command": "python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Final documentation validation passed for specification 1.1.1; not application qualification."
+    },
+    {
+      "command": "bash tools/check-safety.sh",
+      "result": "Final 27 safety regressions and all 472 public candidate files passed; generated contracts are current."
+    },
+    {
+      "command": "cargo fmt --all -- --check; git diff --check in both repositories",
+      "result": "Passed on the final handoff changes."
+    }
+  ],
+  "rust_tests": 294,
+  "rust_doc_tests": 1,
+  "python_tests": 653,
+  "web_tests": 259,
+  "cli_tests": 51,
+  "document_regressions": 44,
+  "safety_regressions": 27,
+  "rust_boundary_regressions": 12,
+  "new_rust_tests": 2,
+  "new_cli_tests": 6,
+  "shared_conformance_cases": 205,
+  "runtime_schema": 7,
+  "cli_envelope": 1,
+  "worker_protocol": "1.0",
+  "coverage": [
+    "Public plan/why/upstream/downstream and selected-command help; usage conflicts and malformed flags preserve one clean JSON envelope.",
+    "Nonexecuting drafts preserve authoring bytes and have no new dataset rows, versions, branches, builds or attempts; proposed registrations and symbolic parents are explicit.",
+    "Graph depth 0/1/N/omitted in both directions; 2,200 validation aliases, 1,104 reachable nodes and complete paginated delivery.",
+    "Real retained Parquet versions qualify selected/between/exclusion/force scope, fallback selection, exact older pins, write conflicts and conservative require-current refusal.",
+    "Working Git branches select data context; immutable Git-ref captures tolerate invalid current source without checkout changes; detached HEAD requires an explicit branch.",
+    "Typed JSON/lossless parameter values, qualified selectors, unknown/wrong types and separate zero/positive timeout overrides.",
+    "Why retains target status when planning is blocked, labels selected-branch heads separately from exact pins, and reports foreign status as unknown.",
+    "Invalid unrelated source and cycles refuse all inspection commands; cycle codes and source anchors are preserved.",
+    "Generated closed schemas and six additional shared conformance cases agree across Rust, Python and TypeScript."
+  ],
+  "development_findings": [
+    "Initial help required targets and rendered root help; selected-command help now bypasses required targets and renders the selected definition.",
+    "Git journeys exposed missing provenance in shared preparation captures; Git-aware persistent/temporary capture now preserves existing guard semantics.",
+    "Schema array minima, SDK fixture signatures, one-producer-per-module fixtures, synthetic stored-root identity and a Python helper annotation were corrected during qualification."
+  ],
+  "ci": "Pending owner monitoring after push. T053 CI also remains pending owner confirmation; no workflow jobs were polled.",
+  "limits": [
+    "Public build execution, coordinator dispatch and provider resolution/replication remain later tasks.",
+    "Freshness describes selected-branch heads; unspecified writer/clock/secret semantics and legacy evidence remain unknown. Require-current rejects unassessable boundaries.",
+    "A why selection refusal is explicit in planning_error and does not hide inspectable target status; plan returns a failure for that same refusal.",
+    "Git-ref dependencies must match the prepared local environment; source selection never installs dependencies or changes the checkout.",
+    "Complete graph JSON is assembled in linear result memory without an added semantic output cap; existing source/discovery admission limits remain.",
+    "No dependency package, runtime schema or worker protocol version changed. Generated CLI result shapes and capabilities were extended."
+  ]
+}

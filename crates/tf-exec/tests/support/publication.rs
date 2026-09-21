@@ -54,6 +54,7 @@ pub struct Harness {
     pub owner: Option<RuntimeOwner>,
     pub digest: tf_protocol::canonical::ContentDigest,
     pub db: SqliteConnection,
+    keep_root: bool,
 }
 impl Harness {
     pub async fn new() -> Self {
@@ -117,7 +118,13 @@ impl Harness {
             owner: Some(owner),
             digest,
             db,
+            keep_root: false,
         }
+    }
+    /// Hand a seeded fixture to an installed-CLI integration test, which owns cleanup.
+    pub async fn handoff(mut self) {
+        self.owner.take();
+        self.keep_root = true;
     }
     pub fn session(&self) -> CoordinatorSessionId {
         self.owner
@@ -324,6 +331,9 @@ pub fn writable(path: &Path) {
 impl Drop for Harness {
     fn drop(&mut self) {
         self.owner.take();
+        if self.keep_root {
+            return;
+        }
         writable(&self.root);
         let _ = fs::remove_dir_all(&self.root);
     }

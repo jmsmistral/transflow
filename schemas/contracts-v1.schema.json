@@ -1333,7 +1333,11 @@
                 "branch.list",
                 "branch.create",
                 "branch.rename",
-                "branch.delete"
+                "branch.delete",
+                "plan",
+                "why",
+                "graph.upstream",
+                "graph.downstream"
               ]
             },
             "context": {
@@ -1381,6 +1385,15 @@
                 },
                 {
                   "$ref": "#/$defs/BranchResultV1"
+                },
+                {
+                  "$ref": "#/$defs/GraphResultV1"
+                },
+                {
+                  "$ref": "#/$defs/PlanResultV1"
+                },
+                {
+                  "$ref": "#/$defs/WhyResultV1"
                 }
               ]
             },
@@ -1434,7 +1447,11 @@
                 "branch.list",
                 "branch.create",
                 "branch.rename",
-                "branch.delete"
+                "branch.delete",
+                "plan",
+                "why",
+                "graph.upstream",
+                "graph.downstream"
               ]
             },
             "context": {
@@ -1515,7 +1532,11 @@
                 "branch.list",
                 "branch.create",
                 "branch.rename",
-                "branch.delete"
+                "branch.delete",
+                "plan",
+                "why",
+                "graph.upstream",
+                "graph.downstream"
               ]
             },
             "context": {
@@ -2846,6 +2867,833 @@
         "git_independent",
         "requested_name",
         "new_name"
+      ],
+      "additionalProperties": false
+    },
+    "GraphNodeV1": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "type": "string"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0
+        },
+        "depth": {
+          "$ref": "#/$defs/Count"
+        },
+        "external": {
+          "type": "boolean"
+        },
+        "producer": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "identity",
+        "paths",
+        "depth",
+        "external",
+        "producer"
+      ],
+      "additionalProperties": false
+    },
+    "GraphEdgeV1": {
+      "type": "object",
+      "properties": {
+        "parent": {
+          "type": "string"
+        },
+        "consumer": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "data",
+            "validation"
+          ]
+        },
+        "declared_branch": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "omitted",
+                "current",
+                "named"
+              ]
+            },
+            "name": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "stop_branch_fallback": {
+          "type": "boolean"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeclarationCheckV1"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "parent",
+        "consumer",
+        "alias",
+        "role",
+        "declared_branch",
+        "stop_branch_fallback",
+        "checks"
+      ],
+      "additionalProperties": false
+    },
+    "GraphResultV1": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "graph"
+        },
+        "direction": {
+          "enum": [
+            "upstream",
+            "downstream"
+          ]
+        },
+        "workspace": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "source": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "source_digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "registry_fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "certificate_fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "start": {
+          "type": "string"
+        },
+        "depth": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphNodeV1"
+          },
+          "minItems": 0
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphEdgeV1"
+          },
+          "minItems": 0
+        },
+        "total_nodes": {
+          "$ref": "#/$defs/Count"
+        },
+        "total_edges": {
+          "$ref": "#/$defs/Count"
+        },
+        "omitted_nodes": {
+          "$ref": "#/$defs/Count"
+        },
+        "omitted_edges": {
+          "$ref": "#/$defs/Count"
+        },
+        "scope_complete": {
+          "type": "boolean"
+        },
+        "delivery_complete": {
+          "const": true
+        },
+        "external_expanded": {
+          "const": false
+        }
+      },
+      "required": [
+        "kind",
+        "direction",
+        "workspace",
+        "source",
+        "source_digest",
+        "registry_fingerprint",
+        "certificate_fingerprint",
+        "branch",
+        "start",
+        "depth",
+        "nodes",
+        "edges",
+        "total_nodes",
+        "total_edges",
+        "omitted_nodes",
+        "omitted_edges",
+        "scope_complete",
+        "delivery_complete",
+        "external_expanded"
+      ],
+      "additionalProperties": false
+    },
+    "FreshnessStatusV1": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "type": "string"
+        },
+        "path": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "version": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "materialization": {
+          "enum": [
+            "NeverBuilt",
+            "Available",
+            "Missing",
+            "Corrupt",
+            "Unknown"
+          ]
+        },
+        "direct_data": {
+          "enum": [
+            "Current",
+            "Stale",
+            "Unknown"
+          ]
+        },
+        "direct_logic": {
+          "enum": [
+            "Current",
+            "Stale",
+            "Unknown"
+          ]
+        },
+        "inherited": {
+          "enum": [
+            "Current",
+            "Stale",
+            "Unknown"
+          ]
+        },
+        "latest_attempt": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "Running",
+                "Succeeded",
+                "Failed",
+                "Canceled",
+                "Interrupted"
+              ]
+            }
+          ]
+        },
+        "output_quality": {
+          "enum": [
+            "Passed",
+            "Warning",
+            "NoChecks",
+            "Unavailable"
+          ]
+        },
+        "input_quality": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "alias": {
+                "type": "string"
+              },
+              "quality": {
+                "enum": [
+                  "Passed",
+                  "Warning",
+                  "Failed",
+                  "Unavailable"
+                ]
+              }
+            },
+            "required": [
+              "alias",
+              "quality"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "path": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 0
+              },
+              "aliases": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 0
+              },
+              "subject": {
+                "type": "string"
+              },
+              "before": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "after": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "policy": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "path",
+              "aliases",
+              "subject",
+              "before",
+              "after",
+              "policy"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "identity",
+        "path",
+        "version",
+        "materialization",
+        "direct_data",
+        "direct_logic",
+        "inherited",
+        "latest_attempt",
+        "output_quality",
+        "input_quality",
+        "reasons"
+      ],
+      "additionalProperties": false
+    },
+    "PlanResultV1": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "plan"
+        },
+        "workspace": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "source": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "source_digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "source_selector": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "working_tree"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "git_ref"
+                },
+                "ref": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "ref"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "source_commit": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "plan_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "created_us": {
+          "type": "string"
+        },
+        "expires_us": {
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "Full",
+            "Selected",
+            "Between"
+          ]
+        },
+        "force": {
+          "type": "boolean"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0
+        },
+        "boundaries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0
+        },
+        "exclusions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0
+        },
+        "refresh_sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0
+        },
+        "fallback_override": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 0
+            }
+          ]
+        },
+        "boundary_policy": {
+          "enum": [
+            "require_available",
+            "require_current"
+          ]
+        },
+        "branch_would_be_created": {
+          "type": "boolean"
+        },
+        "pending_registrations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dataset": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "dataset",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "writes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dataset": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "path": {
+                "type": "string"
+              },
+              "job": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "expected_generation": {
+                "$ref": "#/$defs/Count"
+              },
+              "bindings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "alias": {
+                      "type": "string"
+                    },
+                    "dataset": {
+                      "$ref": "#/$defs/Uuid"
+                    },
+                    "kind": {
+                      "enum": [
+                        "planned",
+                        "boundary"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "alias",
+                    "dataset",
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 0
+              },
+              "parameters": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/$defs/ScalarValue"
+                }
+              },
+              "resources": {
+                "type": "object",
+                "properties": {
+                  "timeout_seconds": {
+                    "$ref": "#/$defs/Count"
+                  },
+                  "timeout_origin": {
+                    "type": "string"
+                  },
+                  "validation_timeout_seconds": {
+                    "$ref": "#/$defs/Count"
+                  },
+                  "validation_timeout_origin": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "timeout_seconds",
+                  "timeout_origin",
+                  "validation_timeout_seconds",
+                  "validation_timeout_origin"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "dataset",
+              "path",
+              "job",
+              "expected_generation",
+              "bindings",
+              "parameters",
+              "resources"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "reads": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "consumer": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "consumer_path": {
+                "type": "string"
+              },
+              "alias": {
+                "type": "string"
+              },
+              "dataset": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "path": {
+                "type": "string"
+              },
+              "version": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "artifact": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "starting_branch": {
+                "type": "string"
+              },
+              "resolved_branch": {
+                "type": "string"
+              },
+              "resolution": {
+                "type": "string"
+              },
+              "currentness": {
+                "enum": [
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "consumer",
+              "consumer_path",
+              "alias",
+              "dataset",
+              "path",
+              "version",
+              "artifact",
+              "starting_branch",
+              "resolved_branch",
+              "resolution",
+              "currentness"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "freshness": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FreshnessStatusV1"
+          },
+          "minItems": 0
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0
+        },
+        "producer_execution": {
+          "const": false
+        },
+        "authoring_changed": {
+          "const": false
+        },
+        "freshness_context": {
+          "const": "selected_branch_heads"
+        }
+      },
+      "required": [
+        "kind",
+        "workspace",
+        "source",
+        "source_digest",
+        "branch",
+        "source_selector",
+        "source_commit",
+        "plan_id",
+        "digest",
+        "created_us",
+        "expires_us",
+        "mode",
+        "force",
+        "targets",
+        "boundaries",
+        "exclusions",
+        "refresh_sources",
+        "fallback_override",
+        "boundary_policy",
+        "branch_would_be_created",
+        "pending_registrations",
+        "writes",
+        "reads",
+        "freshness",
+        "warnings",
+        "producer_execution",
+        "authoring_changed",
+        "freshness_context"
+      ],
+      "additionalProperties": false
+    },
+    "WhyResultV1": {
+      "type": "object",
+      "properties": {
+        "workspace": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "source": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "source_digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "freshness_context": {
+          "const": "selected_branch_heads"
+        },
+        "producer_execution": {
+          "const": false
+        },
+        "authoring_changed": {
+          "const": false
+        },
+        "kind": {
+          "const": "why"
+        },
+        "target": {
+          "type": "string"
+        },
+        "status": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/FreshnessStatusV1"
+            }
+          ]
+        },
+        "plan": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/PlanResultV1"
+            }
+          ]
+        },
+        "planning_error": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workspace",
+        "source",
+        "source_digest",
+        "branch",
+        "freshness_context",
+        "producer_execution",
+        "authoring_changed",
+        "kind",
+        "target",
+        "status",
+        "plan",
+        "planning_error"
       ],
       "additionalProperties": false
     }

@@ -9,6 +9,8 @@ mod catalog;
 mod env;
 mod import;
 mod init;
+mod inspection_cli;
+mod plan_parameters;
 mod preparation;
 /// Registry durability and recovery application service.
 pub mod reconcile;
@@ -42,7 +44,8 @@ fn command() -> clap::Command {
     use clap::{Arg, ArgAction};
     clap::Command::new("transflow")
         .about("A local build system for dataframe datasets (development scaffold)")
-        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Explicit data-branch lifecycle commands are also available. Dataset builds and the coordinator are not implemented yet.")
+        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Explicit data-branch lifecycle and plan, why, upstream and downstream commands are also available. Dataset builds and the coordinator are not implemented yet.")
+        .subcommands(inspection_cli::commands())
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
         .subcommand(clap::Command::new("branch").disable_help_flag(true).subcommand_required(true).about("List and manage data branches independently of Git")
             .subcommand(clap::Command::new("list").disable_help_flag(true)
@@ -220,6 +223,104 @@ pub fn run(
     match command().try_get_matches_from(args) {
         Ok(matches) => {
             if !matches.get_flag("help") && !matches.get_flag("version") {
+                if let Some((name @ ("plan" | "why" | "upstream" | "downstream"), args)) =
+                    matches.subcommand()
+                {
+                    let mut selected_context = context.clone();
+                    selected_context.source = Some(
+                        redactor.text(
+                            args.get_one::<String>("git-ref")
+                                .map(String::as_str)
+                                .unwrap_or("working_tree"),
+                        )?,
+                    );
+                    // Include discovered workspace context on operational failures too.
+                    if selected_context.workspace.is_none()
+                        && let Ok(current) = std::env::current_dir()
+                        && let Ok(workspace) =
+                            tf_catalog::workspace::Workspace::load(&current, None)
+                    {
+                        selected_context.workspace =
+                            Some(redactor.text(&workspace.root().to_string_lossy())?);
+                    }
+                    let usage_error = name == "why"
+                        && args
+                            .get_many::<String>("targets")
+                            .into_iter()
+                            .flatten()
+                            .chain(args.get_many::<String>("target").into_iter().flatten())
+                            .collect::<std::collections::BTreeSet<_>>()
+                            .len()
+                            != 1;
+                    let result = if usage_error {
+                        Err(build_plan::failure(
+                            "why requires exactly one distinct target",
+                        ))
+                    } else {
+                        inspection_cli::execute(name, args, matches.get_one::<String>("workspace"))
+                    };
+                    match result {
+                        Ok(report) => {
+                            selected_context.source = report.value["source"]
+                                .as_str()
+                                .map(|s| redactor.text(s))
+                                .transpose()?;
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::inspection(
+                                            &version,
+                                            &selected_context,
+                                            report.value,
+                                        )?
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                writeln!(stdout, "{}", report.human).map_err(CliError::Stdout)?;
+                            }
+                            return Ok(ExitCode::SUCCESS);
+                        }
+                        Err(error) => {
+                            let status = if usage_error {
+                                ExitStatus::Usage
+                            } else {
+                                ExitStatus::Failure
+                            };
+                            let diagnostic = if let Some(validation) = error.validation() {
+                                validation.diagnostic(&redactor)?
+                            } else {
+                                Diagnostic::new(DiagnosticCode::OperationFailed, redactor.text("Inspection could not finish")?, redactor.text(&error.to_string())?, redactor.text("Check the selected source, dataset references, branch and prepared environment. Correct unavailable or unassessable read boundaries and retry; no producer was executed.")?)
+                            };
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::failure(
+                                            &version,
+                                            status,
+                                            &selected_context,
+                                            &[diagnostic],
+                                        )?
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                stderr
+                                    .write_all(
+                                        render_diagnostic(
+                                            &diagnostic,
+                                            &selected_context,
+                                            intent.verbose,
+                                            false,
+                                        )
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stderr)?;
+                            }
+                            return Ok(ExitCode::from(status.code()));
+                        }
+                    }
+                }
                 if let Some(("dataset", args)) = matches.subcommand() {
                     let imported = args.subcommand_matches("import").ok_or(CliError::Protocol(
                         tf_protocol::ProtocolError::InvalidDocument,
@@ -596,7 +697,21 @@ pub fn run(
                     format!("transflow {}", env!("CARGO_PKG_VERSION")),
                 )
             } else {
-                (InformationKind::Help, command().render_help().to_string())
+                {
+                    let mut command = command();
+                    command.build();
+                    let mut selected = &mut command;
+                    let mut arguments = &matches;
+                    while let Some((name, next)) = arguments.subcommand() {
+                        selected = selected
+                            .find_subcommand_mut(name)
+                            .ok_or(CliError::Protocol(
+                                tf_protocol::ProtocolError::InvalidDocument,
+                            ))?;
+                        arguments = next;
+                    }
+                    (InformationKind::Help, selected.render_help().to_string())
+                }
             };
             if matches.get_flag("json") {
                 let envelope =
