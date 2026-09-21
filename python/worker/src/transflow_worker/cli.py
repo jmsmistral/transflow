@@ -44,7 +44,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
             try:
                 return serve(args.request, args.control_socket)
-            except (DiscoveryError, ProtocolError, OSError, ValueError):
+            except DiscoveryError, ProtocolError, OSError, ValueError:
                 print(
                     "Discovery setup failed; verify the captured request "
                     "and private coordinator channel",

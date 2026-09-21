@@ -64,19 +64,7 @@
           "conclusion": "success"
         },
         {
-          "name": "packages (ubuntu-24.04-arm, 3.13.15)",
-          "conclusion": "success"
-        },
-        {
-          "name": "packages (macos-15, 3.13.15)",
-          "conclusion": "success"
-        },
-        {
           "name": "packages (ubuntu-24.04, 3.14.7)",
-          "conclusion": "success"
-        },
-        {
-          "name": "packages (ubuntu-24.04, 3.13.15)",
           "conclusion": "success"
         },
         {
@@ -91,19 +79,7 @@
       "conclusion": "success",
       "jobs": [
         {
-          "name": "native (ubuntu-24.04-arm, 3.13.15)",
-          "conclusion": "success"
-        },
-        {
-          "name": "native (ubuntu-24.04, 3.13.15)",
-          "conclusion": "success"
-        },
-        {
           "name": "native (ubuntu-24.04-arm, 3.14.7)",
-          "conclusion": "success"
-        },
-        {
-          "name": "native (macos-15, 3.13.15)",
           "conclusion": "success"
         },
         {
@@ -116,5 +92,6 @@
         }
       ]
     }
-  ]
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

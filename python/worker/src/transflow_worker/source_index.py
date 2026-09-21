@@ -43,7 +43,7 @@ class ModuleIndex:
         captured_paths: tuple[str, ...],
         *,
         runtime_modules: frozenset[str] = frozenset(),
-    ) -> "ModuleIndex":
+    ) -> ModuleIndex:
         """Validate explicit capture paths without filesystem reads, imports or root-order tricks.
 
         The coordinator supplies its allowlisted capture paths. Additional required runtime

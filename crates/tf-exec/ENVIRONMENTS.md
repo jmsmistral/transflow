@@ -2,7 +2,7 @@
 
 The CLI now supports `env lock`, `env sync` and read-only `env check`. Each uses an
 explicit workspace and borrowed coordinator ownership. `--python` wins over the
-local interpreter locator; otherwise the configured `python3.13`/`python3.14` is
+local interpreter locator; otherwise the configured `python3.14` is
 located on PATH. Only lock/sync require the qualified pip 26.2.1 and pip-tools
 7.6.1 installed in that tooling interpreter. Nothing installs tooling implicitly.
 

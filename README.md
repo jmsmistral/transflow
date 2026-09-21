@@ -10,6 +10,9 @@ A local, code-first build system for dataframe datasets, with versioned Parquet 
 
 **Status:** T001–T052 are implemented for their recorded scopes, except T031/T033 task closure remains gated by native editor qualification. Current capabilities include workspace/environment preparation, catalogue validation/lifecycle, source capture, durable storage/publication foundations, branch lifecycle, retained reads/replay identities, and internal planning/acceptance services. T053 adds deterministic graph traversal; T054 exposes public `plan`, `why`, `upstream` and `downstream` commands. The owner confirmed CI success through T055, including shared worker supervision, authenticated control and bounded retained logs. T056 adds resource admission and independent phase timers; local checks pass and push CI awaits owner monitoring. Dataset build execution, the coordinator service and the connected lineage interface remain upcoming; this is not an application release.
 
+Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
+Package installation and workspace environment checks reject other minors.
+
 ## Intended experience
 
 Write Python transforms, declare their input and output datasets, and build a target without managing a separate catalogue namespace for every source directory. Transflow is designed to validate the dependency graph, resolve exact input versions, run checks, preserve the previous successful output when a build fails, and explain what needs rebuilding.
@@ -83,7 +86,7 @@ Keep the canonical specification in a sibling checkout directly under `~/dev/`. 
 
 Read the [specification document map](../transflow-spec/README.md) and [engineering agreement](../transflow-spec/AGENTS.md) before implementation. [AGENTS.md](AGENTS.md) is the short agent entry point. The specification is also hosted at [jmsmistral/transflow-spec](https://github.com/jmsmistral/transflow-spec). Detailed specification files are not duplicated here.
 
-Specification baseline: **1.1.1**. See its task ledger for intended scope; unchecked tasks are not delivered features. End users of a future installed release will not need the specification checkout.
+Specification baseline: **1.1.2**. See its task ledger for intended scope; unchecked tasks are not delivered features. End users of a future installed release will not need the specification checkout.
 
 ## Development checks
 
@@ -141,7 +144,7 @@ toolchain/dependency candidates and exercised them on macOS arm64. Native Linux
 qualification now passes; T001–T020 are complete for their bootstrap/domain/transport/hash/diagnostic/state-machine/storage/ownership/registry scope. T009 and T011 probes pass
 the native platform/Python matrix; T010 retains native editor checks for later integration.
 The [catalogue overlay spike](docs/development/catalog-overlay.md) now passes runtime and
-mypy checks on both Python versions; T010 is complete for its prototype scope, with native editor checks retained for later integration.
+mypy checks on Python 3.14; T010 is complete for its prototype scope, with native editor checks retained for later integration.
 Local verification and remote CI results are recorded separately in the task evidence.
 T007’s [three-platform Rust CI run](https://github.com/jmsmistral/transflow/actions/runs/35410393011) also passes.
 See the [compatibility matrix and setup](docs/development/compatibility.md)

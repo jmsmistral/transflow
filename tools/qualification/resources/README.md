@@ -1,9 +1,9 @@
 # Resource, cancellation and resolver feasibility
 
 T011 adds ten capability tests using the existing pinned qualification environment.
-They pass locally on macOS arm64 with Python 3.13.0 and 3.14.7. The native
+They pass locally on macOS arm64 with Python 3.14.7. The native
 qualification workflow passed all six Python/platform jobs at `a46aca6`,
-covering macOS arm64 and Linux x86_64/arm64 with Python 3.13.15/3.14.7.
+covering macOS arm64 and Linux x86_64/arm64 with Python 3.14.7.
 [CI evidence](../../../docs/development/evidence/t011-ci.json) records the successful runs.
 The [local evidence snapshot](../../../docs/development/evidence/t011-macos-arm64.json)
 retains the actual engine settings, RSS observations and resolver results.
@@ -13,7 +13,6 @@ From the implementation root, after the explicit dependency setup in the
 
 ```bash
 target/qualification/py314/bin/python tools/qualification/resources/probe.py --output target/qualification/t011-py314.json
-target/qualification/py313/bin/python tools/qualification/resources/probe.py --output target/qualification/t011-py313.json
 ```
 
 The full `tools/qualification/check.sh` runner also writes

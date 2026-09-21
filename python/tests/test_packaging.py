@@ -134,7 +134,7 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
         )
         assert metadata["Name"] == "transflow"
         assert metadata["Version"] == VERSION
-        assert metadata["Requires-Python"] == "<3.15,>=3.13"
+        assert metadata["Requires-Python"] == "<3.15,>=3.14"
         assert metadata.get_all("Requires-Dist", []) == []
 
 

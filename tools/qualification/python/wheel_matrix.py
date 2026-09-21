@@ -24,7 +24,7 @@ def main() -> int:
         platforms[f"linux-{arch}"] = [f"manylinux_2_{minor}_{arch}" for minor in range(28, 16, -1)] + [f"manylinux2014_{arch}"]
     results = []
     with tempfile.TemporaryDirectory(prefix="transflow-wheel-matrix-") as directory:
-        for version in ("3.13", "3.14"):
+        for version in ("3.14",):
             for target, tags in platforms.items():
                 report_path = Path(directory) / f"{version}-{target}.json"
                 command = [

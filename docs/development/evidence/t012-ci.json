@@ -44,16 +44,6 @@
       "conclusion": "success",
       "jobs": [
         {
-          "name": "packages (macos-15, 3.13.15)",
-          "conclusion": "success",
-          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570100"
-        },
-        {
-          "name": "packages (ubuntu-24.04-arm, 3.13.15)",
-          "conclusion": "success",
-          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570113"
-        },
-        {
           "name": "packages (ubuntu-24.04, 3.14.7)",
           "conclusion": "success",
           "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570122"
@@ -67,11 +57,6 @@
           "name": "packages (ubuntu-24.04-arm, 3.14.7)",
           "conclusion": "success",
           "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570140"
-        },
-        {
-          "name": "packages (ubuntu-24.04, 3.13.15)",
-          "conclusion": "success",
-          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045124/job/105886570182"
         }
       ]
     },
@@ -103,16 +88,6 @@
       "conclusion": "success",
       "jobs": [
         {
-          "name": "native (ubuntu-24.04, 3.13.15)",
-          "conclusion": "success",
-          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886569993"
-        },
-        {
-          "name": "native (ubuntu-24.04-arm, 3.13.15)",
-          "conclusion": "success",
-          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886570057"
-        },
-        {
           "name": "native (macos-15, 3.14.7)",
           "conclusion": "success",
           "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886570082"
@@ -126,14 +101,10 @@
           "name": "native (ubuntu-24.04, 3.14.7)",
           "conclusion": "success",
           "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886570112"
-        },
-        {
-          "name": "native (macos-15, 3.13.15)",
-          "conclusion": "success",
-          "url": "https://github.com/jmsmistral/transflow/actions/runs/35439045099/job/105886570170"
         }
       ]
     }
   ],
-  "scope": "All five workflows pass; three-platform Rust/web and six-job Python/native matrices. Full application conformance remains later work."
+  "scope": "All five workflows pass; three-platform Rust/web and six-job Python/native matrices. Full application conformance remains later work.",
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

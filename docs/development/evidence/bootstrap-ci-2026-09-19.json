@@ -9,7 +9,6 @@
     "ubuntu-24.04-arm (arm64)"
   ],
   "python_versions": [
-    "3.13.15",
     "3.14.7"
   ],
   "runs": {
@@ -38,5 +37,6 @@
   "limitations": [
     "Public summaries and artifact listings inspected; authenticated logs and artifact contents were not downloaded.",
     "Successful workflow conclusions establish their committed required checks; full application/release conformance remains future work."
-  ]
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

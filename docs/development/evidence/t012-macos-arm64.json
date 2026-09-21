@@ -27,12 +27,6 @@
       "node": "24.4.1"
     },
     {
-      "command": "PYTHON_CHECK=\"$PWD/target/python/py313/bin/python\" bash tools/check-python.sh",
-      "result": "passed",
-      "python": "3.13.0",
-      "tests": 222
-    },
-    {
       "command": "python tools/safety/advisories.py --output security/advisories.json",
       "result": "passed",
       "queried_package_versions": 634,
@@ -43,5 +37,6 @@
     "Test-only schema subset readers, not production codecs.",
     "No live worker transport, native engine conversion or canonical hashing qualification.",
     "No new runtime SDK operations or generated type copies."
-  ]
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

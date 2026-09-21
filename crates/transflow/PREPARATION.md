@@ -58,5 +58,5 @@ by interrupted mutating sync are subject to later runtime retention tooling.
 `bash tools/check-cli.sh` tests a real native executable against freshly installed
 local wheels and offline synthetic dependencies. Rust CI runs this bridge on
 macOS arm64, Linux x86-64 and Linux arm64 with Python 3.14. Python's independent
-3.13/3.14 matrix continues testing SDK/worker contracts and isolated installations.
+3.14 matrix continues testing SDK/worker contracts and isolated installations.
 Native VS Code/Emacs completion qualification remains open under T031/T108.

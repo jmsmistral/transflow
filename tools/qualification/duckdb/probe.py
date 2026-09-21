@@ -479,7 +479,7 @@ class CapabilityTests(unittest.TestCase):
 def run_child():
     expected = {"duckdb": "1.5.5", "pyarrow": "25.0.1", "polars": "1.44.2", "pandas": "3.0.6"}
     versions = {name: importlib.metadata.version(name) for name in expected}
-    if versions != expected or sys.version_info[:2] not in {(3, 13), (3, 14)}:
+    if versions != expected or sys.version_info[:2] != (3, 14):
         raise RuntimeError(
             f"Unqualified probe environment: {versions}; Python {platform.python_version()}"
         )

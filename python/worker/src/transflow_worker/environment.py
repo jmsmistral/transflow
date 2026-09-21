@@ -97,11 +97,8 @@ def target_identity() -> dict[str, object]:
 
 
 def _tooling(minor: str) -> None:
-    if minor != f"{sys.version_info.major}.{sys.version_info.minor}" or minor not in {
-        "3.13",
-        "3.14",
-    }:
-        raise EnvironmentError("Select a Python interpreter matching configured 3.13 or 3.14")
+    if minor != f"{sys.version_info.major}.{sys.version_info.minor}" or minor != "3.14":
+        raise EnvironmentError("Select a Python interpreter matching configured 3.14")
     for name, version in [("pip", PIP_VERSION), ("pip-tools", RESOLVER_VERSION)]:
         try:
             actual = metadata.version(name)

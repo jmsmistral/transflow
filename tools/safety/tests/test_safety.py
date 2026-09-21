@@ -357,7 +357,7 @@ class AuditTests(unittest.TestCase):
     def test_current_lock_inventory_covers_all_sources(self):
         data = inventory(ROOT)
         self.assertEqual({p["ecosystem"] for p in data["packages"]}, {"crates.io", "PyPI", "npm"})
-        self.assertEqual(len(data["locks"]), 9)
+        self.assertEqual(len(data["locks"]), 7)
 
     def test_new_lockfile_requires_inventory_review(self):
         from baseline import git_files

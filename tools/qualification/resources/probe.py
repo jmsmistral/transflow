@@ -177,7 +177,7 @@ def main():
     args = parser.parse_args()
     expected = {"pip": "26.2.1", "pip-tools": "7.6.1", "polars": "1.44.2", "duckdb": "1.5.5"}
     versions = {name: importlib.metadata.version(name) for name in expected}
-    if versions != expected or sys.version_info[:2] not in {(3, 13), (3, 14)}:
+    if versions != expected or sys.version_info[:2] != (3, 14):
         raise RuntimeError("Use the qualified Python and locked resolver/engine environment")
     result = unittest.TextTestRunner(verbosity=2).run(
         unittest.defaultTestLoader.loadTestsFromTestCase(ResourceTests)

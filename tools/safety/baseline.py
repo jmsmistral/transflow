@@ -16,10 +16,8 @@ LOCKS = (
     "tools/qualification/rust/Cargo.lock",
     "web/package-lock.json",
     "tools/qualification/web/package-lock.json",
-    "python/dev-py313.lock",
     "python/dev-py314.lock",
     "tools/qualification/python/resolver.lock",
-    "tools/qualification/python/py313.lock",
     "tools/qualification/python/py314.lock",
 )
 RULES = {

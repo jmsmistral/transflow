@@ -7,7 +7,6 @@
   "status": "Local pre-commit verification; CI pending",
   "commands": [
     "bash tools/check.sh",
-    "PYTHON_CHECK=target/python/py313/bin/python bash tools/check-python.sh",
     "PYTHON=target/qualification/py314/bin/python bash tools/qualification/check.sh"
   ],
   "result": "passed",
@@ -18,7 +17,6 @@
     "rust_tests": 56,
     "rust_compile_fail_documentation_tests": 1,
     "python_314_tests": 442,
-    "python_313_tests": 442,
     "web_tests": 210
   },
   "canonical_vectors": {
@@ -28,7 +26,7 @@
     "rust_invariant_tests": 4,
     "python_cases": 39,
     "typescript_cases": 28,
-    "final_fixture_review": "Corrected illustrative scalar carriers and added real wire-validation assertions; reran Rust/Python 3.13+3.14/TypeScript canonical suites successfully."
+    "final_fixture_review": "Corrected illustrative scalar carriers and added real wire-validation assertions; reran Rust/Python 3.14/TypeScript canonical suites successfully."
   },
   "native_rust": {
     "sqlite_version": "3.51.3",
@@ -60,5 +58,6 @@
     "Artifact file claims require future storage verification; no publication path exists.",
     "Publication IDs remain separate domain values; full A12/A13 and G0 remain open.",
     "Input is decoded JSON; raw decoders must reject duplicate keys and avoid prior precision loss."
-  ]
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

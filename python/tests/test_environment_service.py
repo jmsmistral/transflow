@@ -228,3 +228,10 @@ def test_missing_sdk_metadata_is_drift_and_never_triggers_index_install(
     monkeypatch.setattr("transflow_worker.environment._run", forbidden)
     with pytest.raises(EnvironmentError, match="drifted"):
         check(workspace)
+
+
+@pytest.mark.parametrize("minor", ["3.12", "3.15"])
+def test_unsupported_interpreter_is_rejected_before_resolution(tmp_path: Path, minor: str) -> None:
+    with pytest.raises(EnvironmentError, match="configured 3.14"):
+        lock_environment(tmp_path, "requirements.in", "requirements.lock", minor, offline=True)
+    assert not (tmp_path / "requirements.lock").exists()

@@ -71,7 +71,7 @@ Review the resulting inventory and exception changes together with the locks.
 
 [dependencies.json](../../security/dependencies.json) records 640 distinct package
 versions: 222 crates.io, 391 npm and 27 PyPI. Every entry includes its contributing
-lockfiles and declared license text/expression. The nine locks cover application,
+lockfiles and declared license text/expression. The seven locks cover application,
 package/web tooling and isolated T003 qualification dependencies, including
 platform-specific transitive packages. They are not all shipped runtime dependencies.
 Lock SHA-256 values bind the inventory; the advisory report is bound to the full

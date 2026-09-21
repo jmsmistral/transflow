@@ -32,7 +32,7 @@ def probe(rust_parquet: Path | None) -> dict[str, object]:
     }
     versions = {name: importlib.metadata.version(name) for name in expected_versions}
     require(versions == expected_versions, f"Unqualified engine versions: {versions}")
-    require(sys.version_info[:2] in {(3, 13), (3, 14)}, "Only Python 3.13/3.14 are in this matrix")
+    require(sys.version_info[:2] == (3, 14), "Only Python 3.14 is supported")
     lock_path = Path(__file__).with_name(f"py{sys.version_info.major}{sys.version_info.minor}.lock")
     locked = dict(re.findall(r"^([A-Za-z0-9_-]+)==([^\s\\]+)", lock_path.read_text(), re.M))
     require(bool(locked), "Engine lock has no package pins")

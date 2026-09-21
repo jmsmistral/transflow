@@ -10,13 +10,13 @@
   "web_tests": 220,
   "declaration_cases": 49,
   "additional_verification": [
-    "Python 3.13 full package/lint/type suite: 543 passed",
-    "Real Polars 1.44.2 returns: DataFrame/LazyFrame accepted, five invalid returns rejected on Python 3.13 and 3.14",
+    "Real Polars 1.44.2 returns: DataFrame/LazyFrame accepted, five invalid returns rejected on Python 3.14",
     "Installed-wheel decorator typing and overlay exports verified"
   ],
   "limits": [
     "Discovery and production catalogue binding remain T027/T030",
     "Full expectation AST/DSL and evaluation remain T059-T062",
     "Execution context is an interface; decorators do not execute lifecycle checks"
-  ]
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

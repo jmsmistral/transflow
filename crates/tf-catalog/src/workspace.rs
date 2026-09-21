@@ -251,11 +251,8 @@ impl WorkspaceConfig {
                 return Err(invalid("branching", "invalid branch name"));
             }
         }
-        if !matches!(raw.python.version.as_str(), "3.13" | "3.14") {
-            return Err(invalid(
-                "python.version",
-                "supported versions are 3.13 and 3.14",
-            ));
+        if raw.python.version != "3.14" {
+            return Err(invalid("python.version", "the supported version is 3.14"));
         }
         relative_path(&raw.python.requirements)?;
         relative_path(&raw.python.lock)?;

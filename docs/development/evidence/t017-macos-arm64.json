@@ -6,8 +6,7 @@
   "specification_base": "353fb301bebd2f66c58bc92189bab540f35cc73a",
   "status": "Local pre-commit verification; CI pending",
   "commands": [
-    "bash tools/check.sh",
-    "PYTHON_CHECK=target/python/py313/bin/python bash tools/check-python.sh"
+    "bash tools/check.sh"
   ],
   "result": "passed",
   "counts": {
@@ -17,7 +16,6 @@
     "rust_tests": 73,
     "rust_compile_fail_documentation_tests": 1,
     "python_314_tests": 462,
-    "python_313_tests": 462,
     "web_tests": 220,
     "execution_tests": 12,
     "generated_event_steps": 57344
@@ -37,5 +35,6 @@
     "Pure domain transitions only; no actual persistence, worker processes or artifact I/O.",
     "Caller proves ownership and atomically persists publication guards.",
     "A20/A22 end-to-end crash recovery and process supervision remain later tasks."
-  ]
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

@@ -7,12 +7,11 @@ application's canonical evaluator, scratchpad service or transform adapters.
 ```bash
 cd ~/dev/transflow
 target/qualification/py314/bin/python tools/qualification/duckdb/probe.py --output target/qualification/t009-py314.json
-target/qualification/py313/bin/python tools/qualification/duckdb/probe.py --output target/qualification/t009-py313.json
 ```
 
 Prepare those environments using the [qualification setup](../../../docs/development/compatibility.md).
 The existing native qualification command also runs this probe and preserves
-`duckdb-capabilities.json` with its other reports. Its six-job CI matrix will run
+`duckdb-capabilities.json` with its other reports. Its three-platform CI matrix runs
 these tests after the changes are pushed. No specification checkout or new
 package installation is required by the probe.
 

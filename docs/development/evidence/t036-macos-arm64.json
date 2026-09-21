@@ -6,8 +6,7 @@
   "commands": [
     "bash tools/check.sh",
     "bash tools/check-rust.sh",
-    "target/qualification/py314/bin/python -I -B python/tools/check_normalization.py target/debug/examples/normalization_probe",
-    "target/qualification/py313/bin/python -I -B python/tools/check_normalization.py target/debug/examples/normalization_probe"
+    "target/qualification/py314/bin/python -I -B python/tools/check_normalization.py target/debug/examples/normalization_probe"
   ],
   "rust_tests": 190,
   "rust_documentation_tests": 1,
@@ -19,15 +18,6 @@
   "boundary_tests": 12,
   "verification_note": "Aggregate passed with 189 Rust tests plus one documentation test. After adding the retained-schema forgery regression and metadata byte guard, the complete Rust check passed with 190 plus one documentation test.",
   "engine_probes": {
-    "py313": {
-      "result": "pass",
-      "checks": 7,
-      "engines": {
-        "pyarrow": "25.0.1",
-        "polars": "1.44.2",
-        "duckdb": "1.5.5"
-      }
-    },
     "py314": {
       "result": "pass",
       "checks": 7,
@@ -53,5 +43,6 @@
     "DuckDB validation rejects aware ns and non-UTC timezone labels; UTC session required",
     "Logical preflights do not replace installed-engine/timezone/expression checks",
     "Older unpublished import preparations without normalized schema evidence must be prepared again"
-  ]
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

@@ -6,17 +6,6 @@
   "specification_base": "d6aca45477e980b9f98e4d16f4755e7f5d2870b7",
   "local_runs": [
     {
-      "python": "3.13.0",
-      "mypy": "2.3.1",
-      "platform": "macOS arm64",
-      "tests": 48,
-      "failures": 0,
-      "errors": 0,
-      "wheel_sha256": {
-        "transflow-0.0.0.dev0-py3-none-any.whl": "e375db4df4985d0042c7378dcd8ce0556d789bd485f2cf91d373d05f64fb2fa2"
-      }
-    },
-    {
       "python": "3.14.7",
       "mypy": "2.3.1",
       "platform": "macOS arm64",
@@ -56,5 +45,6 @@
     "Native VS Code/Pylance and Emacs/lsp-mode completion",
     "New T010 native Linux or remote CI runs",
     "Production worker binding, CatalogSnapshotV1, refresh lifecycle and full A53/A69 acceptance"
-  ]
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

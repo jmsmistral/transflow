@@ -11,4 +11,4 @@ Follow the canonical engineering agreement and the selected task's dependencies 
 
 If the sibling directory is absent or inaccessible, resolve that contributor setup problem rather than guessing its contents. Preserve unrelated changes in both repositories. Record actual verification results and separate repository commit references when available; do not claim tests passed, features shipped or commits exist without evidence.
 
-The spec repository is a development requirement, not a runtime dependency of the installed application. The current baseline is specification **1.1.1**; consult its change history before implementing a superseded design.
+The spec repository is a development requirement, not a runtime dependency of the installed application. The current baseline is specification **1.1.2**; consult its change history before implementing a superseded design.

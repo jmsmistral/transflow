@@ -105,3 +105,11 @@ fn locators_cannot_override_computation_policy() {
         assert!(LocalConfig::parse(text).is_err());
     }
 }
+
+#[test]
+fn only_the_supported_python_minor_is_accepted() {
+    for minor in 0..=20 {
+        let config = format!("{BASE}[python]\nversion='3.{minor}'\n");
+        assert_eq!(WorkspaceConfig::parse(&config).is_ok(), minor == 14);
+    }
+}

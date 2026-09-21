@@ -6,8 +6,7 @@
   "specification_base": "fb0c1b86b950b7d835c8d2db0c6af33b284f3dd3",
   "status": "Local pre-commit verification; CI pending",
   "commands": [
-    "bash tools/check.sh",
-    "PYTHON_CHECK=target/python/py313/bin/python bash tools/check-python.sh"
+    "bash tools/check.sh"
   ],
   "result": "passed",
   "counts": {
@@ -17,7 +16,6 @@
     "rust_tests": 52,
     "rust_compile_fail_documentation_tests": 1,
     "python_314_tests": 403,
-    "python_313_tests": 403,
     "web_tests": 182,
     "shared_schema_cases": 157,
     "shared_version_cases": 17
@@ -38,5 +36,6 @@
     "Blocking codec requires supervisor deadlines and cancellation.",
     "No worker operation dispatch, process supervision or nonce authentication.",
     "No canonical hashing; full A37/A69 and G0 remain open."
-  ]
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

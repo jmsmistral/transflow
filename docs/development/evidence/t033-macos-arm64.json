@@ -40,6 +40,7 @@
     "Native VS Code/Emacs completion remains pending under T031/T108",
     "Trusted imports may cause arbitrary side effects",
     "Persistent coordinator and broader cancellation/process supervisor remain later tasks",
-    "CLI integration CI uses Python 3.14; independent worker/SDK CI covers 3.13 and 3.14"
-  ]
+    "CLI integration CI uses Python 3.14; independent worker/SDK CI covers 3.14"
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

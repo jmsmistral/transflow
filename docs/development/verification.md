@@ -1,5 +1,9 @@
 # Contributor verification
 
+Historical interpreter-specific entries have been filtered to the current Python
+3.14 baseline. Retained results are original measurements; original workflow
+totals may include removed jobs. Current checks are recorded in the latest section.
+
 The contributor checks use Python's standard library and Git; T004 adds the
 pinned Rust toolchain, rustfmt and Clippy; T005 adds hash-locked Python package
 tooling in a separate repository-local environment. T006 adds Node 24.4.1/npm
@@ -98,10 +102,9 @@ contexts, generation failure paths and concurrent installed-wheel mypy overlays.
 See the [catalogue qualification report](catalog-overlay.md); native editor
 completion is still unverified.
 
-The [Python CI workflow](../../.github/workflows/python.yml) covers both Python
-versions on all three target platforms and preserves wheel hashes and JUnit
-reports. Native local execution uses Python 3.14.7 and the available 3.13.0;
-CI's Python 3.13.15/3.14.7 matrix passes on all three platforms. T014 replaces bootstrap metadata with protocol 1.0 framing and session guards;
+The [Python CI workflow](../../.github/workflows/python.yml) covers Python 3.14 on all three target platforms and preserves wheel hashes and JUnit
+reports. Native local execution uses Python 3.14.7;
+CI's Python 3.14.7 matrix passes on all three platforms. T014 replaces bootstrap metadata with protocol 1.0 framing and session guards;
 execution operations remain unimplemented.
 
 The aggregate also runs `bash tools/check-web.sh`: exact Node/npm versions,
@@ -150,12 +153,12 @@ record each revision separately when those commits exist.
 ## T012 completion evidence
 
 On 2026-09-19 the full contributor aggregate passed on macOS arm64, including
-222 Python 3.14.7 tests; the separate Python 3.13.0 runner also passed 222 tests.
+222 Python 3.14.7 tests.
 [Local evidence](evidence/t012-macos-arm64.json) records the commands/counts. All
 five [CI workflows and their 19 jobs](evidence/t012-ci.json) passed for implementation
 `e97eee3bb82d4f921745840e259742d7bec06f97`, paired with specification progress
 `22c5f53`. The Rust/web jobs cover all three platforms; Python and native
-qualification cover both Python minor versions on each platform. T012 is complete
+qualification cover Python 3.14 on each platform. T012 is complete
 for contract definitions; production domain/transport/hashing work remains T013–T015.
 
 ## T013 domain verification
@@ -183,7 +186,7 @@ The installed wheel includes schema data, named validators and framing helpers; 
 requires neither repository nor third-party Python dependencies. SDK/worker metadata
 now reports protocol 1.0 with no executable operations. The full contributor aggregate passes: 44 document regressions, 27 safety regressions,
 eleven Rust boundary regressions, 52 Rust tests plus one compile-fail documentation
-test, 403 Python tests and 182 web tests. Both local Python 3.14.7 and 3.13.0
+test, 403 Python tests and 182 web tests. Local Python 3.14.7
 runners pass. The shared corpus now includes integral decimal metadata written
 as JSON `3.0`/`-2.0` (157 schema cases plus 17 version cases).
 [Local evidence](evidence/t014-macos-arm64.json) records the scope. All five
@@ -203,10 +206,9 @@ The already locked `sha2` 0.10.9 is now a direct tf-protocol/native probe depend
 the native probe checks the standard SHA-256 `abc` answer. No package identity or
 version was added. The full aggregate passes: 44 document regressions, 27 safety
 regressions, eleven boundary regressions, 56 Rust tests plus one compile-fail
-documentation test, 442 Python tests and 210 web tests. Both local Python 3.14.7
-and 3.13.0 package runners pass. Native qualification passes using the prepared
+documentation test, 442 Python tests and 210 web tests. Local Python 3.14.7 package runners pass. Native qualification passes using the prepared
 engine environment. The final fixture correction was rechecked by all three
-languages and both Python versions. See [local evidence](evidence/t015-macos-arm64.json);
+languages and Python 3.14. See [local evidence](evidence/t015-macos-arm64.json);
 All five [CI workflows and their 19 jobs](evidence/t015-ci.json) pass at implementation
 `34506fa27a0c10c98f3830daf9b8a73b833494e8`, paired with specification progress
 `d09ce720917e9ec7ed3f55ae614fc916fcae8d08`. T015 is complete.
@@ -215,8 +217,7 @@ All five [CI workflows and their 19 jobs](evidence/t015-ci.json) pass at impleme
 
 The full `bash tools/check.sh` aggregate passes: 44 document regressions, 27 safety
 regressions, eleven Rust boundary regressions, 61 Rust tests plus one compile-fail
-documentation test, 462 Python tests and 220 web tests. Both local Python 3.14.7
-and 3.13.0 runners pass. The shared corpus now has 167 cases, including diagnostic
+documentation test, 462 Python tests and 220 web tests. Local Python 3.14.7 runners pass. The shared corpus now has 167 cases, including diagnostic
 text and result-envelope failures; five generated outputs reproduce exactly.
 The TypeScript fixture reader now compares array constants structurally. The
 renamed-checkout document test preserves links to the intra-repository CLI crate.
@@ -241,7 +242,7 @@ The full contributor aggregate passes. Final Rust verification (after the added
 schema-forgery regression) passes 190 tests plus one documentation test. Python
 passes 635 tests, web 250, installed-worker CLI 28, document regressions 44,
 safety 27 and boundary checks twelve. The production-normalizer engine probe
-passes seven groups on both prepared local Python versions using PyArrow 25.0.1,
+passes seven groups on Python 3.14 using PyArrow 25.0.1,
 Polars 1.44.2 and DuckDB 1.5.5. No dependency version or lock changed.
 See [local evidence](evidence/t036-macos-arm64.json) and the
 [normalization guide](../../crates/tf-store/NORMALIZATION.md). All five [CI workflows and 19 jobs](evidence/t036-ci.json) pass at implementation `c99f4c2517a557f95fdd7ba6ce38797550d10225`, paired with specification progress `13477efd082c7a71ea9d237ef6ed03a3a25d9b42`. The six native jobs also pass the production-normalizer engine probe. T036 is complete.
@@ -548,3 +549,31 @@ The [owner receipt](evidence/t055-owner-ci.json) records T055 push CI success.
 T056 push CI is pending owner monitoring; no workflows were polled. Durable
 runtime dispatch, process identity/publication races and SQL adapter limits remain
 later tasks. No browser journey applies to this backend-only change.
+
+
+## Python 3.14-only baseline (2026-09-21)
+
+The owner-directed support cleanup is locally verified on macOS arm64 Python
+3.14.7. Contributor gates passed across the aggregate and its corrected
+continuation: 315 Rust tests plus one doc test, 660 Python, 261 web and 51
+installed-worker integrations; 44/27/12 document/safety/boundary regressions.
+The aggregate initially found the retired-lock count and formatter changes for
+the new target; corrected gates pass. Native qualification also passes: engine
+checks, sixteen DuckDB capability tests, ten resource/resolver tests, seven
+normalization groups and producer-return checks.
+
+Package metadata, Rust workspace validation, worker environment tooling and
+qualification enforce Python 3.14 only. Both Python CI matrices contain three
+platform jobs pinned to 3.14.7. Removing two retired locks leaves seven covering
+the same 640 package versions; refreshed OSV evidence reports zero matches.
+Ruff/mypy now target 3.14. Two generated local environments, a type-checker cache,
+and 26 generated bytecode/report files for the retired interpreter were removed.
+Historical evidence entries were filtered without relabelling measurements.
+A tracked-file audit finds no retired-interpreter version or filename references;
+unrelated dependency versions and required third-party compatibility code remain.
+
+Specification 1.1.2 records the approved support change. CI remains pending owner
+monitoring; no workflows were polled. No current T056 CI confirmation or T057
+implementation is inferred from this cleanup.
+
+See [local evidence](evidence/python314-only-macos-arm64.json).

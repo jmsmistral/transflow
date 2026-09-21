@@ -37,35 +37,18 @@
       "job_id": 105881379921
     },
     {
-      "os": "ubuntu-24.04",
-      "python": "3.13.15",
-      "conclusion": "success",
-      "job_id": 105881379968
-    },
-    {
       "os": "macos-15",
       "python": "3.14.7",
       "conclusion": "success",
       "job_id": 105881379998
     },
     {
-      "os": "macos-15",
-      "python": "3.13.15",
-      "conclusion": "success",
-      "job_id": 105881379999
-    },
-    {
       "os": "ubuntu-24.04-arm",
       "python": "3.14.7",
       "conclusion": "success",
       "job_id": 105881380002
-    },
-    {
-      "os": "ubuntu-24.04-arm",
-      "python": "3.13.15",
-      "conclusion": "success",
-      "job_id": 105881380103
     }
   ],
-  "scope": "Ten T011 probes invoked by the successful native runner, alongside existing qualification. No production/runtime or full A61 acceptance claim."
+  "scope": "Ten T011 probes invoked by the successful native runner, alongside existing qualification. No production/runtime or full A61 acceptance claim.",
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

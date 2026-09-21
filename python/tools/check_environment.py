@@ -9,8 +9,8 @@ from pathlib import Path
 def main() -> int:
     """Check the environment without installing or resolving dependencies."""
     minor = sys.version_info[:2]
-    if minor not in {(3, 13), (3, 14)}:
-        print("Python checks require Python 3.13 or 3.14", file=sys.stderr)
+    if minor != (3, 14):
+        print("Python checks require Python 3.14", file=sys.stderr)
         return 1
     lock = Path(__file__).resolve().parents[1] / f"dev-py{minor[0]}{minor[1]}.lock"
     pins = dict(re.findall(r"^([A-Za-z0-9_-]+)==([^\s\\]+)", lock.read_text(), re.M))

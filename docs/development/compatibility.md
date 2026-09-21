@@ -1,7 +1,7 @@
 # Dependency qualification — T003
 
 Status on 2026-09-19: native macOS arm64 and Linux x86_64/arm64 qualification
-passes across Python 3.13.15/3.14.7 in CI. T003 is complete. This is a dependency baseline, not an application release
+passes across Python 3.14.7 in CI. T003 is complete. This is a dependency baseline, not an application release
 or a claim that the full G0 gate has passed.
 
 The [retained machine-readable report](evidence/t003-macos-arm64.json) contains
@@ -12,7 +12,7 @@ the native SQLite/engine results, exact tool output and selected wheel filenames
 | Component | Pin / qualification |
 |---|---|
 | Rust toolchain | 1.98.1; edition 2024; initial MSRV 1.98.1 (older compilers unqualified) |
-| Python | 3.14.7 primary; existing 3.13.0 additionally exercised locally; CI pins 3.13.15 and 3.14.7 |
+| Python | 3.14 only; CI and local qualification pin 3.14.7 |
 | Resolver | pip 26.2.1 + pip-tools 7.6.1, with their transitive hash lock |
 | Polars | 1.44.2, including matching polars-runtime-32 |
 | DuckDB | 1.5.5 |
@@ -41,16 +41,13 @@ Transflow was fetched from an index.
 
 | Target | Python wheels | Native execution |
 |---|---|---|
-| macOS arm64, macOS 15 | 3.13 and 3.14: eight hash-locked wheel candidates each | Pass on macOS 15.3.1 with Python 3.13.0 and 3.14.7 |
-| Linux x86-64, glibc 2.28+ wheel baseline | 3.13 and 3.14: eight candidates each | Passed in CI on both pinned interpreters |
-| Linux arm64, glibc 2.28+ wheel baseline | 3.13 and 3.14: eight candidates each | Passed in CI on both pinned interpreters |
+| macOS arm64, macOS 15 | 3.14: eight hash-locked wheel candidates each | Pass on macOS 15.3.1 with Python 3.14.7 |
+| Linux x86-64, glibc 2.28+ wheel baseline | 3.14: eight candidates each | Passed in CI on the pinned interpreter |
+| Linux arm64, glibc 2.28+ wheel baseline | 3.14: eight candidates each | Passed in CI on the pinned interpreter |
 
 Wheel resolution is not native execution, full environment-marker validation or
 an OS support promise. The CI jobs use Ubuntu 24.04 and macOS 15. Earlier macOS,
-musl Linux, Windows and free-threaded Python have not been qualified. The local
-3.13.0 run is a compatibility spot check using an existing interpreter, not a
-recommendation to install that old patch release. CI uses the maintained
-[3.13.15 release](https://www.python.org/downloads/release/python-31315/).
+musl Linux, Windows and free-threaded Python have not been qualified.
 
 The Rust executable performs eight checks: actual linked SQLite version/source
 identity, WAL/FULL/foreign-key pragmas, transaction rollback, an Arrow/Parquet
@@ -123,9 +120,7 @@ cargo fetch --locked --manifest-path tools/qualification/rust/Cargo.toml
 PYTHON="$PWD/target/qualification/py314/bin/python" bash tools/qualification/check.sh
 ```
 
-Use a separately created Python 3.13 environment and `py313.lock` for the second
-interpreter. The two engine locks currently match byte-for-byte, but remain
-separate because resolution occurs under each actual interpreter. Rust's compiler,
+Use the Python 3.14 engine lock. Rust's compiler,
 Python's interpreter and Node/npm are explicit prerequisites; the script diagnoses
 toolchain drift and does not upgrade them. Dependency probes leave only ignored
 reports/artifacts beneath `target/qualification/`. Your project pyenv packages and
@@ -167,8 +162,7 @@ license baseline remains T008. Canonical rationale is in
 The [DuckDB capability probe](../../tools/qualification/duckdb/README.md) extends
 native qualification with sixteen tests for restricted helper setup, parsed SQL
 policy, exact aggregates/typed round trips, interruption and physical spill.
-It reuses the existing locked engine environments. Both local Python 3.13.0 and
-3.14.7 runs pass; the native runner now writes `duckdb-capabilities.json` alongside
+It reuses the existing locked engine environments. Local Python 3.14.7 runs pass; the native runner now writes `duckdb-capabilities.json` alongside
 its T003 reports. Remote results for the new tests remain pending.
 
 [ADR-008](../../../transflow-spec/docs/adr/ADR-008.md) records engine limitations
@@ -180,13 +174,13 @@ The existing cross-engine probes do not implement those adapters.
 ## T011 resource and resolver extension
 
 The [resource capability probe](../../tools/qualification/resources/README.md) adds
-ten tests to the existing six-job native matrix using unchanged dependency locks.
-Local Python 3.13.0/3.14.7 runs pass separate phase deadlines, cancellable disabled
+ten tests to the native platform matrix using unchanged dependency versions.
+Local Python 3.14.7 runs pass separate phase deadlines, cancellable disabled
 timers, real POSIX group/child reaping, explicit memory policy and offline
 pip/pip-tools hash resolution with tamper rejection. Engine defaults and peak
 RSS are reported; no universal hard-process memory support is claimed. All six
 [native jobs](https://github.com/jmsmistral/transflow/actions/runs/35437047654) passed
-at `a46aca6`, using Python 3.13.15/3.14.7 on macOS arm64 and Linux x86_64/arm64.
+at `a46aca6`, using Python 3.14.7 on macOS arm64 and Linux x86_64/arm64.
 
 T032 promotes the already-locked `unicode-ident` 1.0.26 library to an explicit
 `tf-catalog` dependency for Python-style XID identifier validation. Its pure
@@ -198,4 +192,4 @@ was added or upgraded. Python NFKC/source-module rules remain enforced by the SD
 T033 promotes the already qualified serde_json pin into the application composition
 root and adds the permitted tf-exec → tf-protocol edge. No dependency version changes.
 The native Rust CI jobs now also run the installed Python 3.14 worker/CLI lifecycle
-bridge; independent Python jobs retain the 3.13/3.14 matrix.
+bridge; independent Python jobs retain the 3.14 matrix.

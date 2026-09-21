@@ -376,7 +376,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
         while not stopped.wait(5):
             try:
                 send({"type": "heartbeat"})
-            except (ProtocolError, OSError):
+            except ProtocolError, OSError:
                 os._exit(1)  # Coordinator loss cannot authorize continued import work.
 
     send({"type": "hello", "operation": "discover", "capabilities": ["discovery.v1"]})

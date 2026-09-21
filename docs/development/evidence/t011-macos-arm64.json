@@ -7,101 +7,6 @@
   "local_runs": [
     {
       "task": "T011",
-      "python": "3.13.0",
-      "platform": "Darwin",
-      "machine": "arm64",
-      "packages": {
-        "pip": "26.2.1",
-        "pip-tools": "7.6.1",
-        "polars": "1.44.2",
-        "duckdb": "1.5.5"
-      },
-      "tests": 10,
-      "failures": 0,
-      "errors": 0,
-      "observations": {
-        "memory_policy": {
-          "default_admission_gate": false,
-          "optional_reservation_enforced": true,
-          "reservation_is_not_RSS_limit": true
-        },
-        "engine_settings_and_cancellation": {
-          "polars": {
-            "ready": true,
-            "threads": 1,
-            "max_rss_bytes": 53444608,
-            "engine": "1.44.2",
-            "transflow_memory_budget": null,
-            "cancelled": true,
-            "reaped": true
-          },
-          "duckdb": {
-            "ready": true,
-            "threads": 1,
-            "max_rss_bytes": 42909696,
-            "engine": "1.5.5",
-            "engine_memory_limit": "102.3 GiB",
-            "transflow_memory_budget": null,
-            "cancelled": true,
-            "reaped": true
-          }
-        },
-        "process_tree": {
-          "descendant_reaped": true,
-          "parent_reaped": true
-        },
-        "hard_process_limits": "unsupported; rejected explicitly on every platform",
-        "duckdb_opt_in_limit": {
-          "engine_default": "102.3 GiB",
-          "requested": "1MB",
-          "effective": "976.5 KiB",
-          "spill": "disabled for test",
-          "over_budget_query": "OutOfMemoryException",
-          "scope": "engine buffer manager; not total process RSS"
-        },
-        "resolver": {
-          "failed_install_preserves_environment": true,
-          "offline_resolution": true,
-          "transitive_constraint_respected": true,
-          "repeat_lock_identical": true,
-          "clean_install": true,
-          "tampering_rejected": true,
-          "fixture_wheel_hashes": {
-            "transflow_fixture_leaf-1.0.0-py3-none-any.whl": "0131f20051a699f7ea8fdd1bc9a21017162d896e68b290076a55272be78e0b27",
-            "transflow_fixture_root-1.0.0-py3-none-any.whl": "ab0389de34cc6788934d6591b1a15e68198012e014fc4d3ac5341a90fb4900c4"
-          }
-        },
-        "escalation": {
-          "grace_seconds": 0.05,
-          "SIGKILL": true,
-          "reaped": true
-        },
-        "independent_timers": {
-          "clock": "injected elapsed seconds; real children",
-          "interactive_expired_at": 31,
-          "validation_alive_at": 3599,
-          "validation_error": {
-            "outcome": "ERROR",
-            "phase": "validation",
-            "name": "synthetic/check",
-            "elapsed_seconds": 3600,
-            "limit_seconds": 3600,
-            "setting_source": "workspace",
-            "setting_key": "validation.timeout_seconds",
-            "message": "Validation timed out for synthetic/check. Increase validation.timeout_seconds in workspace, or set it to 0 to disable it.",
-            "logs": ""
-          }
-        }
-      },
-      "limits": [
-        "Feasibility only; not production resource admission or worker supervision",
-        "Phase time uses an injected clock; child cancellation uses real POSIX signals",
-        "No cgroup backend or universal RSS ceiling",
-        "Only fixed bounded-output fixture processes; no hostile-process containment"
-      ]
-    },
-    {
-      "task": "T011",
       "python": "3.14.7",
       "platform": "Darwin",
       "machine": "arm64",
@@ -200,5 +105,6 @@
     "bash tools/check.sh": "passed",
     "PYTHON=target/qualification/py314/bin/python bash tools/qualification/check.sh": "passed",
     "new_native_CI": "not yet run"
-  }
+  },
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

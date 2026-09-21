@@ -29,17 +29,6 @@
   },
   "runs": [
     {
-      "python": "3.13.0",
-      "tests_passed": 28,
-      "ruff": "passed",
-      "mypy_strict": "passed",
-      "pip_check": "passed",
-      "tooling_lock_sha256": "70e9c67f810e843334c39b4d47c1a23c30e7a982a1da144b87fc86c844227ddc",
-      "wheel_sha256": {
-        "transflow-0.0.0.dev0-py3-none-any.whl": "9f68308a9d06eb8e6c2759fff619d4a19260979133563f6c4469f4e16330a0db"
-      }
-    },
-    {
       "python": "3.14.7",
       "tests_passed": 28,
       "ruff": "passed",
@@ -55,7 +44,7 @@
   "limits": [
     "bootstrap only",
     "no engines or execution operations in wheel",
-    "native Linux and CI Python 3.13.15 pending",
     "no publication or complete application conformance"
-  ]
+  ],
+  "evidence_scope_note": "Retired interpreter entries removed on 2026-09-21; retained entries are original measurements. Historical workflow totals may include removed jobs."
 }

@@ -1,7 +1,6 @@
 # Catalogue binding and typing spike
 
-T010 now has an executable SDK binding and mypy overlay prototype. Python 3.13.0
-and 3.14.7 pass all 48 package tests on macOS arm64 with mypy 2.3.1. Twenty tests
+T010 now has an executable SDK binding and mypy overlay prototype. Python 3.14.7 passes all 48 package tests on macOS arm64 with mypy 2.3.1. Twenty tests
 were added for this spike. Interactive editor completion is still unverified;
 The owner accepted T010 G0 closure on the runtime/mypy evidence and retained
 that acceptance item under T031/T108. The
@@ -56,7 +55,6 @@ Use the prepared, hash-locked contributor environments described in
 
 ```bash
 bash tools/check-python.sh
-PYTHON_CHECK="$PWD/target/python/py313/bin/python" bash tools/check-python.sh
 ```
 
 The packaging test builds and installs the actual wheel offline outside both
