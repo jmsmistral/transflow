@@ -68,10 +68,12 @@ impl Session {
         operation: Operation,
         capabilities: BTreeSet<String>,
     ) -> Result<Self, ProtocolError> {
-        if capabilities
-            .iter()
-            .any(|s| s != "diagnostic.note.v1" && s != "discovery.v1")
-        {
+        if capabilities.iter().any(|s| {
+            !matches!(
+                s.as_str(),
+                "diagnostic.note.v1" | "discovery.v1" | "polars.execute.v1"
+            )
+        }) {
             return Err(ProtocolError::Capability);
         }
         Ok(Self {

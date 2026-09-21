@@ -25,3 +25,6 @@ pub mod timing;
 
 /// Persisted build cancellation, attempt-bound workers and client disconnect policy.
 pub mod cancellation;
+
+/// Pinned Polars scans, one materialization and independently validated staging.
+pub mod polars;

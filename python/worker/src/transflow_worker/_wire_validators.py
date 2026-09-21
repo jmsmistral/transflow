@@ -216,3 +216,8 @@ def validate_WhyResultV1(value: object) -> None:
 def validate_ResourcePolicyV1(value: object) -> None:
     """Assert the ResourcePolicyV1 contract, including custom formats."""
     validate_document("ResourcePolicyV1", value)
+
+
+def validate_PolarsExecutionRequestV1(value: object) -> None:
+    """Assert the PolarsExecutionRequestV1 contract, including custom formats."""
+    validate_document("PolarsExecutionRequestV1", value)

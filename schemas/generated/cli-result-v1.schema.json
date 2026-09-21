@@ -3794,6 +3794,199 @@
         "memory_enforcement"
       ],
       "additionalProperties": false
+    },
+    "PolarsExecutionRequestV1": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "protocol": {
+          "$ref": "#/$defs/ProtocolVersion"
+        },
+        "request_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "capture_root": {
+          "type": "string"
+        },
+        "source_roots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RelativePath"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "$ref": "#/$defs/RelativePath"
+              },
+              "sha256": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "byte_length": {
+                "$ref": "#/$defs/Count"
+              }
+            },
+            "required": [
+              "path",
+              "sha256",
+              "byte_length"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 100000
+        },
+        "catalog": {
+          "$ref": "#/$defs/CatalogSnapshotV1"
+        },
+        "environment_fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "result_directory": {
+          "type": "string"
+        },
+        "auth_token": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "producer": {
+          "$ref": "#/$defs/DeclarationV1"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "alias": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "dataset": {
+                "$ref": "#/$defs/DatasetKey"
+              },
+              "version_id": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "artifact_root": {
+                "type": "string"
+              },
+              "artifact_digest": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "manifest": {
+                "$ref": "#/$defs/ArtifactManifestV1"
+              }
+            },
+            "required": [
+              "alias",
+              "dataset",
+              "version_id",
+              "artifact_root",
+              "artifact_digest",
+              "manifest"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 10000
+        },
+        "context": {
+          "type": "object",
+          "properties": {
+            "build_id": {
+              "$ref": "#/$defs/Uuid"
+            },
+            "job_id": {
+              "$ref": "#/$defs/Uuid"
+            },
+            "evaluation_time": {
+              "$ref": "#/$defs/ScalarValue"
+            },
+            "random_seed": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/Count"
+                }
+              ]
+            },
+            "parameters": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "format": "transflow-name"
+                  },
+                  "value": {
+                    "$ref": "#/$defs/WireValue"
+                  }
+                },
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 0,
+              "maxItems": 10000
+            }
+          },
+          "required": [
+            "build_id",
+            "job_id",
+            "evaluation_time",
+            "random_seed",
+            "parameters"
+          ],
+          "additionalProperties": false
+        },
+        "compression": {
+          "enum": [
+            "uncompressed",
+            "snappy",
+            "zstd"
+          ]
+        },
+        "row_group_size": {
+          "$ref": "#/$defs/Count"
+        },
+        "threads": {
+          "$ref": "#/$defs/Count"
+        }
+      },
+      "required": [
+        "format_version",
+        "protocol",
+        "request_id",
+        "attempt_id",
+        "capture_root",
+        "source_roots",
+        "files",
+        "catalog",
+        "environment_fingerprint",
+        "result_directory",
+        "auth_token",
+        "producer",
+        "inputs",
+        "context",
+        "compression",
+        "row_group_size",
+        "threads"
+      ],
+      "additionalProperties": false
     }
   },
   "$ref": "#/$defs/CliEnvelopeV1"

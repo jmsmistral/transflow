@@ -6,7 +6,7 @@ select a named `$defs` entry; the document root is a definition collection, not 
 validator for arbitrary payloads. These definitions implement architecture 7.1
 and the shape of the future worker boundary. They do not start a worker or publish
 artifacts. T014 now implements protocol 1.0 framing; installed SDK/worker diagnostics
-report 1.0 with no execution operations enabled.
+report 1.0; T058 enables private Polars execution alongside captured discovery.
 [Production domain types](../crates/tf-domain/README.md) are implemented by T013.
 [Transport/code generation](../crates/tf-protocol/README.md) is implemented by T014;
 [Canonical encoding/hashing](canonical-v1.md) is implemented by T015.
@@ -40,7 +40,7 @@ metadata is an open string-to-string map, without executable meaning.
 
 The fixtures use a deliberately small receiver profile that understands only
 `diagnostic.note.v1`, carrying a string scalar. T014 implements the same optional diagnostic extension, gated by both peers
-advertising support. Worker execution operations remain unavailable. Required capability names and extension names must be unique, and
+advertising support. T058 adds `polars.execute.v1` and its closed request carrier; other worker operations remain unavailable. Required capability names and extension names must be unique, and
 there can be at most 64 of each. The hello capability advertisement has the same
 64-item bound. T014 enforces hello, identity, ordering and capability intersection; T055 owns
 nonce authentication and the process launcher.
@@ -175,3 +175,9 @@ job/CPU/thread/memory and discovery/interactive timeout values and provenance.
 Memory absence uses null; counts use exact decimal strings. Two fixtures bring
 the shared corpus to 207 cases. This extends the initial unreleased contract;
 old development drafts need re-preparation. Version baselines remain unchanged.
+
+T058 `PolarsExecutionRequestV1` reuses captured discovery identity and adds an exact
+producer declaration, alias-qualified pinned artifact manifests, resolved context
+and writer/thread settings. Existing artifact-ready frames carry evidence only;
+the Rust adapter independently recomputes the staged candidate manifest. The new
+capability must be understood and negotiated; control protocol 1.0 is unchanged.

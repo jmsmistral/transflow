@@ -1,0 +1,116 @@
+{
+  "task": "T058",
+  "date": "2026-09-21",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "polars": "1.44.2",
+  "implementation_base": "2c7d705817047dc584b6487cb6c9458f5d9c464a",
+  "specification_base": "0ec9df989bdfbcf2633d55cc54746a7fff6dc706",
+  "result": "passed",
+  "commands": [
+    {
+      "command": "bash tools/check.sh",
+      "result": "Document (44), safety (27) and Rust-boundary (12) regressions passed. Initial runs found the stale schema registry fingerprint, independent capability readers and fixed conformance count; corrected before final gates."
+    },
+    {
+      "command": "bash tools/check-rust.sh",
+      "result": "Passed: formatting, workspace/standalone storage compilation, Clippy and 324 Rust tests plus one doc test; target/rust-tests.log."
+    },
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "Passed: 673 tests, locked toolchain check, Ruff, formatting, strict mypy and actual wheel installation; target/python/py314/tests.xml."
+    },
+    {
+      "command": "bash tools/check-web.sh",
+      "result": "Passed: typecheck, lint, formatting, 266 tests and matching production builds; target/web/unit-tests.json."
+    },
+    {
+      "command": "bash tools/check-cli.sh",
+      "result": "Passed: 51 installed CLI tests; target/cli-tests.xml and /private/tmp/t058-cli.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh",
+      "result": "Passed: existing engine/resource/normalization probes and all 22 new packaged Polars execution cases; /private/tmp/t058-qualification.log and target/qualification/runs/native.Fns7Sq."
+    },
+    {
+      "command": "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/tests/test_execution_context.py",
+      "result": "All three tests passed after final explicit binary32 parameter rounding; final typing and aggregate Python checks also include this refinement."
+    },
+    {
+      "command": "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Passed: specification 1.1.2, 629 local links, document and syntax validation only. Both repository git diff --check commands also pass."
+    }
+  ],
+  "verification": {
+    "rust_tests": 324,
+    "rust_doc_tests": 1,
+    "python_tests": 673,
+    "web_tests": 266,
+    "document_regressions": 44,
+    "safety_regressions": 27,
+    "boundary_regressions": 12,
+    "conformance_cases": 212,
+    "native_polars_cases": 22,
+    "installed_cli_tests": 51
+  },
+  "streaming": {
+    "result": "pass",
+    "checks": [
+      "exact-files",
+      "dataframe",
+      "empty",
+      "precision",
+      "once",
+      "aliases-and-validation-role",
+      "threads",
+      "parameter",
+      "source",
+      "none",
+      "multiple",
+      "generator",
+      "object",
+      "null-type",
+      "duration",
+      "schema-mismatch",
+      "changed-source",
+      "changed-alias",
+      "changed-digest",
+      "changed-existing",
+      "exception",
+      "streaming"
+    ],
+    "polars": "1.44.2",
+    "streaming_peak_rss_bytes": 241106944,
+    "streaming_logical_bytes": 1024000000
+  },
+  "coverage": [
+    "A02 adapter foundation: exact ordered alias-qualified manifests, distinct repeated dataset aliases and validation-only input exclusion from function arguments.",
+    "A06: instrumented producer called once and lazy plan executed once; output collection is forbidden on the returned plan; metadata reopens staged bytes.",
+    "A10/A33 Polars scope: real Rust/Arrow/Polars round trips preserve nullable primitive widths, decimal38, naive and named-zone timestamps, nested values, null/NaN/infinities and negative zero; unsupported dtypes fail explicitly.",
+    "Real Rust supervisor runs the built wheel with thread policy before engine imports and private nonce-authenticated bounded control/logs.",
+    "Every native case seeds a real existing publication and verifies generation, version and event unchanged on adapter success and failure.",
+    "Eight-million-row, sixteen-column sink emits 1,024,000,000 logical bytes with measured worker peak RSS 241,106,944 bytes; no default memory cap or unconditional output collection.",
+    "Shared Rust/Python/TypeScript readers cover five added execute request/capability cases, including invalid fields/count carriers; packaging advertises discover and execute.",
+    "Immutable context parameters preserve large integers, fixed-scale decimals, binary32 width and nested values; unsupported Python datetime nanoseconds and ambient secret lookup fail."
+  ],
+  "corrected_failures": [
+    "Registered polars.execute.v1 in all production and independent fixture readers; the original supervisor correctly rejected an unregistered capability.",
+    "Worker initially named the output differently from the existing store canonical part-00000.parquet; aligned it instead of relaxing full manifest comparison.",
+    "Corrected the native typed Parameter fixture and Python fixture formatting/type assertions.",
+    "Refreshed the reviewed authored-schema hash and updated the exact shared case inventory from 207 to 212.",
+    "Final document validation initially used an older ambient python3 without tomllib; reran successfully with the qualified Python 3.14 interpreter. No interpreter fallback was added."
+  ],
+  "limits": [
+    "Local evidence is macOS arm64 only. Supported Linux/macOS CI is handed to the owner without polling.",
+    "This is the private Polars data plane. Public build/serve, runtime dispatch, input/output expectation evaluation and publication composition remain T061\u2013T067; other transform adapters remain later tasks.",
+    "Caller holds runtime ownership, input leases and resource policy, verifies environment and completes required input expectations before execution.",
+    "The worker manifest is evidence only. Rust returns a closed invisible candidate; no worker or adapter updates catalogue heads.",
+    "Polars physical fields are nullable; explicit schemas must match exactly. Unsupported schema types and submicrosecond Python datetime parameters fail rather than silently coerce.",
+    "Context secret delivery requires the later source service. Process-group cancellation and heartbeat disconnect use the existing supervisor; no hostile-code sandbox is claimed.",
+    "Streaming measurement concerns the worker and this query shape. Eager user code, joins/sorts/UDFs and Rust artifact validation have separate resource costs.",
+    "No dependency pins, public CLI envelope, runtime schema 7, protocol 1.0 or specification 1.1.2 version changes.",
+    "Earlier pending owner CI confirmations remain pending; continuing work is not a CI success report."
+  ],
+  "ci": "pending_owner_monitoring",
+  "agent_polled_workflows": false
+}

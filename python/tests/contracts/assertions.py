@@ -206,6 +206,7 @@ def invariant(name: str, value: dict[str, Any]) -> None:
         supported = {
             "diagnostic.note.v1",
             "discovery.v1",
+            "polars.execute.v1",
         }  # Fixture reader profile; not a live worker capability.
         need(len(set(required)) == len(required) and set(required) <= supported, name)
         need(len({e["capability"] for e in extensions}) == len(extensions), name)

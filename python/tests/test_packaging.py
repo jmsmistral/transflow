@@ -123,6 +123,8 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
             "source_index",
             "environment",
             "discovery",
+            "execution",
+            "polars_adapter",
         )
     }
     metadata_files = {"METADATA", "WHEEL", "RECORD", "top_level.txt", "entry_points.txt"}
@@ -173,7 +175,7 @@ def test_isolated_worker_ignores_source_shadowing(installed: Path, tmp_path: Pat
         "protocol_major": 1,
         "protocol_minor": 0,
         "wire_protocol_implemented": True,
-        "supported_operations": ["discover"],
+        "supported_operations": ["discover", "execute"],
     }
     assert result.stderr == ""
     assert sorted(path.name for path in tmp_path.iterdir()) == [
@@ -188,7 +190,11 @@ def test_worker_entrypoints(installed: Path, tmp_path: Path, args: list[str]) ->
     console = run([str(installed.parent / "transflow-worker"), *args], tmp_path)
     assert module.stdout == console.stdout
     assert module.stderr == console.stderr == ""
-    assert VERSION in module.stdout if args == ["--version"] else "not implemented" in module.stdout
+    assert (
+        VERSION in module.stdout
+        if args == ["--version"]
+        else "Polars execution worker" in module.stdout
+    )
 
 
 @pytest.mark.parametrize(
@@ -202,7 +208,7 @@ def test_worker_entrypoints(installed: Path, tmp_path: Path, args: list[str]) ->
         ["compatibility", "--protocol-major", "-1"],
     ],
 )
-def test_worker_rejects_unavailable_operations_and_protocols(
+def test_worker_rejects_incomplete_requests_and_protocols(
     installed: Path, tmp_path: Path, args: list[str]
 ) -> None:
     result = run([str(installed), "-I", "-m", "transflow_worker", *args], tmp_path, ok=False)

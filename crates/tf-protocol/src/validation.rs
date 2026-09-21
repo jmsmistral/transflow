@@ -216,9 +216,12 @@ fn invariant(name: &str, v: &Value) -> bool {
             let names: Option<BTreeSet<_>> = required.iter().map(Value::as_str).collect();
             names.is_some_and(|names| {
                 names.len() == required.len()
-                    && names
-                        .iter()
-                        .all(|s| matches!(*s, "diagnostic.note.v1" | "discovery.v1"))
+                    && names.iter().all(|s| {
+                        matches!(
+                            *s,
+                            "diagnostic.note.v1" | "discovery.v1" | "polars.execute.v1"
+                        )
+                    })
             }) && unique(extensions, "capability")
                 && extensions.iter().all(|e| {
                     e["capability"] == "diagnostic.note.v1" && e["value"]["type"] == "string"

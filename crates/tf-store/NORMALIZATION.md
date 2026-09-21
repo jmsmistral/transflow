@@ -4,7 +4,8 @@ T036 provides the shared Rust normalization service used by import staging and
 future artifact/execution services. It projects qualified Arrow types into the
 closed `LogicalSchemaV1` and computes the existing canonical schema fingerprint.
 It validates actual decoded values before a copied import can be retained.
-It does not publish artifacts, evaluate expectations or implement transform workers.
+It does not publish artifacts or evaluate expectations. T058 now uses it to
+independently validate [Polars worker candidates](../../python/POLARS.md).
 
 Supported logical types are booleans, all signed/unsigned integer widths, binary32
 and binary64 floats, UTF-8 strings, binary, Date32 dates, decimal128, timestamps,
@@ -65,4 +66,4 @@ PyArrow and Polars rewrites are inspected by production Rust normalization and
 compared to original typed values and fingerprints; empty Polars output keeps
 schema. The compatible DuckDB subset is compared identically with its session
 explicitly set to UTC. Object and duration failures are also tested. The probe
-runs in the six-job native qualification matrix on the locked engines.
+runs in the three-job native qualification matrix on the locked engines.

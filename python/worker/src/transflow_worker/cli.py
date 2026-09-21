@@ -15,7 +15,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Print help/version or verify the installed SDK/worker bootstrap pair."""
     parser = argparse.ArgumentParser(
         prog="transflow-worker",
-        description="Worker packaging bootstrap; execution is not implemented yet.",
+        description="Private captured-source discovery and Polars execution worker.",
         add_help=False,
     )
     parser.add_argument("-h", "--help", action="store_true", help="show this help message")
@@ -32,6 +32,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     discovery.add_argument("--request", type=Path, required=True)
     discovery.add_argument("--control-socket", type=Path, required=True)
+    execution = subcommands.add_parser("execute", help="materialize a pinned Polars producer")
+    execution.add_argument("--request", type=Path, required=True)
+    execution.add_argument("--control-socket", type=Path, required=True)
     try:
         args = parser.parse_args(argv)
         if args.help or args.command is None and not args.version:
@@ -48,6 +51,19 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(
                     "Discovery setup failed; verify the captured request "
                     "and private coordinator channel",
+                    file=sys.stderr,
+                )
+                return 1
+        elif args.command == "execute":
+            from .discovery import DiscoveryError
+            from .execution import serve as execute_serve
+            from .wire import ProtocolError
+
+            try:
+                return execute_serve(args.request, args.control_socket)
+            except DiscoveryError, ProtocolError, OSError, ValueError:
+                print(
+                    "Execution setup failed; verify the pinned request and private channel",
                     file=sys.stderr,
                 )
                 return 1

@@ -270,7 +270,10 @@ function invariant(name: string, value: Record<string, unknown>): void {
     );
     need(
       required.every(
-        (c) => c === "diagnostic.note.v1" || c === "discovery.v1",
+        (c) =>
+          c === "diagnostic.note.v1" ||
+          c === "discovery.v1" ||
+          c === "polars.execute.v1",
       ) &&
         extensions.every(
           (e) =>

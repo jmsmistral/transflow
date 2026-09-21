@@ -70,8 +70,9 @@ Direct function calls are ordinary Python, including their return values.
 `transflow.declarations.validate_result(function, result)` is the explicit boundary
 that accepts only a real Polars DataFrame or LazyFrame, without collecting it.
 Missing Polars is an actionable environment error; nothing installs implicitly.
-Full execution, materialization, checks and publication remain later tasks.
+T058 [materializes Polars results](POLARS.md) once through the private worker;
+canonical checks and full runtime/publication composition remain later tasks.
 
 Verification combines pure declarations, installed-wheel import/type/package tests,
 and `python/tools/check_declaration_returns.py` against pinned real Polars in all
-six native qualification jobs. No new dependency is required by importing the SDK.
+three native qualification jobs. No new dependency is required by importing the SDK.

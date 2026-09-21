@@ -4341,5 +4341,303 @@
       "memory_origin": null,
       "memory_enforcement": "none"
     }
+  },
+  {
+    "name": "polars-execute-hello",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "0",
+      "required_capabilities": [
+        "polars.execute.v1"
+      ],
+      "extensions": [],
+      "message": {
+        "type": "hello",
+        "operation": "execute",
+        "capabilities": [
+          "polars.execute.v1"
+        ]
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "polars-execute-request",
+    "schema": "PolarsExecutionRequestV1",
+    "value": {
+      "format_version": 1,
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000001",
+      "capture_root": "/synthetic/capture",
+      "source_roots": [
+        "src"
+      ],
+      "files": [],
+      "catalog": {
+        "format_version": 1,
+        "workspace_id": "00000000-0000-4000-8000-000000000001",
+        "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+        "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "entries": []
+      },
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_directory": "/synthetic/result",
+      "auth_token": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "producer": {
+        "module": "producer",
+        "function": "produce",
+        "path": "src/producer.py",
+        "line": 1,
+        "source": false,
+        "engine": "polars",
+        "inputs": [],
+        "output": {
+          "ref": {
+            "form": "string",
+            "value": "curated/items"
+          },
+          "checks": [],
+          "schema": null
+        },
+        "parameters": [],
+        "wall_timeout_seconds": null,
+        "cache": "deterministic",
+        "refresh": null,
+        "secret_refs": [],
+        "lineage_json": null
+      },
+      "inputs": [],
+      "context": {
+        "build_id": "00000000-0000-4000-8000-000000000001",
+        "job_id": "00000000-0000-4000-8000-000000000001",
+        "evaluation_time": {
+          "type": "timestamp",
+          "value": "2026-09-21T00:00:00.000000Z",
+          "unit": "us",
+          "timezone": "UTC"
+        },
+        "random_seed": null,
+        "parameters": []
+      },
+      "compression": "zstd",
+      "row_group_size": "8192",
+      "threads": "2"
+    },
+    "valid": true
+  },
+  {
+    "name": "polars-execute-invalid-threads",
+    "schema": "PolarsExecutionRequestV1",
+    "value": {
+      "format_version": 1,
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000001",
+      "capture_root": "/synthetic/capture",
+      "source_roots": [
+        "src"
+      ],
+      "files": [],
+      "catalog": {
+        "format_version": 1,
+        "workspace_id": "00000000-0000-4000-8000-000000000001",
+        "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+        "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "entries": []
+      },
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_directory": "/synthetic/result",
+      "auth_token": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "producer": {
+        "module": "producer",
+        "function": "produce",
+        "path": "src/producer.py",
+        "line": 1,
+        "source": false,
+        "engine": "polars",
+        "inputs": [],
+        "output": {
+          "ref": {
+            "form": "string",
+            "value": "curated/items"
+          },
+          "checks": [],
+          "schema": null
+        },
+        "parameters": [],
+        "wall_timeout_seconds": null,
+        "cache": "deterministic",
+        "refresh": null,
+        "secret_refs": [],
+        "lineage_json": null
+      },
+      "inputs": [],
+      "context": {
+        "build_id": "00000000-0000-4000-8000-000000000001",
+        "job_id": "00000000-0000-4000-8000-000000000001",
+        "evaluation_time": {
+          "type": "timestamp",
+          "value": "2026-09-21T00:00:00.000000Z",
+          "unit": "us",
+          "timezone": "UTC"
+        },
+        "random_seed": null,
+        "parameters": []
+      },
+      "compression": "zstd",
+      "row_group_size": "8192",
+      "threads": 2
+    },
+    "valid": false
+  },
+  {
+    "name": "polars-execute-invalid-compression",
+    "schema": "PolarsExecutionRequestV1",
+    "value": {
+      "format_version": 1,
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000001",
+      "capture_root": "/synthetic/capture",
+      "source_roots": [
+        "src"
+      ],
+      "files": [],
+      "catalog": {
+        "format_version": 1,
+        "workspace_id": "00000000-0000-4000-8000-000000000001",
+        "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+        "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "entries": []
+      },
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_directory": "/synthetic/result",
+      "auth_token": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "producer": {
+        "module": "producer",
+        "function": "produce",
+        "path": "src/producer.py",
+        "line": 1,
+        "source": false,
+        "engine": "polars",
+        "inputs": [],
+        "output": {
+          "ref": {
+            "form": "string",
+            "value": "curated/items"
+          },
+          "checks": [],
+          "schema": null
+        },
+        "parameters": [],
+        "wall_timeout_seconds": null,
+        "cache": "deterministic",
+        "refresh": null,
+        "secret_refs": [],
+        "lineage_json": null
+      },
+      "inputs": [],
+      "context": {
+        "build_id": "00000000-0000-4000-8000-000000000001",
+        "job_id": "00000000-0000-4000-8000-000000000001",
+        "evaluation_time": {
+          "type": "timestamp",
+          "value": "2026-09-21T00:00:00.000000Z",
+          "unit": "us",
+          "timezone": "UTC"
+        },
+        "random_seed": null,
+        "parameters": []
+      },
+      "compression": "automatic",
+      "row_group_size": "8192",
+      "threads": "2"
+    },
+    "valid": false
+  },
+  {
+    "name": "polars-execute-invalid-skip_checks",
+    "schema": "PolarsExecutionRequestV1",
+    "value": {
+      "format_version": 1,
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000001",
+      "capture_root": "/synthetic/capture",
+      "source_roots": [
+        "src"
+      ],
+      "files": [],
+      "catalog": {
+        "format_version": 1,
+        "workspace_id": "00000000-0000-4000-8000-000000000001",
+        "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+        "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "entries": []
+      },
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_directory": "/synthetic/result",
+      "auth_token": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "producer": {
+        "module": "producer",
+        "function": "produce",
+        "path": "src/producer.py",
+        "line": 1,
+        "source": false,
+        "engine": "polars",
+        "inputs": [],
+        "output": {
+          "ref": {
+            "form": "string",
+            "value": "curated/items"
+          },
+          "checks": [],
+          "schema": null
+        },
+        "parameters": [],
+        "wall_timeout_seconds": null,
+        "cache": "deterministic",
+        "refresh": null,
+        "secret_refs": [],
+        "lineage_json": null
+      },
+      "inputs": [],
+      "context": {
+        "build_id": "00000000-0000-4000-8000-000000000001",
+        "job_id": "00000000-0000-4000-8000-000000000001",
+        "evaluation_time": {
+          "type": "timestamp",
+          "value": "2026-09-21T00:00:00.000000Z",
+          "unit": "us",
+          "timezone": "UTC"
+        },
+        "random_seed": null,
+        "parameters": []
+      },
+      "compression": "zstd",
+      "row_group_size": "8192",
+      "threads": "2",
+      "skip_checks": true
+    },
+    "valid": false
   }
 ]

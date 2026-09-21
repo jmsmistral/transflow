@@ -26,8 +26,10 @@ mappings so caller mutation cannot change an accepted frame.
 The codec receives protocol major 1. Minor 0 is current; a higher advertised minor
 is acceptable only with understood message shapes and capabilities. The installed
 SDK/worker compatibility diagnostic now reports 1.0 and `wire_protocol_implemented`
-as true. `supported_operations` remains empty: operation identifiers are defined,
-with discovery enabled since T027; execution/check/query workers remain later work.
+as true. `supported_operations` advertises `discover` and `execute`; T058 enables
+the `polars.execute.v1` capability with `PolarsExecutionRequestV1`. Required engine
+packages are checked at execution, never installed implicitly. Check/query workers
+remain later work.
 
 `Session` binds request UUID, attempt UUID and an expected operation before reading
 hello. It requires hello first and only once, checks operation and identity,

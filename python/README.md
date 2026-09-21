@@ -8,8 +8,9 @@ The development package supports Python 3.14. It provides version and
 bootstrap compatibility metadata, plus worker help/version/compatibility commands.
 T010 adds an internal immutable catalogue binding and typing-overlay prototype with
 explicit test contexts. T026 adds [immutable authoring declarations](DECLARATIONS.md) and preserved-callable
-decorators. Production catalogue binding, engine adapters and execution remain
-later tasks. See the
+decorators. Captured discovery and catalogue binding are implemented. T058 adds the private
+[Polars execution adapter](POLARS.md); public build/check/publication composition
+remains later work. See the
 [prototype evidence and limits](../docs/development/catalog-overlay.md). Importing the SDK does not initialize a workspace or worker.
 
 ## Contributor setup and checks
@@ -40,7 +41,8 @@ target/python/demo/bin/python -I -m transflow_worker compatibility
 The report checks installed package/version consistency and worker protocol 1.0.
 T014 provides [bounded framing and generated validators](../crates/tf-protocol/README.md).
 The report now says `wire_protocol_implemented: true`, but `supported_operations`
-now contains `discover`: [isolated discovery](DISCOVERY.md) is implemented; execution/query operations remain unavailable. Major mismatch
+now contains `discover` and `execute`: [isolated discovery](DISCOVERY.md) and the
+[Polars data plane](POLARS.md) are implemented; check/query operations remain unavailable. Major mismatch
 fails immediately; sessions separately check minor compatibility and mutually
 supported capabilities. This diagnostic JSON is not the worker control channel.
 

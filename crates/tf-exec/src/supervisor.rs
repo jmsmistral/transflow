@@ -419,7 +419,7 @@ fn run_inner(
                 .parse()
                 .map_err(|_| Failure::Configuration)?,
             launch.operation,
-            ["discovery.v1".to_owned()].into(),
+            ["discovery.v1".to_owned(), "polars.execute.v1".to_owned()].into(),
         )
         .map_err(|_| Failure::Configuration)?,
         launch.operation,

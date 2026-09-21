@@ -18,7 +18,7 @@ class CompatibilityReport:
     protocol_major: int
     protocol_minor: int
     wire_protocol_implemented: bool = True
-    supported_operations: tuple[str, ...] = ("discover",)
+    supported_operations: tuple[str, ...] = ("discover", "execute")
 
 
 def check_compatibility(*, protocol_major: int = 1, protocol_minor: int = 0) -> CompatibilityReport:

@@ -328,9 +328,12 @@ fn invariant(name: &str, value: &Value) -> bool {
                 .collect::<BTreeSet<_>>();
             names.len() == required.len()
                 && extra.len() == extensions.len()
-                && names
-                    .iter()
-                    .all(|n| matches!(*n, "diagnostic.note.v1" | "discovery.v1"))
+                && names.iter().all(|n| {
+                    matches!(
+                        *n,
+                        "diagnostic.note.v1" | "discovery.v1" | "polars.execute.v1"
+                    )
+                })
                 && extra.iter().all(|n| *n == "diagnostic.note.v1")
                 && extensions.iter().all(|e| e["value"]["type"] == "string")
         }

@@ -1,4 +1,4 @@
-# Worker supervision (T055–T057)
+# Worker supervision (T055–T058)
 
 `tf_exec::supervisor` owns one fresh process group per attempt. `Launch` takes an
 absolute, already verified interpreter, an operation enum, a schema-validated
@@ -90,3 +90,7 @@ T056 reports typed phase timeout evidence, the actual pre-import thread limit an
 cleanup duration. Phase timers exclude cleanup/grace. POLARS, OpenMP and common
 BLAS/NumExpr/Accelerate environment limits are set before Python starts. DuckDB
 connection thread/buffer/spill configuration remains the adapter responsibility.
+
+T058 adds the `polars.execute.v1` capability and [Polars execution service](../../python/POLARS.md).
+Execute controls carry artifact-ready evidence; successful worker exit is followed
+by independent Rust candidate validation and never directly advances a head.
