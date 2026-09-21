@@ -57,7 +57,8 @@ contracts for future service dispatch; there is no producer/scheduler service ye
 ownership alive across repository use. Always await `OwnedStore::close` before
 coordinator shutdown; dropping an async operation can leave an uncertain commit
 outcome, so recovery must consult durable state and later reservation fences. This
-foundation does not supervise worker cancellation or implement recovery publication.
+ownership foundation composes with [publication recovery](src/publication.rs) and
+[T057 cancellation](CANCELLATION.md); it does not itself run a coordinator loop.
 
 ## Verification
 
@@ -65,8 +66,8 @@ Nine tests include one subprocess fixture entry point and a deterministic inheri
 owner, wait on a readiness marker, prove contention, kill/reap it and reacquire with
 a different session. They cover stale metadata, copied clones, incompatible schemas,
 process identity, unsafe files/permissions, replaced locks, private atomic registration,
-loopback-only endpoints, mode policy and the owned database lifetime. A21/A63 service,
-CLI disconnect and cancellation scenarios remain later tasks.
+loopback-only endpoints, mode policy and the owned database lifetime. T057 adds A21/A63 service-level client-disconnect/cancellation fixtures; public
+CLI/daemon routing remains later integration.
 
 A macOS CI recurrence during T020 was reproduced as a failed immediate reacquisition
 after dropping an owner. A deterministic test keeps a duplicate locked descriptor in

@@ -39,6 +39,9 @@ pub enum Failure {
     /// Private file, pipe, socket or process operation failed.
     #[error("Worker supervision encountered an operating-system error")]
     Io,
+    /// OS start identity changed, disappeared, or the child was already reaped.
+    #[error("Worker process identity could not be verified; group signal refused")]
+    Identity,
     /// Invalid, incomplete, incompatible or wrong-session control traffic.
     #[error("Worker returned invalid or incomplete control messages")]
     Protocol,
@@ -154,6 +157,9 @@ pub struct Report {
     pub heartbeat_delayed: bool,
     /// Managed child PID for diagnostics only; never a reusable signal authority.
     pub pid: Option<u32>,
+    /// OS start record captured while the direct child was still owned.
+    /// Diagnostic evidence only: a persisted PID/start pair is not signal authority.
+    pub process_start: Option<String>,
     /// Native exit code; None also covers signal exit or no launch.
     pub exit_code: Option<i32>,
     /// Both streams reached EOF. False identifies escaped/inherited descriptors.
@@ -175,6 +181,7 @@ impl Default for Report {
             result: None,
             heartbeat_delayed: false,
             pid: None,
+            process_start: None,
             exit_code: None,
             logs_complete: false,
             timeout: None,
@@ -186,6 +193,8 @@ impl Default for Report {
 struct OwnedChild {
     child: Child,
     reaped: bool,
+    // Only fresh, owned worker group leaders get a start record. OS probes do not.
+    process_start: Option<String>,
 }
 impl OwnedChild {
     fn pid(&self) -> Result<rustix::process::Pid, Failure> {
@@ -204,6 +213,15 @@ impl OwnedChild {
         .is_some())
     }
     fn signal(&self, signal: rustix::process::Signal) -> Result<(), Failure> {
+        if self.reaped
+            || self.process_start.is_none()
+            || crate::ownership::process_start(self.child.id()).ok() != self.process_start
+        {
+            return Err(Failure::Identity);
+        }
+        // Prove it remains our waitable child. The start check alone has a
+        // check-to-signal race (and macOS start records have second precision).
+        self.exited()?;
         match rustix::process::kill_process_group(self.pid()?, signal) {
             Ok(()) | Err(rustix::io::Errno::SRCH) => Ok(()),
             #[cfg(target_os = "macos")]
@@ -228,6 +246,7 @@ impl OwnedChild {
         let mut probe = OwnedChild {
             child,
             reaped: false,
+            process_start: None,
         };
         // This probe is not a group leader; it is reaped directly below.
         // A failed inspection never authorizes shortening the termination grace.
@@ -459,8 +478,12 @@ fn run_inner(
     let mut owned = OwnedChild {
         child,
         reaped: false,
+        process_start: None,
     };
     report.pid = Some(owned.child.id());
+    owned.process_start =
+        Some(crate::ownership::process_start(owned.child.id()).map_err(|_| Failure::Identity)?);
+    report.process_start.clone_from(&owned.process_start);
     let mut secrets = launch.redact.clone();
     secrets.push(token.to_vec());
     secrets.push(token_hex.into_bytes());
@@ -696,4 +719,40 @@ pub async fn run_async(launch: Launch, cancel: Cancellation) -> Report {
         outcome: Err(Failure::Io),
         ..Report::default()
     })
+}
+
+#[cfg(test)]
+mod identity_tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used)] // Isolated native fixtures.
+    use super::*;
+    #[test]
+    fn stale_start_record_and_reaped_handle_never_signal_a_live_group() {
+        // The canary is our own isolated group. Never target a parent/unrelated group.
+        let child = Command::new("/bin/sleep")
+            .arg("30")
+            .process_group(0)
+            .spawn()
+            .unwrap();
+        let mut owned = OwnedChild {
+            child,
+            reaped: false,
+            process_start: None,
+        };
+        let start = crate::ownership::process_start(owned.child.id()).unwrap();
+        owned.process_start = Some(format!("stale:{start}"));
+        for signal in [rustix::process::Signal::TERM, rustix::process::Signal::KILL] {
+            assert_eq!(owned.signal(signal), Err(Failure::Identity));
+            assert!(
+                !owned.exited().unwrap(),
+                "mismatched start must leave the canary alive"
+            );
+        }
+        owned.process_start = Some(start);
+        owned.signal(rustix::process::Signal::KILL).unwrap();
+        owned.reap().unwrap();
+        assert_eq!(
+            owned.signal(rustix::process::Signal::TERM),
+            Err(Failure::Identity)
+        );
+    }
 }

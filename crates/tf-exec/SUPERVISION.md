@@ -1,4 +1,4 @@
-# Worker supervision (T055–T056)
+# Worker supervision (T055–T057)
 
 `tf_exec::supervisor` owns one fresh process group per attempt. `Launch` takes an
 absolute, already verified interpreter, an operation enum, a schema-validated
@@ -45,7 +45,7 @@ A caller may provide a canonical private attempt directory. Log files are opened
 create-new relative to its directory descriptor before starting Python, with
 0600 permissions and no symlink following. They are flushed on normal cleanup,
 including crash/protocol-error/cancellation. Retention belongs to the caller.
-`Report` preserves both streams, typed outcome, terminal/result evidence, native
+`Report` preserves both streams, typed outcome, terminal/result evidence, PID/start identity, native
 exit status and whether both streams reached EOF. Process success is not authority
 to publish a dataset or update a head.
 
@@ -58,7 +58,8 @@ is idempotent. Synchronous discovery shares this owner, retains logs in failure
 evidence and keeps import output separate from CLI stdout/stderr. Public log
 inspection and durable attempt/event composition remain later tasks.
 
-Cleanup holds the direct child waitable with `waitid(WNOWAIT)` until the final
+Cleanup rechecks the captured OS start record before each group signal, refuses reaped
+handles and missing/mismatched identities, and holds the direct child waitable with `waitid(WNOWAIT)` until the final
 process-group signal. Its PID therefore cannot be reused during cleanup. The
 child is reaped only afterwards; no saved PID is signalled later. Darwin can
 return EPERM for a zombie-only group: the macOS path checks the pinned group via
@@ -72,8 +73,10 @@ The direct child also has a kill fallback. Descendants in the group receive
 termination; orphan descendant reaping belongs to the OS. Trusted code can escape
 the group, and inherited descriptors then have a bounded final drain with
 `logs_complete=false`. No hostile containment or restart PID recovery is claimed;
-persisted identity validation, cancellation/publication races and restart cleanup
-remain T057/T066.
+[build cancellation and publication races](CANCELLATION.md) are now composed by T057.
+Persisted restart process reconciliation remains T066. A waiting persistent client
+must observe coordinator-owned work independently; dropping the supervisor future
+is coordinator abandonment, not a normal client disconnect.
 
 Native tests cover simultaneous multi-megabyte streams, crash/startup errors,
 wrong nonce/session/version/phase, malformed/oversized/partial frames, missing or

@@ -9,7 +9,8 @@ use sqlx::{Connection, Row, SqliteConnection};
 use std::collections::BTreeSet;
 use tf_domain::execution::{CancelRequest, Fence, OutputTarget, PublicationIntent};
 use tf_domain::{
-    BranchName, BuildId, CoordinatorSessionId, DatasetKey, JobId, RequestId, VersionId, WorkspaceId,
+    AttemptId, BranchName, BuildId, CoordinatorSessionId, DatasetKey, JobId, RequestId, VersionId,
+    WorkspaceId,
 };
 use tf_protocol::canonical::{ContentDigest, DigestKind, canonical_json};
 /// Publication refusal is distinct from a storage failure.
@@ -185,6 +186,44 @@ pub(crate) async fn authority(
     Ok(())
 }
 impl Store {
+    /// Check exact accepted attempt authority before registering a worker with the
+    /// coordinator's cancellation service. The caller holds the real runtime lock
+    /// and serializes registration/cancellation through that service.
+    pub async fn authorize_worker(
+        &mut self,
+        workspace: WorkspaceId,
+        build: BuildId,
+        attempt: AttemptId,
+        fence: Fence,
+    ) -> Result<()> {
+        let mut tx = self.db.begin().await?;
+        authority(&mut tx, workspace, fence.session).await?;
+        let row = sqlx::query("SELECT b.cancel_requested,b.state,a.state,j.state FROM attempts a JOIN jobs j ON j.id=a.job_id JOIN builds b ON b.id=j.build_id JOIN build_plans p ON p.id=b.plan_id JOIN source_snapshots s ON s.id=p.source_snapshot_id JOIN write_reservations r ON r.build_id=b.id AND r.dataset_id=j.dataset_id AND r.branch_id=j.branch_id AND r.session_id=a.session_id AND r.fence=a.fence WHERE a.id=? AND b.id=? AND a.session_id=? AND a.fence=? AND s.workspace_id=? AND p.disposition='ACCEPTED'")
+            .bind(attempt.to_string()).bind(build.to_string()).bind(fence.session.to_string())
+            .bind(num(fence.generation)?).bind(workspace.to_string())
+            .fetch_optional(&mut *tx).await?.ok_or(PublicationError::Fence)?;
+        if row.try_get::<i64, _>(0)? != 0 {
+            return Err(PublicationError::Canceled);
+        }
+        let active = |state: &str| {
+            matches!(
+                state,
+                "STARTING"
+                    | "VALIDATING_INPUTS"
+                    | "RUNNING"
+                    | "MATERIALIZING"
+                    | "VALIDATING_OUTPUTS"
+            )
+        };
+        if row.try_get::<String, _>(1)? != "RUNNING"
+            || !active(&row.try_get::<String, _>(2)?)
+            || !active(&row.try_get::<String, _>(3)?)
+        {
+            return Err(PublicationError::Evidence);
+        }
+        tx.commit().await?;
+        Ok(())
+    }
     /// Establish a newly acquired OS-lock session, interrupting only uncommitted old work.
     /// The caller MUST hold the actual exclusive runtime lock, never merely supply a UUID.
     pub async fn recover_publications(
@@ -468,10 +507,11 @@ impl Store {
         let mut tx = self.db.begin_with("BEGIN IMMEDIATE").await?;
         authority(&mut tx, workspace, session).await?;
         let (state, canceled): (String, i64) =
-            sqlx::query_as("SELECT state,cancel_requested FROM builds WHERE id=?")
+            sqlx::query_as("SELECT b.state,b.cancel_requested FROM builds b JOIN build_plans p ON p.id=b.plan_id JOIN source_snapshots s ON s.id=p.source_snapshot_id WHERE b.id=? AND s.workspace_id=?")
                 .bind(build.to_string())
-                .fetch_one(&mut *tx)
-                .await?;
+                .bind(workspace.to_string())
+                .fetch_optional(&mut *tx)
+                .await?.ok_or(PublicationError::Fence)?;
         let live:i64=sqlx::query_scalar("SELECT count(*) FROM jobs WHERE build_id=? AND state NOT IN ('SUCCEEDED','CACHED','FAILED','BLOCKED','CANCELED','INTERRUPTED')").bind(build.to_string()).fetch_one(&mut *tx).await?;
         let result = if !matches!(state.as_str(), "RUNNING" | "QUEUED") || live == 0 {
             CancelRequest::TooLate

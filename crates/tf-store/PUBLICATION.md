@@ -48,8 +48,9 @@ must be upheld; no SQL connection or transaction is exposed to workers.
 After actual new OS ownership, recovery fences the old session, abandons prepared
 intents, interrupts nonterminal attempts/jobs/builds, and releases old reservations.
 Committed versions/success/events survive. Orphans and interrupted staging are
-retained, invisible, for later retention/GC work. Worker process-group cleanup is
-still T057/T066; this storage recovery does not claim to have killed old workers.
+retained, invisible, for later retention/GC work. T057 [cancellation](../tf-exec/CANCELLATION.md) connects durable requests to live
+owned process-group cleanup; restart orphan cleanup remains T066. This storage
+recovery does not claim to have killed old workers.
 
 These are backend foundations. Accepted-plan composition, worker execution and
 canonical check evaluation remain T049/T055–T064. There is no public `build` or
@@ -61,3 +62,8 @@ loss, malicious owner writes or filesystem/device flush reliability.
 [T039 recovery qualification](../../docs/development/publication-recovery.md)
 now kills real publication subprocesses at nine boundaries and checks persisted
 heads, immutable objects, interrupted/successful attempts and exact event replay.
+
+T057 adds exact worker-registration authorization against accepted plan, build,
+attempt, session, fence and reservation. Cancellation lookup also verifies the
+build's source workspace. These checks reuse existing schema 7 state; they introduce
+no filesystem or process operations inside SQL transactions.

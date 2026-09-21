@@ -208,7 +208,7 @@ fn lock(file: &File) -> Result<bool> {
         Err(std::fs::TryLockError::Error(e)) => Err(e.into()),
     }
 }
-fn process_start(pid: u32) -> Result<String> {
+pub(crate) fn process_start(pid: u32) -> Result<String> {
     if pid == 0 {
         return Err(OwnershipError::Invalid);
     }

@@ -58,14 +58,20 @@ pub struct Harness {
 }
 impl Harness {
     pub async fn new() -> Self {
+        Self::with_mode(CoordinatorMode::Temporary).await
+    }
+    pub async fn with_mode(mode: CoordinatorMode) -> Self {
         let root = std::env::temp_dir().join(format!(
             "tf-publication-{}-{}",
             std::process::id(),
             NEXT.fetch_add(1, Ordering::Relaxed)
         ));
-        Self::at(root).await
+        Self::at_with_mode(root, mode).await
     }
     pub async fn at(root: PathBuf) -> Self {
+        Self::at_with_mode(root, CoordinatorMode::Temporary).await
+    }
+    async fn at_with_mode(root: PathBuf, mode: CoordinatorMode) -> Self {
         fs::create_dir_all(root.join(".transflow/runtime")).unwrap();
         fs::set_permissions(
             root.join(".transflow/runtime"),
@@ -80,8 +86,7 @@ impl Harness {
             root.join("source/one"),
         )
         .unwrap();
-        let mut owner =
-            RuntimeOwner::acquire(&root, workspace(), CoordinatorMode::Temporary).unwrap();
+        let mut owner = RuntimeOwner::acquire(&root, workspace(), mode).unwrap();
         let mut store = owner.open_store().await.unwrap();
         store
             .repository()

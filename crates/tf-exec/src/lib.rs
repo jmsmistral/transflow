@@ -22,3 +22,6 @@ pub mod admission;
 
 /// Monotonic execution, validation, interactive and discovery budgets.
 pub mod timing;
+
+/// Persisted build cancellation, attempt-bound workers and client disconnect policy.
+pub mod cancellation;

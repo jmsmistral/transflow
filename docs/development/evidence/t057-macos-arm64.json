@@ -1,0 +1,69 @@
+{
+  "task": "T057",
+  "date": "2026-09-21",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "result": "passed",
+  "implementation_base": "f35e0264a6467e62157ee3b7ebc6267507895d8f",
+  "specification_base": "3105cd5157f867411146474515538d2d7b82499f",
+  "commands": [
+    {
+      "command": "bash tools/check.sh",
+      "result": "Passed; /private/tmp/t057-check.log. 322 Rust tests plus one doc test, 660 Python, 261 web, 51 installed-worker tests; 44 document, 27 safety and 12 Rust-boundary regressions."
+    },
+    {
+      "command": "cargo test -p tf-exec --lib --test cancellation --test supervision --test publication --test publication_recovery --locked --offline",
+      "result": "Passed 36 tests after final helper-clone behavior; /private/tmp/t057-final.log."
+    },
+    {
+      "command": "cargo test -p tf-exec --test cancellation --locked --offline",
+      "result": "All eight final cancellation tests passed, including the added simultaneous-writer and partial-build regressions; /private/tmp/t057-cancellation-final.log. Final Rust inventory is 324 tests plus one doc test across aggregate and focused runs."
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed on final code; /private/tmp/t057-clippy-final.log."
+    },
+    {
+      "command": "python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Passed after final documentation/evidence updates (specification 1.1.2)."
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "result": "Passed on final code."
+    }
+  ],
+  "verification": {
+    "rust_tests": 324,
+    "rust_doc_tests": 1,
+    "python_tests": 660,
+    "web_tests": 261,
+    "installed_worker_tests": 51,
+    "document_regressions": 44,
+    "safety_regressions": 27,
+    "boundary_regressions": 12,
+    "conformance_cases": 207
+  },
+  "coverage": [
+    "A20/A22: real SQLite cancellation-first, commit-first, repeated cancellation, cancellation after durable object installation, and simultaneous writer races retain one visibility winner.",
+    "Partial-build cancellation preserves already committed attempt/job success, version, head and event; reservations stay held until separate terminal build evidence.",
+    "A21: exact build/attempt/session/fence/reservation registration, duplicate and capacity rejection, canceled registration refusal, and independent live build canary.",
+    "A63 service layer: persistent observer disconnect continues work, explicit Ctrl-C and transient disconnect persist cancellation then stop TERM-resistant groups and reap leaders.",
+    "Stale process-start canary rejects TERM/KILL without stopping its isolated group; already reaped handles reject all group signals.",
+    "Actual lock reacquisition/new session rejects old controls, registrations and publication; database refusal does not signal a live worker.",
+    "Control loss triggers emergency cleanup without a fabricated persisted cancellation receipt; precanceled worker and helper clone do not spawn.",
+    "Existing native supervisor and crash-boundary recovery suites retain nonce/frame validation, bounded logs, phase deadlines, cleanup-held admission and immutable event replay."
+  ],
+  "corrected_failures": [
+    "The initial fixture-helper extraction omitted an existing serde_json::json import; restored it before passing the focused and aggregate checks."
+  ],
+  "limits": [
+    "Only macOS arm64 was executed locally. Supported Linux/macOS push CI is handed to the owner without polling.",
+    "BuildControl is a coordinator service primitive, one retained instance per accepted build. Public build/serve, authenticated client routing, durable process_json/terminal attempt aggregation and restart orphan cleanup remain later runtime/API tasks.",
+    "OS start records are never standalone signal authority; macOS second precision is supplemented by the unreaped owned child. No saved PID signaling API is exposed.",
+    "Trusted code can escape process groups. No hostile-code containment or arbitrary orphan signaling is claimed.",
+    "Runtime schema 7, protocol 1.0, specification 1.1.2, CLI envelope and dependency pins are unchanged.",
+    "T056 and the Python-only support cleanup CI have not received explicit owner confirmation in this turn."
+  ],
+  "ci": "pending_owner_monitoring",
+  "agent_polled_workflows": false
+}
