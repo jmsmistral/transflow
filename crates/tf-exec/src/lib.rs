@@ -1,4 +1,4 @@
-//! Coordinator ownership foundations; worker process supervision remains later work.
+//! Coordinator ownership, process supervision and execution services.
 pub mod environment;
 pub mod ownership;
 
@@ -13,3 +13,6 @@ pub mod input_read;
 
 /// Owner-held cache artifact verification and atomic reuse.
 pub mod cache;
+
+/// Owned worker groups, authenticated control and bounded log retention.
+pub mod supervisor;

@@ -495,3 +495,26 @@ SDK signatures, one producer per module and the synthetic stored root. The first
 aggregate stopped at a test-helper return annotation; the corrected aggregate passed.
 Native worker/socket checks ran with authorized permissions. Push CI is pending owner
 monitoring; T053 also awaits its owner's CI confirmation. No workflows were polled.
+
+
+## T055 worker supervision qualification (2026-09-21)
+
+The contributor aggregate passed on macOS arm64: 301 Rust tests and one doc test,
+654 Python, 259 web, 51 installed-worker tests and 44/27/12 document/safety/boundary
+regressions. Final workspace Clippy and nine native supervision tests pass after
+an additional grace-period regression for descendants with closed log pipes.
+The [evidence record](evidence/t055-macos-arm64.json) distinguishes corrected
+failures, native qualification and remaining limits. The initial aggregate stops
+were missing dated CI evidence fields and one Python test-literal lint violation.
+
+The [supervisor guide](../../crates/tf-exec/SUPERVISION.md) documents private mutual
+nonce proof, bounded control/logs, redaction and retained failure evidence,
+process-group cleanup and async receiver abandonment. Tests cover actual noisy,
+crashing and TERM-resistant subprocesses, invalid control, deadlines and installed
+Python coordinator loss. Group escape is an explicit trust boundary. No browser
+journey is needed for this backend-only change. Phase resource admission and
+durable cancellation/publication/restart composition remain subsequent tasks.
+
+The [owner receipt](evidence/t054-owner-ci.json) records successful CI through T054,
+including T053 traversal. T055 push CI remains with the owner; no workflows were
+polled by the agent.

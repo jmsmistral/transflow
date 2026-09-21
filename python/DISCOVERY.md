@@ -6,15 +6,16 @@ new public discovery command or trust ceremony. A coordinator supplies a validat
 mode-0700 directory. It launches a fresh managed interpreter with `-I -B -m
 transflow_worker discover --request ... --control-socket ...`. Environment drift
 checking through T025 is a caller precondition; discovery never resolves or
-installs packages. Public build/validate orchestration remains later work.
+installs packages. Public validate/catalogue/inspection commands compose this service; build execution remains later work.
 
-Before imports the coordinator sends the request's random 32-byte challenge over
-the dedicated socket. A mismatch aborts without importing source. Control frames
+Before imports the worker sends the request's random 32-byte nonce over the
+private socket, then verifies the coordinator's acknowledgement. The coordinator
+checks possession before revealing that nonce. A mismatch aborts before imports. Control frames
 then use the T014 length-prefixed protocol and `discovery.v1` capability, with
 hello, phase, heartbeat, discovery_ready and completed/error messages. The ready
 message names a size-bounded result file and its byte digest. Stdout/stderr are
-separate logs; T055 still owns the general launcher, bounded log draining,
-cancellation and wall deadlines. There is no worker-side default memory cap.
+separate bounded logs retained by the shared [T055 supervisor](../crates/tf-exec/SUPERVISION.md),
+which also owns operation deadlines and process-group cleanup. There is no worker-side default memory cap.
 
 Discovery validates catalogue fingerprints, source paths/hashes and the T022 module
 index, and compiles every importable Python file before importing any of them.

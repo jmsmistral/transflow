@@ -1,8 +1,9 @@
 # Runtime ownership (T019)
 
 `ownership::RuntimeOwner` holds an OS file lock for its lifetime. It is neither a
-PID-file lock nor a running coordinator service. `serve`, worker supervision and the
-local API are not implemented yet. The current CLI still provides help/version only.
+PID-file lock nor a running coordinator service. `serve` and the local API remain
+later work. T055 adds [worker supervision](SUPERVISION.md), now used by discovery;
+the [public CLI](../transflow/README.md) exposes preparation and inspection commands.
 
 The caller supplies an explicit workspace directory and durable workspace UUID.
 `.transflow/runtime` must already exist, belong to the current user and have private

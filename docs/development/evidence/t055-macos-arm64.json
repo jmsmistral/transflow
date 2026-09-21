@@ -1,0 +1,64 @@
+{
+  "task": "T055",
+  "date": "2026-09-21",
+  "platform": "macOS arm64",
+  "result": "passed",
+  "implementation_base": "0cc7f2450b39a2b4f976e5784c5493bd83899f22",
+  "specification_base": "84aa5545fb615bb6d05ceb7621d4cbf77c8e9cad",
+  "commands": [
+    {
+      "command": "bash tools/check.sh",
+      "result": "Passed in /private/tmp/t055-qualified.log: 301 Rust tests plus one doc test, 654 Python, 259 web, 51 installed-worker tests; 44 document, 27 safety and 12 Rust-boundary regressions."
+    },
+    {
+      "command": "cargo test -p tf-exec --test supervision --locked --offline",
+      "result": "Final nine tests passed in 2.40 seconds after tightening grace for descendants with closed log descriptors; /private/tmp/t055-final-supervision.log."
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed on final supervision code; /private/tmp/t055-final-clippy.log."
+    },
+    {
+      "command": "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/tests/test_discovery.py",
+      "result": "18 installed-worker discovery tests passed, including nonce failure before import and coordinator disconnect during import."
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "result": "Passed."
+    }
+  ],
+  "rust_tests": 301,
+  "rust_doc_tests": 1,
+  "python_tests": 654,
+  "web_tests": 259,
+  "installed_worker_tests": 51,
+  "conformance_cases": 205,
+  "document_regressions": 44,
+  "safety_regressions": 27,
+  "boundary_regressions": 12,
+  "coverage": [
+    "Simultaneous stdout/stderr floods exceed 4 MiB per stream while 4096-byte retention caps preserve explicit markers and exact raw observed counts.",
+    "Crash, startup crash, nonzero exit and worker error retain both streams; real child exit is required independently of completed frames.",
+    "Wrong nonce, session and major; malformed, oversized and partial frames; missing hello; wrong/regressing phases; missing/duplicate results and post-terminal frames fail closed.",
+    "Partial framing and startup silence obey absolute caller deadlines; heartbeat silence alone remains a diagnostic.",
+    "Split known credential and nonce redaction, split sensitive headers, binary bytes, private request/log modes, create-new/no-follow log paths and request/log policy bounds.",
+    "Dropped async receiver cancels a TERM-resistant child group, reaps the leader and preserves logs; normal completion cleans descendants, including full grace after descendants close stdout/stderr.",
+    "Discovery reuses the shared owner and keeps public JSON output isolated from imports. Existing CLI integration journeys pass."
+  ],
+  "corrected_failures": [
+    "Sandbox-only socket attempts returned I/O failures; authorized native runs were used for actual qualification.",
+    "Darwin zombie-only process groups returned EPERM. Cleanup now checks bounded OS process-state evidence before accepting this special case; live-group permission failures are not suppressed.",
+    "Specification task closure initially lacked required Verified on fields; dated owner evidence was added.",
+    "Python lint found one long test-source literal; the literal was split without changing behavior."
+  ],
+  "approval_review": "A proposed fixture moving a child into its parent process group was rejected before execution. That case was removed; all qualified signal tests remain inside freshly isolated worker groups.",
+  "limits": [
+    "Only macOS arm64 executed locally; Linux x86-64/arm64 qualification is left to the existing CI matrix and owner monitoring.",
+    "T056 retains admission, workspace configuration composition and independent execution/validation timers; T057/T066 retain persisted process identity, publication races and restart recovery.",
+    "Trusted code can escape process groups; process isolation is not hostile-code containment. Inherited escaped log descriptors have a bounded final drain with incomplete evidence.",
+    "Private persistent logs are a service API; public log inspection and durable attempt/event persistence remain later tasks.",
+    "Known-value/header redaction does not identify arbitrary transformed secrets. No new dependency, authored/generated schema, protocol or database version."
+  ],
+  "ci": "pending_owner_monitoring",
+  "agent_polled_workflows": false
+}

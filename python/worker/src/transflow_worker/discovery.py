@@ -333,9 +333,10 @@ def serve(request_path: Path, socket_path: Path) -> int:
     with socket.socket(socket.AF_UNIX) as channel:
         channel.settimeout(10)
         channel.connect(str(socket_path))
-        # Fixed-size random challenge, read from the private request, authenticates
-        # the coordinator before imports. The token is never sent by the worker.
+        # Mutual possession of the private request nonce is proven before imports.
+        # The coordinator never reveals the nonce to an unauthenticated peer.
         expected = bytes.fromhex(request["auth_token"])
+        channel.sendall(expected)
         received = bytearray()
         while len(received) < len(expected):
             block = channel.recv(len(expected) - len(received))

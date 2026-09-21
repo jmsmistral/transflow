@@ -59,7 +59,7 @@ def request(
 
 
 def run_worker(
-    python: Path, value: dict[str, Any], *, bad_auth: bool = False
+    python: Path, value: dict[str, Any], *, bad_auth: bool = False, disconnect: bool = False
 ) -> tuple[int, dict[str, Any], list[str]]:
     with tempfile.TemporaryDirectory(prefix="tf-discovery-", dir="/tmp") as short:
         directory = Path(short).resolve()
@@ -97,6 +97,12 @@ def run_worker(
                 channel, _ = listener.accept()
                 with channel:
                     channel.settimeout(10)
+                    proof = bytearray()
+                    while len(proof) < 32:
+                        block = channel.recv(32 - len(proof))
+                        assert block, "worker closed before proving nonce possession"
+                        proof.extend(block)
+                    assert bytes(proof) == bytes.fromhex(value["auth_token"])
                     channel.sendall(bytes(32) if bad_auth else bytes.fromhex(value["auth_token"]))
                     session = Session(
                         value["request_id"],
@@ -108,6 +114,8 @@ def run_worker(
                         while frame := read_frame(cast(BinaryIO, stream)):
                             session.accept(frame)
                             messages.append(frame.message_type)
+                            if disconnect and frame.message_type == "phase":
+                                break
                             if frame.message_type == "discovery_ready":
                                 ready = frame.as_json()["message"]
                                 data = (directory / ready["result_path"]).read_bytes()
@@ -349,3 +357,21 @@ def test_installed_discovery_matches_rust_structural_validation_fixture(
     value["catalog"] = fixture["catalog"]
     code, result, _ = run_worker(installed, value)
     assert code == 0 and result == fixture["discovery"]
+
+
+def test_coordinator_disconnect_aborts_import_before_later_side_effect(
+    installed: Path, tmp_path: Path
+) -> None:
+    marker = tmp_path / "should-not-complete"
+    value = request(
+        tmp_path,
+        {
+            "src/slow.py": (
+                "import time\nfrom pathlib import Path\ntime.sleep(30)\n"
+                f"Path({str(marker)!r}).touch()"
+            )
+        },
+    )
+    status, _, frames = run_worker(installed, value, disconnect=True)
+    assert status != 0 and frames == ["hello", "phase"]
+    assert not marker.exists()

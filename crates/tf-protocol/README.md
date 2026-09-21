@@ -27,7 +27,7 @@ The codec receives protocol major 1. Minor 0 is current; a higher advertised min
 is acceptable only with understood message shapes and capabilities. The installed
 SDK/worker compatibility diagnostic now reports 1.0 and `wire_protocol_implemented`
 as true. `supported_operations` remains empty: operation identifiers are defined,
-but discovery/execution/check/query workers are not yet enabled.
+with discovery enabled since T027; execution/check/query workers remain later work.
 
 `Session` binds request UUID, attempt UUID and an expected operation before reading
 hello. It requires hello first and only once, checks operation and identity,
@@ -48,7 +48,7 @@ The schema supports six operation identifiers and eight message types. Frames ca
 separate typed request/attempt IDs and lossless sequence counters. Session acceptance
 is a prerequisite for future dispatch, not authorization to execute user code.
 Per-attempt nonce authentication, private socket creation, bounded log draining,
-heartbeat deadlines and child cleanup belong to the T055 launcher. T027 owns real
+heartbeat diagnostics and child cleanup are implemented by the [T055 launcher](../tf-exec/SUPERVISION.md). T027 implements real
 discovery. This library does not replace those tasks or enable CLI execution.
 
 ## Generated clients and schema exports
@@ -94,8 +94,8 @@ of numeric wide-integer carriers and unknown message tags. No browser is require
 
 Run the existing Rust/Python/web and safety runners. Local environments that block
 Unix sockets must grant that test local IPC access; skipping it is not a pass.
-Live engine execution, authentication, cancellation/backpressure and production log
-supervision still require their own integration and failure tests.
+Live engine execution remains later work. T055 adds native authentication,
+cancellation and bounded-log failure tests, alongside installed discovery tests.
 
 T015 adds the `canonical` module for bounded JSON encoding, purpose-separated SHA-256,
 streamed raw file hashes and validated manifest/catalogue projections. See the

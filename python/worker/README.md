@@ -5,6 +5,8 @@ version. `python -I -m transflow_worker` is the isolated module entry point;
 `transflow-worker` is the diagnostic console entry point.
 
 Help, version and `compatibility` are available. The latter checks installed
-package identity and bootstrap protocol metadata. Execution, discovery, engine
-adapters and framed socket control remain unimplemented. Diagnostic stdout is
-not the future worker control transport. See [setup and checks](../README.md).
+package identity and protocol metadata. Captured `discover` imports use a mutually
+authenticated private socket with bounded framed control, independent of stdout
+and stderr. The Rust [supervisor](../../crates/tf-exec/SUPERVISION.md) owns bounded
+logs and child-group cleanup. Transform execution and engine adapters remain later
+work. Diagnostic stdout is separate from worker control. See [setup and checks](../README.md).
