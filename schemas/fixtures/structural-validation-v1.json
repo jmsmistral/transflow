@@ -37,7 +37,8 @@
                   "columns": [
                     "id"
                   ],
-                  "kind": "non_null"
+                  "kind": "non_null",
+                  "ast_version": 1
                 },
                 "id": "valid_id",
                 "name": "Valid ID",
@@ -88,7 +89,8 @@
                 "columns": [
                   "id"
                 ],
-                "kind": "primary_key"
+                "kind": "primary_key",
+                "ast_version": 1
               },
               "id": "primary_key",
               "name": "Primary key",

@@ -1,0 +1,589 @@
+[
+  {
+    "name": "non-null",
+    "ast": {
+      "ast_version": 1,
+      "kind": "non_null",
+      "columns": [
+        "age"
+      ]
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"columns\":[\"age\"],\"kind\":\"non_null\"}",
+    "effective_compute_digest": "576c65955faba7d808cbcab963bf7f6c91da361500f8e7c222b507395ecf2f2b"
+  },
+  {
+    "name": "tuple-key",
+    "ast": {
+      "ast_version": 1,
+      "kind": "primary_key",
+      "columns": [
+        "id",
+        "region"
+      ]
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"columns\":[\"id\",\"region\"],\"kind\":\"primary_key\"}",
+    "effective_compute_digest": "2aeffacfc304c727b0f6dcd77e2540342241744fba8ab3579f7ded15933f5059"
+  },
+  {
+    "name": "row-comparison",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_compare",
+      "op": "gte",
+      "left": {
+        "kind": "column",
+        "name": "age"
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "i64",
+          "value": "0"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"kind\":\"row_compare\",\"left\":{\"kind\":\"column\",\"name\":\"age\"},\"op\":\"gte\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"i64\",\"value\":\"0\"}}}",
+    "effective_compute_digest": "bcc38634efadd9f9732a38ccbd886563915cd1edfd3abd9d51a4e05d70b027d1"
+  },
+  {
+    "name": "row-all",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_all",
+      "children": [
+        {
+          "kind": "non_null",
+          "columns": [
+            "age"
+          ]
+        },
+        {
+          "kind": "row_compare",
+          "op": "gte",
+          "left": {
+            "kind": "column",
+            "name": "age"
+          },
+          "right": {
+            "kind": "literal",
+            "value": {
+              "type": "i64",
+              "value": "0"
+            }
+          }
+        }
+      ]
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"children\":[{\"columns\":[\"age\"],\"kind\":\"non_null\"},{\"kind\":\"row_compare\",\"left\":{\"kind\":\"column\",\"name\":\"age\"},\"op\":\"gte\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"i64\",\"value\":\"0\"}}}],\"kind\":\"row_all\"}",
+    "effective_compute_digest": "1c23639655cd93753f618c6967628ac2a6e6c40cd568602df5640cdaaa6285b0"
+  },
+  {
+    "name": "row-any",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_any",
+      "children": [
+        {
+          "kind": "non_null",
+          "columns": [
+            "age"
+          ]
+        },
+        {
+          "kind": "row_not",
+          "child": {
+            "kind": "row_compare",
+            "op": "gte",
+            "left": {
+              "kind": "column",
+              "name": "age"
+            },
+            "right": {
+              "kind": "literal",
+              "value": {
+                "type": "i64",
+                "value": "0"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"children\":[{\"columns\":[\"age\"],\"kind\":\"non_null\"},{\"child\":{\"kind\":\"row_compare\",\"left\":{\"kind\":\"column\",\"name\":\"age\"},\"op\":\"gte\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"i64\",\"value\":\"0\"}}},\"kind\":\"row_not\"}],\"kind\":\"row_any\"}",
+    "effective_compute_digest": "6f4fc269529ca6197e3f053914a9a69907d994c5b749e249ce6e9f656c26a93f"
+  },
+  {
+    "name": "metric",
+    "ast": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "op": "gt",
+      "left": {
+        "kind": "row_count",
+        "input": null
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "u64",
+          "value": "0"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"kind\":\"metric_compare\",\"left\":{\"input\":null,\"kind\":\"row_count\"},\"op\":\"gt\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"u64\",\"value\":\"0\"}}}",
+    "effective_compute_digest": "09dea7469eb14ceea8e06726817752eefc3c28d9943fb92b3c9a2d99890ef2e9"
+  },
+  {
+    "name": "input-metric",
+    "ast": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "op": "equals",
+      "left": {
+        "kind": "row_count",
+        "input": null
+      },
+      "right": {
+        "kind": "row_count",
+        "input": {
+          "kind": "input",
+          "alias": "reference"
+        }
+      }
+    },
+    "aliases": [
+      "reference"
+    ],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"kind\":\"metric_compare\",\"left\":{\"input\":null,\"kind\":\"row_count\"},\"op\":\"equals\",\"right\":{\"input\":{\"alias\":\"reference\",\"kind\":\"input\"},\"kind\":\"row_count\"}}",
+    "effective_compute_digest": "cfb3629d57dd136fdfc98177f5da0769ea44287c6ca9a373388ccdec845ba4b6"
+  },
+  {
+    "name": "dataset-all",
+    "ast": {
+      "ast_version": 1,
+      "kind": "dataset_all",
+      "children": [
+        {
+          "kind": "primary_key",
+          "columns": [
+            "id",
+            "region"
+          ]
+        },
+        {
+          "kind": "metric_compare",
+          "op": "gt",
+          "left": {
+            "kind": "row_count",
+            "input": null
+          },
+          "right": {
+            "kind": "literal",
+            "value": {
+              "type": "u64",
+              "value": "0"
+            }
+          }
+        },
+        {
+          "kind": "every",
+          "child": {
+            "kind": "row_compare",
+            "op": "gte",
+            "left": {
+              "kind": "column",
+              "name": "age"
+            },
+            "right": {
+              "kind": "literal",
+              "value": {
+                "type": "i64",
+                "value": "0"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"children\":[{\"columns\":[\"id\",\"region\"],\"kind\":\"primary_key\"},{\"kind\":\"metric_compare\",\"left\":{\"input\":null,\"kind\":\"row_count\"},\"op\":\"gt\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"u64\",\"value\":\"0\"}}},{\"child\":{\"kind\":\"row_compare\",\"left\":{\"kind\":\"column\",\"name\":\"age\"},\"op\":\"gte\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"i64\",\"value\":\"0\"}}},\"kind\":\"every\"}],\"kind\":\"dataset_all\"}",
+    "effective_compute_digest": "1dae6a4c90efe6a8f99144fdb7ae743aab8df1e76bbd230454390077fd625c47"
+  },
+  {
+    "name": "dataset-any",
+    "ast": {
+      "ast_version": 1,
+      "kind": "dataset_any",
+      "children": [
+        {
+          "kind": "primary_key",
+          "columns": [
+            "id",
+            "region"
+          ]
+        },
+        {
+          "kind": "dataset_not",
+          "child": {
+            "kind": "metric_compare",
+            "op": "gt",
+            "left": {
+              "kind": "row_count",
+              "input": null
+            },
+            "right": {
+              "kind": "literal",
+              "value": {
+                "type": "u64",
+                "value": "0"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"children\":[{\"columns\":[\"id\",\"region\"],\"kind\":\"primary_key\"},{\"child\":{\"kind\":\"metric_compare\",\"left\":{\"input\":null,\"kind\":\"row_count\"},\"op\":\"gt\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"u64\",\"value\":\"0\"}}},\"kind\":\"dataset_not\"}],\"kind\":\"dataset_any\"}",
+    "effective_compute_digest": "7a1aef2be3ffd9328fb71a0e8e80f2e187e49d655f8522d2deb12e623fbf8da6"
+  },
+  {
+    "name": "wide-integer",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_compare",
+      "op": "equals",
+      "left": {
+        "kind": "column",
+        "name": "big"
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "u64",
+          "value": "18446744073709551615"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"kind\":\"row_compare\",\"left\":{\"kind\":\"column\",\"name\":\"big\"},\"op\":\"equals\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"u64\",\"value\":\"18446744073709551615\"}}}",
+    "effective_compute_digest": "b93db0287e30ab7675a6afbd7139849cc0a827bd76b3badb203bc0eef98ee4db"
+  },
+  {
+    "name": "decimal",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_compare",
+      "op": "equals",
+      "left": {
+        "kind": "column",
+        "name": "amount"
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "decimal",
+          "precision": 38,
+          "scale": 2,
+          "value": "123456789012345678901234567890123456.78"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"kind\":\"row_compare\",\"left\":{\"kind\":\"column\",\"name\":\"amount\"},\"op\":\"equals\",\"right\":{\"kind\":\"literal\",\"value\":{\"precision\":38,\"scale\":2,\"type\":\"decimal\",\"value\":\"123456789012345678901234567890123456.78\"}}}",
+    "effective_compute_digest": "1ece0f8a43268a23b3b0ce3e5dee9ceb6f638cbaf8658a67202efecd26bf4729"
+  },
+  {
+    "name": "quoted-name",
+    "ast": {
+      "ast_version": 1,
+      "kind": "non_null",
+      "columns": [
+        "x\"; SELECT nothing --"
+      ]
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"columns\":[\"x\\\"; SELECT nothing --\"],\"kind\":\"non_null\"}",
+    "effective_compute_digest": "0421e2ce9f6aa92522fd436a98d346537a203fa61c695a36e238476e59a22233"
+  },
+  {
+    "name": "mixed-row",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_all",
+      "children": [
+        {
+          "kind": "non_null",
+          "columns": [
+            "age"
+          ]
+        },
+        {
+          "kind": "primary_key",
+          "columns": [
+            "id",
+            "region"
+          ]
+        }
+      ]
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "mixed-dataset",
+    "ast": {
+      "ast_version": 1,
+      "kind": "dataset_any",
+      "children": [
+        {
+          "kind": "primary_key",
+          "columns": [
+            "id",
+            "region"
+          ]
+        },
+        {
+          "kind": "non_null",
+          "columns": [
+            "age"
+          ]
+        }
+      ]
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "wrong-not",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_not",
+      "child": {
+        "kind": "primary_key",
+        "columns": [
+          "id",
+          "region"
+        ]
+      }
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "wrong-promotion",
+    "ast": {
+      "ast_version": 1,
+      "kind": "every",
+      "child": {
+        "kind": "primary_key",
+        "columns": [
+          "id",
+          "region"
+        ]
+      }
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "unknown-alias",
+    "ast": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "op": "equals",
+      "left": {
+        "kind": "row_count",
+        "input": null
+      },
+      "right": {
+        "kind": "row_count",
+        "input": {
+          "kind": "input",
+          "alias": "reference"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "duplicate-key",
+    "ast": {
+      "ast_version": 1,
+      "kind": "primary_key",
+      "columns": [
+        "id",
+        "id"
+      ]
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "non-null-arity",
+    "ast": {
+      "ast_version": 1,
+      "kind": "non_null",
+      "columns": [
+        "a",
+        "b"
+      ]
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "empty-bool",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_all",
+      "children": []
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "unknown-operator",
+    "ast": {
+      "ast_version": 1,
+      "kind": "sql",
+      "query": "SELECT TRUE"
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "unknown-comparison",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_compare",
+      "op": "approximately",
+      "left": {
+        "kind": "column",
+        "name": "age"
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "i64",
+          "value": "0"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "null-comparison",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_compare",
+      "op": "gte",
+      "left": {
+        "kind": "column",
+        "name": "age"
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "null"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "scalar-column-mix",
+    "ast": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "op": "gt",
+      "left": {
+        "kind": "row_count",
+        "input": null
+      },
+      "right": {
+        "kind": "column",
+        "name": "age"
+      }
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "string-count",
+    "ast": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "op": "gt",
+      "left": {
+        "kind": "row_count",
+        "input": null
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "string",
+          "value": "3"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "literal-only",
+    "ast": {
+      "ast_version": 1,
+      "kind": "row_compare",
+      "op": "gte",
+      "left": {
+        "kind": "literal",
+        "value": {
+          "type": "i64",
+          "value": "1"
+        }
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "i64",
+          "value": "0"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "future-version",
+    "ast": {
+      "ast_version": 2,
+      "kind": "non_null",
+      "columns": [
+        "age"
+      ]
+    },
+    "aliases": [],
+    "valid": false
+  }
+]

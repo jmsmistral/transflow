@@ -5,7 +5,7 @@
       "name": "worker-contract-v1",
       "inputs": {
         "tools/contracts/generate.py": "ab4a3bbd0efe711f35d75f231543ea76b8ce55fe0ff122c68b325066538c4ac1",
-        "schemas/contracts-v1.schema.json": "df658a3ba1af48397cc578cb24c0c89e09a5ded9870588142a66f93a18a5aceb",
+        "schemas/contracts-v1.schema.json": "0b1e904c1fc3c98405f26fdda69b47a269a04bdb5fe99edc2d524b0d01a5a8dc",
         "schemas/versions.json": "beb4e63198f8a245c2735b23f3fa9890697b166d20cc6812f0b47aa19ec4080f"
       },
       "outputs": [

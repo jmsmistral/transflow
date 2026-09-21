@@ -331,7 +331,10 @@ fn invariant(name: &str, value: &Value) -> bool {
                 && names.iter().all(|n| {
                     matches!(
                         *n,
-                        "diagnostic.note.v1" | "discovery.v1" | "polars.execute.v1"
+                        "diagnostic.note.v1"
+                            | "discovery.v1"
+                            | "polars.execute.v1"
+                            | "expectation.ast.v1"
                     )
                 })
                 && extra.iter().all(|n| *n == "diagnostic.note.v1")

@@ -28,7 +28,7 @@ fn definition(name: &str, path: &str, inputs: Vec<Value>) -> Value {
     json!({"module":name,"function":"produce","path":format!("src/{name}.py"),"line":3,"source":false,"engine":"polars","inputs":inputs,"output":{"ref":{"form":"string","value":path},"checks":[],"schema":null},"parameters":[],"wall_timeout_seconds":null,"cache":"deterministic","refresh":null,"secret_refs":[],"lineage_json":null})
 }
 fn check(kind: &str, columns: Vec<&str>) -> Value {
-    json!({"id":"key","name":"Required key","expectation":{"kind":kind,"columns":columns},"on_error":"FAIL","null_policy":null,"sample_rows":null,"description":null})
+    json!({"id":"key","name":"Required key","expectation":{"ast_version":1,"kind":kind,"columns":columns},"on_error":"FAIL","null_policy":null,"sample_rows":null,"description":null})
 }
 fn schema() -> Value {
     json!({"format_version":1,"fields":[{"name":"id","logical_type":{"type":"i64"},"nullable":false}]})
@@ -408,5 +408,71 @@ fn input_preparation_preserves_aliases_and_rejects_a_changed_validation_context(
             .candidates()[1]
             .as_str(),
         "master"
+    );
+}
+
+#[test]
+fn nested_ast_validates_aliases_types_and_preserves_deferred_obligations() {
+    let mut d = definition("producer", "a", vec![input("reference", "raw/reference")]);
+    // This fixture needs no registry data reads: the local producer declares the input.
+    let source = definition("source", "raw/reference", vec![]);
+    let mut c = check("non_null", vec!["id"]);
+    c["expectation"] = json!({"ast_version":1,"kind":"dataset_all","children":[
+        {"kind":"every","child":{"kind":"row_compare","op":"gte","left":{"kind":"column","name":"id"},"right":{"kind":"literal","value":{"type":"i64","value":"0"}}}},
+        {"kind":"metric_compare","op":"equals","left":{"kind":"row_count","input":null},"right":{"kind":"row_count","input":{"kind":"input","alias":"reference"}}}
+    ]});
+    d["output"]["checks"] = json!([c]);
+    let mut f = Fixture::new(vec![d, source]);
+    let graph = validation::validate(&f.request()).unwrap();
+    assert!(
+        graph
+            .deferred()
+            .iter()
+            .any(|d| d.check_id.as_deref() == Some("key")
+                && d.reason == DeferredReason::SchemaUnavailable)
+    );
+    let original = f.discovery.clone();
+    f.discovery["definitions"][0]["output"]["schema"] = schema();
+    let graph = validation::validate(&f.request()).unwrap();
+    assert!(
+        graph
+            .deferred()
+            .iter()
+            .any(|d| d.check_id.as_deref() == Some("key")
+                && d.reason == DeferredReason::EvaluateData)
+    );
+    f.discovery["definitions"][0]["output"]["schema"]["fields"][0]["logical_type"]["type"] =
+        "string".into();
+    assert!(
+        validation::validate(&f.request())
+            .unwrap_err()
+            .message
+            .contains("incompatible")
+    );
+    f.discovery = original;
+    f.discovery["definitions"][0]["output"]["checks"][0]["expectation"]["children"][1]["right"]["input"]
+        ["alias"] = "hidden".into();
+    assert!(
+        validation::validate(&f.request())
+            .unwrap_err()
+            .message
+            .contains("undeclared")
+    );
+}
+
+#[test]
+fn legacy_seed_normalizes_to_the_same_effective_ast_before_hashing() {
+    let mut d = definition("producer", "a", vec![]);
+    d["output"]["checks"] = json!([check("non_null", vec!["id"])]);
+    let mut f = Fixture::new(vec![d]);
+    let current = validation::validate(&f.request()).unwrap();
+    f.discovery["definitions"][0]["output"]["checks"][0]["expectation"]
+        .as_object_mut()
+        .unwrap()
+        .remove("ast_version");
+    let legacy = validation::validate(&f.request()).unwrap();
+    assert_eq!(
+        current.candidate().definitions()[0].declaration["output"]["checks"],
+        legacy.candidate().definitions()[0].declaration["output"]["checks"]
     );
 }

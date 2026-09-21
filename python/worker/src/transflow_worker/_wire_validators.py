@@ -221,3 +221,33 @@ def validate_ResourcePolicyV1(value: object) -> None:
 def validate_PolarsExecutionRequestV1(value: object) -> None:
     """Assert the PolarsExecutionRequestV1 contract, including custom formats."""
     validate_document("PolarsExecutionRequestV1", value)
+
+
+def validate_ExpectationInputRef(value: object) -> None:
+    """Assert the ExpectationInputRef contract, including custom formats."""
+    validate_document("ExpectationInputRef", value)
+
+
+def validate_ExpectationMetric(value: object) -> None:
+    """Assert the ExpectationMetric contract, including custom formats."""
+    validate_document("ExpectationMetric", value)
+
+
+def validate_ExpectationValue(value: object) -> None:
+    """Assert the ExpectationValue contract, including custom formats."""
+    validate_document("ExpectationValue", value)
+
+
+def validate_ExpectationScalar(value: object) -> None:
+    """Assert the ExpectationScalar contract, including custom formats."""
+    validate_document("ExpectationScalar", value)
+
+
+def validate_ExpectationNode(value: object) -> None:
+    """Assert the ExpectationNode contract, including custom formats."""
+    validate_document("ExpectationNode", value)
+
+
+def validate_ExpectationAstV1(value: object) -> None:
+    """Assert the ExpectationAstV1 contract, including custom formats."""
+    validate_document("ExpectationAstV1", value)

@@ -221,7 +221,7 @@ fn edge_stream_continues_after_all_nodes_and_keeps_roles_branches_and_checks() {
     inputs[0]["role"] = json!("validation");
     inputs[0]["branch"] = json!({"kind":"named","name":"old"});
     inputs[0]["stop_branch_fallback"] = json!(true);
-    inputs[0]["checks"] = json!([{"id":"key","name":"Key","expectation":{"kind":"non_null","columns":["id"]},"on_error":"WARN","null_policy":null,"sample_rows":null,"description":null}]);
+    inputs[0]["checks"] = json!([{"id":"key","name":"Key","expectation":{"ast_version":1,"kind":"non_null","columns":["id"]},"on_error":"WARN","null_policy":null,"sample_rows":null,"description":null}]);
     let g = Fixture::new("", vec![definition(0, vec![]), definition(1, inputs)]).graph("feature");
     let t = query(&g, "data/n1", Direction::Upstream, None);
     let p = t.page(None, 100).unwrap();

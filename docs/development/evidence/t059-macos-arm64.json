@@ -1,0 +1,72 @@
+{
+  "task": "T059",
+  "date": "2026-09-21",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "26f51d6ee3782905325323c1cc97db7232821129",
+  "specification_base": "58017f7228b505418d8f208bbadd08d2f8598b4d",
+  "result": "passed",
+  "commands": [
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check.sh",
+      "result": "Document, safety and Rust gates passed: 44 document regressions, 27 safety regressions, 12 Rust-boundary regressions, 329 Rust tests and one doc test. Aggregate then found an overlong line in the new CLI source fixture; corrected and resumed remaining gates. Log: /private/tmp/t059-check.log."
+    },
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "Passed: 741 tests, locked toolchain check, Ruff, formatting, strict mypy across 48 files and actual wheel installation; target/python/py314/tests.xml."
+    },
+    {
+      "command": "bash tools/check-web.sh",
+      "result": "Passed: typecheck, ESLint, formatting, 284 tests and matching production builds; target/web/unit-tests.json."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh",
+      "result": "Passed: real packaged worker, new capability and existing engine/resource/normalization probes, including all 22 Polars cases. Reports: target/qualification/runs/native.5Ki9H3; log: /private/tmp/t059-native.log."
+    },
+    {
+      "command": "bash tools/check-cli.sh",
+      "result": "Passed: 52 installed CLI tests, including successful composed-AST validation and rejected mixed kinds without producer execution or workspace mutation; target/cli-tests.xml."
+    },
+    {
+      "command": "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Passed: specification 1.1.2 documentation/syntax validation. Both repositories also pass git diff --check."
+    }
+  ],
+  "coverage": [
+    "27 shared Rust/Python semantic fixtures cover canonical AST bytes and effective-policy Compute hashes, typed comparisons/composition/promotion, exact literals and negative cases.",
+    "230 shared structural conformance cases pass the Rust, Python and TypeScript readers, including AST shapes, rejected unknown fields/operators/versions and the new capability.",
+    "Whole-workspace validation checks nested aliases and known schemas, preserves explicit unknown-schema/data obligations, and normalizes the legacy seed and inherited policy before fingerprinting.",
+    "SDK constructor/decorator tests reject executable values, mixed row/scalar kinds and implicit Python truth conversion without running the producer or a predicate.",
+    "Recursive branch discrimination and AST depth/node limits prevent repeated traversal of irrelevant schema alternatives.",
+    "Native supervised Polars regression suite preserves the previous publication and completes a 1,024,000,000-byte logical streaming output with 241,729,536-byte worker peak RSS."
+  ],
+  "corrected_failures": [
+    "The old structural-discovery fixture needed explicit AST-v1 output; the decoder separately retains and tests legacy seed compatibility.",
+    "A deep AST test exposed repeated exploration of mismatched recursive schema branches. Discriminator preflight fixes this without weakening closed-schema validation.",
+    "Installed discovery tests initially could not bind Unix sockets inside the sandbox; reran with authorized local process/socket permissions and passed.",
+    "Added the repository-standard test-only unwrap allowance and fixed an overlong source-fixture line before final gates."
+  ],
+  "limits": [
+    "Local evidence covers macOS arm64 only; owner monitors Linux/macOS push workflows.",
+    "T059 is syntax and structural validation. Remaining G1 DSL and exact truth/metric semantics are T060; canonical evaluation/publication integration remain T061-T062.",
+    "Cross-input row-count references are representable AST syntax; their data evaluation remains G3.",
+    "Unknown future, foreign and named-branch schemas remain deferred. Structural acceptance is never a data PASS or publication permission.",
+    "Protocol 1.0, reserved AST version 1, runtime schema 7, specification 1.1.2 and dependency/toolchain pins remain unchanged. New worker output requires expectation.ast.v1; old seed declarations normalize before hashing.",
+    "Earlier pending owner CI confirmations remain pending."
+  ],
+  "ci": "pending_owner_monitoring",
+  "agent_polled_workflows": false,
+  "verification": {
+    "rust_tests": 329,
+    "rust_doc_tests": 1,
+    "python_tests": 741,
+    "web_tests": 284,
+    "installed_cli_tests": 52,
+    "document_regressions": 44,
+    "safety_regressions": 27,
+    "boundary_regressions": 12,
+    "structural_conformance_cases": 230,
+    "semantic_ast_cases": 27,
+    "native_polars_cases": 22
+  }
+}

@@ -137,6 +137,7 @@ def _ref(value: str | DatasetRef) -> dict[str, object]:
 
 def _check(check: Check) -> dict[str, object]:
     value = asdict(check)
+    value["expectation"] = check.expectation.to_wire()
     if check.sample_rows is not None:
         value["sample_rows"] = str(check.sample_rows)
     return value
@@ -365,7 +366,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                     "attempt_id": request["attempt_id"],
                     "sequence": str(sequence),
                     "message": message,
-                    "required_capabilities": ["discovery.v1"],
+                    "required_capabilities": ["discovery.v1", "expectation.ast.v1"],
                     "extensions": [],
                 }
             )
@@ -379,7 +380,13 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
             except ProtocolError, OSError:
                 os._exit(1)  # Coordinator loss cannot authorize continued import work.
 
-    send({"type": "hello", "operation": "discover", "capabilities": ["discovery.v1"]})
+    send(
+        {
+            "type": "hello",
+            "operation": "discover",
+            "capabilities": ["discovery.v1", "expectation.ast.v1"],
+        }
+    )
     thread = threading.Thread(target=heartbeat, daemon=True)
     thread.start()
     try:

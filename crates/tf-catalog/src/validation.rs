@@ -17,8 +17,8 @@ use tf_protocol::{
 
 /// Current installed SDK declaration contract. A changed SDK invalidates retained evidence.
 pub const SDK_VERSION: &str = "0.0.0.dev0";
-/// Current implemented check declarations; the complete expectation DSL extends this later.
-pub const CHECK_SEMANTICS: &str = "declarations-v1:non-null-primary-key:strict-null-v1";
+/// Current typed AST semantics; changing these invalidates retained validation certificates.
+pub const CHECK_SEMANTICS: &str = "expectation-ast-v1:typed-composition:strict-null-v1";
 /// Inputs obtained from one captured source and authenticated, matched worker discovery.
 /// `modules` is the complete pre-import ModuleIndex (including helpers/namespaces), not a target subset.
 /// The caller verifies source bytes and environment drift before invoking this pure service.
@@ -428,19 +428,24 @@ fn declaration(d: &mut Value, config: &WorkspaceConfig) -> Result<(), Validation
     {
         return Err(error("Parameter names or typed defaults are invalid"));
     }
+    let aliases: BTreeSet<String> = inputs
+        .iter()
+        .filter_map(|i| i["alias"].as_str().map(str::to_owned))
+        .collect();
     let Some(inputs) = d["inputs"].as_array_mut() else {
         return Err(error("Inputs are malformed"));
     };
     for input in inputs {
-        effective_checks(&mut input["checks"], config, &loc)?;
+        effective_checks(&mut input["checks"], config, &loc, &aliases)?;
     }
-    effective_checks(&mut d["output"]["checks"], config, &loc)?;
+    effective_checks(&mut d["output"]["checks"], config, &loc, &aliases)?;
     Ok(())
 }
 fn effective_checks(
     checks: &mut Value,
     config: &WorkspaceConfig,
     loc: &Location,
+    aliases: &BTreeSet<String>,
 ) -> Result<(), ValidationError> {
     let error = |message| fail(message, vec![loc.clone()]);
     let Some(checks) = checks.as_array_mut() else {
@@ -450,15 +455,15 @@ fn effective_checks(
         return Err(error("Check IDs must be unique within each binding"));
     }
     for check in checks {
-        let columns = array(&check["expectation"], "columns")?;
-        if columns.is_empty()
-            || !unique(columns, None)
-            || (check["expectation"]["kind"] == "non_null" && columns.len() != 1)
-        {
-            return Err(error(
-                "Expectation columns are empty, repeated or have invalid arity",
-            ));
+        // Upgrade the pre-AST declaration seed before fingerprinting; never emit it.
+        if check["expectation"].get("ast_version").is_none() {
+            check["expectation"]["ast_version"] = 1.into();
         }
+        tf_protocol::expectation::decode(
+            &check["expectation"],
+            &aliases.iter().map(String::as_str).collect(),
+        )
+        .map_err(|e| error(e.0))?;
         if check["null_policy"].is_null() {
             check["null_policy"] = config.null_policy().into();
         }
@@ -537,18 +542,11 @@ pub fn validate(request: &ValidationRequest<'_>) -> Result<ValidatedGraph, Valid
                 },
             });
             for check in array(binding, "checks")? {
-                if columns.as_ref().is_some_and(|known| {
-                    array(&check["expectation"], "columns").is_ok_and(|wanted| {
-                        wanted
-                            .iter()
-                            .any(|c| !c.as_str().is_some_and(|c| known.contains(c)))
-                    })
-                }) {
-                    return Err(fail(
-                        "An expectation names a column absent from the declared schema",
-                        vec![d.location.clone()],
-                    ));
-                }
+                let aliases = d.inputs.iter().map(|i| i.alias.as_str()).collect();
+                let ast = tf_protocol::expectation::decode(&check["expectation"], &aliases)
+                    .map_err(|e| fail(e.0, vec![d.location.clone()]))?;
+                tf_protocol::expectation::validate_schema(&ast, schema)
+                    .map_err(|e| fail(e.0, vec![d.location.clone()]))?;
                 deferred.push(DeferredValidation {
                     dataset: d.path.as_str().into(),
                     input_alias: input_alias.clone(),

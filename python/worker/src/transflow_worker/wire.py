@@ -205,7 +205,12 @@ class Session:
         validate_document("Uuid", attempt_id)
         if operation not in OPERATIONS:
             raise ProtocolError("order")
-        if not capabilities <= {"diagnostic.note.v1", "discovery.v1", "polars.execute.v1"}:
+        if not capabilities <= {
+            "diagnostic.note.v1",
+            "discovery.v1",
+            "polars.execute.v1",
+            "expectation.ast.v1",
+        }:
             raise ProtocolError("capability")
         self._request = request_id
         self._attempt = attempt_id

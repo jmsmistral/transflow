@@ -37,3 +37,6 @@ pub mod input;
 
 /// Resolved resource-setting provenance.
 pub mod resources;
+
+/// Typed expectation syntax, distinct row/value/metric/dataset kinds.
+pub mod expectation;

@@ -108,7 +108,7 @@ def run_worker(
                         value["request_id"],
                         value["attempt_id"],
                         "discover",
-                        frozenset({"discovery.v1"}),
+                        frozenset({"discovery.v1", "expectation.ast.v1"}),
                     )
                     with channel.makefile("rb") as stream:
                         while frame := read_frame(cast(BinaryIO, stream)):

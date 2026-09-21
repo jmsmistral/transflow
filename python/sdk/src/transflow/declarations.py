@@ -299,6 +299,11 @@ def _decorate(
     if len(set(secrets)) != len(secrets):
         raise DeclarationError("secret_refs must not repeat reference names")
     lineage_json = None if lineage is None else frozen_json(lineage)
+    aliases = {name for name, _ in bound}
+    bindings: tuple[Input | Output, ...] = (output, *(value for _, value in bound))
+    for binding in bindings:
+        for check in binding.checks:
+            check.expectation.validate_inputs(aliases)
 
     def decorate(function: F) -> F:
         if (

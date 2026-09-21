@@ -11,7 +11,7 @@ installs packages. Public validate/catalogue/inspection commands compose this se
 Before imports the worker sends the request's random 32-byte nonce over the
 private socket, then verifies the coordinator's acknowledgement. The coordinator
 checks possession before revealing that nonce. A mismatch aborts before imports. Control frames
-then use the T014 length-prefixed protocol and `discovery.v1` capability, with
+then use the T014 length-prefixed protocol and `discovery.v1`/`expectation.ast.v1` capabilities, with
 hello, phase, heartbeat, discovery_ready and completed/error messages. The ready
 message names a size-bounded result file and its byte digest. Stdout/stderr are
 separate bounded logs retained by the shared [T055 supervisor](../crates/tf-exec/SUPERVISION.md),

@@ -24,3 +24,6 @@ pub mod canonical;
 
 /// Versioned CLI result envelopes.
 pub mod diagnostic;
+
+/// Expectation AST-v1 decoding and deferred-schema semantic validation.
+pub mod expectation;

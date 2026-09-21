@@ -59,7 +59,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                     "attempt_id": request["attempt_id"],
                     "sequence": str(sequence),
                     "message": message,
-                    "required_capabilities": ["polars.execute.v1"],
+                    "required_capabilities": ["polars.execute.v1", "expectation.ast.v1"],
                     "extensions": [],
                 }
             )
@@ -73,7 +73,13 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
             except ProtocolError, OSError:
                 os._exit(1)
 
-    send({"type": "hello", "operation": "execute", "capabilities": ["polars.execute.v1"]})
+    send(
+        {
+            "type": "hello",
+            "operation": "execute",
+            "capabilities": ["polars.execute.v1", "expectation.ast.v1"],
+        }
+    )
     thread = threading.Thread(target=heartbeat, daemon=True)
     thread.start()
     try:

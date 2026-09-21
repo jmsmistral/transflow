@@ -108,3 +108,10 @@ T016 adds `diagnostic::CliEnvelope` and the standalone generated CLI result sche
 The current shared corpus has 167 cases; five schema/type/validator outputs are
 registered. Worker protocol 1.0 is unchanged. CLI envelope version 1 has independent
 output/status/context semantics described in the [CLI guide](../transflow/README.md).
+
+T059 adds [expectation AST-v1](../../python/EXPECTATIONS.md) decoding, typed domain
+syntax, schema-aware semantic preflight and canonical re-encoding. Discovery and
+Polars execution now require `expectation.ast.v1`; peers lacking it fail closed.
+The catalogue normalizes the readable legacy two-operation seed before hashing.
+Shared semantic vectors qualify canonical AST bytes and policy-resolved hashes;
+this module does not evaluate data or compile SQL.

@@ -1638,29 +1638,36 @@
           "format": "transflow-name"
         },
         "expectation": {
-          "type": "object",
-          "properties": {
-            "kind": {
-              "enum": [
-                "non_null",
-                "primary_key"
-              ]
-            },
-            "columns": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "format": "transflow-name"
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "non_null",
+                    "primary_key"
+                  ]
+                },
+                "columns": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "transflow-name"
+                  },
+                  "minItems": 0,
+                  "maxItems": 1000
+                }
               },
-              "minItems": 0,
-              "maxItems": 1000
+              "required": [
+                "kind",
+                "columns"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "$ref": "#/$defs/ExpectationAstV1"
             }
-          },
-          "required": [
-            "kind",
-            "columns"
-          ],
-          "additionalProperties": false
+          ]
         },
         "on_error": {
           "enum": [
@@ -3987,6 +3994,634 @@
         "threads"
       ],
       "additionalProperties": false
+    },
+    "ExpectationInputRef": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "input"
+        },
+        "alias": {
+          "type": "string",
+          "format": "transflow-name"
+        }
+      },
+      "required": [
+        "kind",
+        "alias"
+      ],
+      "additionalProperties": false
+    },
+    "ExpectationMetric": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "row_count"
+        },
+        "input": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ExpectationInputRef"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "input"
+      ],
+      "additionalProperties": false
+    },
+    "ExpectationValue": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "column"
+            },
+            "name": {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "value": {
+              "$ref": "#/$defs/ScalarValue"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ExpectationScalar": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "value": {
+              "$ref": "#/$defs/ScalarValue"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/ExpectationMetric"
+        }
+      ]
+    },
+    "ExpectationNode": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "non_null"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "kind",
+            "columns"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "primary_key"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "kind",
+            "columns"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "row_compare"
+            },
+            "op": {
+              "enum": [
+                "gt",
+                "gte",
+                "lt",
+                "lte",
+                "equals",
+                "not_equals"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/ExpectationValue"
+            },
+            "right": {
+              "$ref": "#/$defs/ExpectationValue"
+            }
+          },
+          "required": [
+            "kind",
+            "op",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "metric_compare"
+            },
+            "op": {
+              "enum": [
+                "gt",
+                "gte",
+                "lt",
+                "lte",
+                "equals",
+                "not_equals"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/ExpectationScalar"
+            },
+            "right": {
+              "$ref": "#/$defs/ExpectationScalar"
+            }
+          },
+          "required": [
+            "kind",
+            "op",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "row_all"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ExpectationNode"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "kind",
+            "children"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "row_any"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ExpectationNode"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "kind",
+            "children"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "dataset_all"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ExpectationNode"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "kind",
+            "children"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "dataset_any"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ExpectationNode"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "kind",
+            "children"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "row_not"
+            },
+            "child": {
+              "$ref": "#/$defs/ExpectationNode"
+            }
+          },
+          "required": [
+            "kind",
+            "child"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "dataset_not"
+            },
+            "child": {
+              "$ref": "#/$defs/ExpectationNode"
+            }
+          },
+          "required": [
+            "kind",
+            "child"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "every"
+            },
+            "child": {
+              "$ref": "#/$defs/ExpectationNode"
+            }
+          },
+          "required": [
+            "kind",
+            "child"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ExpectationAstV1": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "non_null"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "columns",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "primary_key"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "columns",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "row_compare"
+            },
+            "op": {
+              "enum": [
+                "gt",
+                "gte",
+                "lt",
+                "lte",
+                "equals",
+                "not_equals"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/ExpectationValue"
+            },
+            "right": {
+              "$ref": "#/$defs/ExpectationValue"
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "op",
+            "left",
+            "right",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "metric_compare"
+            },
+            "op": {
+              "enum": [
+                "gt",
+                "gte",
+                "lt",
+                "lte",
+                "equals",
+                "not_equals"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/ExpectationScalar"
+            },
+            "right": {
+              "$ref": "#/$defs/ExpectationScalar"
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "op",
+            "left",
+            "right",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "row_all"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ExpectationNode"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "children",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "row_any"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ExpectationNode"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "children",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "dataset_all"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ExpectationNode"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "children",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "dataset_any"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ExpectationNode"
+              },
+              "minItems": 1,
+              "maxItems": 1000
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "children",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "row_not"
+            },
+            "child": {
+              "$ref": "#/$defs/ExpectationNode"
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "child",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "dataset_not"
+            },
+            "child": {
+              "$ref": "#/$defs/ExpectationNode"
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "child",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "every"
+            },
+            "child": {
+              "$ref": "#/$defs/ExpectationNode"
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "child",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        }
+      ]
     }
   },
   "$ref": "#/$defs/CliEnvelopeV1"

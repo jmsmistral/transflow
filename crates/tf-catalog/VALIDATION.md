@@ -21,10 +21,11 @@ local graph including repeated aliases, validation-only and named-branch edges.
 It validates source/transform policies, public non-reserved input identifiers,
 typed parameter defaults, unique check IDs, expectation arity/columns and inherited
 null/sample policies. Unicode identifiers use the already-locked `unicode-ident`
-1.0.26 library; the dependency graph adds no package version. The current check
-contract supports `non_null` and `primary_key`; unknown operations fail, including
-under WARN. T059–T062 will extend the AST/DSL and evaluator and must update the
-check semantic version. Sample row settings control later diagnostics, never
+1.0.26 library; the dependency graph adds no package version. The [T059 AST contract](../../python/EXPECTATIONS.md) adds nested typed composition,
+explicit comparisons and declared input references; unknown operations fail, including
+under WARN. The check semantic version changes to invalidate earlier certificates.
+The legacy two-operation seed normalizes to AST-v1 before hashing. T060–T062
+extend the remaining DSL and evaluator. Sample row settings control later diagnostics, never
 sampling-based acceptance.
 
 Declared schemas permit early rejection of impossible column references. They

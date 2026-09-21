@@ -219,7 +219,10 @@ fn invariant(name: &str, v: &Value) -> bool {
                     && names.iter().all(|s| {
                         matches!(
                             *s,
-                            "diagnostic.note.v1" | "discovery.v1" | "polars.execute.v1"
+                            "diagnostic.note.v1"
+                                | "discovery.v1"
+                                | "polars.execute.v1"
+                                | "expectation.ast.v1"
                         )
                     })
             }) && unique(extensions, "capability")
@@ -235,6 +238,16 @@ fn validate(schema: &Value, value: &Value, defs: &Value, depth: usize) -> bool {
         return false;
     };
     if depth > 64 || map.keys().any(|k| !KEYWORDS.contains(&k.as_str())) {
+        return false;
+    }
+    // Reject a mismatched discriminator before descending into recursive children.
+    // Object key order must not turn recursive oneOf schemas into exponential work.
+    if let (Some(properties), Some(object)) = (schema["properties"].as_object(), value.as_object())
+        && properties.iter().any(|(key, rule)| {
+            rule.get("const")
+                .is_some_and(|expected| object.get(key).is_some_and(|v| !same(v, expected)))
+        })
+    {
         return false;
     }
     if let Some(reference) = schema["$ref"].as_str() {

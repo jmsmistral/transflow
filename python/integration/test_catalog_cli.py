@@ -771,3 +771,29 @@ def test_captured_graph_traversal_depth_and_pagination_never_execute_producers(
     )
     assert not plan_probe(workspace, direction, start, "0")["ok"]
     assert not (workspace / ".transflow/runtime/catalog.sqlite").exists()
+
+
+def test_typed_expectation_validation_never_runs_data_and_preserves_workspace(
+    workspace: Path,
+) -> None:
+    code = """from transflow import Check, Output, transform
+from transflow import expectations as E
+positive = E.compare(E.col("amount"), "gte", E.literal({"type":"i64","value":"0"}))
+@transform(output=Output(
+    "raw/orders", checks=Check(E.all(E.col("amount").non_null(), positive), "Amount")
+))
+def orders():
+    raise AssertionError("Validation must never execute the producer")
+"""
+    source(workspace, "orders.py", code)
+    before = files(workspace)
+    result = cli(workspace, "validate", "--python", sys.executable)
+    assert result["exit_status"] == 0
+    assert files(workspace) == before
+    source(
+        workspace, "orders.py", code.replace('E.col("amount").non_null()', 'E.primary_key("id")')
+    )
+    before = files(workspace)
+    result = cli(workspace, "validate", "--python", sys.executable, ok=False)
+    assert result["exit_status"] != 0
+    assert files(workspace) == before

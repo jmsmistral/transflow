@@ -319,7 +319,7 @@
     "schema": "WireValue",
     "value": {
       "type": "i64",
-      "value": "\u0661"
+      "value": "١"
     },
     "valid": false
   },
@@ -588,7 +588,7 @@
     "schema": "WireValue",
     "value": {
       "type": "string",
-      "value": "\u3053\u3093\u306b\u3061\u306f \ud83e\udd80 e\u0301"
+      "value": "こんにちは 🦀 é"
     },
     "valid": true
   },
@@ -2125,7 +2125,7 @@
     "name": "unicode-name-256",
     "schema": "Field",
     "value": {
-      "name": "\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80",
+      "name": "🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀",
       "logical_type": {
         "type": "string"
       },
@@ -2137,7 +2137,7 @@
     "name": "unicode-name-257",
     "schema": "Field",
     "value": {
-      "name": "\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80\ud83e\udd80",
+      "name": "🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀",
       "logical_type": {
         "type": "string"
       },
@@ -2399,7 +2399,7 @@
       "diagnostics": [
         {
           "code": "TF_GRAPH_CYCLE",
-          "heading": "unsafe\u202e",
+          "heading": "unsafe‮",
           "reason": "A dependency cycle was found.",
           "remediation": "Remove one dependency before building.",
           "sources": [
@@ -4073,7 +4073,7 @@
       "entries": [
         {
           "id": "00000000-0000-4000-8000-000000000002",
-          "name": "feature/\u0394\u202e",
+          "name": "feature/Δ‮",
           "revision": "0",
           "deleted": false,
           "heads": "9007199254740993",
@@ -4089,7 +4089,7 @@
       "confirmation_required": false,
       "policy_source": "workspace.toml",
       "git_independent": true,
-      "requested_name": "feature/\u0394\u202e",
+      "requested_name": "feature/Δ‮",
       "new_name": "analysis"
     },
     "valid": true
@@ -4639,5 +4639,399 @@
       "skip_checks": true
     },
     "valid": false
+  },
+  {
+    "name": "expectation-non-null",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "non_null",
+      "columns": [
+        "age"
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-tuple-key",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "primary_key",
+      "columns": [
+        "id",
+        "region"
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-row-comparison",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "row_compare",
+      "op": "gte",
+      "left": {
+        "kind": "column",
+        "name": "age"
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "i64",
+          "value": "0"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-row-all",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "row_all",
+      "children": [
+        {
+          "kind": "non_null",
+          "columns": [
+            "age"
+          ]
+        },
+        {
+          "kind": "row_compare",
+          "op": "gte",
+          "left": {
+            "kind": "column",
+            "name": "age"
+          },
+          "right": {
+            "kind": "literal",
+            "value": {
+              "type": "i64",
+              "value": "0"
+            }
+          }
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-row-any",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "row_any",
+      "children": [
+        {
+          "kind": "non_null",
+          "columns": [
+            "age"
+          ]
+        },
+        {
+          "kind": "row_not",
+          "child": {
+            "kind": "row_compare",
+            "op": "gte",
+            "left": {
+              "kind": "column",
+              "name": "age"
+            },
+            "right": {
+              "kind": "literal",
+              "value": {
+                "type": "i64",
+                "value": "0"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-metric",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "op": "gt",
+      "left": {
+        "kind": "row_count",
+        "input": null
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "u64",
+          "value": "0"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-input-metric",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "op": "equals",
+      "left": {
+        "kind": "row_count",
+        "input": null
+      },
+      "right": {
+        "kind": "row_count",
+        "input": {
+          "kind": "input",
+          "alias": "reference"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-dataset-all",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "dataset_all",
+      "children": [
+        {
+          "kind": "primary_key",
+          "columns": [
+            "id",
+            "region"
+          ]
+        },
+        {
+          "kind": "metric_compare",
+          "op": "gt",
+          "left": {
+            "kind": "row_count",
+            "input": null
+          },
+          "right": {
+            "kind": "literal",
+            "value": {
+              "type": "u64",
+              "value": "0"
+            }
+          }
+        },
+        {
+          "kind": "every",
+          "child": {
+            "kind": "row_compare",
+            "op": "gte",
+            "left": {
+              "kind": "column",
+              "name": "age"
+            },
+            "right": {
+              "kind": "literal",
+              "value": {
+                "type": "i64",
+                "value": "0"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-dataset-any",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "dataset_any",
+      "children": [
+        {
+          "kind": "primary_key",
+          "columns": [
+            "id",
+            "region"
+          ]
+        },
+        {
+          "kind": "dataset_not",
+          "child": {
+            "kind": "metric_compare",
+            "op": "gt",
+            "left": {
+              "kind": "row_count",
+              "input": null
+            },
+            "right": {
+              "kind": "literal",
+              "value": {
+                "type": "u64",
+                "value": "0"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-wide-integer",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "row_compare",
+      "op": "equals",
+      "left": {
+        "kind": "column",
+        "name": "big"
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "u64",
+          "value": "18446744073709551615"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-decimal",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "row_compare",
+      "op": "equals",
+      "left": {
+        "kind": "column",
+        "name": "amount"
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "decimal",
+          "precision": 38,
+          "scale": 2,
+          "value": "123456789012345678901234567890123456.78"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-quoted-name",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "non_null",
+      "columns": [
+        "x\"; SELECT nothing --"
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "expectation-empty-bool",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "row_all",
+      "children": []
+    },
+    "valid": false
+  },
+  {
+    "name": "expectation-unknown-operator",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "sql",
+      "query": "SELECT TRUE"
+    },
+    "valid": false
+  },
+  {
+    "name": "expectation-unknown-comparison",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "row_compare",
+      "op": "approximately",
+      "left": {
+        "kind": "column",
+        "name": "age"
+      },
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "i64",
+          "value": "0"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "expectation-scalar-column-mix",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "op": "gt",
+      "left": {
+        "kind": "row_count",
+        "input": null
+      },
+      "right": {
+        "kind": "column",
+        "name": "age"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "expectation-future-version",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 2,
+      "kind": "non_null",
+      "columns": [
+        "age"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "expectation-ast-capability",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "0",
+      "required_capabilities": [
+        "expectation.ast.v1"
+      ],
+      "extensions": [],
+      "message": {
+        "type": "hello",
+        "operation": "execute",
+        "capabilities": [
+          "expectation.ast.v1"
+        ]
+      }
+    },
+    "valid": true
   }
 ]

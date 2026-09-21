@@ -208,6 +208,7 @@ def invariant(name: str, value: dict[str, Any]) -> None:
             "diagnostic.note.v1",
             "discovery.v1",
             "polars.execute.v1",
+            "expectation.ast.v1",
         }  # Registered optional extension; Session checks negotiation.
         need(len(set(required)) == len(required) and set(required) <= supported, name)
         need(len({e["capability"] for e in extensions}) == len(extensions), name)
@@ -222,6 +223,11 @@ def validate(
 ) -> None:
     need(depth <= 64, "contract nesting limit")
     need(set(schema) <= KEYWORDS, "unsupported schema keyword")
+    # Check discriminators before recursive children, regardless of JSON key order.
+    if isinstance(value, dict):
+        for key, rule in schema.get("properties", {}).items():
+            if "const" in rule and key in value:
+                need(same(value[key], rule["const"]), "const")
     if "$ref" in schema:
         validate(
             definitions[schema["$ref"].removeprefix("#/$defs/")], value, definitions, depth + 1

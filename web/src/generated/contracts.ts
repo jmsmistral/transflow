@@ -72,7 +72,7 @@ export type CliEnvelopeV1 = ({ readonly "format_version": 1; readonly "product_v
 export type DiscoveryRefV1 = ({ readonly "form": "string"; readonly "value": string } | { readonly "form": "bound"; readonly "workspace_id": Uuid; readonly "dataset_id": Uuid; readonly "path": string; readonly "catalog_fingerprint": Sha256 });
 
 // prettier-ignore
-export type DeclarationCheckV1 = { readonly "id": string; readonly "name": string; readonly "expectation": { readonly "kind": ("non_null" | "primary_key"); readonly "columns": ReadonlyArray<string> }; readonly "on_error": ("FAIL" | "WARN"); readonly "null_policy": (null | "fail" | "ignore"); readonly "sample_rows": (null | Count); readonly "description": (null | string) };
+export type DeclarationCheckV1 = { readonly "id": string; readonly "name": string; readonly "expectation": ({ readonly "kind": ("non_null" | "primary_key"); readonly "columns": ReadonlyArray<string> } | ExpectationAstV1); readonly "on_error": ("FAIL" | "WARN"); readonly "null_policy": (null | "fail" | "ignore"); readonly "sample_rows": (null | Count); readonly "description": (null | string) };
 
 // prettier-ignore
 export type DeclarationInputV1 = { readonly "alias": string; readonly "ref": DiscoveryRefV1; readonly "branch": { readonly "kind": ("omitted" | "current" | "named"); readonly "name": (null | string) }; readonly "stop_branch_fallback": boolean; readonly "role": ("data" | "validation"); readonly "checks": ReadonlyArray<DeclarationCheckV1> };
@@ -130,3 +130,21 @@ export type ResourcePolicyV1 = { readonly "timeout_seconds": Count; readonly "ti
 
 // prettier-ignore
 export type PolarsExecutionRequestV1 = { readonly "format_version": 1; readonly "protocol": ProtocolVersion; readonly "request_id": Uuid; readonly "attempt_id": Uuid; readonly "capture_root": string; readonly "source_roots": ReadonlyArray<RelativePath>; readonly "files": ReadonlyArray<{ readonly "path": RelativePath; readonly "sha256": Sha256; readonly "byte_length": Count }>; readonly "catalog": CatalogSnapshotV1; readonly "environment_fingerprint": Sha256; readonly "result_directory": string; readonly "auth_token": Sha256; readonly "producer": DeclarationV1; readonly "inputs": ReadonlyArray<{ readonly "alias": string; readonly "dataset": DatasetKey; readonly "version_id": Uuid; readonly "artifact_root": string; readonly "artifact_digest": Sha256; readonly "manifest": ArtifactManifestV1 }>; readonly "context": { readonly "build_id": Uuid; readonly "job_id": Uuid; readonly "evaluation_time": ScalarValue; readonly "random_seed": (null | Count); readonly "parameters": ReadonlyArray<{ readonly "name": string; readonly "value": WireValue }> }; readonly "compression": ("uncompressed" | "snappy" | "zstd"); readonly "row_group_size": Count; readonly "threads": Count };
+
+// prettier-ignore
+export type ExpectationInputRef = { readonly "kind": "input"; readonly "alias": string };
+
+// prettier-ignore
+export type ExpectationMetric = { readonly "kind": "row_count"; readonly "input": (null | ExpectationInputRef) };
+
+// prettier-ignore
+export type ExpectationValue = ({ readonly "kind": "column"; readonly "name": string } | { readonly "kind": "literal"; readonly "value": ScalarValue });
+
+// prettier-ignore
+export type ExpectationScalar = ({ readonly "kind": "literal"; readonly "value": ScalarValue } | ExpectationMetric);
+
+// prettier-ignore
+export type ExpectationNode = ({ readonly "kind": "non_null"; readonly "columns": ReadonlyArray<string> } | { readonly "kind": "primary_key"; readonly "columns": ReadonlyArray<string> } | { readonly "kind": "row_compare"; readonly "op": ("gt" | "gte" | "lt" | "lte" | "equals" | "not_equals"); readonly "left": ExpectationValue; readonly "right": ExpectationValue } | { readonly "kind": "metric_compare"; readonly "op": ("gt" | "gte" | "lt" | "lte" | "equals" | "not_equals"); readonly "left": ExpectationScalar; readonly "right": ExpectationScalar } | { readonly "kind": "row_all"; readonly "children": ReadonlyArray<ExpectationNode> } | { readonly "kind": "row_any"; readonly "children": ReadonlyArray<ExpectationNode> } | { readonly "kind": "dataset_all"; readonly "children": ReadonlyArray<ExpectationNode> } | { readonly "kind": "dataset_any"; readonly "children": ReadonlyArray<ExpectationNode> } | { readonly "kind": "row_not"; readonly "child": ExpectationNode } | { readonly "kind": "dataset_not"; readonly "child": ExpectationNode } | { readonly "kind": "every"; readonly "child": ExpectationNode });
+
+// prettier-ignore
+export type ExpectationAstV1 = ({ readonly "kind": "non_null"; readonly "columns": ReadonlyArray<string>; readonly "ast_version": 1 } | { readonly "kind": "primary_key"; readonly "columns": ReadonlyArray<string>; readonly "ast_version": 1 } | { readonly "kind": "row_compare"; readonly "op": ("gt" | "gte" | "lt" | "lte" | "equals" | "not_equals"); readonly "left": ExpectationValue; readonly "right": ExpectationValue; readonly "ast_version": 1 } | { readonly "kind": "metric_compare"; readonly "op": ("gt" | "gte" | "lt" | "lte" | "equals" | "not_equals"); readonly "left": ExpectationScalar; readonly "right": ExpectationScalar; readonly "ast_version": 1 } | { readonly "kind": "row_all"; readonly "children": ReadonlyArray<ExpectationNode>; readonly "ast_version": 1 } | { readonly "kind": "row_any"; readonly "children": ReadonlyArray<ExpectationNode>; readonly "ast_version": 1 } | { readonly "kind": "dataset_all"; readonly "children": ReadonlyArray<ExpectationNode>; readonly "ast_version": 1 } | { readonly "kind": "dataset_any"; readonly "children": ReadonlyArray<ExpectationNode>; readonly "ast_version": 1 } | { readonly "kind": "row_not"; readonly "child": ExpectationNode; readonly "ast_version": 1 } | { readonly "kind": "dataset_not"; readonly "child": ExpectationNode; readonly "ast_version": 1 } | { readonly "kind": "every"; readonly "child": ExpectationNode; readonly "ast_version": 1 });
