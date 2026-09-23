@@ -8,6 +8,7 @@ use crate::{
 };
 use serde_json::{Value, json};
 use std::{
+    collections::BTreeMap,
     fs::{File, OpenOptions},
     io::Read,
     os::unix::fs::{MetadataExt, OpenOptionsExt},
@@ -70,7 +71,11 @@ pub enum Error {
 }
 /// Complete evaluation evidence; ERROR blocks even when the check severity is WARN.
 pub struct Completion {
-    /// Validated result envelope. Data rows and samples are never included here.
+    /// Exact verified manifest for durable evidence binding.
+    pub manifest: Value,
+    /// Private sample payloads keyed by digest; never ordinary log/export fields.
+    pub samples: BTreeMap<String, Value>,
+    /// Validated result envelope. Only sample digests, never rows, are included here.
     pub result: Value,
     /// Bounded helper logs, process outcome and timeout details when a helper ran.
     pub report: Option<Report>,
@@ -161,14 +166,33 @@ pub fn run(
     }
     let supported = compiler::schema_supported(&manifest["logical_schema"]);
     let mut plan = compiler::compile(checks, &manifest["logical_schema"]);
-    for (c, n) in checks.iter().zip(&mut plan.nodes) {
-        if c["sample_rows"] != "0" {
-            *n = Err("samples_not_implemented");
-        }
+    for n in &mut plan.nodes {
         if let Err(e) = supported {
             *n = Err(e);
         }
     }
+    let policy = launch
+        .request
+        .get("sample_policy")
+        .cloned()
+        .unwrap_or_else(|| json!({"allowed_columns":[],"sensitive_columns":[],"max_rows":20}));
+    validate_document("CheckSamplePolicyV1", &policy)
+        .map_err(|_| Error::Contract("sample policy"))?;
+    let allowed = policy["allowed_columns"]
+        .as_array()
+        .ok_or(Error::Evidence)?;
+    if allowed
+        .iter()
+        .map(Value::to_string)
+        .collect::<std::collections::BTreeSet<_>>()
+        .len()
+        != allowed.len()
+    {
+        return Err(Error::Evidence);
+    }
+    let sample_queries = compiler::samples(checks, &manifest["logical_schema"], &policy);
+    launch.request["sample_policy"] = policy.clone();
+    launch.request["sample_queries"] = json!(sample_queries);
     launch.request["queries"] = json!(plan.queries);
     let threads = launch
         .reservation
@@ -197,6 +221,8 @@ pub fn run(
     }
     let mut report = None;
     let mut aggregate_rows = vec![];
+    let mut sample_rows = vec![];
+    let mut samples = BTreeMap::new();
     let mut failure = if cancellation.requested() {
         Some("canceled")
     } else if budget.expired().map_err(|_| Error::Evidence)?.is_some() {
@@ -204,7 +230,10 @@ pub fn run(
     } else {
         None
     };
-    if failure.is_none() && plan.nodes.iter().any(|n| n.is_ok()) && !plan.queries.is_empty() {
+    if failure.is_none()
+        && plan.nodes.iter().any(|n| n.is_ok())
+        && (!plan.queries.is_empty() || sample_queries.iter().any(Option::is_some))
+    {
         let r = supervisor::run(launch, cancel);
         failure = match r.outcome {
             Ok(()) => None,
@@ -242,11 +271,53 @@ pub fn run(
                         return Err(Error::Evidence);
                     }
                 }
+                let sampled = value["samples"].as_array().ok_or(Error::Evidence)?;
+                if sampled.len() != checks.len() {
+                    return Err(Error::Evidence);
+                }
+                for (query, sample) in sample_queries.iter().zip(sampled) {
+                    match (query, sample.is_null()) {
+                        (None, true) => (),
+                        (Some(query), false) => {
+                            if sample["columns"] != query["columns"]
+                                || sample["limit"] != query["limit"]
+                                || sample["reason"] != query["reason"]
+                                || sample["rows"].as_array().is_none_or(|r| {
+                                    r.len() > query["limit"].as_u64().unwrap_or(0) as usize
+                                })
+                                || serde_json::to_vec(sample)
+                                    .map_err(|_| Error::Evidence)?
+                                    .len()
+                                    > 65536
+                            {
+                                return Err(Error::Evidence);
+                            }
+                            for row in sample["rows"].as_array().ok_or(Error::Evidence)? {
+                                let row = row.as_array().ok_or(Error::Evidence)?;
+                                let cols = query["columns"].as_array().ok_or(Error::Evidence)?;
+                                if row.len() != cols.len() {
+                                    return Err(Error::Evidence);
+                                }
+                                for (cell, col) in row.iter().zip(cols) {
+                                    let mut typ = cell.clone();
+                                    typ.as_object_mut().ok_or(Error::Evidence)?.remove("value");
+                                    if cell["type"] != "null" && typ != col["logical_type"] {
+                                        return Err(Error::Evidence);
+                                    }
+                                }
+                            }
+                        }
+                        _ => return Err(Error::Evidence),
+                    }
+                }
                 subject.root()?; // No result may certify changed bytes.
-                Ok(rows.clone())
+                Ok((rows.clone(), sampled.clone()))
             })();
             match parsed {
-                Ok(rows) => aggregate_rows = rows,
+                Ok((rows, sampled)) => {
+                    aggregate_rows = rows;
+                    sample_rows = sampled;
+                }
                 Err(_) => failure = Some("result_integrity"),
             }
         }
@@ -261,7 +332,7 @@ pub fn run(
     let finished = now()?;
     let elapsed = start.elapsed().as_micros().to_string();
     let mut outcomes = vec![];
-    for (c, n) in checks.iter().zip(&plan.nodes) {
+    for (index, (c, n)) in checks.iter().zip(&plan.nodes).enumerate() {
         let mut metrics = vec![];
         let outcome = if let Some(e) = failure {
             Err(e)
@@ -288,11 +359,33 @@ pub fn run(
                 ("ERROR", None, Some(e), false)
             }
         };
-        outcomes.push(json!({"id":c["id"],"name":c["name"],"definition_digest":content_digest(DigestKind::Compute,c).map_err(|_|Error::Evidence)?.hex(),"status":status,"severity":c["on_error"],"exact":exact,"failed_rows":failed,"error":error,"metrics":metrics,"sample":null}));
+        let mut sample = Value::Null;
+        if status == "VIOLATION"
+            && let Some(value) = sample_rows.get(index).filter(|s| !s.is_null())
+        {
+            let mut value = value.clone();
+            if let Some(total) = failed.as_ref().and_then(|s| s.parse::<u64>().ok()) {
+                value["truncated"] = json!(
+                    value["truncated"] == true
+                        || total > value["rows"].as_array().map_or(0, Vec::len) as u64
+                );
+            }
+            let key = content_digest(DigestKind::Compute, &value)
+                .map_err(|_| Error::Evidence)?
+                .hex();
+            samples.insert(key.clone(), value);
+            sample = json!(key);
+        }
+        outcomes.push(json!({"id":c["id"],"name":c["name"],"definition_digest":content_digest(DigestKind::Compute,c).map_err(|_|Error::Evidence)?.hex(),"status":status,"severity":c["on_error"],"exact":exact,"failed_rows":failed,"error":error,"metrics":metrics,"sample":sample}));
     }
-    let result = json!({"format_version":1,"request_id":request["request_id"],"attempt_id":request["attempt_id"],"artifact_digest":digest,"subject_version":request["subject_version"],"consumer_definition":request["consumer_definition"],"binding":request["binding"],"phase":phase,"evaluator":"duckdb-1.5.5:core-v1","semantics":"strict-null-key-v1","started_us":started,"finished_us":finished,"duration_us":elapsed,"checks":outcomes});
+    let result = json!({"format_version":1,"request_id":request["request_id"],"attempt_id":request["attempt_id"],"artifact_digest":digest,"subject_version":request["subject_version"],"consumer_definition":request["consumer_definition"],"binding":request["binding"],"phase":phase,"evaluator":"duckdb-1.5.5:core-v1","semantics":"strict-null-key-v1","started_us":started,"finished_us":finished,"duration_us":elapsed,"checks":outcomes,"sample_policy":policy});
     validate_document("CheckEvaluationResultV1", &result).map_err(|_| Error::Contract("result"))?;
-    Ok(Completion { result, report })
+    Ok(Completion {
+        manifest: manifest.clone(),
+        result,
+        report,
+        samples,
+    })
 }
 
 #[cfg(test)]

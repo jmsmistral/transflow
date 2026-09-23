@@ -517,29 +517,32 @@ impl Store {
                 .fetch_one(&mut *tx)
                 .await?;
         if existing != 0 {
-            return Err(PublicationError::Evidence);
-        }
-        for (index, (definition, subject, outcome, metrics, start, finish)) in
-            rows.iter().enumerate()
-        {
-            // Deterministic identity scoped to this attempt; no retry may replace evidence.
-            let hash = tf_protocol::canonical::content_digest(
-                DigestKind::Compute,
-                &json!({"attempt":request.intent.attempt().to_string(),"gate_result":index}),
-            )
-            .map_err(|_| PublicationError::Evidence)?
-            .hex();
-            let id = format!(
-                "{}-{}-{}-{}-{}",
-                &hash[..8],
-                &hash[8..12],
-                &hash[12..16],
-                &hash[16..20],
-                &hash[20..32]
-            );
-            sqlx::query("INSERT INTO check_results(id,attempt_id,subject_json,definition_fingerprint,outcome,metrics_json,started_at_us,finished_at_us) VALUES(?,?,?,?,?,?,?,?)")
-                .bind(id).bind(request.intent.attempt().to_string()).bind(subject).bind(definition)
-                .bind(outcome).bind(metrics).bind(start).bind(finish).execute(&mut *tx).await?;
+            if existing != rows.len() as i64 {
+                return Err(PublicationError::Evidence);
+            }
+            for (definition, subject, outcome, metrics, start, finish) in &rows {
+                let stored=sqlx::query("SELECT subject_json,outcome,metrics_json,started_at_us,finished_at_us FROM check_results WHERE attempt_id=? AND definition_fingerprint=?")
+                    .bind(request.intent.attempt().to_string()).bind(definition).fetch_all(&mut *tx).await?;
+                let stored = stored
+                    .first()
+                    .filter(|_| stored.len() == 1)
+                    .ok_or(PublicationError::Evidence)?;
+                if stored.try_get::<String, _>(0)? != *subject
+                    || stored.try_get::<String, _>(1)? != *outcome
+                    || stored.try_get::<String, _>(2)? != *metrics
+                    || stored.try_get::<i64, _>(3)? != *start
+                    || stored.try_get::<i64, _>(4)? != *finish
+                {
+                    return Err(PublicationError::Evidence);
+                }
+            }
+        } else {
+            for (definition, subject, outcome, metrics, start, finish) in &rows {
+                let id = crate::check_evidence::result_id(request.intent.attempt(), definition)?;
+                sqlx::query("INSERT INTO check_results(id,attempt_id,subject_json,definition_fingerprint,outcome,metrics_json,started_at_us,finished_at_us) VALUES(?,?,?,?,?,?,?,?)")
+                    .bind(id.to_string()).bind(request.intent.attempt().to_string()).bind(subject).bind(definition)
+                    .bind(outcome).bind(metrics).bind(start).bind(finish).execute(&mut *tx).await?;
+            }
         }
         tx.commit().await?;
         Ok(())

@@ -4990,6 +4990,24 @@
           },
           "minItems": 0,
           "maxItems": 4096
+        },
+        "sample_policy": {
+          "$ref": "#/$defs/CheckSamplePolicyV1"
+        },
+        "sample_queries": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/CheckSampleQueryV1"
+              }
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 128
         }
       },
       "required": [
@@ -5059,6 +5077,21 @@
           },
           "minItems": 0,
           "maxItems": 4096
+        },
+        "samples": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/CheckSampleV1"
+              }
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 128
         }
       },
       "required": [
@@ -5221,7 +5254,14 @@
                 "maxItems": 4096
               },
               "sample": {
-                "type": "null"
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/Sha256"
+                  }
+                ]
               }
             },
             "required": [
@@ -5240,6 +5280,9 @@
           },
           "minItems": 0,
           "maxItems": 128
+        },
+        "sample_policy": {
+          "$ref": "#/$defs/CheckSamplePolicyV1"
         }
       },
       "required": [
@@ -5257,6 +5300,141 @@
         "finished_us",
         "duration_us",
         "checks"
+      ],
+      "additionalProperties": false
+    },
+    "CheckSamplePolicyV1": {
+      "type": "object",
+      "properties": {
+        "allowed_columns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "minItems": 0,
+          "maxItems": 16
+        },
+        "sensitive_columns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "max_rows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        }
+      },
+      "required": [
+        "allowed_columns",
+        "sensitive_columns",
+        "max_rows"
+      ],
+      "additionalProperties": false
+    },
+    "CheckSampleV1": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Field"
+          },
+          "minItems": 0,
+          "maxItems": 16
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ScalarValue"
+            },
+            "minItems": 0,
+            "maxItems": 16
+          },
+          "minItems": 0,
+          "maxItems": 20
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "reason": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          ]
+        }
+      },
+      "required": [
+        "columns",
+        "rows",
+        "truncated",
+        "limit",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "CheckSampleQueryV1": {
+      "type": "object",
+      "properties": {
+        "sql": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScalarValue"
+          },
+          "minItems": 0,
+          "maxItems": 8192
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Field"
+          },
+          "minItems": 0,
+          "maxItems": 16
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "reason": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          ]
+        }
+      },
+      "required": [
+        "sql",
+        "parameters",
+        "columns",
+        "limit",
+        "reason"
       ],
       "additionalProperties": false
     }

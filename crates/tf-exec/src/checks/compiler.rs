@@ -351,3 +351,56 @@ pub(super) fn compile(checks: &[Value], schema: &Value) -> Plan {
         nodes,
     }
 }
+
+/// Compile independent, bounded diagnostic reads. They never decide the aggregate outcome.
+pub(super) fn samples(checks: &[Value], schema: &Value, policy: &Value) -> Vec<Option<Value>> {
+    let fields = schema["fields"].as_array().cloned().unwrap_or_default();
+    let sensitive = policy["sensitive_columns"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    let columns: Vec<_> = policy["allowed_columns"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|n| !sensitive.contains(n))
+        .filter_map(|n| fields.iter().find(|f| f["name"] == *n))
+        .filter(|f| !matches!(f["logical_type"]["type"].as_str(), Some("list" | "struct")))
+        .cloned()
+        .collect();
+    checks.iter().map(|check| {
+        let requested = check["sample_rows"].as_str()?.parse::<u64>().ok()?;
+        if requested == 0 { return None; }
+        let limit = requested.min(policy["max_rows"].as_u64().unwrap_or(20)).min(20);
+        let mut c = Compiler { fields:fields.iter().filter_map(|f|Some((f["name"].as_str()?.into(),f["logical_type"].clone()))).collect(),queries:vec![],expressions:vec![],parameters:vec![],batch:0,remaining:4096 };
+        let ast = decode(&check["expectation"], &Default::default()).ok()?;
+        validate_schema(&ast,schema).ok()?;
+        let select = columns.iter().map(|f| {
+            let name = quote(f["name"].as_str().unwrap_or(""));
+            if f["logical_type"]["type"] == "binary" {format!("to_base64({name})")} else {format!("CAST({name} AS VARCHAR)")}
+        }).collect::<Vec<_>>();
+        let mut source = "subject".to_owned();
+        let predicate = match ast {
+            Expectation::Row(r) | Expectation::Dataset(DatasetExpectation::Every(r)) => {
+                let sql = c.row_sql(&r).ok()?;
+                Some(format!("({sql}) IS {}", if check["null_policy"]=="ignore" {"FALSE"} else {"NOT TRUE"}))
+            },
+            Expectation::Dataset(DatasetExpectation::PrimaryKey(names)) => {
+                let keys = names.iter().map(|n|quote(n.as_str())).collect::<Vec<_>>();
+                // An internal name is chosen outside the actual schema namespace.
+                let mut name = "__transflow_sample_count".to_owned();
+                while c.fields.keys().any(|n|n.eq_ignore_ascii_case(&name)) {name.push('_');}
+                let name = quote(&name);
+                source = format!("(SELECT *,count(*) OVER (PARTITION BY {}) AS {name} FROM subject) AS sample_source",keys.join(","));
+                Some(format!("({} OR {name}>1)",keys.iter().map(|k|format!("{k} IS NULL")).collect::<Vec<_>>().join(" OR ")))
+            },
+            _ => None,
+        };
+        let reason = if limit==0 {Some("policy_disabled")} else if columns.is_empty(){Some("no_allowed_columns")} else if predicate.is_none(){Some("no_row_attribution")} else {None};
+        let sql = if let Some(predicate)=predicate.filter(|_|reason.is_none()) {
+            let bounded=select.iter().map(|s|format!("({s} IS NULL OR octet_length(encode({s}))<=4096)")).collect::<Vec<_>>().join(" AND ");
+            format!("SELECT {} FROM {source} WHERE ({predicate}) AND ({bounded}) LIMIT {}",select.join(","),limit+1)
+        } else {String::new()};
+        Some(json!({"sql":sql,"parameters":if reason.is_some(){vec![]}else{c.parameters},"columns":columns,"limit":limit,"reason":reason}))
+    }).collect()
+}

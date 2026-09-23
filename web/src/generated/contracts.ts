@@ -153,13 +153,22 @@ export type ExpectationAstV1 = ({ readonly "kind": "non_null"; readonly "columns
 export type CheckQueryV1 = { readonly "sql": string; readonly "parameters": ReadonlyArray<ScalarValue>; readonly "width": number };
 
 // prettier-ignore
-export type CheckEvaluationRequestV1 = { readonly "format_version": 1; readonly "protocol": ProtocolVersion; readonly "request_id": Uuid; readonly "attempt_id": Uuid; readonly "auth_token": Sha256; readonly "result_directory": string; readonly "spill_directory": string; readonly "artifact_root": string; readonly "artifact_digest": Sha256; readonly "manifest": ArtifactManifestV1; readonly "phase": ("input" | "output"); readonly "subject_version": (null | Uuid); readonly "consumer_definition": Sha256; readonly "binding": (null | string); readonly "threads": Count; readonly "memory_bytes": (null | Count); readonly "spill_bytes": Count; readonly "queries": ReadonlyArray<CheckQueryV1> };
+export type CheckEvaluationRequestV1 = { readonly "format_version": 1; readonly "protocol": ProtocolVersion; readonly "request_id": Uuid; readonly "attempt_id": Uuid; readonly "auth_token": Sha256; readonly "result_directory": string; readonly "spill_directory": string; readonly "artifact_root": string; readonly "artifact_digest": Sha256; readonly "manifest": ArtifactManifestV1; readonly "phase": ("input" | "output"); readonly "subject_version": (null | Uuid); readonly "consumer_definition": Sha256; readonly "binding": (null | string); readonly "threads": Count; readonly "memory_bytes": (null | Count); readonly "spill_bytes": Count; readonly "queries": ReadonlyArray<CheckQueryV1>; readonly "sample_policy"?: CheckSamplePolicyV1; readonly "sample_queries"?: ReadonlyArray<(null | CheckSampleQueryV1)> };
 
 // prettier-ignore
-export type CheckAggregatesV1 = { readonly "format_version": 1; readonly "request_id": Uuid; readonly "artifact_digest": Sha256; readonly "queries": ReadonlyArray<{ readonly "counts": ReadonlyArray<Count>; readonly "error": (null | string) }> };
+export type CheckAggregatesV1 = { readonly "format_version": 1; readonly "request_id": Uuid; readonly "artifact_digest": Sha256; readonly "queries": ReadonlyArray<{ readonly "counts": ReadonlyArray<Count>; readonly "error": (null | string) }>; readonly "samples"?: ReadonlyArray<(null | CheckSampleV1)> };
 
 // prettier-ignore
 export type CheckMetricV1 = { readonly "path": string; readonly "passed": boolean; readonly "expected": Readonly<Record<string, string>>; readonly "counts": Readonly<Record<string, string>> };
 
 // prettier-ignore
-export type CheckEvaluationResultV1 = { readonly "format_version": 1; readonly "request_id": Uuid; readonly "attempt_id": Uuid; readonly "artifact_digest": Sha256; readonly "subject_version": (null | Uuid); readonly "consumer_definition": Sha256; readonly "binding": (null | string); readonly "phase": ("input" | "output"); readonly "evaluator": string; readonly "semantics": string; readonly "started_us": Count; readonly "finished_us": Count; readonly "duration_us": Count; readonly "checks": ReadonlyArray<{ readonly "id": string; readonly "name": string; readonly "definition_digest": Sha256; readonly "status": ("PASS" | "VIOLATION" | "ERROR"); readonly "severity": ("FAIL" | "WARN"); readonly "exact": boolean; readonly "failed_rows": (null | Count); readonly "error": (null | string); readonly "metrics": ReadonlyArray<CheckMetricV1>; readonly "sample": null }> };
+export type CheckEvaluationResultV1 = { readonly "format_version": 1; readonly "request_id": Uuid; readonly "attempt_id": Uuid; readonly "artifact_digest": Sha256; readonly "subject_version": (null | Uuid); readonly "consumer_definition": Sha256; readonly "binding": (null | string); readonly "phase": ("input" | "output"); readonly "evaluator": string; readonly "semantics": string; readonly "started_us": Count; readonly "finished_us": Count; readonly "duration_us": Count; readonly "checks": ReadonlyArray<{ readonly "id": string; readonly "name": string; readonly "definition_digest": Sha256; readonly "status": ("PASS" | "VIOLATION" | "ERROR"); readonly "severity": ("FAIL" | "WARN"); readonly "exact": boolean; readonly "failed_rows": (null | Count); readonly "error": (null | string); readonly "metrics": ReadonlyArray<CheckMetricV1>; readonly "sample": (null | Sha256) }>; readonly "sample_policy"?: CheckSamplePolicyV1 };
+
+// prettier-ignore
+export type CheckSamplePolicyV1 = { readonly "allowed_columns": ReadonlyArray<string>; readonly "sensitive_columns": ReadonlyArray<string>; readonly "max_rows": number };
+
+// prettier-ignore
+export type CheckSampleV1 = { readonly "columns": ReadonlyArray<Field>; readonly "rows": ReadonlyArray<ReadonlyArray<ScalarValue>>; readonly "truncated": boolean; readonly "limit": number; readonly "reason": (null | string) };
+
+// prettier-ignore
+export type CheckSampleQueryV1 = { readonly "sql": string; readonly "parameters": ReadonlyArray<ScalarValue>; readonly "columns": ReadonlyArray<Field>; readonly "limit": number; readonly "reason": (null | string) };

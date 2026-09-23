@@ -32,7 +32,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
     let mut limits = Limits::default();
     if mode == "timeout" {
-        limits.validation.value = 1;
+        // Leave helper startup room on loaded CI hosts; the injected query is unbounded
+        // relative to this deadline and must actually begin before qualification passes.
+        limits.validation.value = 3;
     }
     if mode == "disabled" {
         limits.validation.value = 0;
@@ -88,7 +90,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
     println!(
         "{}",
-        json!({"result":result.result,"worker":result.report.as_ref().map(|r|json!({"outcome":format!("{:?}",r.outcome),"timeout":r.timeout.as_ref().map(ToString::to_string),"stdout":String::from_utf8_lossy(&r.stdout.bytes),"stderr":String::from_utf8_lossy(&r.stderr.bytes),"logs_complete":r.logs_complete}))})
+        json!({"result":result.result,"samples":result.samples,"worker":result.report.as_ref().map(|r|json!({"outcome":format!("{:?}",r.outcome),"timeout":r.timeout.as_ref().map(ToString::to_string),"stdout":String::from_utf8_lossy(&r.stdout.bytes),"stderr":String::from_utf8_lossy(&r.stderr.bytes),"logs_complete":r.logs_complete}))})
     );
     Ok(())
 }

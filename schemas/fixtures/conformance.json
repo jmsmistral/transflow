@@ -5240,5 +5240,286 @@
         }
       ]
     }
+  },
+  {
+    "name": "check-policy",
+    "schema": "CheckSamplePolicyV1",
+    "value": {
+      "allowed_columns": [
+        "id"
+      ],
+      "sensitive_columns": [],
+      "max_rows": 20
+    },
+    "valid": true
+  },
+  {
+    "name": "check-sample",
+    "schema": "CheckSampleV1",
+    "value": {
+      "columns": [
+        {
+          "name": "id",
+          "logical_type": {
+            "type": "i64"
+          },
+          "nullable": true
+        }
+      ],
+      "rows": [
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "limit": 20,
+      "truncated": false,
+      "reason": null
+    },
+    "valid": true
+  },
+  {
+    "name": "check-policy-cap",
+    "schema": "CheckSamplePolicyV1",
+    "value": {
+      "allowed_columns": [
+        "id"
+      ],
+      "sensitive_columns": [],
+      "max_rows": 21
+    },
+    "valid": false
+  },
+  {
+    "name": "check-policy-columns",
+    "schema": "CheckSamplePolicyV1",
+    "value": {
+      "allowed_columns": [
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x"
+      ],
+      "sensitive_columns": [],
+      "max_rows": 20
+    },
+    "valid": false
+  },
+  {
+    "name": "check-sample-cap",
+    "schema": "CheckSampleV1",
+    "value": {
+      "columns": [
+        {
+          "name": "id",
+          "logical_type": {
+            "type": "i64"
+          },
+          "nullable": true
+        }
+      ],
+      "rows": [
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "limit": 21,
+      "truncated": false,
+      "reason": null
+    },
+    "valid": false
+  },
+  {
+    "name": "check-sample-rows",
+    "schema": "CheckSampleV1",
+    "value": {
+      "columns": [
+        {
+          "name": "id",
+          "logical_type": {
+            "type": "i64"
+          },
+          "nullable": true
+        }
+      ],
+      "rows": [
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "limit": 20,
+      "truncated": false,
+      "reason": null
+    },
+    "valid": false
+  },
+  {
+    "name": "check-sample-unknown",
+    "schema": "CheckSampleV1",
+    "value": {
+      "columns": [
+        {
+          "name": "id",
+          "logical_type": {
+            "type": "i64"
+          },
+          "nullable": true
+        }
+      ],
+      "rows": [
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "limit": 20,
+      "truncated": false,
+      "reason": null,
+      "unexpected": true
+    },
+    "valid": false
   }
 ]

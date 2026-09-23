@@ -212,6 +212,7 @@ class Session:
             "expectation.ast.v1",
             "expectation.core.v1",
             "duckdb.checks.v1",
+            "duckdb.samples.v1",
         }:
             raise ProtocolError("capability")
         self._request = request_id

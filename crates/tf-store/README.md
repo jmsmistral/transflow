@@ -19,7 +19,7 @@ workspace initialization and robust ownership/path protection remain separate ta
 
 ## Schema and migrations
 
-Seven additive migrations install 47 logical tables: source/catalogue projections,
+Eight additive migrations install 53 logical tables: source/catalogue projections,
 versions/heads, builds/jobs/attempts, checks, scheduling, events/outbox, pins/audit,
 registry mutation journals, foreign replicas/leases, frozen publication/check
 links, read retention, replay, cache associations and computation comparison evidence. Publication is implemented below; scheduler, retention and replica-copy
@@ -108,3 +108,10 @@ plus the migration ledger.
 comparison evidence, and a single-transaction head/attempt/check snapshot. There
 are now 47 logical tables plus the migration ledger. Existing publications remain
 unchanged; absent comparison metadata is explicitly unknown.
+
+
+[T063 check evidence](../tf-exec/CHECKS.md) adds schema 8: complete immutable
+check envelopes, private bounded samples, certificate keys, explicit reuse records
+and failed-candidate retention roots. Original evaluation times never change on
+reuse. Diagnostic reads require explicit intent and return warnings; safe evidence
+reads do not load row values. Consumer failures cannot rewrite provider results.

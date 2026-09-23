@@ -276,7 +276,8 @@ function invariant(name: string, value: Record<string, unknown>): void {
           c === "polars.execute.v1" ||
           c === "expectation.ast.v1" ||
           c === "expectation.core.v1" ||
-          c === "duckdb.checks.v1",
+          c === "duckdb.checks.v1" ||
+          c === "duckdb.samples.v1",
       ) &&
         extensions.every(
           (e) =>

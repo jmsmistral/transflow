@@ -13,7 +13,7 @@ use std::{
 use tf_domain::{DatasetId, WorkspaceId};
 
 /// Latest supported runtime schema. Authoring registry versions are independent.
-pub const SCHEMA_VERSION: i64 = 7;
+pub const SCHEMA_VERSION: i64 = 8;
 
 /// Branch-scoped retained version reuse and guarded adoption.
 pub mod cache;
@@ -343,3 +343,6 @@ pub mod replay;
 
 /// Transactionally frozen freshness history, independent of graph evaluation.
 pub mod freshness;
+
+/// Durable exact check evidence, certificate reuse and explicit private diagnostics.
+pub mod check_evidence;

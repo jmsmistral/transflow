@@ -276,3 +276,18 @@ def validate_CheckMetricV1(value: object) -> None:
 def validate_CheckEvaluationResultV1(value: object) -> None:
     """Assert the CheckEvaluationResultV1 contract, including custom formats."""
     validate_document("CheckEvaluationResultV1", value)
+
+
+def validate_CheckSamplePolicyV1(value: object) -> None:
+    """Assert the CheckSamplePolicyV1 contract, including custom formats."""
+    validate_document("CheckSamplePolicyV1", value)
+
+
+def validate_CheckSampleV1(value: object) -> None:
+    """Assert the CheckSampleV1 contract, including custom formats."""
+    validate_document("CheckSampleV1", value)
+
+
+def validate_CheckSampleQueryV1(value: object) -> None:
+    """Assert the CheckSampleQueryV1 contract, including custom formats."""
+    validate_document("CheckSampleQueryV1", value)

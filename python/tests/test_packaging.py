@@ -125,6 +125,7 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
             "discovery",
             "execution",
             "check_adapter",
+            "check_samples",
             "checks",
             "polars_adapter",
         )

@@ -61,6 +61,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                     "message": message,
                     "required_capabilities": [
                         "duckdb.checks.v1",
+                        "duckdb.samples.v1",
                         "expectation.ast.v1",
                         "expectation.core.v1",
                     ],
@@ -81,7 +82,12 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
         {
             "type": "hello",
             "operation": "evaluate_checks",
-            "capabilities": ["duckdb.checks.v1", "expectation.ast.v1", "expectation.core.v1"],
+            "capabilities": [
+                "duckdb.checks.v1",
+                "duckdb.samples.v1",
+                "expectation.ast.v1",
+                "expectation.core.v1",
+            ],
         }
     )
     thread = threading.Thread(target=heartbeat, daemon=True)

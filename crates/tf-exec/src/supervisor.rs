@@ -425,6 +425,7 @@ fn run_inner(
                 "expectation.ast.v1".to_owned(),
                 "expectation.core.v1".to_owned(),
                 "duckdb.checks.v1".to_owned(),
+                "duckdb.samples.v1".to_owned(),
             ]
             .into(),
         )

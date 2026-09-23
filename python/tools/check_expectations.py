@@ -97,6 +97,8 @@ def main() -> None:
             memory: str | None = None,
             spill: str = "268435456",
             expected: list[str] | None = None,
+            allowed: list[str] | None = None,
+            sensitive: list[str] | None = None,
         ) -> dict[str, Any]:
             directory = root / name
             directory.mkdir()
@@ -142,6 +144,11 @@ def main() -> None:
                 "checks": [_check(c.effective()) for c in checks],
                 # Caller SQL is discarded and replaced by the typed compiler.
                 "queries": [{"sql": "DROP VIEW subject", "parameters": [], "width": 1}],
+                "sample_policy": {
+                    "allowed_columns": allowed or [],
+                    "sensitive_columns": sensitive or [],
+                    "max_rows": 20,
+                },
             }
             request_path = directory / "request.json"
             request_path.write_text(json.dumps(request))
@@ -158,7 +165,9 @@ def main() -> None:
             if expected is not None:
                 assert [c["status"] for c in actual] == expected, (name, result)
             assert result["result"]["artifact_digest"] == subject["artifact_digest"]
-            assert all(c["sample"] is None for c in actual)
+            if all(c.effective().sample_rows == 0 for c in checks):
+                assert all(c["sample"] is None for c in actual)
+                assert result["samples"] == {}
             if result["worker"] is not None:
                 assert result["worker"]["stdout"] == "" and result["worker"]["stderr"] == "", result
                 assert result["worker"]["logs_complete"], result
@@ -425,6 +434,96 @@ def main() -> None:
             mode="disabled",
             expected=["PASS"],
         )
+        # Samples are independent of the exact full count and never enter worker logs.
+        sampled = run(
+            "sample-cap-redaction",
+            pa.table({"id": list(range(50)), "secret": ["private-sentinel"] * 50}),
+            [Check(E.col("id").lt(0), "sample", sample_rows=100)],
+            allowed=["id", "secret"],
+            sensitive=["secret"],
+            expected=["VIOLATION"],
+        )
+        value = next(iter(sampled["samples"].values()))
+        assert len(value["rows"]) == 20 and value["truncated"] and value["limit"] == 20
+        assert sampled["result"]["checks"][0]["failed_rows"] == "50"
+        assert [c["name"] for c in value["columns"]] == ["id"]
+        assert "private-sentinel" not in json.dumps(sampled)
+        sample = run(
+            "sample-no-allowlist",
+            pa.table({"id": [1, 2]}),
+            [Check(E.col("id").lt(0), "sample", sample_rows=20)],
+            expected=["VIOLATION"],
+        )
+        assert next(iter(sample["samples"].values()))["reason"] == "no_allowed_columns"
+        precise = run(
+            "sample-precise",
+            pa.table(
+                {
+                    "id": [1],
+                    "wide": pa.array([2**64 - 1], pa.uint64()),
+                    "decimal": pa.array(
+                        [Decimal("12345678901234567890.123456789")], pa.decimal128(38, 9)
+                    ),
+                    "nano": pa.array([1], pa.timestamp("ns")),
+                    "binary": [b"\x00\xff"],
+                    "flag": [True],
+                    "float": [float("nan")],
+                }
+            ),
+            [Check(E.col("id").lt(0), "precise", sample_rows=1)],
+            allowed=["wide", "decimal", "nano", "binary", "flag", "float"],
+            expected=["VIOLATION"],
+        )
+        cells = next(iter(precise["samples"].values()))["rows"][0]
+        assert [c["value"] for c in cells] == [
+            str(2**64 - 1),
+            "12345678901234567890.123456789",
+            "1970-01-01T00:00:00.000000001",
+            "AP8=",
+            True,
+            "NaN",
+        ]
+        pk = run(
+            "sample-pk",
+            pa.table({"id": [1, 2, 2, None]}),
+            [Check(E.primary_key("id"), "pk", sample_rows=20)],
+            allowed=["id"],
+            expected=["VIOLATION"],
+        )
+        assert len(next(iter(pk["samples"].values()))["rows"]) == 3
+        ignored = run(
+            "sample-ignore-null",
+            pa.table({"id": [None, -1, 1]}),
+            [Check(E.col("id").gte(0), "ignore", null_policy="ignore", sample_rows=20)],
+            allowed=["id"],
+            expected=["VIOLATION"],
+        )
+        assert next(iter(ignored["samples"].values()))["rows"] == [[{"type": "i64", "value": "-1"}]]
+        dataset = run(
+            "sample-no-attribution",
+            pa.table({"id": [1, 2]}),
+            [Check(E.row_count().equals(3), "count", sample_rows=20)],
+            allowed=["id"],
+            expected=["VIOLATION"],
+        )
+        assert next(iter(dataset["samples"].values()))["reason"] == "no_row_attribution"
+        schema_only = run(
+            "sample-schema-only",
+            pa.table({"id": [1, 2]}),
+            [Check(E.col("id").has_type("string"), "schema", sample_rows=1)],
+            allowed=["id"],
+            expected=["VIOLATION"],
+        )
+        assert next(iter(schema_only["samples"].values()))["reason"] == "no_row_attribution"
+        large_cell = run(
+            "sample-large-cell",
+            pa.table({"id": [1], "text": ["x" * 100000]}),
+            [Check(E.col("id").lt(0), "large", sample_rows=1)],
+            allowed=["text"],
+            expected=["VIOLATION"],
+        )
+        assert next(iter(large_cell["samples"].values()))["rows"] == []
+        assert next(iter(large_cell["samples"].values()))["truncated"]
         # Strict engine budget failure must never be a partial/sampled PASS.
         run(
             "memory-error",

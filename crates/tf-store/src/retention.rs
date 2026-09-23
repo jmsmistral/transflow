@@ -421,6 +421,7 @@ async fn roots(
  UNION SELECT artifact_digest FROM pins WHERE artifact_digest IS NOT NULL AND (expires_at_us IS NULL OR expires_at_us>?)
  UNION SELECT artifact_digest FROM read_leases WHERE artifact_digest IS NOT NULL AND released=0 AND expires_at_us>?
  UNION SELECT p.artifact_digest FROM publication_intents p JOIN attempts a ON a.id=p.attempt_id JOIN jobs j ON j.id=a.job_id JOIN builds b ON b.id=j.build_id WHERE p.state='PREPARED' AND b.state IN ('QUEUED','RUNNING')
+ UNION SELECT artifact_digest FROM failed_check_candidates
  UNION SELECT json_extract(i.value,'$.artifact') FROM publication_contracts c JOIN jobs j ON j.id=c.job_id JOIN builds b ON b.id=j.build_id,json_each(c.contract_json,'$.inputs') i WHERE b.state IN ('QUEUED','RUNNING') LIMIT 100001"#).bind(now).bind(now).fetch_all(&mut *db).await?;
     let sources:Vec<String>=sqlx::query_scalar("SELECT source_snapshot_id FROM dataset_versions WHERE id IN (SELECT id FROM retained_work) UNION SELECT source_snapshot_id FROM pins WHERE source_snapshot_id IS NOT NULL AND (expires_at_us IS NULL OR expires_at_us>?) UNION SELECT p.source_snapshot_id FROM build_plans p JOIN builds b ON b.plan_id=p.id WHERE b.state IN ('QUEUED','RUNNING') AND p.source_snapshot_id IS NOT NULL LIMIT 100001").bind(now).fetch_all(&mut *db).await?;
     if digests.len() > 100_000 || sources.len() > 100_000 {

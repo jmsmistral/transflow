@@ -14,16 +14,10 @@ use tf_exec::{
     supervisor::{Cancellation, Launch, Policy},
     timing::{Budget, Limits, Phase as TimedPhase},
 };
-use tf_protocol::{
-    Operation,
-    canonical::{DigestKind, content_digest},
-};
+use tf_protocol::Operation;
 use tf_store::{
     artifacts::ArtifactStore,
-    publication::{
-        CheckRequirement, CheckSubject, InputProvenance, InputRole, PublicationRequest,
-        gate_definition,
-    },
+    publication::{CheckRequirement, CheckSubject, InputProvenance, InputRole, PublicationRequest},
 };
 #[path = "../tests/support/publication.rs"]
 mod fixture;
@@ -99,27 +93,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         .zip(&input_checks)
         .chain(std::iter::once((None, &output_checks)))
     {
-        for check in checks {
-            let raw = content_digest(DigestKind::Compute, check)?.hex();
-            let definition = gate_definition(&raw, alias)?;
-            rt.block_on(
-                sqlx::query("INSERT INTO check_definitions VALUES(?,?,1,?,?,?,?)")
-                    .bind(&definition)
-                    .bind(check["expectation"].to_string())
-                    .bind(if alias.is_some() { "input" } else { "output" })
-                    .bind(alias)
-                    .bind(check["id"].as_str())
-                    .bind(json!({"severity":check["on_error"]}).to_string())
-                    .execute(&mut h.db),
-            )?;
-            contract.checks.push(CheckRequirement {
-                definition,
-                subject: alias
-                    .map(|a| CheckSubject::Input(a.into()))
-                    .unwrap_or(CheckSubject::Output),
-                required: check["on_error"] == "FAIL",
-            });
-        }
+        let session = h.session();
+        let mut store = rt.block_on(h.owner.as_mut().ok_or("owner")?.open_store())?;
+        contract
+            .checks
+            .extend(rt.block_on(store.repository()?.register_check_definitions(
+                fixture::workspace(),
+                session,
+                alias,
+                checks,
+            ))?);
+        rt.block_on(store.close())?;
     }
     let seeded = rt.block_on(h.seed(20, 20));
     let target = OutputTarget {
@@ -176,6 +160,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         reservation: None,
         threads: 1,
     };
+    let consumer = tf_protocol::canonical::content_digest(
+        tf_protocol::canonical::DigestKind::Compute,
+        &request["producer"],
+    )?
+    .hex();
     let execute = launch(Operation::Execute, "PolarsExecutionRequestV1", request);
     let mut requested = lifecycle::Request {
         execute,
@@ -228,7 +217,71 @@ fn main() -> Result<(), Box<dyn Error>> {
                 json!({"format_version":1,"protocol":{"major":1,"minor":0},"request_id":tf_exec::discovery::random_id().map_err(tf_store::artifacts::ArtifactError::from)?,"auth_token":"0".repeat(64),"result_directory":dir,"memory_bytes":null,"spill_bytes":"268435456"}),
             ))
         },
-        |phase| {
+        |event| {
+            let phase = match event {
+                lifecycle::Event::Enter(phase) => phase,
+                lifecycle::Event::Evaluated(e) => {
+                    let context = tf_store::check_evidence::Context {
+                        consumer_definition: &consumer,
+                        sample_policy: &json!({"allowed_columns":[],"sensitive_columns":[],"max_rows":20}),
+                        job: &job,
+                        attempt,
+                        contract: &contract,
+                        at_us: i64::try_from(
+                            SystemTime::now()
+                                .duration_since(UNIX_EPOCH)
+                                .map_err(|_| lifecycle::Error::Contract)?
+                                .as_micros(),
+                        )
+                        .map_err(|_| lifecycle::Error::Contract)?,
+                    };
+                    let mut store = rt.block_on(
+                        h.owner
+                            .as_mut()
+                            .ok_or(lifecycle::Error::Contract)?
+                            .open_store(),
+                    )?;
+                    rt.block_on(store.repository()?.record_check_evaluation(
+                        &context,
+                        &e.result,
+                        &e.manifest,
+                        &e.samples,
+                    ))?;
+                    rt.block_on(store.close())?;
+                    return Ok(());
+                }
+                lifecycle::Event::Rejected(f) => {
+                    if let Some(candidate) = &f.candidate {
+                        let context = tf_store::check_evidence::Context {
+                            consumer_definition: &consumer,
+                            sample_policy: &json!({"allowed_columns":[],"sensitive_columns":[],"max_rows":20}),
+                            job: &job,
+                            attempt,
+                            contract: &contract,
+                            at_us: i64::try_from(
+                                SystemTime::now()
+                                    .duration_since(UNIX_EPOCH)
+                                    .map_err(|_| lifecycle::Error::Contract)?
+                                    .as_micros(),
+                            )
+                            .map_err(|_| lifecycle::Error::Contract)?,
+                        };
+                        let mut store = rt.block_on(
+                            h.owner
+                                .as_mut()
+                                .ok_or(lifecycle::Error::Contract)?
+                                .open_store(),
+                        )?;
+                        rt.block_on(
+                            store
+                                .repository()?
+                                .record_failed_check_candidate(&context, candidate),
+                        )?;
+                        rt.block_on(store.close())?;
+                    }
+                    return Ok(());
+                }
+            };
             phases.push(phase.name());
             let transitions: &[Phase] = match phase {
                 TimedPhase::InputValidation => &[Phase::ValidatingInputs],
@@ -264,6 +317,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             Ok(())
         },
     );
+    if let Some(e) = completion.evidence_error {
+        return Err(e.into());
+    }
     let results: Vec<_> = completion
         .evaluations
         .iter()
@@ -341,9 +397,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             .bind(attempt.to_string())
             .fetch_one(&mut h.db),
     )?;
+    let retained_checks = rt.block_on(h.scalar("SELECT count(*) FROM check_evidence"));
+    let failed_candidates = rt.block_on(h.scalar("SELECT count(*) FROM failed_check_candidates"));
     println!(
         "{}",
-        json!({"outcome":outcome,"results":results,"producer_ran":completion.execution.is_some(),"skipped":completion.skipped,"candidate":candidate,"candidate_readable":candidate_readable,"head":head,"linked":linked,"provider_checks":provider_checks,"phases":phases,"attempt_state":state,"versions":rt.block_on(h.scalar("SELECT count(*) FROM dataset_versions"))})
+        json!({"retained_checks":retained_checks,"failed_candidates":failed_candidates,"outcome":outcome,"results":results,"producer_ran":completion.execution.is_some(),"skipped":completion.skipped,"candidate":candidate,"candidate_readable":candidate_readable,"head":head,"linked":linked,"provider_checks":provider_checks,"phases":phases,"attempt_state":state,"versions":rt.block_on(h.scalar("SELECT count(*) FROM dataset_versions"))})
     );
     rt.block_on(h.handoff());
     Ok(())

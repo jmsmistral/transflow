@@ -93,6 +93,7 @@ def connect(request: dict[str, Any], paths: list[str]) -> Any:
 def execute(request: dict[str, Any]) -> dict[str, Any]:
     paths, guards = pinned_files(request)
     rows: list[dict[str, Any]] = []
+    samples: list[dict[str, Any] | None] = []
     with connect(request, paths) as db:
         for query in request["queries"]:
             # Only Rust's private typed compiler constructs these queries. Values remain
@@ -118,6 +119,10 @@ def execute(request: dict[str, Any]) -> dict[str, Any]:
                 # A query failure is ERROR, including under WARN. Continue independent queries.
                 # Never retain engine messages: they can contain paths, literals and row values.
                 rows.append({"counts": [], "error": "query_error"})
+        from .check_samples import execute as sample
+
+        for query in request.get("sample_queries", []):
+            samples.append(None if query is None else sample(db, query))
     if any(_file(Path(path)) != guard for path, guard in zip(paths, guards, strict=True)):
         raise CheckError("artifact_integrity", "Check subject changed during evaluation")
     return {
@@ -125,4 +130,5 @@ def execute(request: dict[str, Any]) -> dict[str, Any]:
         "request_id": request["request_id"],
         "artifact_digest": request["artifact_digest"],
         "queries": rows,
+        **({"samples": samples} if "sample_queries" in request else {}),
     }

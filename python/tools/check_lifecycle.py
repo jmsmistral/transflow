@@ -148,6 +148,13 @@ def main() -> None:
                 if not ran and mode not in {"omitted", "wrong-version", "canceled"}:
                     assert result["attempt_state"] == "VALIDATING_INPUTS"
                     assert all(c["status"] == "SKIPPED" for c in result["skipped"])
+            assert result["retained_checks"] == sum(len(r["checks"]) for r in result["results"]), (
+                result
+            )
+            if not published and ran and mode != "tamper" and body == "return items":
+                assert result["failed_candidates"] == 1, result
+            else:
+                assert result["failed_candidates"] == 0, result
             for r in result["results"]:
                 if r["phase"] == "output":
                     assert r["artifact_digest"] == result["candidate"]

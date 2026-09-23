@@ -210,6 +210,7 @@ def invariant(name: str, value: dict[str, Any]) -> None:
             "expectation.ast.v1",
             "expectation.core.v1",
             "duckdb.checks.v1",
+            "duckdb.samples.v1",
         }  # Fixture reader profile; not a live worker capability.
         need(len(set(required)) == len(required) and set(required) <= supported, name)
         need(len({e["capability"] for e in extensions}) == len(extensions), name)

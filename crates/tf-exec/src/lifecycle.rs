@@ -62,6 +62,14 @@ pub enum Error {
         /// Independent retention failure.
         retention: tf_store::artifacts::ArtifactError,
     },
+    /// A publication refusal and independent diagnostic persistence failure.
+    #[error("Publication failed ({original}); diagnostic persistence also failed ({evidence})")]
+    EvidenceRetention {
+        /// Original publication refusal.
+        original: Box<Error>,
+        /// Separate evidence error.
+        evidence: Box<Error>,
+    },
     /// Durable storage failed.
     #[error(transparent)]
     Store(#[from] tf_store::StoreError),
@@ -88,6 +96,7 @@ pub struct Approved<'a> {
     contract: String,
     results: Vec<Value>,
     cancel: Cancellation,
+    consumer: String,
 }
 impl Approved<'_> {
     /// Exact checked artifact identity, used to form the domain publication intent.
@@ -106,8 +115,19 @@ pub struct Rejected {
     /// A retention failure must remain visible rather than masking the original error.
     pub retention_error: Option<tf_store::artifacts::ArtifactError>,
 }
+/// Durable lifecycle observations, always outside worker execution and SQL transactions.
+pub enum Event<'a> {
+    /// Persist this phase before work starts.
+    Enter(Phase),
+    /// Persist complete results, including failures and private sample payloads.
+    Evaluated(&'a checks::Completion),
+    /// Retain failed-candidate identity without exposing a normal dataset version.
+    Rejected(&'a Rejected),
+}
 /// Logs and contextual evidence survive a gate failure; no provider certificate is mutated.
 pub struct Completion<'a> {
+    /// Separate failure to retain rejection evidence, if any.
+    pub evidence_error: Option<Error>,
     /// Exact per-binding input results followed by candidate output results.
     pub evaluations: Vec<checks::Completion>,
     /// Producer report is absent if an input gate blocked execution.
@@ -234,7 +254,7 @@ fn permits(result: &Value) -> bool {
 /// Run input checks, invoke/sink once only when allowed, then check the closed bytes.
 /// `helper` allocates a fresh private request/result directory per group; all identity,
 /// timing, threads and permits are supplied here, never re-resolved from current heads.
-/// `enter` persists attempt phase boundaries before work and may refuse stale/canceled work.
+/// `observe` persists phase boundaries and complete evidence, and may refuse further work.
 /// Output validation begins only after materialization has returned closed bytes.
 /// Caller retains ownership, input leases and the reservation throughout this blocking call.
 pub fn run<'a>(
@@ -244,7 +264,7 @@ pub fn run<'a>(
     reservation: &Reservation,
     cancel: Cancellation,
     mut helper: impl FnMut(Phase, Option<&str>) -> Result<Launch, Error>,
-    mut enter: impl FnMut(Phase) -> Result<(), Error>,
+    mut observe: impl FnMut(Event<'_>) -> Result<(), Error>,
 ) -> Completion<'a> {
     let mut evaluations = Vec::new();
     let mut execution = None;
@@ -286,7 +306,7 @@ pub fn run<'a>(
         if cancel.requested() {
             return Err(Error::Canceled);
         }
-        enter(phase)?;
+        observe(Event::Enter(phase))?;
         // Independent aliases are all evaluated even when an earlier alias violates policy.
         for ((input, checks), binding) in inputs
             .iter()
@@ -301,6 +321,7 @@ pub fn run<'a>(
                     Subject::Pinned(input),
                     checks,
                 )?);
+                observe(Event::Evaluated(evaluations.last().ok_or(Error::Contract)?))?;
             }
         }
         if evaluations.iter().any(|e| !permits(&e.result)) {
@@ -310,7 +331,7 @@ pub fn run<'a>(
             return Err(Error::Canceled);
         }
         phase = Phase::Transform;
-        enter(phase)?;
+        observe(Event::Enter(phase))?;
         request.execute.timing = Some(Work {
             budget: request.budget.clone(),
             phase,
@@ -326,7 +347,7 @@ pub fn run<'a>(
         execution = materialized.report;
         candidate = Some(materialized.candidate?);
         phase = Phase::OutputValidation;
-        enter(phase)?;
+        observe(Event::Enter(phase))?;
         if cancel.requested() {
             return Err(Error::Canceled);
         }
@@ -340,6 +361,7 @@ pub fn run<'a>(
                 Subject::Candidate(c),
                 &request.output_checks,
             )?);
+            observe(Event::Evaluated(evaluations.last().ok_or(Error::Contract)?))?;
         }
         if evaluations.iter().any(|e| !permits(&e.result)) {
             return Err(Error::Gate);
@@ -353,6 +375,7 @@ pub fn run<'a>(
             contract: request.contract.canonical()?,
             results: evaluations.iter().map(|e| e.result.clone()).collect(),
             cancel: cancel.clone(),
+            consumer,
         })
     })();
     let outcome = match budget.finish() {
@@ -386,7 +409,12 @@ pub fn run<'a>(
             retention_error,
         }
     });
+    let evidence_error = outcome
+        .as_ref()
+        .err()
+        .and_then(|failure| observe(Event::Rejected(failure)).err());
     Completion {
+        evidence_error,
         evaluations,
         execution,
         skipped,
@@ -409,6 +437,7 @@ pub fn publish(
         contract,
         results,
         cancel,
+        consumer,
     } = approved;
     let mut candidate = Some(candidate);
     let result = (|| {
@@ -443,16 +472,52 @@ pub fn publish(
         runtime.block_on(store.close())?;
         Ok(receipt)
     })();
-    if result.is_err()
-        && let Some(candidate) = candidate
-    {
-        let retained = candidate.install(|_| Ok(()));
-        if let Err(retention) = retained {
-            return Err(Error::Retention {
-                original: Box::new(result.err().ok_or(Error::Contract)?),
-                retention,
-            });
-        }
+    if let Err(original) = result {
+        let evidence = (|| -> Result<(), Error> {
+            if let Some(candidate) = candidate {
+                candidate.install(|_| Ok(()))?;
+            }
+            let artifacts = ArtifactStore::open(owner.workspace_root())?;
+            let digest = tf_protocol::canonical::ContentDigest::from_hex(
+                DigestKind::Artifact,
+                &request.intent.artifact().hex(),
+            )
+            .map_err(|_| Error::Contract)?;
+            let artifact = artifacts.verify(digest)?;
+            let i = &request.intent;
+            let job = tf_domain::execution::Job::new(
+                i.job(),
+                i.build(),
+                i.binding(),
+                i.target(),
+                i.fence(),
+                tf_domain::execution::RetryPolicy::default(),
+                tf_domain::execution::EventTime(0),
+            );
+            let context = tf_store::check_evidence::Context {
+                job: &job,
+                attempt,
+                contract: &request.contract,
+                at_us: request.at_us,
+                consumer_definition: &consumer,
+                sample_policy: &json!({"allowed_columns":[],"sensitive_columns":[],"max_rows":20}),
+            };
+            let mut store = runtime.block_on(owner.open_store())?;
+            runtime.block_on(
+                store
+                    .repository()?
+                    .record_failed_check_candidate(&context, &artifact),
+            )?;
+            runtime.block_on(store.close())?;
+            Ok(())
+        })();
+        return match evidence {
+            Ok(()) => Err(original),
+            Err(evidence) => Err(Error::EvidenceRetention {
+                original: Box::new(original),
+                evidence: Box::new(evidence),
+            }),
+        };
     }
     result
 }
