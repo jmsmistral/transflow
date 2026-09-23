@@ -54,6 +54,10 @@ pub struct Worker {
     cancel: Cancellation,
 }
 impl Worker {
+    /// Attempt-bound token for composed input/transform/output helpers.
+    pub fn cancellation(&self) -> Cancellation {
+        self.cancel.clone()
+    }
     fn matches(&self, launch: &Launch) -> bool {
         launch.request["attempt_id"]
             .as_str()

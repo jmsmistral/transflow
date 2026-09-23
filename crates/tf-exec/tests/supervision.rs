@@ -334,3 +334,29 @@ fn real_validation_helpers_share_one_hour_and_one_reservation() {
         assert_eq!(pool.usage().unwrap(), Default::default());
     });
 }
+
+#[test]
+fn bounded_phase_projection_is_attempt_bound_and_never_blocks_cleanup() {
+    for capacity in [0, 4] {
+        let root = Scratch::create().unwrap();
+        let mut request = launch(root.path(), "normal");
+        let (tx, rx) = std::sync::mpsc::sync_channel(capacity);
+        request.phase_events = Some(tx);
+        let start = Instant::now();
+        let report = supervisor::run(request, Cancellation::default());
+        if capacity == 0 {
+            assert_eq!(report.outcome, Err(Failure::Protocol));
+        } else {
+            assert_eq!(report.outcome, Ok(()));
+            let event = rx.try_recv().unwrap();
+            assert_eq!(
+                event.attempt.to_string(),
+                "00000000-0000-4000-8000-000000000002"
+            );
+            assert_eq!(event.name, "discovering");
+            assert!(event.observed >= start && event.observed <= Instant::now());
+        }
+        assert!(stopped(report.pid.unwrap()));
+        assert!(report.logs_complete);
+    }
+}

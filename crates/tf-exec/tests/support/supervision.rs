@@ -27,6 +27,7 @@ pub fn launch(root: &Path, mode: &str) -> Launch {
         python: peer,
         operation: Operation::Discover,
         request_schema: "DiscoveryRequestV1",
+        phase_events: None,
         request: json!({"format_version":1,"protocol":{"major":1,"minor":0},"request_id":"00000000-0000-4000-8000-000000000001","attempt_id":"00000000-0000-4000-8000-000000000002","capture_root":mode,"source_roots":[],"files":[],"catalog":{"format_version":1,"workspace_id":"00000000-0000-4000-8000-000000000003","source_snapshot_id":"00000000-0000-4000-8000-000000000004","catalog_fingerprint":"a".repeat(64),"entries":[]},"environment_fingerprint":"b".repeat(64),"result_directory":root}),
         policy: Policy {
             log_bytes: 4096,

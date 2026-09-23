@@ -110,6 +110,7 @@ pub fn discover(
             python: python.to_owned(),
             operation: Operation::Discover,
             request_schema: "DiscoveryRequestV1",
+            phase_events: None,
             request,
             policy: crate::supervisor::Policy::default(),
             log_directory: None,

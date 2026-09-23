@@ -103,6 +103,16 @@ impl Default for Policy {
         }
     }
 }
+/// Validated phase observation; the receiver persists it without blocking stream draining.
+#[derive(Debug)]
+pub struct WorkerPhase {
+    /// Exact bound attempt.
+    pub attempt: tf_domain::AttemptId,
+    /// Closed, protocol-validated phase name.
+    pub name: String,
+    /// Real monotonic observation time.
+    pub observed: Instant,
+}
 /// One fresh managed worker. Fields are deliberately not Debug to avoid request leaks.
 pub struct Launch {
     /// Absolute, already environment-verified interpreter path.
@@ -111,6 +121,8 @@ pub struct Launch {
     pub operation: Operation,
     /// Existing authored schema for the operation request.
     pub request_schema: &'static str,
+    /// Optional bounded nonblocking phase projection. Overflow fails the worker.
+    pub phase_events: Option<std::sync::mpsc::SyncSender<WorkerPhase>>,
     /// Request identity and operation data. The launcher replaces auth_token.
     pub request: Value,
     /// Resolved resource-independent supervision policy.
@@ -136,7 +148,8 @@ impl Cancellation {
     pub fn cancel(&self) {
         self.0.store(true, Ordering::Release);
     }
-    pub(crate) fn requested(&self) -> bool {
+    /// Observe a cancellation request without signaling processes.
+    pub fn requested(&self) -> bool {
         self.0.load(Ordering::Acquire)
     }
 }
@@ -597,6 +610,19 @@ fn run_inner(
                             .as_str()
                             .map(str::to_owned);
                         guard.accept(frame)?;
+                        if let (Some(sender), Some(name)) = (&launch.phase_events, &phase) {
+                            sender
+                                .try_send(WorkerPhase {
+                                    attempt: launch.request["attempt_id"]
+                                        .as_str()
+                                        .ok_or(Failure::Protocol)?
+                                        .parse()
+                                        .map_err(|_| Failure::Protocol)?,
+                                    name: name.clone(),
+                                    observed: now,
+                                })
+                                .map_err(|_| Failure::Protocol)?;
+                        }
                         if let (Some(work), Some(phase)) = (&launch.timing, phase) {
                             work.message(launch.operation, &phase)
                                 .map_err(|_| Failure::Protocol)?;

@@ -106,7 +106,7 @@ Output failures and precommit refusals retain sealed, strictly verified candidat
 objects without a version/head reference. The completion exposes the candidate
 identity and manifest for diagnostics, independently of normal dataset reads.
 Retention failures remain visible alongside the original refusal. These objects
-are not reusable certificates or successful dataset versions. T063 will provide
+are not reusable certificates or successful dataset versions. T063 provides
 complete durable failure/certificate/sample records; T064 will connect these
 services to graph dispatch, held input leases and terminal job/build persistence.
 Environment verification, runtime ownership and leases remain caller obligations.
@@ -155,3 +155,11 @@ explicit inspection API reads them. Normal evidence/outbox records contain no ro
 values; future export/OpenLineage/UI work must use these safe projections. A sample
 query or decoding failure is evaluator ERROR, never an implicit PASS. Protocol
 1.0, AST 1, specification 1.1.2 and dependency versions remain unchanged.
+
+
+T064's [accepted-plan dispatcher](../transflow/DISPATCH.md) now owns input leases,
+environment verification, reservations, complete evidence callbacks and terminal
+job/build state. `publish_observed` exposes the durable intent boundary for a
+COMMITTING phase observation before installation. The ordinary `publish` wrapper
+retains its existing behavior. Executed jobs evaluate every check; whole-job cache
+hits retain their original check evidence without a fabricated new evaluation.

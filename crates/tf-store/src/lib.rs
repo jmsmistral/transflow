@@ -346,3 +346,6 @@ pub mod freshness;
 
 /// Durable exact check evidence, certificate reuse and explicit private diagnostics.
 pub mod check_evidence;
+
+/// Guarded accepted-plan dispatch persistence.
+pub mod execution;

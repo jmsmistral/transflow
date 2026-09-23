@@ -71,6 +71,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let log_directory = PathBuf::from(request["result_directory"].as_str().ok_or("Expected result directory")?);
         let threads = request["threads"].as_str().ok_or("Expected threads")?.parse()?;
         let launch = Launch { python, operation:Operation::Execute, request_schema:"PolarsExecutionRequestV1", request,
+        phase_events: None,
             policy:Policy { operation_timeout:Some(Duration::from_secs(60)), termination_grace:Duration::from_millis(100), ..Policy::default() },
             log_directory:Some(log_directory), redact:vec![], timing:None, reservation:None, threads };
         let completion = tf_exec::polars::run(&store, launch, &inputs, Cancellation::default(), tf_exec::discovery::random_id()?.parse()?);

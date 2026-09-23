@@ -36,6 +36,7 @@ jobs:
           python -m pip install --require-hashes --only-binary=:all: -r tools/qualification/python/resolver.lock
           python_minor="$(python -c 'import sys; print(f"{sys.version_info.major}{sys.version_info.minor}")')"
           python -m pip install --require-hashes --only-binary=:all: -r "tools/qualification/python/py${python_minor}.lock"
+          python -m pip download --require-hashes --only-binary=:all: -r "tools/qualification/python/py${python_minor}.lock" --dest target/qualification/wheelhouse
           npm install --global npm@11.4.2 --ignore-scripts --no-audit --no-fund
           npm --prefix tools/qualification/web ci --ignore-scripts --no-audit --no-fund
           npm --prefix tools/qualification/web run prepare:types

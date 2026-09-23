@@ -577,3 +577,21 @@ monitoring; no workflows were polled. No current T056 CI confirmation or T057
 implementation is inferred from this cleanup.
 
 See [local evidence](evidence/python314-only-macos-arm64.json).
+
+
+## T064 accepted-plan dispatch (2026-09-23)
+
+The full contributor aggregate and final Rust verification pass on macOS arm64:
+347 Rust tests plus one doc test, 793 Python tests, 304 web tests and 52 installed
+CLI tests; document, safety and boundary regressions also pass. Native qualification
+passes with 18 additional dispatcher scenarios using real managed packaged workers.
+These cover exact scopes/pins/parent versions, cache/force/source refresh, check
+failures/warnings, concurrent admission, live sink phases and cancellation cleanup.
+See [the service guide](../../crates/transflow/DISPATCH.md) and
+[measured evidence](evidence/t064-macos-arm64.json).
+
+Qualification setup now downloads the hash-locked engine wheels into
+`target/qualification/wheelhouse`; repeated checks remain offline. Run contributor
+and native suites sequentially. Public CLI build/retry/restart orchestration remains
+T065–T067. T063 CI was confirmed by the owner in a [separate receipt](evidence/t063-ci.json);
+T064 CI remains owner-monitored and no workflows were polled.

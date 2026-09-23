@@ -13,7 +13,7 @@ validation helpers check out the same reservation: they do not acquire another
 job slot. Two simultaneous workers cannot spend one reservation. Dropping the
 caller does not release running capacity: the supervisor retains the permit until
 TERM/grace/KILL/reap and log draining finish. Queue cancellation and capacity
-release wake pending futures. Durable queues and runtime dispatch remain T064.
+release wake pending futures. T064 now composes runtime dispatch through the [accepted-plan service](../transflow/DISPATCH.md); restart recovery remains T066.
 
 Default capacities come from resolved workspace max_jobs (2) and CPU tokens
 (auto uses available logical CPUs). Default worker threads divide tokens across

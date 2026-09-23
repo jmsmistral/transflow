@@ -114,6 +114,7 @@ cd ~/dev/transflow
 python -m venv target/qualification/py314
 target/qualification/py314/bin/python -m pip install --require-hashes --only-binary=:all: -r tools/qualification/python/resolver.lock
 target/qualification/py314/bin/python -m pip install --require-hashes --only-binary=:all: -r tools/qualification/python/py314.lock
+target/qualification/py314/bin/python -m pip download --require-hashes --only-binary=:all: -r tools/qualification/python/py314.lock --dest target/qualification/wheelhouse
 npm --prefix tools/qualification/web ci --ignore-scripts --no-audit --no-fund
 npm --prefix tools/qualification/web run prepare:types
 cargo fetch --locked --manifest-path tools/qualification/rust/Cargo.toml

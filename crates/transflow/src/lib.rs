@@ -814,3 +814,6 @@ pub mod graph_query;
 
 /// Shared configuration-to-runtime resource policy and frozen plan projection.
 pub mod resources;
+
+/// Internal accepted-plan execution and publication dispatcher.
+pub mod dispatch;

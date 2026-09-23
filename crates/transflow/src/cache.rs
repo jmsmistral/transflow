@@ -83,7 +83,7 @@ pub async fn prepare(
         result: completed.1.map_err(crate::build_plan::failure),
     })
 }
-async fn prepare_inner(
+pub(crate) async fn prepare_inner(
     owner: &mut RuntimeOwner,
     build: BuildId,
     job: JobId,

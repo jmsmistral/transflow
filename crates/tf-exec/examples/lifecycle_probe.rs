@@ -152,6 +152,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         python: python.clone(),
         operation,
         request_schema,
+        phase_events: None,
         request,
         policy: Policy::default(),
         log_directory: None,

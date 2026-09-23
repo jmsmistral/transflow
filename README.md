@@ -179,9 +179,13 @@ candidate. FAIL violations and evaluator errors preserve the old head; WARN data
 violations remain recorded after publication. T063 adds immutable check evidence,
 strict input-certificate reuse APIs and optional allowlisted failure samples capped
 at 20 rows. Samples are off by default and accessible only through explicit
-diagnostic service reads. Public build execution remains later orchestration work.
+diagnostic service reads. The [accepted-plan dispatcher](crates/transflow/DISPATCH.md)
+now composes dependency-ready execution, exact parent/pinned inputs, whole-job
+cache reuse, checks and publication. It retains live materialization phases and
+terminal job/build state, with bounded concurrent workers and cancellation cleanup.
+The public `build` command remains T067.
 
-[Isolated discovery](python/DISCOVERY.md) collects declarations in fresh workers, without invoking producer functions. [Worker supervision](crates/tf-exec/SUPERVISION.md) separates authenticated control from bounded stdout/stderr logs and owns process-group cleanup. [Resource admission and phase budgets](crates/tf-exec/RESOURCES.md) provide bounded job/CPU reservations, optional estimated memory admission and independent one-hour transform/input/output validation budgets; interactive work defaults to 30 seconds. Discovery uses the workspace execution timeout, including zero-disable. Plans expose resolved resource settings and provenance; dataset execution remains upcoming.
+[Isolated discovery](python/DISCOVERY.md) collects declarations in fresh workers, without invoking producer functions. [Worker supervision](crates/tf-exec/SUPERVISION.md) separates authenticated control from bounded stdout/stderr logs and owns process-group cleanup. [Resource admission and phase budgets](crates/tf-exec/RESOURCES.md) provide bounded job/CPU reservations, optional estimated memory admission and independent one-hour transform/input/output validation budgets; interactive work defaults to 30 seconds. Discovery uses the workspace execution timeout, including zero-disable. Plans expose resolved resource settings and provenance; the internal dispatcher now applies these settings to dataset execution.
 
 [Candidate reconciliation](crates/tf-catalog/CANDIDATES.md) resolves same-pass outputs and rejects graph conflicts before registry mutation.
 

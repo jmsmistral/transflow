@@ -431,6 +431,23 @@ pub fn publish(
     request: PublicationRequest,
     approved: Approved<'_>,
 ) -> Result<PublicationReceipt, Error> {
+    {
+        let at_us = request.at_us;
+        publish_observed(owner, runtime, request, approved, || Ok(at_us), |_| Ok(()))
+    }
+}
+/// Publish with a coordinator observation after the durable intent, outside its transaction.
+/// The callback records COMMITTING before installation; the clock supplies the final
+/// commit observation after integrity verification. Failure refuses publication.
+pub fn publish_observed(
+    owner: &mut RuntimeOwner,
+    runtime: &tokio::runtime::Runtime,
+    request: PublicationRequest,
+    approved: Approved<'_>,
+    clock: impl FnOnce() -> Result<i64, Error>,
+    observe: impl FnOnce(&mut tf_store::Store) -> Result<(), Error>,
+) -> Result<PublicationReceipt, Error> {
+    let mut request = request;
     let Approved {
         candidate,
         attempt,
@@ -459,6 +476,7 @@ pub fn publish(
         let mut store = runtime.block_on(owner.open_store())?;
         runtime.block_on(store.repository()?.record_gate_results(&request, &results))?;
         runtime.block_on(store.repository()?.prepare_publication(&request, checked))?;
+        observe(store.repository()?)?;
         let object = candidate
             .take()
             .ok_or(Error::Contract)?
@@ -467,6 +485,11 @@ pub fn publish(
         if cancel.requested() {
             return Err(Error::Canceled);
         }
+        let committed_us = clock()?;
+        if committed_us < request.at_us {
+            return Err(Error::Contract);
+        }
+        request.at_us = committed_us;
         let receipt =
             runtime.block_on(store.repository()?.commit_publication(&request, &object))?;
         runtime.block_on(store.close())?;

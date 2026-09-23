@@ -1,0 +1,69 @@
+{
+  "task": "T064",
+  "date": "2026-09-23",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "6b94d94b6a80b271007a7d055a9795f585baa55b",
+  "specification_base": "a6dd10744bd060228496d60ca0636ffb731b6987",
+  "result": "passed",
+  "commands": [
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check.sh",
+      "result": "Passed: document/safety/boundary regressions, Rust formatting/Clippy/tests, Ruff/mypy, 793 Python tests, 304 web tests and 52 installed CLI tests. /private/tmp/t064-check-final.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-rust.sh",
+      "result": "Passed after final lease/cancellation/publication-clock refinements: 347 Rust tests plus one documentation test, formatting, compilation, standalone storage and Clippy. /private/tmp/t064-rust-final.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh",
+      "result": "Passed complete native qualification, including 18 accepted-plan dispatcher scenarios. target/qualification/runs/native.hvukXY; /private/tmp/t064-qualification.log."
+    },
+    {
+      "command": "target/python/py314/bin/python -m ruff check --config python/pyproject.toml python/tools/check_dispatch.py; target/python/py314/bin/python -m mypy --config-file python/pyproject.toml",
+      "result": "Passed on the final native test runner; 54 typed Python source files."
+    }
+  ],
+  "native_dispatch_cases": [
+    "full diamond publishes exact parent versions and complete evidence",
+    "whole-job reuse creates no attempts",
+    "force executes despite identical bytes",
+    "selected scope binds explicit historical pin exactly",
+    "between scope publishes only descendants and releases boundary leases",
+    "unresolved boundary refuses before any producer or branch creation",
+    "invalid complete graph starts no producer",
+    "accepted capture executes despite later checkout edits",
+    "pre-dispatch cancellation starts no attempts and cleans reservations",
+    "input FAIL retains evidence and prevents producer invocation",
+    "output FAIL retains invisible bytes and blocks planned descendants without fallback",
+    "exact WARN violation permits publication",
+    "independent ready siblings overlap under two job reservations",
+    "live sink phase and durable cancellation preserve head and release leases",
+    "explicit memory estimates admit jobs and missing estimates cleanly refuse",
+    "always-refresh source runs again and children bind its new version",
+    "every planned binding resolves from this build despite older retained heads",
+    "captured context reference conservatively keys the frozen evaluation clock"
+  ],
+  "coverage": [
+    "Atomic exact-membership dispatch start; state/fence CAS refuses replays, duplicate jobs, negative durations, canceled nonterminal progress and forged terminal aggregation.",
+    "Bounded nonblocking attempt-bound phase reporting fails on overflow and still cleans up workers. Monotonic sink observations are distinct from lazy function execution; publication time follows actual integrity verification.",
+    "Frozen accepted graph/source/environment, exact historical pins and parent versions, one shared admission pool, retained check/process/log evidence, terminal reservation/lease cleanup and preflight refusal cleanup."
+  ],
+  "corrected_during_verification": [
+    "Initial native runs exposed a build-start SQL column mismatch and an extra execution-input wire field; both corrected before successful end-to-end runs.",
+    "Aggregate initially stopped at macro visibility after splitting the coordinator module; corrected and the full aggregate passed.",
+    "A focused test invocation inside the restricted sandbox could not inspect process identity; the final suites passed with normal local process permissions.",
+    "The live-phase test synchronizes on persisted MATERIALIZING rather than assuming immediate delivery from its producer marker."
+  ],
+  "limits": [
+    "Internal Polars dispatch only; public build CLI is T067.",
+    "One attempt and abort-on-failure; configurable retries/continuation T065 and restart reconciliation T066.",
+    "Executed jobs evaluate all checks; whole-job cache adoption retains original certificates. Individual input-certificate reuse is an optional optimization.",
+    "Memory admission requires explicit per-job estimates, not hard OS limits. Secret delivery is refused before producer execution. Context references conservatively include the frozen evaluation clock in cache keys.",
+    "CI remains owner-monitored. Linux qualification awaits push workflows. Runtime schema 8, worker protocol 1.0, AST 1 and dependency/toolchain pins unchanged."
+  ],
+  "ci": {
+    "status": "pending_owner_monitoring",
+    "agent_polled_workflows": false
+  }
+}
