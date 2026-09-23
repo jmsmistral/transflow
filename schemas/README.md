@@ -197,3 +197,12 @@ Membership values reuse ScalarValue and schema conditions reuse LogicalType.
 The [truth/key corpus](fixtures/expectation-semantics-v1.json) records exact truth
 tables, age boundaries and key metrics independently of an engine. Production
 artifact evaluation remains T061.
+
+T061 adds private `CheckEvaluationRequestV1`, `CheckAggregatesV1` and
+`CheckEvaluationResultV1` contracts behind `duckdb.checks.v1`. Rust replaces the
+request's queries and paths using its typed compiler and verified artifact subject;
+SQL is never accepted as an authored expectation. Aggregate cells are exact Count
+strings, with closed error/results envelopes and no data rows. Result identity,
+child metric paths, exactness, severity, timings and absent row attribution survive
+the process boundary. Protocol 1.0 and AST 1 remain unchanged. See the
+[canonical evaluator](../crates/tf-exec/CHECKS.md) for bounds and lifecycle limits.

@@ -251,3 +251,28 @@ def validate_ExpectationNode(value: object) -> None:
 def validate_ExpectationAstV1(value: object) -> None:
     """Assert the ExpectationAstV1 contract, including custom formats."""
     validate_document("ExpectationAstV1", value)
+
+
+def validate_CheckQueryV1(value: object) -> None:
+    """Assert the CheckQueryV1 contract, including custom formats."""
+    validate_document("CheckQueryV1", value)
+
+
+def validate_CheckEvaluationRequestV1(value: object) -> None:
+    """Assert the CheckEvaluationRequestV1 contract, including custom formats."""
+    validate_document("CheckEvaluationRequestV1", value)
+
+
+def validate_CheckAggregatesV1(value: object) -> None:
+    """Assert the CheckAggregatesV1 contract, including custom formats."""
+    validate_document("CheckAggregatesV1", value)
+
+
+def validate_CheckMetricV1(value: object) -> None:
+    """Assert the CheckMetricV1 contract, including custom formats."""
+    validate_document("CheckMetricV1", value)
+
+
+def validate_CheckEvaluationResultV1(value: object) -> None:
+    """Assert the CheckEvaluationResultV1 contract, including custom formats."""
+    validate_document("CheckEvaluationResultV1", value)

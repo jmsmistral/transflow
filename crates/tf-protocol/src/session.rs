@@ -76,6 +76,7 @@ impl Session {
                     | "polars.execute.v1"
                     | "expectation.ast.v1"
                     | "expectation.core.v1"
+                    | "duckdb.checks.v1"
             )
         }) {
             return Err(ProtocolError::Capability);

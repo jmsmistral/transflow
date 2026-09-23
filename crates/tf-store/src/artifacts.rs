@@ -335,6 +335,16 @@ impl Candidate<'_> {
     pub fn digest(&self) -> Result<ContentDigest> {
         self.digest.ok_or(ArtifactError::Metadata)
     }
+    /// Reverify closed staging and expose its exact root to an application-owned evaluator.
+    /// Keep this candidate borrowed until the helper exits; publication still verifies again.
+    pub fn evaluation_root(&self) -> Result<PathBuf> {
+        self.verify()?;
+        Ok(self
+            .store
+            .workspace
+            .join(".transflow/runtime/objects")
+            .join(&self.name))
+    }
     fn verify(&self) -> Result<()> {
         self.store.validate()?;
         if !same(

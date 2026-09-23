@@ -28,3 +28,6 @@ pub mod cancellation;
 
 /// Pinned Polars scans, one materialization and independently validated staging.
 pub mod polars;
+
+/// Canonical exact checks over verified Parquet subjects.
+pub mod checks;

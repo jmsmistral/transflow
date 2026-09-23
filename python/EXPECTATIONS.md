@@ -2,8 +2,9 @@
 
 An expectation is immutable syntax. Constructing it, attaching it to a `Check`,
 discovering it or running `transflow validate` never evaluates rows or invokes a
-producer. T060 supplies pure Rust truth/metric kernels; artifact evaluation and
-publication gates remain T061–T062. Successful workspace validation is not a
+producer. T060 supplies pure Rust truth/metric kernels; the
+[T061 canonical evaluator](../crates/tf-exec/CHECKS.md) now checks verified Parquet
+bytes. Publication gates remain T062. Successful workspace validation is not a
 data-quality PASS.
 
 The SDK distinguishes `RowPredicate`, `DatasetExpectation`, `ColumnRef`, `Literal`,
@@ -92,8 +93,9 @@ one null-key row, excluded from duplicate grouping. For `[1, 2, 2, null]`, metri
 Every row in a duplicate group counts. Empty row/key checks pass; `row_count().gt(0)`
 fails on zero. These rules have [shared semantic fixtures](../schemas/fixtures/expectation-semantics-v1.json).
 The key reducer consumes externally grouped counts and holds no dataset-sized key
-map. T061 still owns real Parquet scans, exact grouping/spill and error reporting;
-T062 owns lifecycle gates. No public build check execution is delivered here.
+map. T061 now implements real Parquet scans, exact grouping/spill and error reporting
+in an application-owned helper. T062 still owns lifecycle gates; public build check
+execution remains later orchestration. See the [evaluator guide](../crates/tf-exec/CHECKS.md).
 
 Expression processing is bounded to 1,000 nodes and at most 32 semantic levels;
 the existing stricter enclosing schema/transport depth and byte limits also apply.

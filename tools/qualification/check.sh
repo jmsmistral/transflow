@@ -39,6 +39,8 @@ cargo build --locked --offline -p tf-store --example normalization_probe
 cargo build --locked --offline -p tf-exec --example polars_probe
 "$python_bin" -m pip wheel --no-index --no-deps --no-build-isolation --wheel-dir "$run_dir/wheels" ./python
 "$python_bin" -I -B python/tools/check_polars_execution.py "$CARGO_TARGET_DIR/debug/examples/polars_probe" "$CARGO_TARGET_DIR/debug/examples/normalization_probe" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" > "$run_dir/polars-execution.json"
+cargo build --locked --offline -p tf-exec --example checks_probe
+"$python_bin" -I -B python/tools/check_expectations.py "$CARGO_TARGET_DIR/debug/examples/checks_probe" "$CARGO_TARGET_DIR/debug/examples/polars_probe" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" > "$run_dir/expectation-evaluation.json"
 node tools/qualification/web/patch-elk.mjs
 npm --prefix tools/qualification/web run typecheck
 npm --prefix tools/qualification/web test

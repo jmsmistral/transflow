@@ -5154,5 +5154,91 @@
       }
     },
     "valid": true
+  },
+  {
+    "name": "duckdb-checks-capability",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "0",
+      "required_capabilities": [
+        "duckdb.checks.v1"
+      ],
+      "extensions": [],
+      "message": {
+        "type": "hello",
+        "operation": "execute",
+        "capabilities": [
+          "duckdb.checks.v1"
+        ]
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "check-aggregates-exact",
+    "schema": "CheckAggregatesV1",
+    "valid": true,
+    "value": {
+      "format_version": 1,
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "queries": [
+        {
+          "counts": [
+            "4",
+            "1",
+            "2"
+          ],
+          "error": null
+        }
+      ]
+    }
+  },
+  {
+    "name": "check-aggregates-lossy-number",
+    "schema": "CheckAggregatesV1",
+    "valid": false,
+    "value": {
+      "format_version": 1,
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "queries": [
+        {
+          "counts": [
+            4,
+            "1",
+            "2"
+          ],
+          "error": null
+        }
+      ]
+    }
+  },
+  {
+    "name": "check-aggregates-no-data-rows",
+    "schema": "CheckAggregatesV1",
+    "valid": false,
+    "value": {
+      "format_version": 1,
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "queries": [
+        {
+          "counts": [
+            "4",
+            "1",
+            "2"
+          ],
+          "error": null,
+          "data_rows": []
+        }
+      ]
+    }
   }
 ]

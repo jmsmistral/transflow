@@ -116,3 +116,9 @@ Polars execution require `expectation.ast.v1` and T060's additive
 The catalogue normalizes the readable legacy two-operation seed before hashing.
 Shared semantic vectors qualify canonical AST bytes and policy-resolved hashes;
 this module does not evaluate data or compile SQL.
+
+T061's private canonical evaluator contracts and `duckdb.checks.v1` capability
+carry application-compiled aggregate requests and exact count/error responses.
+The parent verifies complete identity/digest/shape evidence before returning check
+results. The shared structural corpus now has 243 cases. This protocol module
+still performs no SQL or file evaluation; [tf-exec owns that service](../tf-exec/CHECKS.md).

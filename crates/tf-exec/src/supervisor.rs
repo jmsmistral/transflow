@@ -136,7 +136,7 @@ impl Cancellation {
     pub fn cancel(&self) {
         self.0.store(true, Ordering::Release);
     }
-    fn requested(&self) -> bool {
+    pub(crate) fn requested(&self) -> bool {
         self.0.load(Ordering::Acquire)
     }
 }
@@ -424,6 +424,7 @@ fn run_inner(
                 "polars.execute.v1".to_owned(),
                 "expectation.ast.v1".to_owned(),
                 "expectation.core.v1".to_owned(),
+                "duckdb.checks.v1".to_owned(),
             ]
             .into(),
         )

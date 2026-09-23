@@ -1,0 +1,79 @@
+{
+  "task": "T061",
+  "date": "2026-09-23",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "dc4aa1877a2063fb07beea2b431ae1c5c31354a8",
+  "specification_base": "1b31d95e281755fd157ade2febffc54ab4ef1254",
+  "result": "passed",
+  "commands": [
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check.sh",
+      "result": "Specification/document/safety/boundary and all Rust gates pass: 44/27/12 regressions, 339 Rust tests plus one doc test. Python reached 778 passed with one packaging allowlist failure; corrected and resumed remaining gates. Log: /private/tmp/t061-check.log."
+    },
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "Passed: 779 tests, pinned tooling, Ruff/formatting, strict mypy across 51 files and installed-wheel tests. Report: target/python/py314/tests.xml; log: /private/tmp/t061-python.log."
+    },
+    {
+      "command": "bash tools/check-web.sh",
+      "result": "Passed: type/lint/format, 297 tests and matching production builds. Report: target/web/unit-tests.json; log: /private/tmp/t061-web.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh",
+      "result": "Passed: full native qualification, including 22 supervised Polars cases and 21 new canonical evaluator cases. Reports: target/qualification/runs/native.FyUfDq; log: /private/tmp/t061-native.log."
+    },
+    {
+      "command": "bash tools/check-cli.sh",
+      "result": "Passed: 52 installed CLI tests. Report: target/cli-tests.xml; log: /private/tmp/t061-cli.log."
+    },
+    {
+      "command": "target/qualification/py314/bin/python -I -B python/tools/check_expectations.py target/qualification/cargo/debug/examples/checks_probe target/qualification/cargo/debug/examples/polars_probe target/qualification/runs/native.FyUfDq/wheels/transflow-0.0.0.dev0-py3-none-any.whl",
+      "result": "Passed: final 21 cases after strengthening composite-key metric assertions. Physical group-spill peak 20,119,552 bytes; log: /private/tmp/t061-evaluator-final.log."
+    },
+    {
+      "command": "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Passed: final document/syntax checks for specification 1.1.2. Both repositories pass git diff --check."
+    }
+  ],
+  "coverage": [
+    "Actual Rust typed compiler, exact artifact service, isolated packaged Python helper and pinned DuckDB execute input and candidate checks without producer imports or publication.",
+    "Arrow, Polars, Arrow-backed pandas and trusted SQL fixture writers produce identical canonical statuses and exact metrics; no new transform adapters are claimed.",
+    "Complete three-valued truth tables, root fail/ignore, NaN comparisons, negative zero, null membership, empty-table and row-count rules.",
+    "Exact u64, decimal(38,2) and naive nanosecond literal comparisons; lossy timezone-aware nanoseconds and case-colliding schemas fail before scanning.",
+    "Single/composite key counts preserve tuple boundaries and count all duplicate-group rows plus null-key rows; unsupported key types are ERROR.",
+    "Row predicates batch in groups of 32, stable child metrics survive composition, and independent errors cannot be hidden by any/not or WARN.",
+    "Injected active DuckDB query exceeds a one-second validation phase budget, produces ERROR and is terminated/reaped; explicit zero permits evaluation and cancellation still blocks.",
+    "Two-million-row sparse-key grouping passes with physical spill under an explicit 32,000,000-byte test memory limit; observed native spill peak 18,513,920 bytes. Zero spill capacity and one-byte engine memory limits return ERROR.",
+    "Exact path allowlist, locked configuration and disabled external access/replacement scans are inspected against the production connection. Spill directories are removed after success and forced cleanup.",
+    "243 shared structural cases include capability negotiation and rejection of numeric/lossy count cells or data rows in aggregate envelopes."
+  ],
+  "corrected_failures": [
+    "Initial request schema used minLength/maxLength keywords unsupported by the existing strict assertion engines. Removed those keywords; existing bounded request/result transport and AST/plan limits remain enforced.",
+    "Wheel-content regression identified the new worker modules missing from its explicit inventory; updated the inventory and reran the Python gate.",
+    "Initial 64 MB grouping fixture needed no measurable spill. Sparse keys with an explicit 32 MB test-only setting now qualify physical spill and zero-spill failure.",
+    "T060 owner CI confirmation is recorded separately. Its task checkbox remains open because the ledger requires prerequisite T059 confirmation; no historical CI success was inferred."
+  ],
+  "limits": [
+    "Local macOS arm64 qualification only. Owner monitors push CI; no workflows queried.",
+    "T062 publication gates, T063 durable evidence/samples and later public build orchestration remain unimplemented. Nonzero sample requests fail explicitly.",
+    "G3 cross-input metric evaluation and pandas/SQL transform adapters remain deferred; these engines are fixture writers only.",
+    "Caller retains subject leases, environment verification, producer admission and the shared attempt validation Budget. Engine buffer limits are not hard RSS caps.",
+    "Protocol 1.0, AST 1, runtime schema 7, specification 1.1.2 and dependency/toolchain pins unchanged. New private evaluator requires duckdb.checks.v1."
+  ],
+  "verification": {
+    "rust_tests": 339,
+    "rust_doc_tests": 1,
+    "python_tests": 779,
+    "web_tests": 297,
+    "document_regressions": 44,
+    "safety_regressions": 27,
+    "boundary_regressions": 12,
+    "structural_conformance_cases": 243,
+    "native_evaluator_cases": 21,
+    "native_polars_cases": 22,
+    "installed_cli_tests": 52
+  },
+  "ci": "pending_owner_monitoring",
+  "agent_polled_workflows": false
+}

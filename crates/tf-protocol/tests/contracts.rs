@@ -336,6 +336,7 @@ fn invariant(name: &str, value: &Value) -> bool {
                             | "polars.execute.v1"
                             | "expectation.ast.v1"
                             | "expectation.core.v1"
+                            | "duckdb.checks.v1"
                     )
                 })
                 && extra.iter().all(|n| *n == "diagnostic.note.v1")

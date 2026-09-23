@@ -35,6 +35,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     execution = subcommands.add_parser("execute", help="materialize a pinned Polars producer")
     execution.add_argument("--request", type=Path, required=True)
     execution.add_argument("--control-socket", type=Path, required=True)
+    evaluation = subcommands.add_parser(
+        "evaluate_checks", help="evaluate canonical checks privately"
+    )
+    evaluation.add_argument("--request", type=Path, required=True)
+    evaluation.add_argument("--control-socket", type=Path, required=True)
     try:
         args = parser.parse_args(argv)
         if args.help or args.command is None and not args.version:
@@ -64,6 +69,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             except DiscoveryError, ProtocolError, OSError, ValueError:
                 print(
                     "Execution setup failed; verify the pinned request and private channel",
+                    file=sys.stderr,
+                )
+                return 1
+        elif args.command == "evaluate_checks":
+            from .checks import serve as checks_serve
+            from .discovery import DiscoveryError
+            from .wire import ProtocolError
+
+            try:
+                return checks_serve(args.request, args.control_socket)
+            except DiscoveryError, ProtocolError, OSError, ValueError:
+                print(
+                    "Check setup failed; verify the exact subject and private channel",
                     file=sys.stderr,
                 )
                 return 1

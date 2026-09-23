@@ -124,6 +124,8 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
             "environment",
             "discovery",
             "execution",
+            "check_adapter",
+            "checks",
             "polars_adapter",
         )
     }

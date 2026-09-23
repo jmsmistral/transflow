@@ -43,7 +43,8 @@ with typed comparisons, boolean composition, explicit promotion and input refere
 Discovery emits versioned canonical syntax; workspace validation resolves policies
 and checks structural semantics. G1 column/metric convenience methods, membership,
 null/float/schema predicates and exact key/truth kernels are available. Artifact
-evaluation and lifecycle integration remain T061–T062.
+evaluation is implemented by [T061](../crates/tf-exec/CHECKS.md); lifecycle integration
+remains T062.
 Lambdas, SQL strings and engine expressions are not accepted as expectations.
 
 Exactly the `role="data"` aliases are dataframe parameters. `role="validation"`

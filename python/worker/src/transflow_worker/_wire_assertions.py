@@ -210,6 +210,7 @@ def invariant(name: str, value: dict[str, Any]) -> None:
             "polars.execute.v1",
             "expectation.ast.v1",
             "expectation.core.v1",
+            "duckdb.checks.v1",
         }  # Registered optional extension; Session checks negotiation.
         need(len(set(required)) == len(required) and set(required) <= supported, name)
         need(len({e["capability"] for e in extensions}) == len(extensions), name)

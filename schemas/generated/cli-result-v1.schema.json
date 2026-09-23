@@ -4876,6 +4876,389 @@
           "additionalProperties": false
         }
       ]
+    },
+    "CheckQueryV1": {
+      "type": "object",
+      "properties": {
+        "sql": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScalarValue"
+          },
+          "minItems": 0,
+          "maxItems": 8192
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65
+        }
+      },
+      "required": [
+        "sql",
+        "parameters",
+        "width"
+      ],
+      "additionalProperties": false
+    },
+    "CheckEvaluationRequestV1": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "protocol": {
+          "$ref": "#/$defs/ProtocolVersion"
+        },
+        "request_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "auth_token": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "result_directory": {
+          "type": "string"
+        },
+        "spill_directory": {
+          "type": "string"
+        },
+        "artifact_root": {
+          "type": "string"
+        },
+        "artifact_digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "manifest": {
+          "$ref": "#/$defs/ArtifactManifestV1"
+        },
+        "phase": {
+          "enum": [
+            "input",
+            "output"
+          ]
+        },
+        "subject_version": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "consumer_definition": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "binding": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          ]
+        },
+        "threads": {
+          "$ref": "#/$defs/Count"
+        },
+        "memory_bytes": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "spill_bytes": {
+          "$ref": "#/$defs/Count"
+        },
+        "queries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CheckQueryV1"
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        }
+      },
+      "required": [
+        "format_version",
+        "protocol",
+        "request_id",
+        "attempt_id",
+        "auth_token",
+        "result_directory",
+        "spill_directory",
+        "artifact_root",
+        "artifact_digest",
+        "manifest",
+        "phase",
+        "subject_version",
+        "consumer_definition",
+        "binding",
+        "threads",
+        "memory_bytes",
+        "spill_bytes",
+        "queries"
+      ],
+      "additionalProperties": false
+    },
+    "CheckAggregatesV1": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "request_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "artifact_digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "queries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "counts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Count"
+                },
+                "minItems": 0,
+                "maxItems": 65
+              },
+              "error": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string",
+                    "format": "transflow-name"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "counts",
+              "error"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        }
+      },
+      "required": [
+        "format_version",
+        "request_id",
+        "artifact_digest",
+        "queries"
+      ],
+      "additionalProperties": false
+    },
+    "CheckMetricV1": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "expected": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "path",
+        "passed",
+        "expected",
+        "counts"
+      ],
+      "additionalProperties": false
+    },
+    "CheckEvaluationResultV1": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "request_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "artifact_digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "subject_version": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "consumer_definition": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "binding": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          ]
+        },
+        "phase": {
+          "enum": [
+            "input",
+            "output"
+          ]
+        },
+        "evaluator": {
+          "type": "string"
+        },
+        "semantics": {
+          "type": "string"
+        },
+        "started_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "finished_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "duration_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "name": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "definition_digest": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "status": {
+                "enum": [
+                  "PASS",
+                  "VIOLATION",
+                  "ERROR"
+                ]
+              },
+              "severity": {
+                "enum": [
+                  "FAIL",
+                  "WARN"
+                ]
+              },
+              "exact": {
+                "type": "boolean"
+              },
+              "failed_rows": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/Count"
+                  }
+                ]
+              },
+              "error": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string",
+                    "format": "transflow-name"
+                  }
+                ]
+              },
+              "metrics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CheckMetricV1"
+                },
+                "minItems": 0,
+                "maxItems": 4096
+              },
+              "sample": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "definition_digest",
+              "status",
+              "severity",
+              "exact",
+              "failed_rows",
+              "error",
+              "metrics",
+              "sample"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "format_version",
+        "request_id",
+        "attempt_id",
+        "artifact_digest",
+        "subject_version",
+        "consumer_definition",
+        "binding",
+        "phase",
+        "evaluator",
+        "semantics",
+        "started_us",
+        "finished_us",
+        "duration_us",
+        "checks"
+      ],
+      "additionalProperties": false
     }
   },
   "$ref": "#/$defs/CliEnvelopeV1"

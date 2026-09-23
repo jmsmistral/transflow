@@ -172,8 +172,9 @@ metadata. See the [authoring guide](python/DECLARATIONS.md) for examples and lim
 The [core expectation DSL](python/EXPECTATIONS.md) supports column comparisons,
 null/membership/float/schema checks, row counts, primary keys and typed composition.
 Structural validation and pure Rust truth/metric kernels establish exact semantics.
-Checking actual Parquet data, public build execution and publication integration
-remain T061–T062 and subsequent orchestration tasks.
+The [canonical evaluator](crates/tf-exec/CHECKS.md) now runs exact checks over
+verified Parquet bytes in an isolated DuckDB helper. Public build execution and
+input/output publication gates remain T062 and subsequent orchestration tasks.
 
 [Isolated discovery](python/DISCOVERY.md) collects declarations in fresh workers, without invoking producer functions. [Worker supervision](crates/tf-exec/SUPERVISION.md) separates authenticated control from bounded stdout/stderr logs and owns process-group cleanup. [Resource admission and phase budgets](crates/tf-exec/RESOURCES.md) provide bounded job/CPU reservations, optional estimated memory admission and independent one-hour transform/input/output validation budgets; interactive work defaults to 30 seconds. Discovery uses the workspace execution timeout, including zero-disable. Plans expose resolved resource settings and provenance; dataset execution remains upcoming.
 
