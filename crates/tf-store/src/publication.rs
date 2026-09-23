@@ -75,6 +75,14 @@ pub enum CheckSubject {
     /// A frozen input alias.
     Input(String),
 }
+/// Scope an evaluator declaration digest to its input alias or output phase.
+/// Identical declarations on repeated aliases are distinct consumer obligations.
+pub fn gate_definition(declaration: &str, alias: Option<&str>) -> Result<String> {
+    digest(declaration)?;
+    Ok(tf_protocol::canonical::content_digest(DigestKind::Compute,
+        &json!({"declaration":declaration,"phase":if alias.is_some(){"input"}else{"output"},"binding":alias}))
+        .map_err(|_| PublicationError::Evidence)?.hex())
+}
 /// Frozen declaration obligation. Missing/evaluator-error/skipped checks never pass.
 #[derive(Clone, Debug)]
 pub struct CheckRequirement {
@@ -337,6 +345,202 @@ impl Store {
             .bind(encoded)
             .execute(&mut *tx)
             .await?;
+        tx.commit().await?;
+        Ok(())
+    }
+    /// Persist one legal attempt phase before starting its work. No user work occurs
+    /// inside this transaction; cancellation and exact reservation identity are rechecked.
+    pub async fn advance_gate_phase(
+        &mut self,
+        job: &tf_domain::execution::Job,
+        attempt: AttemptId,
+        from: tf_domain::execution::Phase,
+        to: tf_domain::execution::Phase,
+    ) -> Result<()> {
+        use tf_domain::execution::{JobState, Phase};
+        if job.state() != &JobState::Executing(from)
+            || job
+                .attempts()
+                .last()
+                .is_none_or(|a| a.id() != attempt || a.phase() != from || a.outcome().is_some())
+            || job.cancellation_requested()
+        {
+            return Err(PublicationError::Evidence);
+        }
+        if !matches!(
+            (from, to),
+            (Phase::Starting, Phase::ValidatingInputs)
+                | (Phase::ValidatingInputs, Phase::Running)
+                | (Phase::Running, Phase::Materializing)
+                | (Phase::Materializing, Phase::ValidatingOutputs)
+        ) {
+            return Err(PublicationError::Evidence);
+        }
+        let mut tx = self.db.begin_with("BEGIN IMMEDIATE").await?;
+        authority(
+            &mut tx,
+            job.target().dataset.workspace_id(),
+            job.fence().session,
+        )
+        .await?;
+        let row = sqlx::query("SELECT b.cancel_requested FROM attempts a JOIN jobs j ON j.id=a.job_id JOIN builds b ON b.id=j.build_id JOIN build_plans p ON p.id=b.plan_id JOIN write_reservations r ON r.build_id=b.id AND r.dataset_id=j.dataset_id AND r.branch_id=j.branch_id AND r.session_id=a.session_id AND r.fence=a.fence JOIN publication_contracts c ON c.job_id=j.id WHERE a.id=? AND j.id=? AND b.id=? AND a.session_id=? AND a.fence=? AND a.state=? AND j.state=? AND b.state='RUNNING' AND p.id=? AND p.source_snapshot_id=? AND p.disposition='ACCEPTED' AND j.dataset_id=? AND j.branch_id=? AND r.expected_head_generation=?")
+            .bind(attempt.to_string()).bind(job.id().to_string()).bind(job.build().to_string())
+            .bind(job.fence().session.to_string()).bind(num(job.fence().generation)?)
+            .bind(from.name()).bind(from.name()).bind(job.binding().plan.to_string())
+            .bind(job.binding().source.to_string()).bind(job.target().dataset.dataset_id().to_string())
+            .bind(job.target().branch.to_string()).bind(num(job.target().expected_generation)?)
+            .fetch_optional(&mut *tx).await?.ok_or(PublicationError::Fence)?;
+        if row.try_get::<i64, _>(0)? != 0 {
+            return Err(PublicationError::Canceled);
+        }
+        sqlx::query("UPDATE attempts SET state=? WHERE id=?")
+            .bind(to.name())
+            .bind(attempt.to_string())
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query("UPDATE jobs SET state=? WHERE id=?")
+            .bind(to.name())
+            .bind(job.id().to_string())
+            .execute(&mut *tx)
+            .await?;
+        tx.commit().await?;
+        Ok(())
+    }
+    /// Persist the minimal exact gate rows required by the existing publication guard.
+    /// Full reusable certificates, samples and failed-attempt persistence are separate work.
+    /// Results must cover the frozen contract exactly and cannot update another attempt.
+    pub async fn record_gate_results(
+        &mut self,
+        request: &PublicationRequest,
+        results: &[Value],
+    ) -> Result<()> {
+        let contract = request.contract.canonical()?;
+        let mut rows = Vec::new();
+        let mut seen = BTreeSet::new();
+        let mut consumer = None;
+        for result in results {
+            tf_protocol::validate_document("CheckEvaluationResultV1", result)
+                .map_err(|_| PublicationError::Evidence)?;
+            if result["attempt_id"] != request.intent.attempt().to_string()
+                || result["evaluator"] != "duckdb-1.5.5:core-v1"
+                || result["semantics"] != "strict-null-key-v1"
+            {
+                return Err(PublicationError::Evidence);
+            }
+            if consumer
+                .as_ref()
+                .is_some_and(|v| v != &result["consumer_definition"])
+            {
+                return Err(PublicationError::Evidence);
+            }
+            consumer = Some(result["consumer_definition"].clone());
+            let time = |key: &str| {
+                result[key]
+                    .as_str()
+                    .and_then(|s| s.parse::<i64>().ok())
+                    .ok_or(PublicationError::Evidence)
+            };
+            let (start, finish) = (time("started_us")?, time("finished_us")?);
+            if start > finish || finish > request.at_us {
+                return Err(PublicationError::Evidence);
+            }
+            for check in result["checks"]
+                .as_array()
+                .ok_or(PublicationError::Evidence)?
+            {
+                let declaration = check["definition_digest"]
+                    .as_str()
+                    .ok_or(PublicationError::Evidence)?;
+                let definition = gate_definition(declaration, result["binding"].as_str())?;
+                if !seen.insert(definition.to_owned()) {
+                    return Err(PublicationError::Evidence);
+                }
+                let obligation = request
+                    .contract
+                    .checks
+                    .iter()
+                    .find(|c| c.definition == definition)
+                    .ok_or(PublicationError::Evidence)?;
+                let subject = match &obligation.subject {
+                    CheckSubject::Output => {
+                        if result["phase"] != "output"
+                            || !result["binding"].is_null()
+                            || !result["subject_version"].is_null()
+                            || result["artifact_digest"] != request.intent.artifact().hex()
+                        {
+                            return Err(PublicationError::Evidence);
+                        }
+                        json!({"artifact_digest":request.intent.artifact().hex()})
+                    }
+                    CheckSubject::Input(alias) => {
+                        let input = request
+                            .contract
+                            .inputs
+                            .iter()
+                            .find(|i| &i.alias == alias)
+                            .ok_or(PublicationError::Evidence)?;
+                        if result["phase"] != "input"
+                            || result["binding"] != *alias
+                            || result["subject_version"] != input.version.to_string()
+                            || result["artifact_digest"] != input.artifact.hex()
+                        {
+                            return Err(PublicationError::Evidence);
+                        }
+                        json!({"alias":alias,"version_id":input.version.to_string(),"artifact_digest":input.artifact.hex()})
+                    }
+                };
+                let outcome = check["status"].as_str().ok_or(PublicationError::Evidence)?;
+                if check["severity"] != if obligation.required { "FAIL" } else { "WARN" }
+                    || check["exact"] != true
+                    || !(outcome == "PASS" || (!obligation.required && outcome == "VIOLATION"))
+                {
+                    return Err(PublicationError::Evidence);
+                }
+                rows.push((
+                    definition.to_owned(),
+                    encoded(&subject)?,
+                    outcome.to_owned(),
+                    encoded(check)?,
+                    start,
+                    finish,
+                ));
+            }
+        }
+        if seen.len() != request.contract.checks.len() {
+            return Err(PublicationError::Evidence);
+        }
+        let mut tx = self.db.begin_with("BEGIN IMMEDIATE").await?;
+        guards(&mut tx, request, &contract, false).await?;
+        let existing: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM check_results WHERE attempt_id=?")
+                .bind(request.intent.attempt().to_string())
+                .fetch_one(&mut *tx)
+                .await?;
+        if existing != 0 {
+            return Err(PublicationError::Evidence);
+        }
+        for (index, (definition, subject, outcome, metrics, start, finish)) in
+            rows.iter().enumerate()
+        {
+            // Deterministic identity scoped to this attempt; no retry may replace evidence.
+            let hash = tf_protocol::canonical::content_digest(
+                DigestKind::Compute,
+                &json!({"attempt":request.intent.attempt().to_string(),"gate_result":index}),
+            )
+            .map_err(|_| PublicationError::Evidence)?
+            .hex();
+            let id = format!(
+                "{}-{}-{}-{}-{}",
+                &hash[..8],
+                &hash[8..12],
+                &hash[12..16],
+                &hash[16..20],
+                &hash[20..32]
+            );
+            sqlx::query("INSERT INTO check_results(id,attempt_id,subject_json,definition_fingerprint,outcome,metrics_json,started_at_us,finished_at_us) VALUES(?,?,?,?,?,?,?,?)")
+                .bind(id).bind(request.intent.attempt().to_string()).bind(subject).bind(definition)
+                .bind(outcome).bind(metrics).bind(start).bind(finish).execute(&mut *tx).await?;
+        }
         tx.commit().await?;
         Ok(())
     }

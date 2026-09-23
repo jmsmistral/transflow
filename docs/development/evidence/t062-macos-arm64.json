@@ -1,0 +1,95 @@
+{
+  "task": "T062",
+  "date": "2026-09-23",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "28110294e83971ad9314a568f53fd70c48c4d864",
+  "specification_base": "96c74ba0a66aae1c06f2233b903029808fbcb5a9",
+  "result": "passed",
+  "commands": [
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check.sh",
+      "result": "Passed: document/safety/boundary regressions, Rust checks, Python, web and installed CLI checks. Log: /private/tmp/t062-check.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh",
+      "result": "Passed: full native qualification with 22 Polars, 21 evaluator and 21 lifecycle scenarios. Reports: target/qualification/runs/native.Jy7eqQ; log: /private/tmp/t062-native.log."
+    },
+    {
+      "command": "cargo test -p tf-exec --test lifecycle_evidence --locked --offline",
+      "result": "Passed: two additional regressions covering alias/phase scoping and 16 SQLite evidence cases. Log: /private/tmp/t062-evidence.log."
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed on final implementation, including examples and new regression tests. Log: /private/tmp/t062-final-clippy.log."
+    },
+    {
+      "command": "target/python/py314/bin/python -m ruff check --config python/pyproject.toml python/tools/check_lifecycle.py; target/python/py314/bin/python -m ruff format --config python/pyproject.toml --check python/tools/check_lifecycle.py",
+      "result": "Passed after final native-fixture assertions."
+    },
+    {
+      "command": "cargo test --workspace --locked --offline",
+      "result": "Passed on final implementation: 341 Rust tests and 1 doc test. Log: /private/tmp/t062-final-rust.log."
+    },
+    {
+      "command": "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Passed: final specification 1.1.2 document and syntax checks. Both repositories pass git diff --check."
+    }
+  ],
+  "coverage": [
+    "All required input obligations are checked before one producer invocation/materialization. Input FAIL and ERROR-under-WARN invoke no function; independent aliases still return their results.",
+    "Closed output candidate checks bind the same artifact digest used by publication. FAIL and ERROR preserve the old version/head; WARN remains VIOLATION with exact metrics linked to the new consumer version.",
+    "One parent reservation supports sequential helper/producer permits at max_jobs=1, and one shared Budget supplies independent transform/input/output deadlines.",
+    "Repeated aliases and identical declarations on input/output have distinct scoped contract obligations. A pre-existing provider PASS quality record remains unchanged through consumer failures and success.",
+    "Missing obligations and changed versions fail before producer execution. Nonexecuted output checks report SKIPPED with a reason.",
+    "Failed output candidates and precommit cancellation/conflicts retain readable sealed objects with no dataset version/head reference. Changed candidate bytes are rejected, not retained as trusted evidence.",
+    "SQLite persistence atomically rejects ERROR, SKIPPED, missing, duplicate, wrong-attempt/artifact/version/alias/definition/phase, inexact, late, wrong-severity and canceled evidence. Published warning evidence cannot be overwritten.",
+    "Explicit cancellation before execution, after materialization and before publication, persisted cancellation, generation conflicts, candidate tampering, helper failure and producer exceptions all preserve last-good visibility."
+  ],
+  "native_lifecycle_cases": [
+    "pass",
+    "input-fail",
+    "input-warn",
+    "input-error-warn",
+    "output-fail",
+    "output-warn",
+    "output-error-warn",
+    "helper-error-warn",
+    "repeated-alias",
+    "all-input-aliases",
+    "no-checks",
+    "independent-output-checks",
+    "omitted-obligation",
+    "wrong-version",
+    "canceled",
+    "cancel-after-materialize",
+    "cancel-before-publish",
+    "persisted-cancel",
+    "conflict",
+    "tamper",
+    "producer-error"
+  ],
+  "verification": {
+    "rust_tests": 341,
+    "rust_doc_tests": 1,
+    "python_tests": 779,
+    "web_tests": 297,
+    "document_regressions": 44,
+    "safety_regressions": 27,
+    "boundary_regressions": 12,
+    "structural_conformance_cases": 243,
+    "native_evaluator_cases": 21,
+    "native_polars_cases": 22,
+    "native_lifecycle_cases": 21,
+    "installed_cli_tests": 52
+  },
+  "limits": [
+    "Local macOS arm64 evidence only. Push CI remains with the owner; no workflows were queried. T061 CI success was not inferred from the request to continue.",
+    "This is one-attempt gate integration, not public build execution. T064 retains terminal job/build dispatch, live worker phase projection and graph/lease orchestration.",
+    "T063 retains complete durable failure evidence, reusable certificates and bounded samples. T062 persists only successful gate rows needed for publication; complete result envelopes/logs and rejected-candidate identity are returned to the caller.",
+    "Caller retains runtime ownership, verified environment and exact input leases through blocking work. Failed candidate objects have no dataset-version/head reference and remain subject to later retention policy.",
+    "Protocol 1.0, AST 1, runtime schema 7, specification 1.1.2 and dependency/toolchain pins unchanged."
+  ],
+  "ci": "pending_owner_monitoring",
+  "agent_polled_workflows": false
+}

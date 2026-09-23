@@ -230,6 +230,10 @@ impl Job {
     pub fn build(&self) -> BuildId {
         self.build
     }
+    /// Frozen output branch and expected generation for the attempt lifecycle.
+    pub fn target(&self) -> OutputTarget {
+        self.target
+    }
     /// Read-only state; no direct terminal rewrite API exists.
     pub fn state(&self) -> &JobState {
         &self.state

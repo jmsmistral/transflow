@@ -4,7 +4,8 @@
 `Candidate`. It never imports a producer, invokes a transform, changes heads or
 publishes. Callers retain exact version leases, candidate ownership, environment
 verification and the producer's resource reservation until helper cleanup completes.
-T062 integrates input/output gates; T063 persists certificates and bounded samples.
+T062 integrates input/output gates below; T063 adds reusable certificates, complete
+failed-attempt evidence persistence and bounded samples.
 Public build execution remains later orchestration work.
 
 Rust validates resolved check policies and the actual normalized schema, compiles
@@ -67,3 +68,51 @@ transform adapters. Coverage includes complete truth tables, null/NaN behavior,
 quoted identifiers and bound injection-like values, exact wide values, empty
 subjects, candidates, WARN errors, active-query deadlines, cancellation, physical
 key-group spill, zero-disk failure, restricted paths and cleanup.
+
+## Single-attempt lifecycle (T062)
+
+`lifecycle::run` accepts the complete frozen publication contract, ordered verified
+inputs, resolved declarations and one admitted producer reservation. It rejects
+missing obligations, changed versions/aliases or unresolved policies before any
+producer runs. Independent input aliases are evaluated before deciding the input
+gate. Every ERROR and every FAIL violation blocks; WARN data violations permit
+continuation. Nonexecuted output checks have an explicit SKIPPED reason.
+
+The same reservation supplies one worker permit at a time, with a shared Budget
+for all helpers in each validation phase and a separate transform phase. A phase
+callback lets the owning coordinator persist boundaries with
+`Store::advance_gate_phase`; its short transactions recheck exact accepted attempt,
+reservation and cancellation authority. The output boundary follows closed
+materialization, including both RUNNING-to-MATERIALIZING and
+MATERIALIZING-to-VALIDATING_OUTPUTS transitions. Live per-worker phase projection
+and terminal job/build dispatch remain part of T064.
+
+Only successful gates return an `Approved` candidate. This private token binds its
+attempt, complete contract, exact candidate and evaluator results. The consuming
+`lifecycle::publish` verifies those identities against the legal domain intent,
+persists the minimal exact gate rows, and uses the existing journal/install/commit
+protocol. It uses the owned candidate directly: no second function invocation,
+sink or staging copy. Cancellation and head-generation checks still apply at the
+SQLite visibility boundary. No worker obtains publication authority.
+
+Input check identities are scoped to the consumer's exact alias, version and
+artifact. Identical declaration digests on two aliases or on input and output get
+separate contract obligations. Publication links results to the consumer's new
+version only; it never changes a provider's quality certificate. WARN results stay
+VIOLATION with their severity and exact metrics; publication never rewrites PASS.
+The full envelope and bounded logs remain in the lifecycle completion.
+
+Output failures and precommit refusals retain sealed, strictly verified candidate
+objects without a version/head reference. The completion exposes the candidate
+identity and manifest for diagnostics, independently of normal dataset reads.
+Retention failures remain visible alongside the original refusal. These objects
+are not reusable certificates or successful dataset versions. T063 will provide
+complete durable failure/certificate/sample records; T064 will connect these
+services to graph dispatch, held input leases and terminal job/build persistence.
+Environment verification, runtime ownership and leases remain caller obligations.
+
+Native `python/tools/check_lifecycle.py` runs the packaged workers and real SQLite
+publication across PASS/FAIL/WARN/ERROR, repeated aliases, absent obligations,
+cancellation, conflicts, candidate tampering and producer failures. It checks
+function counts, preserved last-good version references, invisible retained bytes,
+exact output artifact identity and warnings linked after successful publication.

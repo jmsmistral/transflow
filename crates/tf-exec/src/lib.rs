@@ -31,3 +31,6 @@ pub mod polars;
 
 /// Canonical exact checks over verified Parquet subjects.
 pub mod checks;
+
+/// One-attempt input/output gates and approved-candidate publication.
+pub mod lifecycle;
