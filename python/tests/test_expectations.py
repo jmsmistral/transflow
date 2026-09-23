@@ -102,3 +102,60 @@ def test_nested_json_key_order_and_depth_fail_without_recursive_branch_explosion
         node = {"child": node, "kind": "row_not"}
     with pytest.raises(DeclarationError):
         E.Expectation.from_wire({"ast_version": 1, **node})
+
+
+def test_core_age_dsl_and_every_builder() -> None:
+    age = E.all(E.col("age").non_null(), E.col("age").gte(0), E.col("age").lt(200))
+    assert isinstance(age, E.RowPredicate)
+    assert isinstance(E.every(age), E.DatasetExpectation)
+    for op in ("gt", "gte", "lt", "lte", "equals", "not_equals"):
+        assert getattr(E.col("id"), op)(2).to_wire()["op"] == op
+        assert getattr(E.row_count(), op)(0).to_wire()["op"] == op
+    for row in (
+        E.col("id").is_null(),
+        E.col("x").is_finite(),
+        E.col("x").is_nan(),
+        E.col("id").is_in(1, 2, None),
+        E.col("id").is_in(),
+    ):
+        assert isinstance(row, E.RowPredicate)
+    assert isinstance(E.col("id").exists(), E.DatasetExpectation)
+    assert isinstance(E.col("id").has_type("i64"), E.DatasetExpectation)
+    assert (
+        E.col("x").has_type({"type": "decimal", "precision": 38, "scale": 2}).to_wire()["kind"]
+        == "has_type"
+    )
+
+
+def test_convenience_literals_preserve_types_and_require_explicit_exotic_types() -> None:
+    for value, kind, text in [
+        (2**64 - 1, "u64", str(2**64 - 1)),
+        (True, "bool", True),
+        (-0.0, "f64", "-0.0"),
+        (float("nan"), "f64", "NaN"),
+    ]:
+        right = cast(dict[str, object], E.col("x").equals(value).to_wire()["right"])
+        assert right["value"] == {"type": kind, "value": text}
+    for invalid_value in (2**64, -(2**63) - 1, None, lambda: 0, {"type": "i64", "value": "1"}):
+        with pytest.raises(DeclarationError):
+            E.col("x").equals(invalid_value)
+    with pytest.raises(DeclarationError):
+        E.col("x").is_in(1, "1")
+    with pytest.raises(DeclarationError):
+        E.row_count().gt(1.0)
+    with pytest.raises(DeclarationError):
+        E.col("x").has_type("object")
+
+
+def test_has_type_and_membership_take_immutable_copies() -> None:
+    typ = {"type": "i64"}
+    expression = E.col("x").has_type(typ)
+    typ["type"] = "string"
+    assert expression.to_wire()["logical_type"] == {"type": "i64"}
+    membership = E.col("x").is_in(
+        E.literal({"type": "decimal", "precision": 38, "scale": 2, "value": "1.00"}), None
+    )
+    assert membership.to_wire()["values"] == [
+        {"type": "decimal", "precision": 38, "scale": 2, "value": "1.00"},
+        {"type": "null"},
+    ]

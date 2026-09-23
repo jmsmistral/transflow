@@ -210,6 +210,7 @@ class Session:
             "discovery.v1",
             "polars.execute.v1",
             "expectation.ast.v1",
+            "expectation.core.v1",
         }:
             raise ProtocolError("capability")
         self._request = request_id

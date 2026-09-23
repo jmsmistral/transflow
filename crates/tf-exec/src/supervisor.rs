@@ -423,6 +423,7 @@ fn run_inner(
                 "discovery.v1".to_owned(),
                 "polars.execute.v1".to_owned(),
                 "expectation.ast.v1".to_owned(),
+                "expectation.core.v1".to_owned(),
             ]
             .into(),
         )

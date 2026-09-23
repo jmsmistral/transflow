@@ -4334,6 +4334,121 @@
             "child"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "is_null"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          },
+          "required": [
+            "kind",
+            "column"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "is_finite"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          },
+          "required": [
+            "kind",
+            "column"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "is_nan"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          },
+          "required": [
+            "kind",
+            "column"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "exists"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            }
+          },
+          "required": [
+            "kind",
+            "column"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "is_in"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "values": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ScalarValue"
+              },
+              "minItems": 0,
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "kind",
+            "column",
+            "values"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "has_type"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "logical_type": {
+              "$ref": "#/$defs/LogicalType"
+            }
+          },
+          "required": [
+            "kind",
+            "column",
+            "logical_type"
+          ],
+          "additionalProperties": false
         }
       ]
     },
@@ -4617,6 +4732,145 @@
           "required": [
             "kind",
             "child",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "is_null"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "column",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "is_finite"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "column",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "is_nan"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "column",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "exists"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "column",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "is_in"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "values": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ScalarValue"
+              },
+              "minItems": 0,
+              "maxItems": 1000
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "column",
+            "values",
+            "ast_version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "has_type"
+            },
+            "column": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "logical_type": {
+              "$ref": "#/$defs/LogicalType"
+            },
+            "ast_version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "kind",
+            "column",
+            "logical_type",
             "ast_version"
           ],
           "additionalProperties": false

@@ -585,5 +585,135 @@
     },
     "aliases": [],
     "valid": false
+  },
+  {
+    "name": "is_null",
+    "ast": {
+      "ast_version": 1,
+      "kind": "is_null",
+      "column": "value"
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"column\":\"value\",\"kind\":\"is_null\"}",
+    "effective_compute_digest": "e86eca0f6c773ce057d2c911f249944af884747c3ba27e8c2e2f1c49bfc3e838"
+  },
+  {
+    "name": "is_finite",
+    "ast": {
+      "ast_version": 1,
+      "kind": "is_finite",
+      "column": "value"
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"column\":\"value\",\"kind\":\"is_finite\"}",
+    "effective_compute_digest": "af33b96b1683c3e7c4823a8fe9043c78de5b6429da806115a106342d1816ce35"
+  },
+  {
+    "name": "is_nan",
+    "ast": {
+      "ast_version": 1,
+      "kind": "is_nan",
+      "column": "value"
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"column\":\"value\",\"kind\":\"is_nan\"}",
+    "effective_compute_digest": "001729a44379d0abe70bcd03d5c879c8cfd6668d186a696a553ee0b3003d9896"
+  },
+  {
+    "name": "exists",
+    "ast": {
+      "ast_version": 1,
+      "kind": "exists",
+      "column": "value"
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"column\":\"value\",\"kind\":\"exists\"}",
+    "effective_compute_digest": "08f5f3709266a8c2f4418b13e24847c4492ce0a426c8d1a942534dc84d82a964"
+  },
+  {
+    "name": "has-type",
+    "ast": {
+      "ast_version": 1,
+      "kind": "has_type",
+      "column": "value",
+      "logical_type": {
+        "type": "i64"
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"column\":\"value\",\"kind\":\"has_type\",\"logical_type\":{\"type\":\"i64\"}}",
+    "effective_compute_digest": "5117a5cc176ff4c9904ba8d1f98d7b5ec3ad9f19d97d569466e37a35c274f2e9"
+  },
+  {
+    "name": "membership-null",
+    "ast": {
+      "ast_version": 1,
+      "kind": "is_in",
+      "column": "value",
+      "values": [
+        {
+          "type": "i64",
+          "value": "1"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"column\":\"value\",\"kind\":\"is_in\",\"values\":[{\"type\":\"i64\",\"value\":\"1\"},{\"type\":\"null\"}]}",
+    "effective_compute_digest": "24d14c8c01c28ab755cd830f7945b51fb15110c34b13d7d9374fd12168ffb217"
+  },
+  {
+    "name": "membership-empty",
+    "ast": {
+      "ast_version": 1,
+      "kind": "is_in",
+      "column": "value",
+      "values": []
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"column\":\"value\",\"kind\":\"is_in\",\"values\":[]}",
+    "effective_compute_digest": "a2aa8f7a869a1aa5301552eae22a6aad3846971536f972d1677a7b4695ad546d"
+  },
+  {
+    "name": "membership-mixed",
+    "ast": {
+      "ast_version": 1,
+      "kind": "is_in",
+      "column": "value",
+      "values": [
+        {
+          "type": "i64",
+          "value": "1"
+        },
+        {
+          "type": "string",
+          "value": "1"
+        }
+      ]
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "has-type-unknown",
+    "ast": {
+      "ast_version": 1,
+      "kind": "has_type",
+      "column": "value",
+      "logical_type": {
+        "type": "object"
+      }
+    },
+    "aliases": [],
+    "valid": false
   }
 ]

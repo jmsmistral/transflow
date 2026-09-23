@@ -71,7 +71,11 @@ impl Session {
         if capabilities.iter().any(|s| {
             !matches!(
                 s.as_str(),
-                "diagnostic.note.v1" | "discovery.v1" | "polars.execute.v1" | "expectation.ast.v1"
+                "diagnostic.note.v1"
+                    | "discovery.v1"
+                    | "polars.execute.v1"
+                    | "expectation.ast.v1"
+                    | "expectation.core.v1"
             )
         }) {
             return Err(ProtocolError::Capability);

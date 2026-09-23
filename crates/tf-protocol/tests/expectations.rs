@@ -92,3 +92,32 @@ fn ast_size_and_depth_are_bounded() {
     let broad = json!({"ast_version":1,"kind":"row_all","children":vec![leaf;1000]});
     assert!(decode(&broad, &Default::default()).is_err());
 }
+
+#[test]
+fn core_schema_predicates_and_membership_have_distinct_error_semantics() {
+    let schema = json!({"format_version":1,"fields":[{"name":"value","logical_type":{"type":"i64"},"nullable":true}]});
+    for (wire, valid) in [
+        (json!({"kind":"exists","column":"missing"}), true),
+        (
+            json!({"kind":"has_type","column":"missing","logical_type":{"type":"i64"}}),
+            false,
+        ),
+        (
+            json!({"kind":"has_type","column":"value","logical_type":{"type":"string"}}),
+            true,
+        ),
+        (json!({"kind":"is_nan","column":"value"}), false),
+        (json!({"kind":"is_null","column":"value"}), true),
+        (
+            json!({"kind":"is_in","column":"value","values":[{"type":"null"},{"type":"string","value":"1"}]}),
+            false,
+        ),
+        (json!({"kind":"is_in","column":"value","values":[]}), true),
+    ] {
+        let mut wire = wire;
+        wire["ast_version"] = 1.into();
+        let ast = decode(&wire, &Default::default()).unwrap();
+        assert_eq!(validate_schema(&ast, &schema).is_ok(), valid, "{wire}");
+        assert!(validate_schema(&ast, &Value::Null).is_ok());
+    }
+}

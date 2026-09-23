@@ -366,7 +366,11 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                     "attempt_id": request["attempt_id"],
                     "sequence": str(sequence),
                     "message": message,
-                    "required_capabilities": ["discovery.v1", "expectation.ast.v1"],
+                    "required_capabilities": [
+                        "discovery.v1",
+                        "expectation.ast.v1",
+                        "expectation.core.v1",
+                    ],
                     "extensions": [],
                 }
             )
@@ -384,7 +388,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
         {
             "type": "hello",
             "operation": "discover",
-            "capabilities": ["discovery.v1", "expectation.ast.v1"],
+            "capabilities": ["discovery.v1", "expectation.ast.v1", "expectation.core.v1"],
         }
     )
     thread = threading.Thread(target=heartbeat, daemon=True)

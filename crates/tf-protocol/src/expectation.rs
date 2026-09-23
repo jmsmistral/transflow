@@ -122,6 +122,30 @@ fn node(
                 Expectation::Dataset(DatasetExpectation::PrimaryKey(columns))
             }
         }
+        Some("is_null") => Expectation::Row(RowPredicate::IsNull(name(&v["column"])?)),
+        Some("is_finite") => Expectation::Row(RowPredicate::IsFinite(name(&v["column"])?)),
+        Some("is_nan") => Expectation::Row(RowPredicate::IsNan(name(&v["column"])?)),
+        Some("is_in") => {
+            let values = v["values"]
+                .as_array()
+                .ok_or(AstError("Membership values are malformed"))?;
+            let types: Vec<_> = values
+                .iter()
+                .filter(|v| v["type"] != "null")
+                .map(value_type)
+                .collect();
+            if let Some(first) = types.first()
+                && types.iter().any(|t| !compatible(first, t))
+            {
+                return Err(AstError("Membership values have incompatible types"));
+            }
+            Expectation::Row(RowPredicate::IsIn(name(&v["column"])?, values.clone()))
+        }
+        Some("exists") => Expectation::Dataset(DatasetExpectation::Exists(name(&v["column"])?)),
+        Some("has_type") => Expectation::Dataset(DatasetExpectation::HasType(
+            name(&v["column"])?,
+            v["logical_type"].clone(),
+        )),
         Some("row_compare") => {
             let (left, right) = (column(&v["left"])?, column(&v["right"])?);
             if matches!(
@@ -202,7 +226,8 @@ fn value_type(value: &Value) -> Value {
     result
 }
 fn compatible(left: &Value, right: &Value) -> bool {
-    (integer(left) && integer(right)) || left == right
+    !matches!(left["type"].as_str(), Some("list" | "struct"))
+        && ((integer(left) && integer(right)) || left == right)
 }
 fn operand_type(v: &ColumnValue<Value>, fields: &BTreeMap<&str, &Value>) -> Result<Value> {
     match v {
@@ -219,8 +244,29 @@ fn operand_type(v: &ColumnValue<Value>, fields: &BTreeMap<&str, &Value>) -> Resu
 }
 fn check_row(row: &RowPredicate<Value>, fields: &BTreeMap<&str, &Value>) -> Result<()> {
     match row {
-        RowPredicate::NonNull(name) => {
+        RowPredicate::NonNull(name) | RowPredicate::IsNull(name) => {
             operand_type(&ColumnValue::Column(name.clone()), fields)?;
+        }
+        RowPredicate::IsFinite(name) | RowPredicate::IsNan(name) => {
+            let typ = operand_type(&ColumnValue::Column(name.clone()), fields)?;
+            if !matches!(typ["type"].as_str(), Some("f32" | "f64")) {
+                return Err(AstError("Float predicates require a floating-point column"));
+            }
+        }
+        RowPredicate::IsIn(name, values) => {
+            let typ = operand_type(&ColumnValue::Column(name.clone()), fields)?;
+            if matches!(typ["type"].as_str(), Some("list" | "struct")) {
+                return Err(AstError("Membership requires a scalar column"));
+            }
+            if values
+                .iter()
+                .filter(|v| v["type"] != "null")
+                .any(|v| !compatible(&typ, &value_type(v)))
+            {
+                return Err(AstError(
+                    "Membership values have incompatible declared types",
+                ));
+            }
         }
         RowPredicate::Compare(_, left, right) => {
             if !compatible(&operand_type(left, fields)?, &operand_type(right, fields)?) {
@@ -240,6 +286,10 @@ fn check_row(row: &RowPredicate<Value>, fields: &BTreeMap<&str, &Value>) -> Resu
 }
 fn check_dataset(e: &DatasetExpectation<Value>, fields: &BTreeMap<&str, &Value>) -> Result<()> {
     match e {
+        DatasetExpectation::Exists(_) => (),
+        DatasetExpectation::HasType(name, _) => {
+            operand_type(&ColumnValue::Column(name.clone()), fields)?;
+        }
         DatasetExpectation::PrimaryKey(names) => {
             for name in names {
                 let typ = operand_type(&ColumnValue::Column(name.clone()), fields)?;
@@ -313,6 +363,12 @@ fn row_wire(v: &RowPredicate<Value>) -> Value {
     use serde_json::json;
     match v {
         RowPredicate::NonNull(name) => json!({"kind":"non_null","columns":[name.as_str()]}),
+        RowPredicate::IsNull(name) => json!({"kind":"is_null","column":name.as_str()}),
+        RowPredicate::IsFinite(name) => json!({"kind":"is_finite","column":name.as_str()}),
+        RowPredicate::IsNan(name) => json!({"kind":"is_nan","column":name.as_str()}),
+        RowPredicate::IsIn(name, values) => {
+            json!({"kind":"is_in","column":name.as_str(),"values":values})
+        }
         RowPredicate::Compare(op, l, r) => {
             json!({"kind":"row_compare","op":comparison_name(*op),"left":column_wire(l),"right":column_wire(r)})
         }
@@ -325,6 +381,10 @@ fn row_wire(v: &RowPredicate<Value>) -> Value {
 fn dataset_wire(v: &DatasetExpectation<Value>) -> Value {
     use serde_json::json;
     match v {
+        DatasetExpectation::Exists(name) => json!({"kind":"exists","column":name.as_str()}),
+        DatasetExpectation::HasType(name, logical) => {
+            json!({"kind":"has_type","column":name.as_str(),"logical_type":logical})
+        }
         DatasetExpectation::PrimaryKey(names) => {
             json!({"kind":"primary_key","columns":names.iter().map(FieldName::as_str).collect::<Vec<_>>()})
         }

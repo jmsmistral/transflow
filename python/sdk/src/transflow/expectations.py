@@ -1,13 +1,14 @@
 """Immutable expectation AST constructors. No data, SQL or engine execution.
 
-T059 supplies typed composition and explicit scalar/value operands. Remaining core
-operators and their truth/metric semantics are implemented by T060, evaluation by T061.
+T059/T060 provide the G1 declaration surface. Production data evaluation and
+publication gates remain T061/T062; constructing an expression never runs a query.
 """
 
 from __future__ import annotations
 
 import builtins
 import json
+import math
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal as TypingLiteral
@@ -53,6 +54,65 @@ class ColumnRef:
     def non_null(self) -> RowPredicate:
         return RowPredicate._from_node({"kind": "non_null", "columns": [self.name]})
 
+    def is_null(self) -> RowPredicate:
+        return RowPredicate._from_node({"kind": "is_null", "column": self.name})
+
+    def is_finite(self) -> RowPredicate:
+        return RowPredicate._from_node({"kind": "is_finite", "column": self.name})
+
+    def is_nan(self) -> RowPredicate:
+        return RowPredicate._from_node({"kind": "is_nan", "column": self.name})
+
+    def is_in(self, *values: object) -> RowPredicate:
+        return RowPredicate._from_node(
+            {
+                "kind": "is_in",
+                "column": self.name,
+                "values": [
+                    _literal_value(value, allow_null=True).to_wire()["value"] for value in values
+                ],
+            }
+        )
+
+    def exists(self) -> DatasetExpectation:
+        return DatasetExpectation._from_node({"kind": "exists", "column": self.name})
+
+    def has_type(self, logical_type: object) -> DatasetExpectation:
+        logical = {"type": logical_type} if isinstance(logical_type, str) else logical_type
+        return DatasetExpectation._from_node(
+            {
+                "kind": "has_type",
+                "column": self.name,
+                "logical_type": json.loads(frozen_json(logical, "LogicalType")),
+            }
+        )
+
+    def gt(self, value: object) -> RowPredicate:
+        return compare(self, "gt", value if isinstance(value, ColumnRef) else _literal_value(value))
+
+    def gte(self, value: object) -> RowPredicate:
+        return compare(
+            self, "gte", value if isinstance(value, ColumnRef) else _literal_value(value)
+        )
+
+    def lt(self, value: object) -> RowPredicate:
+        return compare(self, "lt", value if isinstance(value, ColumnRef) else _literal_value(value))
+
+    def lte(self, value: object) -> RowPredicate:
+        return compare(
+            self, "lte", value if isinstance(value, ColumnRef) else _literal_value(value)
+        )
+
+    def equals(self, value: object) -> RowPredicate:
+        return compare(
+            self, "equals", value if isinstance(value, ColumnRef) else _literal_value(value)
+        )
+
+    def not_equals(self, value: object) -> RowPredicate:
+        return compare(
+            self, "not_equals", value if isinstance(value, ColumnRef) else _literal_value(value)
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class InputAliasRef:
@@ -80,6 +140,36 @@ class ScalarMetric:
             "kind": "row_count",
             "input": None if self.source is None else {"kind": "input", "alias": self.source.alias},
         }
+
+    def gt(self, value: object) -> DatasetExpectation:
+        return compare(
+            self, "gt", value if isinstance(value, ScalarMetric) else _literal_value(value)
+        )
+
+    def gte(self, value: object) -> DatasetExpectation:
+        return compare(
+            self, "gte", value if isinstance(value, ScalarMetric) else _literal_value(value)
+        )
+
+    def lt(self, value: object) -> DatasetExpectation:
+        return compare(
+            self, "lt", value if isinstance(value, ScalarMetric) else _literal_value(value)
+        )
+
+    def lte(self, value: object) -> DatasetExpectation:
+        return compare(
+            self, "lte", value if isinstance(value, ScalarMetric) else _literal_value(value)
+        )
+
+    def equals(self, value: object) -> DatasetExpectation:
+        return compare(
+            self, "equals", value if isinstance(value, ScalarMetric) else _literal_value(value)
+        )
+
+    def not_equals(self, value: object) -> DatasetExpectation:
+        return compare(
+            self, "not_equals", value if isinstance(value, ScalarMetric) else _literal_value(value)
+        )
 
 
 @dataclass(frozen=True, slots=True, init=False)
@@ -173,6 +263,20 @@ def _validate(node: dict[str, object], depth: int = 0, *, budget: list[int]) -> 
         ):
             raise DeclarationError("Expectation columns are repeated or have invalid arity")
         return "row" if kind == "non_null" else "dataset"
+    if kind in ("is_null", "is_finite", "is_nan", "is_in"):
+        if kind == "is_in":
+            values = node["values"]
+            assert isinstance(values, list)
+            types = [
+                {k: v for k, v in value.items() if k != "value"}
+                for value in values
+                if value["type"] != "null"
+            ]
+            if types and builtins.any(not _compatible(types[0], other) for other in types[1:]):
+                raise DeclarationError("Membership values have incompatible types")
+        return "row"
+    if kind in ("exists", "has_type"):
+        return "dataset"
     if kind in ("row_compare", "metric_compare"):
         left, right = node["left"], node["right"]
         assert isinstance(left, dict) and isinstance(right, dict)
@@ -205,6 +309,35 @@ def _validate(node: dict[str, object], depth: int = 0, *, budget: list[int]) -> 
         if _validate(child, depth + 1, budget=budget) != expected:
             raise DeclarationError("Mixed boolean kinds require explicit E.every promotion")
     return "dataset" if kind == "every" else expected
+
+
+def _compatible(left: dict[str, object], right: dict[str, object]) -> bool:
+    integers = {"i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64"}
+    return (left["type"] in integers and right["type"] in integers) or left == right
+
+
+def _literal_value(value: object, *, allow_null: bool = False) -> Literal:
+    if isinstance(value, Literal):
+        return value
+    if value is None and allow_null:
+        return Literal({"type": "null"})
+    if type(value) is bool:
+        return Literal({"type": "bool", "value": value})
+    if type(value) is int:
+        kind = "u64" if value > 9223372036854775807 else "i64"
+        return Literal({"type": kind, "value": str(value)})
+    if type(value) is float:
+        text = (
+            ("NaN" if math.isnan(value) else ("Infinity" if value > 0 else "-Infinity"))
+            if not math.isfinite(value)
+            else repr(value)
+        )
+        return Literal({"type": "f64", "value": text})
+    if type(value) is str:
+        return Literal({"type": "string", "value": value})
+    raise DeclarationError(
+        "Use a scalar bool/int/float/string or E.literal with an explicit typed carrier"
+    )
 
 
 def col(name: str) -> ColumnRef:

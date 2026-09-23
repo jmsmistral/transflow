@@ -63,3 +63,10 @@ known versus deferred schemas and foreign/named-branch boundaries. A shared
 synthetic fixture is reproduced by a real installed discovery worker over its
 private socket and consumed by Rust validation. Its producer bodies raise if
 invoked; discovery and validation succeed without executing them or allocating IDs.
+
+T060 preflights the full G1 DSL: float predicates require float columns, membership
+requires compatible scalar types, and `has_type` requires an existing column.
+`exists` intentionally permits missing columns; a present but different `has_type`
+is a future data violation, not a malformed expression. Unknown schemas remain
+deferred. The new check-semantics marker invalidates older structural certificates;
+it never represents a data PASS or weakens errors for WARN checks.

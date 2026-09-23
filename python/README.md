@@ -9,7 +9,7 @@ bootstrap compatibility metadata, plus worker help/version/compatibility command
 T010 adds an internal immutable catalogue binding and typing-overlay prototype with
 explicit test contexts. T026 adds [immutable authoring declarations](DECLARATIONS.md) and preserved-callable
 decorators. Captured discovery and catalogue binding are implemented. T058 adds the private
-[Polars execution adapter](POLARS.md), and T059 adds the [typed expectation AST](EXPECTATIONS.md); public build/check/publication composition
+[Polars execution adapter](POLARS.md), and T059–T060 add the [typed expectation DSL and semantic kernels](EXPECTATIONS.md); public build/check/publication composition
 remains later work. See the
 [prototype evidence and limits](../docs/development/catalog-overlay.md). Importing the SDK does not initialize a workspace or worker.
 

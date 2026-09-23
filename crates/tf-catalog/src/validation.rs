@@ -18,7 +18,7 @@ use tf_protocol::{
 /// Current installed SDK declaration contract. A changed SDK invalidates retained evidence.
 pub const SDK_VERSION: &str = "0.0.0.dev0";
 /// Current typed AST semantics; changing these invalidates retained validation certificates.
-pub const CHECK_SEMANTICS: &str = "expectation-ast-v1:typed-composition:strict-null-v1";
+pub const CHECK_SEMANTICS: &str = "expectation-ast-v1:core-dsl:strict-null-key-v1";
 /// Inputs obtained from one captured source and authenticated, matched worker discovery.
 /// `modules` is the complete pre-import ModuleIndex (including helpers/namespaces), not a target subset.
 /// The caller verifies source bytes and environment drift before invoking this pure service.

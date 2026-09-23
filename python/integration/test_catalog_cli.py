@@ -778,7 +778,7 @@ def test_typed_expectation_validation_never_runs_data_and_preserves_workspace(
 ) -> None:
     code = """from transflow import Check, Output, transform
 from transflow import expectations as E
-positive = E.compare(E.col("amount"), "gte", E.literal({"type":"i64","value":"0"}))
+positive = E.all(E.col("amount").gte(0), E.col("amount").lt(200))
 @transform(output=Output(
     "raw/orders", checks=Check(E.all(E.col("amount").non_null(), positive), "Amount")
 ))

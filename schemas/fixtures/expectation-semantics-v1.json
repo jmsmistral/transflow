@@ -1,0 +1,190 @@
+{
+  "truth": [
+    {
+      "left": "true",
+      "right": "true",
+      "all": "true",
+      "any": "true"
+    },
+    {
+      "left": "true",
+      "right": "false",
+      "all": "false",
+      "any": "true"
+    },
+    {
+      "left": "true",
+      "right": "unknown",
+      "all": "unknown",
+      "any": "true"
+    },
+    {
+      "left": "false",
+      "right": "true",
+      "all": "false",
+      "any": "true"
+    },
+    {
+      "left": "false",
+      "right": "false",
+      "all": "false",
+      "any": "false"
+    },
+    {
+      "left": "false",
+      "right": "unknown",
+      "all": "false",
+      "any": "unknown"
+    },
+    {
+      "left": "unknown",
+      "right": "true",
+      "all": "unknown",
+      "any": "true"
+    },
+    {
+      "left": "unknown",
+      "right": "false",
+      "all": "false",
+      "any": "unknown"
+    },
+    {
+      "left": "unknown",
+      "right": "unknown",
+      "all": "unknown",
+      "any": "unknown"
+    }
+  ],
+  "not": {
+    "true": "false",
+    "false": "true",
+    "unknown": "unknown"
+  },
+  "ages": [
+    {
+      "value": 0,
+      "truth": "true"
+    },
+    {
+      "value": 199,
+      "truth": "true"
+    },
+    {
+      "value": 200,
+      "truth": "false"
+    },
+    {
+      "value": -1,
+      "truth": "false"
+    },
+    {
+      "value": null,
+      "truth": "false"
+    }
+  ],
+  "keys": [
+    {
+      "name": "single",
+      "types": [
+        "i64"
+      ],
+      "rows": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          null
+        ]
+      ],
+      "metrics": [
+        1,
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "name": "tuple-collision",
+      "types": [
+        "string",
+        "string"
+      ],
+      "rows": [
+        [
+          "a|b",
+          "c"
+        ],
+        [
+          "a",
+          "b|c"
+        ],
+        [
+          "a|b",
+          "c"
+        ],
+        [
+          null,
+          "x"
+        ],
+        [
+          null,
+          null
+        ]
+      ],
+      "metrics": [
+        2,
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "name": "empty",
+      "types": [
+        "i64"
+      ],
+      "rows": [],
+      "metrics": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "case-unicode",
+      "types": [
+        "string"
+      ],
+      "rows": [
+        [
+          "A"
+        ],
+        [
+          "a"
+        ],
+        [
+          "é"
+        ],
+        [
+          "é"
+        ],
+        [
+          "a"
+        ]
+      ],
+      "metrics": [
+        0,
+        1,
+        2,
+        2
+      ]
+    }
+  ]
+}

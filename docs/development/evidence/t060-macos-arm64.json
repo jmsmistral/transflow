@@ -1,0 +1,80 @@
+{
+  "task": "T060",
+  "date": "2026-09-23",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "a51e8b828cc725e263f690af7e541c8ce2172b68",
+  "specification_base": "c0224b52a346982d3250718b94cc62653761090d",
+  "result": "passed",
+  "commands": [
+    {
+      "command": "cargo test -p tf-protocol --test expectation_semantics --test expectations --locked --offline",
+      "result": "Passed: six semantic tests and four AST/schema tests."
+    },
+    {
+      "command": "cargo clippy -p tf-domain -p tf-protocol -p tf-catalog --all-targets --locked --offline -- -D warnings",
+      "result": "Passed after correcting two test-only lint findings."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh",
+      "result": "Passed: native engine/resource/normalization probes and all 22 packaged supervised Polars cases. Reports: target/qualification/runs/native.XxZx35; log: /private/tmp/t060-native.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check.sh",
+      "result": "Document, safety and Rust gates passed: 44 document regressions, 27 safety regressions, 12 boundary regressions, 336 Rust tests and one doc test. Aggregate stopped at two test-variable typing errors; corrected and resumed Python/web/CLI gates. Log: /private/tmp/t060-check.log."
+    },
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "Passed: 771 tests, all 19 locked tooling pins, Ruff, formatting, strict mypy across 48 files and installed-wheel tests. Report: target/python/py314/tests.xml; log: /private/tmp/t060-python.log."
+    },
+    {
+      "command": "bash tools/check-web.sh",
+      "result": "Passed: typecheck, ESLint, formatting, 293 tests and matching production builds. Report: target/web/unit-tests.json; log: /private/tmp/t060-web.log."
+    },
+    {
+      "command": "bash tools/check-cli.sh",
+      "result": "Passed: 52 installed CLI tests, including full non-null/range DSL validation without producer execution or workspace mutation. Report: target/cli-tests.xml; log: /private/tmp/t060-cli.log."
+    },
+    {
+      "command": "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Passed: specification 1.1.2 document/syntax checks. Both repositories pass git diff --check."
+    }
+  ],
+  "coverage": [
+    "Every G1 SDK builder creates immutable AST-v1 syntax without importing an engine or invoking producers.",
+    "36 shared Rust/Python AST cases compare exact canonical bytes and effective-policy digests. 239 structural cases include core node shapes and the additive capability.",
+    "Complete three-valued truth tables and root null-policy metrics; age 0/199 pass, -1/200/null violate the full expression, and empty row/key checks pass while row_count > 0 fails.",
+    "Null differs from NaN; NaN comparisons are false except not_equals; negative zero equals zero; membership nulls match only explicit null.",
+    "Exact primary-key tuples preserve component boundaries, case/Unicode spelling and integer/decimal/timestamp precision. Null-key rows are counted once outside grouping; all duplicate-group rows count.",
+    "The canonical [1,2,2,null] key fixture yields null_key_rows=1, duplicate_groups=1, duplicate_group_rows=2, violating_rows=3.",
+    "Schema preflight distinguishes deliberate exists/has_type conditions from missing columns and incompatible operands; unsupported key types fail even before empty/null data is considered.",
+    "Native Polars streaming regression materializes 1,024,000,000 logical bytes with 238,206,976-byte worker peak RSS through the new capability."
+  ],
+  "corrected_failures": [
+    "Focused Clippy initially rejected a test helper panic and a cloned one-element slice; replaced them with fixture lookup and std::slice::from_ref.",
+    "Aggregate strict mypy found two test-local variables reused for incompatible inferred types; renamed them and reran the complete Python gate successfully."
+  ],
+  "limits": [
+    "macOS arm64 local evidence only. Owner monitors push workflows; no CI success inferred.",
+    "Pure semantic kernels do not scan Parquet, compile DuckDB queries or retain dataset-sized key maps. T061 owns production evaluation/grouping/spill; T062 owns publication gates.",
+    "No public build/check execution or G3 cross-input metric evaluation is claimed. Unknown schemas remain deferred; structural acceptance is never a data PASS.",
+    "Protocol 1.0, AST 1, runtime schema 7, specification 1.1.2 and all dependency/toolchain pins remain unchanged. New workers require expectation.core.v1 alongside expectation.ast.v1 and operation capabilities.",
+    "T059 and earlier pending owner CI confirmations remain pending."
+  ],
+  "ci": "pending_owner_monitoring",
+  "agent_polled_workflows": false,
+  "verification": {
+    "rust_tests": 336,
+    "rust_doc_tests": 1,
+    "python_tests": 771,
+    "web_tests": 293,
+    "document_regressions": 44,
+    "safety_regressions": 27,
+    "boundary_regressions": 12,
+    "structural_conformance_cases": 239,
+    "semantic_ast_cases": 36,
+    "pure_semantics_tests": 6,
+    "native_polars_cases": 22,
+    "installed_cli_tests": 52
+  }
+}

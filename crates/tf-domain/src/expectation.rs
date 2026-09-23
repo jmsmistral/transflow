@@ -56,6 +56,14 @@ pub enum ScalarOperand<L> {
 pub enum RowPredicate<L> {
     /// Column value is present.
     NonNull(FieldName),
+    /// Null is explicitly present.
+    IsNull(FieldName),
+    /// Float is finite; null produces unknown.
+    IsFinite(FieldName),
+    /// Float is NaN; null produces unknown.
+    IsNan(FieldName),
+    /// Exact allowed literals, with explicit null membership.
+    IsIn(FieldName, Vec<L>),
     /// Explicit comparison of compatible typed operands.
     Compare(Comparison, ColumnValue<L>, ColumnValue<L>),
     /// Composition of the same boolean kind.
@@ -68,6 +76,10 @@ pub enum RowPredicate<L> {
 pub enum DatasetExpectation<L> {
     /// Non-null unique tuples across the named columns.
     PrimaryKey(Vec<FieldName>),
+    /// Schema existence; a missing column is a normal violation.
+    Exists(FieldName),
+    /// Exact logical type test; the codec validates the type payload.
+    HasType(FieldName, L),
     /// Explicit comparison of compatible typed operands.
     Compare(Comparison, ScalarOperand<L>, ScalarOperand<L>),
     /// Explicitly require a row predicate across the dataset.
@@ -85,3 +97,6 @@ pub enum Expectation<L> {
     /// A whole-dataset condition.
     Dataset(DatasetExpectation<L>),
 }
+
+/// Pure truth, scalar and exact key metric semantics; no artifact scans.
+pub mod semantics;

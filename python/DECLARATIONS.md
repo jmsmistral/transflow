@@ -38,10 +38,12 @@ Only `FAIL` and `WARN` severities are valid. Names without explicit IDs use a
 case-folded word slug with underscore separators; names with no word characters need
 an explicit ID.
 
-The [T059 expectation AST](EXPECTATIONS.md) extends primary-key/non-null declarations
+The [T059–T060 expectation DSL](EXPECTATIONS.md) extends primary-key/non-null declarations
 with typed comparisons, boolean composition, explicit promotion and input references.
 Discovery emits versioned canonical syntax; workspace validation resolves policies
-and checks structural semantics. The remaining DSL and evaluation are T060–T062.
+and checks structural semantics. G1 column/metric convenience methods, membership,
+null/float/schema predicates and exact key/truth kernels are available. Artifact
+evaluation and lifecycle integration remain T061–T062.
 Lambdas, SQL strings and engine expressions are not accepted as expectations.
 
 Exactly the `role="data"` aliases are dataframe parameters. `role="validation"`

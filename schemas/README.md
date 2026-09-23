@@ -19,7 +19,7 @@ report 1.0; T058 enables private Polars execution alongside captured discovery.
 |---|---|---|
 | Worker control protocol | major 1, minor 0 | Framing and session guards implemented by T014 |
 | Logical schema, artifact manifest, catalogue snapshot | 1 each | Shapes defined here |
-| Expectation AST | 1 | T059 typed syntax and structural semantics; evaluation remains later work |
+| Expectation AST | 1 | T059–T060 typed G1 syntax and exact semantics; artifact evaluation remains T061 |
 | Workspace config, authoring registry, HTTP API | 1 each | Independent configuration/API baselines |
 | SQLite schema | 0 | No product migration exists; not permission to adopt an arbitrary database |
 
@@ -189,3 +189,11 @@ non-null/primary-key declaration seeds remain readable and normalize before hash
 [Shared AST vectors](fixtures/expectations-v1.json) qualify semantic rejection,
 canonical bytes and effective-check digests in Rust/Python; structural fixture shapes
 also pass the independent TypeScript reader. See the [AST guide](../python/EXPECTATIONS.md).
+
+T060 adds closed AST-v1 forms for `is_null`, `is_finite`, `is_nan`, `is_in`, `exists`
+and `has_type`. Newly emitted discovery/execute frames additionally require
+`expectation.core.v1`; the protocol and reserved AST versions stay unchanged.
+Membership values reuse ScalarValue and schema conditions reuse LogicalType.
+The [truth/key corpus](fixtures/expectation-semantics-v1.json) records exact truth
+tables, age boundaries and key metrics independently of an engine. Production
+artifact evaluation remains T061.
