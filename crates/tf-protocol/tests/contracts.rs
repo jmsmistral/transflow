@@ -364,6 +364,9 @@ fn validate(schema: &Value, value: &Value, defs: &Value, depth: usize) -> bool {
         let Some(key) = reference.strip_prefix("#/$defs/") else {
             return false;
         };
+        if key == "ExecutionJsonV1" {
+            return execution_json(value, 0);
+        }
         return validate(&defs[key], value, defs, depth + 1);
     }
     if let Some(branches) = schema["oneOf"].as_array()
@@ -393,6 +396,7 @@ fn validate(schema: &Value, value: &Value, defs: &Value, depth: usize) -> bool {
                 && n >= schema["minimum"].as_f64().unwrap()
                 && n <= schema["maximum"].as_f64().unwrap()
         }),
+        Some("number") => value.as_f64().is_some_and(f64::is_finite),
         Some("boolean") => value.is_boolean(),
         Some("null") => value.is_null(),
         Some("array") => value.as_array().is_some_and(|items| {
@@ -468,4 +472,16 @@ fn unknown_schema_rules_fail_closed() {
         &Value::Null,
         0
     ));
+}
+
+fn execution_json(value: &Value, depth: usize) -> bool {
+    if depth > 64 {
+        return false;
+    }
+    match value {
+        Value::Array(items) => items.iter().all(|v| execution_json(v, depth + 1)),
+        Value::Object(items) => items.values().all(|v| execution_json(v, depth + 1)),
+        Value::Number(n) => n.as_f64().is_some_and(f64::is_finite),
+        _ => true,
+    }
 }

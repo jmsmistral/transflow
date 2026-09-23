@@ -11,6 +11,7 @@ from transflow._catalog_prototype import CatalogContextError, PrototypeSnapshot
 
 # Explicit forwarding preserves the SDK root exports without creating runtime Python files.
 ROOT_STUB = """from transflow._version import __version__ as __version__
+from transflow.errors import TransientIOError as TransientIOError
 from transflow.compatibility import (
     PROTOCOL_VERSION as PROTOCOL_VERSION,
     ProtocolCompatibilityError as ProtocolCompatibilityError,

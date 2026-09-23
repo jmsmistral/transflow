@@ -43,8 +43,8 @@ fn version_is_the_actual_development_package_version() -> Result<(), Box<dyn Err
 #[test]
 fn unavailable_commands_and_invalid_flags_fail() -> Result<(), Box<dyn Error>> {
     for args in [
-        vec!["build", "synthetic/orders"],
-        vec!["serve"],
+        vec!["schedule", "list"],
+        vec!["build", "x", "--unknown"],
         vec!["--unknown"],
     ] {
         let output = invoke(&args)?;

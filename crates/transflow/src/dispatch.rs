@@ -1,5 +1,6 @@
 //! Execute an immutable accepted plan using shared cache, worker, check and publication services.
 mod context;
+pub(crate) use cancel::unstarted as cancel_unstarted;
 mod worker;
 use serde_json::{Value, json};
 use std::{
@@ -54,6 +55,7 @@ macro_rules! repository {
         result?
     }};
 }
+mod cancel;
 mod coordinator;
 
 /// Complete immutable job outcomes; no check samples or raw worker logs are exposed.
@@ -86,6 +88,20 @@ impl Drop for CancelOnDrop {
 pub struct Options {
     /// Per-job estimated peak bytes, required only with a configured memory budget.
     pub memory_estimates: BTreeMap<JobId, u64>,
+    /// Bounded best-effort phase observations; terminal storage remains authoritative.
+    pub progress: Option<std::sync::mpsc::SyncSender<Value>>,
+    /// Authenticated coordinator cancellation requests; acknowledgement follows durable commit.
+    pub commands:
+        Option<std::sync::Arc<std::sync::Mutex<std::sync::mpsc::Receiver<CancelCommand>>>>,
+}
+/// A transport-validated cancellation request. Only the coordinator mutates SQLite.
+pub struct CancelCommand {
+    /// Explicit requested build, never an implicit workspace-wide cancellation.
+    pub build: BuildId,
+    /// Bounded acknowledgement, sent after the publication/cancellation transaction.
+    pub reply: std::sync::mpsc::SyncSender<
+        std::result::Result<tf_domain::execution::CancelRequest, String>,
+    >,
 }
 /// Dispatch an accepted, untouched build. Dropping this coordinator future requests cleanup;
 /// a persistent server must retain the future independently of its client connection.
@@ -129,6 +145,9 @@ struct Coordinator<'a> {
     active: BTreeMap<JobId, Active>,
     phase_start: BTreeMap<JobId, Instant>,
     started: Instant,
+    contracts: BTreeMap<JobId, tf_store::cache::Request>,
+    retry_leases: BTreeMap<JobId, Vec<ReadLease>>,
+    progress: Option<std::sync::mpsc::SyncSender<Value>>,
 }
 
 fn execute(
@@ -188,6 +207,9 @@ fn execute(
         active: BTreeMap::new(),
         phase_start: BTreeMap::new(),
         started: Instant::now(),
+        contracts: BTreeMap::new(),
+        retry_leases: BTreeMap::new(),
+        progress: options.progress,
     };
     repository!(
         coordinator.owner,
@@ -222,6 +244,25 @@ fn execute(
             .checked_sub(Duration::from_millis(100))
             .unwrap_or_else(Instant::now);
         loop {
+            if let Some(commands) = &options.commands {
+                while let Ok(command) = commands.lock().map_err(fail)?.try_recv() {
+                    if command.build == build_id {
+                        let result = rt.block_on(control.request(coordinator.owner));
+                        let _ = command
+                            .reply
+                            .try_send(result.as_ref().copied().map_err(ToString::to_string));
+                        result.map_err(fail)?;
+                        abort = true;
+                    } else {
+                        let result = crate::build_transport::cancel_owned(
+                            coordinator.owner,
+                            rt,
+                            command.build,
+                        );
+                        let _ = command.reply.try_send(result.map_err(|e| e.to_string()));
+                    }
+                }
+            }
             if !abort && cancellation_checked.elapsed() >= Duration::from_millis(100) {
                 if repository!(coordinator.owner, rt, s, s.dispatch_canceled(build_id)) {
                     rt.block_on(control.request(coordinator.owner))
@@ -256,6 +297,10 @@ fn execute(
                 }
                 if abort {
                     coordinator.cancel_job(*id)?;
+                    continue;
+                }
+                if matches!(job.state(), JobState::RetryWait(ready) if coordinator.time() < *ready)
+                {
                     continue;
                 }
                 if parents.iter().any(|p|!matches!(coordinator.prepared.jobs[p].state(),JobState::Finished(o) if o.successful())){
@@ -303,10 +348,20 @@ fn execute(
                     inputs.push(artifacts.verify(i.artifact).map_err(fail)?);
                     leases.push(lease);
                 }
+                if let Some(old) = coordinator.retry_leases.remove(id) {
+                    for lease in old {
+                        repository!(coordinator.owner, rt, s, s.release_read(&lease));
+                    }
+                }
                 let reservation = rt
                     .block_on(pool.request(demand).map_err(fail)?)
                     .map_err(fail)?;
-                coordinator.transition(*id, |j, t| j.queue(j.fence(), t))?;
+                if !matches!(
+                    coordinator.prepared.jobs[id].state(),
+                    JobState::RetryWait(_)
+                ) {
+                    coordinator.transition(*id, |j, t| j.queue(j.fence(), t))?;
+                }
                 let attempt = AttemptId::from_bytes(*new_id()?.as_bytes());
                 let directory = attempts.join(attempt.to_string());
                 worker::private(&directory)?;
@@ -405,8 +460,24 @@ fn execute(
                         .ok_or_else(|| fail("missing worker join"))?
                         .join()
                         .map_err(|_| fail("worker panicked"))?;
+                    control
+                        .finished(
+                            coordinator.prepared.jobs[&id]
+                                .attempts()
+                                .last()
+                                .ok_or_else(|| fail("missing completed attempt"))?
+                                .id(),
+                        )
+                        .map_err(fail)?;
                     drop(reservation);
-                    if !success && !abort {
+                    if !success
+                        && !abort
+                        && coordinator.prepared.abort_on_failure
+                        && matches!(
+                            coordinator.prepared.jobs[&id].state(),
+                            JobState::Finished(tf_domain::execution::JobOutcome::Failed(_))
+                        )
+                    {
                         rt.block_on(control.request(coordinator.owner))
                             .map_err(fail)?;
                         abort = true;
@@ -439,50 +510,4 @@ fn execute(
             jobs,
         })
     })
-}
-
-// A preflight refusal leaves no running process: cancel the accepted jobs and release
-// reservations, retaining the immutable plan as the explanation/retry boundary.
-fn cancel_unstarted(
-    owner: &mut RuntimeOwner,
-    rt: &tokio::runtime::Runtime,
-    build: BuildId,
-) -> Result<()> {
-    let plan = repository!(owner, rt, s, s.dispatch_plan(build));
-    let binding = ExecutionBinding {
-        plan: plan.id.parse().map_err(fail)?,
-        source: plan.source.parse().map_err(fail)?,
-    };
-    let mut jobs = vec![];
-    for write in &plan.writes {
-        let id = write.job.parse().map_err(fail)?;
-        let (_, target, fence) = repository!(owner, rt, s, s.cache_job_context(build, id));
-        jobs.push(Job::new(
-            id,
-            build,
-            binding,
-            target,
-            fence,
-            RetryPolicy::default(),
-            EventTime(0),
-        ));
-    }
-    repository!(owner, rt, s, s.start_dispatch(&jobs, now()?));
-    let mut control =
-        tf_exec::cancellation::BuildControl::new(owner, build, jobs.len()).map_err(fail)?;
-    rt.block_on(control.request(owner)).map_err(fail)?;
-    for job in &mut jobs {
-        let old = job.clone();
-        job.request_cancel();
-        job.finish_canceled(job.fence(), EventTime(0))
-            .map_err(fail)?;
-        repository!(owner, rt, s, s.persist_execution(&old, job, now()?, 0));
-    }
-    repository!(
-        owner,
-        rt,
-        s,
-        s.finish_dispatch(&jobs, BuildState::Canceled, now()?)
-    );
-    Ok(())
 }

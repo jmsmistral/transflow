@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import socket
 import stat
 import threading
@@ -76,7 +75,9 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
             try:
                 send({"type": "heartbeat"})
             except ProtocolError, OSError:
-                os._exit(1)
+                from .lifetime import disconnected
+
+                disconnected()
 
     send(
         {

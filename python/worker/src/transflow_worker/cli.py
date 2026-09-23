@@ -42,6 +42,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     evaluation.add_argument("--control-socket", type=Path, required=True)
     try:
         args = parser.parse_args(argv)
+        if args.command in ("discover", "execute", "evaluate_checks"):
+            from .lifetime import start
+
+            start(args.request)
         if args.help or args.command is None and not args.version:
             print(parser.format_help(), end="")
         elif args.version:

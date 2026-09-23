@@ -23,7 +23,8 @@ def typescript(node):
         return "ReadonlyArray<" + typescript(node["items"]) + ">"
     if kind == "object":
         if isinstance(node.get("additionalProperties"), dict):
-            return "Readonly<Record<string, " + typescript(node["additionalProperties"]) + ">>"
+            # Index signatures support recursive JSON aliases; Record aliases do not.
+            return "{ readonly [key: string]: " + typescript(node["additionalProperties"]) + " }"
         required = node.get("required", [])
         fields = [
             "readonly " + json.dumps(key) + ("" if key in required else "?") + ": " + typescript(value)

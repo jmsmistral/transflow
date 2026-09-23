@@ -1,10 +1,10 @@
 {
   "locks": {
-    "Cargo.lock": "2a0cf2ca21d5c54b80c9537535443fbbba904d524465e7243d42381bc8cfd7f6",
+    "Cargo.lock": "553c3dabc4697e1fb61a0c73d41c26ac23391b483b8e365e499a59cb4874d99d",
     "python/dev-py314.lock": "70e9c67f810e843334c39b4d47c1a23c30e7a982a1da144b87fc86c844227ddc",
     "tools/qualification/python/py314.lock": "cd008e118c8e66bda4e999a67be7d869a1fa62ada37ca19246e42a00f7014be3",
     "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
-    "tools/qualification/rust/Cargo.lock": "81ad0166b48b9201e68544f4945c0bff0f83e330aca3efe0a0b95996670e11e9",
+    "tools/qualification/rust/Cargo.lock": "19f3fdd5dd058e1077b8bc1c1999950ec86832baa5e63dec77636860f1a7e96f",
     "tools/qualification/web/package-lock.json": "a9105bbe9e499ec2f60b679f0f838cbf7a5bc7bdee19b1b03de8a6c606f49574",
     "web/package-lock.json": "d6001f7ec228fc459a67c214b46e4299f6151186a3b528f0c18e6ddfd0dadc90"
   },
@@ -2450,6 +2450,20 @@
       ],
       "name": "shlex",
       "version": "2.0.1"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "crates.io",
+      "id": "crates.io:signal-hook-registry@1.4.8",
+      "licenses": [
+        "MIT OR Apache-2.0"
+      ],
+      "locks": [
+        "Cargo.lock",
+        "tools/qualification/rust/Cargo.lock"
+      ],
+      "name": "signal-hook-registry",
+      "version": "1.4.8"
     },
     {
       "deprecations": [],

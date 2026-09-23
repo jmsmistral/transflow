@@ -1,0 +1,125 @@
+{
+  "tasks": [
+    "T065",
+    "T066",
+    "T067"
+  ],
+  "date": "2026-09-23",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "7ba290646ee25155107f8129325c7dcf5fe15f26",
+  "specification_base": "f054fb6e9880e9d6d406672a777f0e3d788ac173",
+  "result": "passed",
+  "commands": [
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check.sh",
+      "result": "Document/safety/boundary checks, Rust formatting/Clippy and 349 tests plus one doc test, Ruff/mypy and 803 Python tests passed. Aggregate stopped at the generated recursive TypeScript alias; generator corrected and remaining web/CLI stages passed separately. /private/tmp/t067-check5.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-web.sh",
+      "result": "Passed typecheck, lint/format, 309 tests, production build and deterministic asset verification. /private/tmp/t067-web.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-cli.sh",
+      "result": "52 installed CLI tests passed. /private/tmp/t067-cli.log."
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed after the final recovery race/path refinement. /private/tmp/t067-clippy-final.log."
+    },
+    {
+      "command": "cargo test --locked --offline -p tf-exec --lib recovery::tests",
+      "result": "Both live-process identity/capability canaries passed after the final recovery refinement. /private/tmp/t067-recovery-final.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+      "result": "Passed privacy, dependency/license/advisory and generated-contract drift checks plus 27 safety regressions. OSV queried 641 locked versions with zero advisory matches. /private/tmp/t067-safety-final.log."
+    },
+    {
+      "command": "target/qualification/py314/bin/python -I -B python/tools/check_dispatch.py target/debug/examples/dispatch_probe target/debug/transflow target/qualification/runs/native.b1Z3Xn/wheels/transflow-0.0.0.dev0-py3-none-any.whl target/qualification/wheelhouse",
+      "result": "All 36 dispatcher/public CLI scenarios passed after the human stderr lock correction. /private/tmp/t067-dispatch-final.log."
+    },
+    {
+      "command": "cargo fmt --all -- --check; cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed on the final executable changes. /private/tmp/t067-clippy-final2.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh",
+      "result": "Complete qualification passed, including all 36 dispatcher/public CLI/restart scenarios and native engine/resource/dependency probes. target/qualification/runs/native.BDGL4b; /private/tmp/t067-qualification-complete.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh; target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Final safety and specification checks passed after documentation updates. /private/tmp/t067-safety-handoff.log; /private/tmp/t067-spec-handoff.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-cli.sh",
+      "result": "All 52 installed CLI tests passed again on the final executable after the human-progress lock fix. /private/tmp/t067-cli-complete.log."
+    }
+  ],
+  "coverage": [
+    "Explicit transient classes, bounded backoff and retained failed attempts; exact frozen contracts and input leases; terminal dependency blocking and independent continuation.",
+    "Real publication crash boundaries preserve committed outputs and undelivered notifications; old sessions cannot publish. Recovery never signals a saved PID and private capabilities authorize only worker self-group cleanup.",
+    "Public implicit planning/new registration, exact saved drafts, no-wait preflight, history/log inspection, historical source and input replay, Ctrl-C, authenticated persistent ownership, failed/WARN check visibility and restart queues."
+  ],
+  "corrected_during_verification": [
+    "A deep execution report exposed artificial recursion depth in schema expansion. Runtime/test validators now bound actual JSON metadata depth; five cross-language conformance cases cover execution success/failure/cancellation and closed result fields.",
+    "The new recursive JSON type exposed TypeScript Record alias recursion restrictions. The schema generator now emits readonly index signatures; generated types and all 309 web tests pass.",
+    "The public cache fixture retained a previous clock-using producer; restored the original fixture before the public journeys.",
+    "Updated the explicit shared fixture count from 250 to 255 and resolved compiler/lint issues before passing checks.",
+    "Cancellation releases active capability slots only after cleanup; completed failed attempts are not rewritten by cancellation during retry wait.",
+    "Worker disconnect cleanup terminates its own group, and recovery tolerates a concurrent completed disconnect cleanup during authentication.",
+    "One full native run stopped at the existing draft expiry/backwards-clock guard. No production guard was relaxed; a fresh full qualification run was used for final verification. The initial error alone does not distinguish expiry from a backwards clock adjustment.",
+    "The new human WARN/progress test exposed an invocation-wide stderr lock deadlock. The executable now locks individual writes, allowing the progress thread to drain and join; the native scenario guards this regression."
+  ],
+  "limits": [
+    "Local macOS arm64 evidence only; Linux qualification awaits owner-monitored push workflows.",
+    "Persistent CLI coordinator runs one build at a time, with concurrent jobs. HTTP/UI, scheduling and daemon installation remain later work; standalone plan/catalogue mutations require stopping this owner.",
+    "Polars execution only; declared secret delivery is refused. Foreign replay and individual check-certificate reuse remain separate work.",
+    "Public configured-memory admission reserves the full budget per job; no default memory cap or enforced RSS guarantee.",
+    "No automatic retry of coordinator interruption. Trusted Python may escape its process group; isolation is not hostile-code containment.",
+    "Runtime schema 8, worker protocol 1.0, AST 1 and specification 1.1.2 unchanged. Ctrl-C support adds locked signal-hook-registry 1.4.8 (MIT OR Apache-2.0), covered by native qualification and advisory inventory."
+  ],
+  "ci": {
+    "status": "pending_owner_monitoring",
+    "agent_polled_workflows": false
+  },
+  "native_dispatch_cases": [
+    "full diamond publishes exact parent versions and complete evidence",
+    "whole-job reuse creates no attempts",
+    "force executes despite identical bytes",
+    "selected scope binds explicit historical pin exactly",
+    "between scope publishes only descendants and releases boundary leases",
+    "unresolved boundary refuses before any producer or branch creation",
+    "invalid complete graph starts no producer",
+    "accepted capture executes despite later checkout edits",
+    "pre-dispatch cancellation starts no attempts and cleans reservations",
+    "input FAIL retains evidence and prevents producer invocation",
+    "output FAIL retains invisible bytes and blocks planned descendants without fallback",
+    "exact WARN violation permits publication",
+    "independent ready siblings overlap under two job reservations",
+    "live sink phase and durable cancellation preserve head and release leases",
+    "explicit memory estimates admit jobs and missing estimates cleanly refuse",
+    "always-refresh source runs again and children bind its new version",
+    "every planned binding resolves from this build despite older retained heads",
+    "captured context reference conservatively keys the frozen evaluation clock",
+    "declared transient retry preserves failed attempt, exact inputs and backoff",
+    "exhausted retries block descendants; continue policy finishes independent work",
+    "unknown deterministic exceptions are never retried despite enabled budget",
+    "one public build registers and publishes a newly declared output without manual sync",
+    "public build performs implicit discovery, checks and publication with history",
+    "saved draft executes exactly once; overrides and silent replanning are refused",
+    "no-wait without persistent coordinator refuses before plan mutation",
+    "restart resumes untouched accepted queues; offline cancellation starts no producer",
+    "replay keeps the historical boundary version and selected scope",
+    "replay uses retained original source and scope despite an invalid later checkout",
+    "changed checkout invalidates a saved draft instead of silently replanning",
+    "log inspection refuses symlink substitution",
+    "public WARN and cached original checks stay visible; FAIL reports retain the last good head",
+    "Ctrl-C cancels only the waiting build and waits for durable cleanup",
+    "real coordinator kill fences interrupted work and authenticates orphan cleanup",
+    "persistent control rejects an invalid capability before mutation",
+    "persistent no-wait owns work after client exit; authenticated cancel and wait work",
+    "cancellation during retry backoff preserves completed failure history and releases reservations"
+  ],
+  "native_reports": "target/qualification/runs/native.BDGL4b"
+}

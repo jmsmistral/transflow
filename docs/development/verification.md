@@ -595,3 +595,31 @@ Qualification setup now downloads the hash-locked engine wheels into
 and native suites sequentially. Public CLI build/retry/restart orchestration remains
 T065–T067. T063 CI was confirmed by the owner in a [separate receipt](evidence/t063-ci.json);
 T064 CI remains owner-monitored and no workflows were polled.
+
+## T065–T067 retries, restart and public execution (2026-09-23)
+
+Local macOS arm64 contributor verification passed Rust formatting, compilation,
+Clippy and 349 tests plus one documentation test; Ruff/mypy and 803 Python tests
+also passed. The aggregate stopped at a generated recursive TypeScript alias;
+after correcting the generator, the separate web and installed CLI stages passed
+309 web tests and 52 CLI tests. Final Clippy, recovery capability canaries and
+safety/generated-drift checks were repeated after their affected changes.
+
+The complete native qualification command passes on the final implementation
+(`target/qualification/runs/native.BDGL4b`). Its build suite passes 36 scenarios, including first-build
+registration, retries, pinned replay, queue recovery, real coordinator kills and
+descendant cleanup, persistent authenticated control, human WARN output and
+backoff cancellation. The human-output scenario found an invocation-wide stderr
+lock deadlock; per-write locking resolves it and the scenario now guards it.
+
+The [build guide](../../crates/transflow/BUILDS.md) documents public commands,
+retry policy, exact replay, authenticated cleanup and the headless coordinator.
+The [combined receipt](evidence/t065-t067-macos-arm64.json) records commands,
+corrected failures, native results and limits. Dependency qualification includes
+the new locked Ctrl-C dependency, signal-hook-registry 1.4.8; the refreshed OSV
+inventory has 641 locked versions and zero advisory matches. Runtime schema 8,
+worker protocol 1.0, AST 1 and specification 1.1.2 are unchanged.
+
+Run worker-heavy contributor/CLI/native suites sequentially. CI remains with the
+owner; no workflow polling is performed and Linux results are not inferred from
+local macOS success. Earlier unconfirmed CI remains explicitly pending.

@@ -39,6 +39,9 @@ pub enum Failure {
     /// Private file, pipe, socket or process operation failed.
     #[error("Worker supervision encountered an operating-system error")]
     Io,
+    /// Explicit temporary launch exhaustion; no interpreter was started.
+    #[error("Worker launch is temporarily unavailable")]
+    Unavailable,
     /// OS start identity changed, disappeared, or the child was already reaped.
     #[error("Worker process identity could not be verified; group signal refused")]
     Identity,
@@ -388,6 +391,12 @@ fn log_files(path: Option<&std::path::Path>) -> Result<(Option<File>, Option<Fil
 pub fn run(mut launch: Launch, cancel: Cancellation) -> Report {
     let mut report = Report::default();
     report.outcome = run_inner(&mut launch, &cancel, &mut report);
+    if let Some(directory) = &launch.log_directory
+        && crate::recovery::remove(directory).is_err()
+        && report.outcome.is_ok()
+    {
+        report.outcome = Err(Failure::Io);
+    }
     report
 }
 fn run_inner(
@@ -470,6 +479,18 @@ fn run_inner(
         .map(|p| p.threads())
         .unwrap_or(launch.threads);
     report.threads = Some(threads);
+    if let Some(directory) = &launch.log_directory {
+        crate::recovery::persist(
+            directory,
+            launch.request["attempt_id"]
+                .as_str()
+                .ok_or(Failure::Configuration)?,
+            0,
+            "",
+            scratch.path().join("recovery.sock"),
+            &token_hex,
+        )?;
+    }
     let child = Command::new(&launch.python)
         .args([
             "-I",
@@ -479,12 +500,20 @@ fn run_inner(
             operation_name(launch.operation),
             "--request",
         ])
-        .arg(request_path)
+        .arg(&request_path)
         .arg("--control-socket")
         .arg(socket_path)
         .current_dir(scratch.path())
         .env_remove("PYTHONPATH")
         .env_remove("PYTHONHOME")
+        .env(
+            "TRANSFLOW_RECOVERABLE_WORKER",
+            if launch.log_directory.is_some() {
+                "1"
+            } else {
+                "0"
+            },
+        )
         .env("POLARS_MAX_THREADS", threads.to_string())
         .env("OMP_NUM_THREADS", threads.to_string())
         .env("OPENBLAS_NUM_THREADS", threads.to_string())
@@ -495,7 +524,14 @@ fn run_inner(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .process_group(0)
-        .spawn()?;
+        .spawn()
+        .map_err(|e| {
+            if e.kind() == std::io::ErrorKind::WouldBlock {
+                Failure::Unavailable
+            } else {
+                Failure::Io
+            }
+        })?;
     let mut owned = OwnedChild {
         child,
         reaped: false,
@@ -505,6 +541,18 @@ fn run_inner(
     owned.process_start =
         Some(crate::ownership::process_start(owned.child.id()).map_err(|_| Failure::Identity)?);
     report.process_start.clone_from(&owned.process_start);
+    if let Some(directory) = &launch.log_directory {
+        crate::recovery::persist(
+            directory,
+            launch.request["attempt_id"]
+                .as_str()
+                .ok_or(Failure::Configuration)?,
+            owned.child.id(),
+            owned.process_start.as_deref().ok_or(Failure::Identity)?,
+            scratch.path().join("recovery.sock"),
+            &token_hex,
+        )?;
+    }
     let mut secrets = launch.redact.clone();
     secrets.push(token.to_vec());
     secrets.push(token_hex.into_bytes());

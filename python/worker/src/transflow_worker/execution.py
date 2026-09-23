@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import os
 import socket
 import stat
 import threading
 from pathlib import Path
 from typing import Any, BinaryIO, cast
+
+from transflow.errors import TransientIOError
 
 from .canonical import artifact_digest
 from .compatibility import check_compatibility
@@ -75,7 +76,9 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
             try:
                 send({"type": "heartbeat"})
             except ProtocolError, OSError:
-                os._exit(1)
+                from .lifetime import disconnected
+
+                disconnected()
 
     send(
         {
@@ -106,7 +109,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
             exc
             if isinstance(exc, DiscoveryError)
             else ExecutionError(
-                "execution",
+                "transient_io" if isinstance(exc, TransientIOError) else "execution",
                 "Polars execution failed; inspect the captured producer and retained logs",
                 request["producer"]["path"],
                 request["producer"]["line"],
@@ -122,7 +125,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                 "type": "error",
                 "code": error.diagnostic["code"],
                 "message": str(error),
-                "retryable": False,
+                "retryable": isinstance(exc, TransientIOError),
             }
         )
         return 1

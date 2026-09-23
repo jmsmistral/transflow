@@ -1,8 +1,11 @@
 //! CLI argument handling, human diagnostics and versioned JSON results.
 //! Help/version require no workspace I/O. Application services remain later work.
 mod branch;
+mod build_cli;
+mod build_logs;
 /// Shared guarded local draft and acceptance pipeline.
 pub mod build_plan;
+mod build_transport;
 /// Accepted-job cache key finalization.
 pub mod cache;
 mod catalog;
@@ -14,6 +17,10 @@ mod plan_parameters;
 mod preparation;
 /// Registry durability and recovery application service.
 pub mod reconcile;
+/// Fenced startup reconciliation and authenticated orphan cleanup.
+pub mod recovery;
+mod replay;
+mod serve;
 use std::{
     ffi::OsString,
     io::{self, IsTerminal},
@@ -44,8 +51,10 @@ fn command() -> clap::Command {
     use clap::{Arg, ArgAction};
     clap::Command::new("transflow")
         .about("A local build system for dataframe datasets (development scaffold)")
-        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Explicit data-branch lifecycle and plan, why, upstream and downstream commands are also available. Dataset builds and the coordinator are not implemented yet.")
+        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Plan, why, graph traversal, dataset builds, execution history and retained replay are available. Serve runs a foreground CLI coordinator. HTTP UI and schedules are not implemented yet.")
         .subcommands(inspection_cli::commands())
+        .subcommand(build_cli::command())
+        .subcommand(clap::Command::new("serve").disable_help_flag(true).about("Run the foreground CLI coordinator (HTTP UI and schedules are not yet connected)"))
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
         .subcommand(clap::Command::new("branch").disable_help_flag(true).subcommand_required(true).about("List and manage data branches independently of Git")
             .subcommand(clap::Command::new("list").disable_help_flag(true)
@@ -223,6 +232,65 @@ pub fn run(
     match command().try_get_matches_from(args) {
         Ok(matches) => {
             if !matches.get_flag("help") && !matches.get_flag("version") {
+                if let Some((name @ ("build" | "serve"), args)) = matches.subcommand() {
+                    let mut context = context.clone();
+                    if context.workspace.is_none()
+                        && let Ok(current) = std::env::current_dir()
+                        && let Ok(workspace) =
+                            tf_catalog::workspace::Workspace::load(&current, None)
+                    {
+                        context.workspace =
+                            Some(redactor.text(&workspace.root().to_string_lossy())?);
+                    }
+                    let result = if name == "serve" {
+                        serve::execute(matches.get_one::<String>("workspace"), intent.json)
+                    } else {
+                        build_cli::execute(
+                            args,
+                            matches.get_one::<String>("workspace"),
+                            intent.json,
+                        )
+                    };
+                    let mut errors = vec![];
+                    let (status, value, human) = match result {
+                        Ok(report) => {
+                            if let Some(source) = report.value["data"]["source"].as_str() {
+                                context.source = Some(redactor.text(source)?);
+                            }
+                            if report.status != ExitStatus::Success {
+                                errors.push(Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Build did not succeed")?,redactor.text("Execution finished with failed, blocked, interrupted or canceled work.")?,redactor.text("Inspect build show and build logs for retained attempt and check evidence.")?));
+                            }
+                            (report.status, Some(report.value), report.human)
+                        }
+                        Err(error) => {
+                            errors.push(Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Build operation could not complete")?,redactor.text(&error.to_string())?,redactor.text("Inspect the selected workspace, retained build evidence and coordinator status before retrying.")?));
+                            (ExitStatus::Failure, None, String::new())
+                        }
+                    };
+                    if intent.json {
+                        let envelope = if let Some(value) = value {
+                            CliEnvelope::execution(&version, &context, value, status, &errors)?
+                        } else {
+                            CliEnvelope::failure(&version, status, &context, &errors)?
+                        };
+                        stdout
+                            .write_all(envelope.as_bytes())
+                            .map_err(CliError::Stdout)?;
+                    } else {
+                        if !human.is_empty() {
+                            writeln!(stdout, "{human}").map_err(CliError::Stdout)?;
+                        }
+                        for error in &errors {
+                            stderr
+                                .write_all(
+                                    render_diagnostic(error, &context, intent.verbose, false)
+                                        .as_bytes(),
+                                )
+                                .map_err(CliError::Stderr)?;
+                        }
+                    }
+                    return Ok(ExitCode::from(status.code()));
+                }
                 if let Some((name @ ("plan" | "why" | "upstream" | "downstream"), args)) =
                     matches.subcommand()
                 {

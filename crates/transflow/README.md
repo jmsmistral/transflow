@@ -13,7 +13,7 @@ cargo run --locked --offline -- --version --json
 cargo run --locked --offline -- --workspace ./analysis --json build orders
 ```
 
-The last example intentionally fails: build is not implemented. Its envelope
+The build example requires a prepared workspace and declared target. Its envelope
 contains the explicitly selected consumer workspace; a later subcommand's
 `--workspace` cannot replace that root context. Workspace commands use nearest-workspace discovery unless a root is explicit. Unknown contexts are null, not guessed.
 
@@ -22,9 +22,9 @@ with format/product versions, implemented capabilities, outcome, matching exit
 status, request context, result and diagnostics. It emits no stderr/progress/ANSI
 on these paths, even with `--color always`. The generated standalone schema is
 [cli-result-v1.schema.json](../../schemas/generated/cli-result-v1.schema.json).
-Success carries an informational or preparation result; the domain envelope also supports
-operational failures and explicit user cancellation for later services. No
-asynchronous acceptance or dataset execution is advertised.
+Success carries an informational, preparation or execution result. Execution failure
+and cancellation retain their final report. The [build guide](BUILDS.md) documents
+waiting builds, persistent acceptance, retries, recovery and replay.
 
 | Exit | Meaning |
 |---:|---|
@@ -46,7 +46,8 @@ source ranges and request context. Source line/column coordinates are one-based
 Unicode-scalar positions; ends are exclusive, ordered and positive. No source file
 is opened. Constructors bound raw text (4096 UTF-8 bytes), sources/references (32
 each) and cause trees (8 children, 4 levels, 64 total nodes). Envelope construction
-adds a 128 KiB diagnostic-text budget and a final 1 MiB output cap.
+adds a 128 KiB diagnostic-text budget. Informational results have a 1 MiB cap;
+complete plan/execution reports preserve the selected semantic scope.
 
 All dynamic diagnostic text passes through `Redactor` before becoming `SafeText`.
 Callers supply known secret values; longest matching credentials are replaced

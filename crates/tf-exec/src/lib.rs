@@ -34,3 +34,9 @@ pub mod checks;
 
 /// One-attempt input/output gates and approved-candidate publication.
 pub mod lifecycle;
+
+/// Authenticated emergency worker cleanup after coordinator loss.
+pub mod recovery;
+
+/// Safe descriptor-relative retained log reads.
+pub mod retained_logs;

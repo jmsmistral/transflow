@@ -13,7 +13,7 @@ tf-catalog = { path = "../tf-catalog" }
 tf-exec = { path = "../tf-exec" }
 tf-plan = { path = "../tf-plan" }
 tf-store = { path = "../tf-store" }
-tokio.workspace = true
+tokio = { workspace = true, features = ["signal"] }
 clap.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

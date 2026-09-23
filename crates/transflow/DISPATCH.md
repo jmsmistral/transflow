@@ -1,9 +1,8 @@
-# Accepted-plan execution (T064)
+# Accepted-plan execution (T064–T067)
 
 `dispatch::run` is an internal application service. It consumes an untouched
-accepted build and retains `RuntimeOwner` until the workers have stopped. Public
-`build` command integration is T067; retry/continue policy is T065 and restart
-reconciliation is T066.
+accepted build and retains `RuntimeOwner` until the workers have stopped. The public [build CLI](BUILDS.md) composes planning, retry/continue policy and restart
+reconciliation around this service.
 
 Before starting any producer, the service reopens the accepted source capture,
 verifies the exact managed environment, validates the complete captured graph,
@@ -18,6 +17,7 @@ through input checks, transform, streaming sink, output checks and publication.
 Helpers reuse the same reservation, with separately timed validation phases.
 Configured memory admission requires caller-supplied positive per-job estimates via
 `run_with_options`; missing/oversized estimates refuse before a producer starts.
+The public CLI conservatively supplies the entire configured budget for each job.
 These estimates are not hard producer memory limits. Canonical check helpers use
 an explicit 1 GiB spill limit and the optional estimated memory allocation. Without
 a memory budget, no default memory cap is introduced.
@@ -40,8 +40,9 @@ failures, not row payloads.
 
 Publication is the existing guarded candidate-install/visibility transaction.
 Canceled/failed attempts cannot replace the old head. A terminal failure blocks
-planned descendants and requests durable cancellation of independent work; this
-initial dispatcher uses one attempt and abort-on-failure. Explicit cancellation
+planned descendants and requests durable cancellation of independent work; the default policy uses one attempt and abort-on-failure. Explicit transient
+classes can opt into bounded retries; continue policy permits independent branches.
+Retry contracts and leases remain frozen, and prior attempts remain immutable. Explicit cancellation
 and dropped coordinator futures stop owned workers; servers must own the future
 independently of client connections. Reservations/leases are released only after
 cleanup and terminal aggregation. Preflight refusals cancel the untouched accepted

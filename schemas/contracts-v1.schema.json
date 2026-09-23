@@ -1337,7 +1337,14 @@
                 "plan",
                 "why",
                 "graph.upstream",
-                "graph.downstream"
+                "graph.downstream",
+                "build",
+                "build.list",
+                "build.show",
+                "build.logs",
+                "build.cancel",
+                "build.replay",
+                "coordinator.cli"
               ]
             },
             "context": {
@@ -1394,6 +1401,9 @@
                 },
                 {
                   "$ref": "#/$defs/WhyResultV1"
+                },
+                {
+                  "$ref": "#/$defs/ExecutionResultV1"
                 }
               ]
             },
@@ -1451,7 +1461,14 @@
                 "plan",
                 "why",
                 "graph.upstream",
-                "graph.downstream"
+                "graph.downstream",
+                "build",
+                "build.list",
+                "build.show",
+                "build.logs",
+                "build.cancel",
+                "build.replay",
+                "coordinator.cli"
               ]
             },
             "context": {
@@ -1479,6 +1496,9 @@
                 },
                 {
                   "$ref": "#/$defs/BranchResultV1"
+                },
+                {
+                  "$ref": "#/$defs/ExecutionResultV1"
                 }
               ]
             },
@@ -1536,7 +1556,14 @@
                 "plan",
                 "why",
                 "graph.upstream",
-                "graph.downstream"
+                "graph.downstream",
+                "build",
+                "build.list",
+                "build.show",
+                "build.logs",
+                "build.cancel",
+                "build.replay",
+                "coordinator.cli"
               ]
             },
             "context": {
@@ -1551,7 +1578,14 @@
               ]
             },
             "result": {
-              "type": "null"
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/ExecutionResultV1"
+                }
+              ]
             },
             "diagnostics": {
               "type": "array",
@@ -5435,6 +5469,66 @@
         "columns",
         "limit",
         "reason"
+      ],
+      "additionalProperties": false
+    },
+    "ExecutionJsonV1": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExecutionJsonV1"
+          },
+          "minItems": 0
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/ExecutionJsonV1"
+          }
+        }
+      ]
+    },
+    "ExecutionResultV1": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "execution"
+        },
+        "operation": {
+          "enum": [
+            "run",
+            "list",
+            "show",
+            "logs",
+            "cancel",
+            "replay",
+            "serve"
+          ]
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/ExecutionJsonV1"
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "operation",
+        "data"
       ],
       "additionalProperties": false
     }

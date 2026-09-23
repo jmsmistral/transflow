@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** T001–T052 are implemented for their recorded scopes, except T031/T033 task closure remains gated by native editor qualification. Current capabilities include workspace/environment preparation, catalogue validation/lifecycle, source capture, durable storage/publication foundations, branch lifecycle, retained reads/replay identities, and internal planning/acceptance services. T053 adds deterministic graph traversal; T054 exposes public `plan`, `why`, `upstream` and `downstream` commands. The owner confirmed CI success through T055, including shared worker supervision, authenticated control and bounded retained logs. T056 adds resource admission and independent phase timers; local checks pass and push CI awaits owner monitoring. T057 adds [persisted cancellation and process identity checks](crates/tf-exec/CANCELLATION.md), including service-level client-disconnect policy and publication race tests. T058 adds the [Polars execution adapter](python/POLARS.md), with pinned lazy inputs, a single streaming sink and independent staged-byte verification. Public dataset build execution, the coordinator service and the connected lineage interface remain upcoming; this is not an application release.
+**Status:** The local developer core now includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator (T065–T067). Polars builds run checks and preserve last-good output on failure. HTTP/UI, scheduling, other transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
 
 Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
 Package installation and workspace environment checks reject other minors.
@@ -59,12 +59,12 @@ Lock/sync are explicit package operations. The matched Transflow wheel is never
 looked up by name on an index. See [environment preparation](crates/tf-exec/ENVIRONMENTS.md)
 for offline wheelhouses, target-specific locks and drift checks.
 
-The subsequent build/service commands remain **unimplemented**:
+After environment setup, build a target or start the headless CLI coordinator:
 
 ```bash
 # Prepare the managed Python environment and write the source modules.
 transflow build curated/order_totals
-transflow serve --open
+transflow serve
 ```
 
 **Initial delivery focuses on Polars transforms**, with DuckDB used internally for
@@ -126,8 +126,9 @@ cargo run --locked --offline -p transflow -- --version
 ```
 
 Help, version, workspace initialization, explicit environment preparation,
-`validate`, and catalogue sync/list/show/rename/remove are available. Dataset builds remain upcoming.
-The built executable works outside either checkout without Python or Git.
+`validate`, and catalogue sync/list/show/rename/remove are available. Polars dataset builds are available; see the [build guide](crates/transflow/BUILDS.md).
+Help/version work outside either checkout without Python or Git; dataset builds
+require the explicitly prepared managed Python environment.
 `bash tools/check-rust.sh` runs the Rust checks without the sibling specification.
 
 Try the [web preview](web/README.md) with `npm --prefix web run dev`. Browser
@@ -183,7 +184,7 @@ diagnostic service reads. The [accepted-plan dispatcher](crates/transflow/DISPAT
 now composes dependency-ready execution, exact parent/pinned inputs, whole-job
 cache reuse, checks and publication. It retains live materialization phases and
 terminal job/build state, with bounded concurrent workers and cancellation cleanup.
-The public `build` command remains T067.
+T065–T067 add retry/continue policy, restart recovery and the public [build CLI](crates/transflow/BUILDS.md).
 
 [Isolated discovery](python/DISCOVERY.md) collects declarations in fresh workers, without invoking producer functions. [Worker supervision](crates/tf-exec/SUPERVISION.md) separates authenticated control from bounded stdout/stderr logs and owns process-group cleanup. [Resource admission and phase budgets](crates/tf-exec/RESOURCES.md) provide bounded job/CPU reservations, optional estimated memory admission and independent one-hour transform/input/output validation budgets; interactive work defaults to 30 seconds. Discovery uses the workspace execution timeout, including zero-disable. Plans expose resolved resource settings and provenance; the internal dispatcher now applies these settings to dataset execution.
 
@@ -196,7 +197,7 @@ The public `build` command remains T067.
 Workspace-local [catalogue editor generations](crates/tf-catalog/EDITOR.md) now have a Rust renderer and atomic refresh service (T031 implementation). Installed-SDK mypy qualification is automated; native VS Code/Emacs qualification is still pending.
 
 The shared [structural validation service](crates/tf-catalog/VALIDATION.md) (T032) checks the complete captured local graph and issues context-bound certificates. Invalid submissions preserve the previous graph for display but block reuse; runtime schema/data checks remain explicitly deferred. Public validation and additive synchronization are available through the
-[preparation lifecycle](crates/transflow/PREPARATION.md). Build orchestration remains upcoming work.
+[preparation lifecycle](crates/transflow/PREPARATION.md). Build orchestration is now exposed by the build CLI.
 
 [Catalogue browsing and lifecycle commands](crates/transflow/CATALOG.md) provide revision-bound pages, exact retained identity lookup, rename previews/aliases and explicit guarded tombstones.
 
@@ -213,17 +214,17 @@ T036 now normalizes imported Arrow/Parquet schemas, validates exact value ranges
 and retains logical schema fingerprints in preparation manifests. It preserves
 null/NaN, integer/decimal precision, timestamp units/timezones and nested values,
 with explicit unsupported-adapter errors. See [normalization and capabilities](crates/tf-store/NORMALIZATION.md).
-Public build/import publication and quality-check execution remain later work.
+Polars builds and quality-check execution are available; standalone imported-data publication remains separate work.
 
 The T037 storage foundation now supports ordered multi-file immutable artifacts,
 strict integrity verification and durable installation with safe byte deduplication.
 See the [artifact guide](crates/tf-store/ARTIFACTS.md). This internal service does
-not yet make imported data or transform outputs publicly buildable.
+not yet make imported data publicly buildable; Polars transform outputs use the build CLI.
 
 T038 adds the internal per-dataset publication transaction: owner fencing,
 reservation/head guards, exact check linkage and durable event replay. Failed or
-canceled publications preserve the last good version. Public build execution is
-still pending; see the [publication foundation](crates/tf-store/PUBLICATION.md).
+canceled publications preserve the last good version. Public builds use this
+[publication foundation](crates/tf-store/PUBLICATION.md).
 
 The [T039 recovery suite](docs/development/publication-recovery.md) now exercises
 real process crashes around artifact installation, publication and notification,
@@ -243,7 +244,7 @@ T042–T043 add per-input branch fallback and alias-preserving exact reads. Name
 inputs retain their own policy; strict inputs never fall back. Selected heads are
 leased before reading, and corrupt data or failed input checks cannot be hidden
 by another branch. Repeated dataset aliases retain separate versions and roles.
-These are shared service foundations; public build/plan commands remain later work.
+These services now back public plan/build commands.
 
 
 T044 adds explicit data-branch management:
@@ -262,7 +263,7 @@ Git and authored policy stay unchanged. See [branch lifecycle](crates/transflow/
 
 T045 adds internal exact-pin qualification and retained replay manifests. Historical
 reads preserve the requested version and report missing original data explicitly.
-Public `plan`, `build` and `build replay` commands remain upcoming work; see the
+Public `plan`, `build` and `build replay` commands are available; see the
 [pin and replay foundation](crates/tf-store/REPLAY.md).
 
 
@@ -270,8 +271,7 @@ T046–T050 add internal full/selected/between planning, source refresh decision
 immutable saved drafts, guarded acceptance with complete write reservations, and
 conservative compute/check keys. New outputs can be planned without editing the
 registry; acceptance preserves their exact proposed IDs and refuses stale context.
-See the [planning service guide](crates/transflow/PLANNING.md). Public build execution
-remains subsequent work.
+See the [planning service guide](crates/transflow/PLANNING.md). Public build execution now uses these services.
 
 ### Retained version reuse
 
@@ -279,7 +279,7 @@ T051 adds [internal branch-scoped cache services](crates/tf-store/CACHE.md).
 Accepted jobs finalize keys after their parents bind, verify retained Parquet,
 and reuse original versions/check evidence. Older matching versions can be adopted
 through audited head changes. Force, source refresh and `cache="never"` require
-execution; public build execution remains upcoming work.
+execution; public build execution is now available.
 
 
 ### Freshness explanations
@@ -313,4 +313,4 @@ producer and changes no authoring registry or data head. `why` explains the targ
 and reports a blocked selection without hiding available freshness evidence.
 See the [inspection guide](crates/transflow/INSPECTION.md) for branch/Git context,
 selection modes, exact pins, parameters, timeouts, JSON output and current limits.
-Build execution remains upcoming work.
+See the [build guide](crates/transflow/BUILDS.md) for execution, recovery and replay.

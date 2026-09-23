@@ -24,3 +24,10 @@ Authoring reads use the already-qualified safe rustix API for nonblocking,
 no-follow opens and verify regular-file identity. This adds no dependency version.
 As with source capture, concurrent edits by the same user remain possible; this
 is not an OS sandbox or atomic multi-file snapshot.
+
+## Execution failure policy
+
+`[execution]` accepts `max_attempts` (1–100, default 1), `retryable_classes`
+(default empty; `transient_io` and `worker_unavailable` only), and
+`abort_on_failure` (default true). These settings are frozen in accepted source
+configuration. See [retry and restart behaviour](../transflow/BUILDS.md).

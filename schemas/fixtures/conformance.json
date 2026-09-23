@@ -2185,7 +2185,14 @@
         "plan",
         "why",
         "graph.upstream",
-        "graph.downstream"
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2252,7 +2259,14 @@
         "plan",
         "why",
         "graph.upstream",
-        "graph.downstream"
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2319,7 +2333,14 @@
         "plan",
         "why",
         "graph.upstream",
-        "graph.downstream"
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2386,7 +2407,14 @@
         "plan",
         "why",
         "graph.upstream",
-        "graph.downstream"
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2453,7 +2481,14 @@
         "plan",
         "why",
         "graph.upstream",
-        "graph.downstream"
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2520,7 +2555,14 @@
         "plan",
         "why",
         "graph.upstream",
-        "graph.downstream"
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2587,7 +2629,14 @@
         "plan",
         "why",
         "graph.upstream",
-        "graph.downstream"
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2654,7 +2703,14 @@
         "plan",
         "why",
         "graph.upstream",
-        "graph.downstream"
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2721,7 +2777,14 @@
         "plan",
         "why",
         "graph.upstream",
-        "graph.downstream"
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2764,7 +2827,14 @@
         "plan",
         "why",
         "graph.upstream",
-        "graph.downstream"
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -5518,6 +5588,342 @@
       "limit": 20,
       "truncated": false,
       "reason": null,
+      "unexpected": true
+    },
+    "valid": false
+  },
+  {
+    "name": "cli-execution-succeeded",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1",
+        "workspace.init",
+        "env.lock",
+        "env.sync",
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove",
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "success",
+      "exit_status": 0,
+      "result": {
+        "kind": "execution",
+        "operation": "run",
+        "data": {
+          "id": "11111111-1111-4111-8111-111111111111",
+          "state": "SUCCEEDED",
+          "jobs": [
+            {
+              "attempts": [
+                {
+                  "checks": [
+                    {
+                      "metrics": {
+                        "canonical": {
+                          "type": "i64",
+                          "value": "9007199254740993"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "diagnostics": []
+    },
+    "valid": true
+  },
+  {
+    "name": "cli-execution-failed",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1",
+        "workspace.init",
+        "env.lock",
+        "env.sync",
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove",
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "failure",
+      "exit_status": 1,
+      "result": {
+        "kind": "execution",
+        "operation": "run",
+        "data": {
+          "id": "11111111-1111-4111-8111-111111111111",
+          "state": "FAILED",
+          "jobs": [
+            {
+              "attempts": [
+                {
+                  "checks": [
+                    {
+                      "metrics": {
+                        "canonical": {
+                          "type": "i64",
+                          "value": "9007199254740993"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "diagnostics": [
+        {
+          "code": "TF_GRAPH_CYCLE",
+          "heading": "Workspace validation failed",
+          "reason": "A dependency cycle was found.",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "cli-execution-canceled",
+    "schema": "CliEnvelopeV1",
+    "value": {
+      "format_version": 1,
+      "product_version": "0.0.0-dev",
+      "capabilities": [
+        "cli.help",
+        "cli.version",
+        "cli.diagnostics.v1",
+        "workspace.init",
+        "env.lock",
+        "env.sync",
+        "env.check",
+        "workspace.validate",
+        "catalog.sync",
+        "catalog.sync.check",
+        "catalog.list",
+        "catalog.show",
+        "catalog.rename",
+        "catalog.remove",
+        "dataset.import.prepare",
+        "branch.list",
+        "branch.create",
+        "branch.rename",
+        "branch.delete",
+        "plan",
+        "why",
+        "graph.upstream",
+        "graph.downstream",
+        "build",
+        "build.list",
+        "build.show",
+        "build.logs",
+        "build.cancel",
+        "build.replay",
+        "coordinator.cli"
+      ],
+      "context": {
+        "workspace": "/synthetic/analysis",
+        "source": null,
+        "request_id": null
+      },
+      "outcome": "canceled",
+      "exit_status": 130,
+      "result": {
+        "kind": "execution",
+        "operation": "run",
+        "data": {
+          "id": "11111111-1111-4111-8111-111111111111",
+          "state": "CANCELED",
+          "jobs": [
+            {
+              "attempts": [
+                {
+                  "checks": [
+                    {
+                      "metrics": {
+                        "canonical": {
+                          "type": "i64",
+                          "value": "9007199254740993"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "diagnostics": [
+        {
+          "code": "TF_GRAPH_CYCLE",
+          "heading": "Workspace validation failed",
+          "reason": "A dependency cycle was found.",
+          "remediation": "Remove one dependency before building.",
+          "sources": [
+            {
+              "path": "src/orders.py",
+              "start": {
+                "line": 18,
+                "column": 1
+              },
+              "end": {
+                "line": 18,
+                "column": 24
+              }
+            }
+          ],
+          "affected": [
+            "curated/orders"
+          ],
+          "causes": []
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "execution-reject-operation",
+    "schema": "ExecutionResultV1",
+    "value": {
+      "kind": "execution",
+      "operation": "unknown",
+      "data": {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "state": "SUCCEEDED",
+        "jobs": [
+          {
+            "attempts": [
+              {
+                "checks": [
+                  {
+                    "metrics": {
+                      "canonical": {
+                        "type": "i64",
+                        "value": "9007199254740993"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "execution-reject-unexpected",
+    "schema": "ExecutionResultV1",
+    "value": {
+      "kind": "execution",
+      "operation": "run",
+      "data": {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "state": "SUCCEEDED",
+        "jobs": [
+          {
+            "attempts": [
+              {
+                "checks": [
+                  {
+                    "metrics": {
+                      "canonical": {
+                        "type": "i64",
+                        "value": "9007199254740993"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
       "unexpected": true
     },
     "valid": false

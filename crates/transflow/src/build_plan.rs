@@ -620,6 +620,7 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
             "metadata-only coordinators cannot import or accept producer code",
         ));
     }
+    crate::recovery::recover(owner).await?;
     let root = owner.workspace_root().to_owned();
     let workspace = Workspace::load(&root, Some(&root)).map_err(failure)?;
     let mut owned = owner.open_store().await.map_err(failure)?;
@@ -647,9 +648,13 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
     if capture.digest() != plan.source_digest {
         return Err(failure("saved source identity changed"));
     }
-    preparation::verify_selection(&capture, &workspace, true).map_err(failure)?;
+    let replay = plan.context["replay_of"].is_string();
+    if !replay {
+        preparation::verify_selection(&capture, &workspace, true).map_err(failure)?;
+    }
     let current_registry = std::fs::read(root.join(".transflow/catalog.toml")).map_err(failure)?;
-    if current_registry != plan.registry.as_bytes()
+    if !replay
+        && current_registry != plan.registry.as_bytes()
         && current_registry != plan.replacement.as_bytes()
     {
         return Err(failure(
@@ -724,7 +729,7 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
     preparation::validate(&proposed, &capture, &plan.discovery, &env)
         .map_err(crate::build_plan::preparation_failure)?;
     // Registry durability shares its existing recovery-journal pipeline. No new UUID allocation.
-    if current_registry != plan.replacement.as_bytes() {
+    if !replay && current_registry != plan.replacement.as_bytes() {
         crate::reconcile::execute_owned(
             owner,
             crate::reconcile::ReconcileRequest {
@@ -743,11 +748,14 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
         plan.source.parse().map_err(failure)?,
     )
     .map_err(failure)?;
-    capture
-        .verify_working_copy(&workspace, true)
-        .map_err(failure)?;
-    if std::fs::read(root.join(".transflow/catalog.toml")).map_err(failure)?
-        != plan.replacement.as_bytes()
+    if !replay {
+        capture
+            .verify_working_copy(&workspace, true)
+            .map_err(failure)?;
+    }
+    if !replay
+        && std::fs::read(root.join(".transflow/catalog.toml")).map_err(failure)?
+            != plan.replacement.as_bytes()
     {
         return Err(failure(
             "catalogue changed after registration; registered outputs remain unbuilt",
@@ -768,11 +776,14 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
             )
             .map_err(failure)?;
     }
-    capture
-        .verify_working_copy(&workspace, true)
-        .map_err(failure)?;
-    if std::fs::read(root.join(".transflow/catalog.toml")).map_err(failure)?
-        != plan.replacement.as_bytes()
+    if !replay {
+        capture
+            .verify_working_copy(&workspace, true)
+            .map_err(failure)?;
+    }
+    if !replay
+        && std::fs::read(root.join(".transflow/catalog.toml")).map_err(failure)?
+            != plan.replacement.as_bytes()
     {
         return Err(failure("catalogue changed before acceptance"));
     }
@@ -784,7 +795,7 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
         .recover_publications(config.id(), session, now)
         .await
         .map_err(failure)?;
-    for dataset in proposed.datasets().filter(|d| !d.is_tombstone()) {
+    for dataset in proposed.datasets().filter(|d| !d.is_tombstone() && !replay) {
         store
             .register_dataset(config.id(), dataset.key().dataset_id(), now)
             .await

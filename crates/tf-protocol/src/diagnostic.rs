@@ -6,7 +6,7 @@ use tf_domain::diagnostic::{Diagnostic, ExitStatus, RequestContext, SafeText};
 /// Initial complete-result envelope format, independent of the worker protocol.
 pub const CLI_ENVELOPE_VERSION: u32 = 1;
 /// Implemented CLI operations. This does not advertise dataset/coordinator capabilities.
-pub const CLI_CAPABILITIES: [&str; 23] = [
+pub const CLI_CAPABILITIES: [&str; 30] = [
     "cli.help",
     "cli.version",
     "cli.diagnostics.v1",
@@ -30,6 +30,13 @@ pub const CLI_CAPABILITIES: [&str; 23] = [
     "why",
     "graph.upstream",
     "graph.downstream",
+    "build",
+    "build.list",
+    "build.show",
+    "build.logs",
+    "build.cancel",
+    "build.replay",
+    "coordinator.cli",
 ];
 /// Successful informational operation.
 #[derive(Clone, Copy, Debug)]
@@ -204,6 +211,23 @@ impl CliEnvelope {
         validate_document(schema, &result)?;
         Self::encode(version, ExitStatus::Success, ctx, result, vec![])
     }
+    /// Structured execution result, retaining terminal evidence even for failure/cancellation.
+    pub fn execution(
+        version: &SafeText,
+        ctx: &RequestContext,
+        result: Value,
+        status: ExitStatus,
+        errors: &[Diagnostic],
+    ) -> Result<Self, ProtocolError> {
+        validate_document("ExecutionResultV1", &result)?;
+        Self::encode(
+            version,
+            status,
+            ctx,
+            result,
+            errors.iter().map(diagnostic).collect(),
+        )
+    }
     fn encode(
         version: &SafeText,
         status: ExitStatus,
@@ -211,7 +235,10 @@ impl CliEnvelope {
         result: Value,
         diagnostics: Vec<Value>,
     ) -> Result<Self, ProtocolError> {
-        let complete_inspection = matches!(result["kind"].as_str(), Some("graph" | "plan" | "why"));
+        let complete_inspection = matches!(
+            result["kind"].as_str(),
+            Some("graph" | "plan" | "why" | "execution")
+        );
         let value = json!({"format_version":CLI_ENVELOPE_VERSION,"product_version":version.as_str(),
             "capabilities":CLI_CAPABILITIES,"outcome":match status {ExitStatus::Success=>"success",ExitStatus::Interrupted=>"canceled",_=>"failure"},
             "exit_status":status.code(),"context":context(ctx),"result":result,"diagnostics":diagnostics});

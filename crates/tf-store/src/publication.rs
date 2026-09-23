@@ -259,11 +259,16 @@ impl Store {
             .execute(&mut *tx)
             .await?;
         sqlx::query("UPDATE attempts SET state='INTERRUPTED',finished_at_us=?,failure_class='coordinator_lost' WHERE state NOT IN ('SUCCEEDED','FAILED','CANCELED','INTERRUPTED')").bind(at_us).execute(&mut *tx).await?;
-        sqlx::query("UPDATE jobs SET state='INTERRUPTED' WHERE state NOT IN ('SUCCEEDED','CACHED','FAILED','BLOCKED','CANCELED','INTERRUPTED')").execute(&mut *tx).await?;
-        sqlx::query("UPDATE builds SET state='INTERRUPTED',finished_at_us=? WHERE state IN ('QUEUED','RUNNING')").bind(at_us).execute(&mut *tx).await?;
-        sqlx::query("DELETE FROM write_reservations")
+        sqlx::query("UPDATE phase_intervals SET finished_at_us=max(started_at_us,?) WHERE finished_at_us IS NULL AND attempt_id IN (SELECT id FROM attempts WHERE state='INTERRUPTED')").bind(at_us).execute(&mut *tx).await?;
+        // Only untouched accepted queues may resume. Partially executed jobs retain exact
+        // interrupted evidence; an interruption is not an implicitly approved transient class.
+        sqlx::query("UPDATE jobs SET state='INTERRUPTED' WHERE state NOT IN ('SUCCEEDED','CACHED','FAILED','BLOCKED','CANCELED','INTERRUPTED') AND build_id IN (SELECT id FROM builds WHERE state='RUNNING')").execute(&mut *tx).await?;
+        sqlx::query("UPDATE builds SET state=CASE WHEN EXISTS(SELECT 1 FROM jobs j WHERE j.build_id=builds.id AND j.state IN ('FAILED','BLOCKED')) THEN 'FAILED' WHEN NOT EXISTS(SELECT 1 FROM jobs j WHERE j.build_id=builds.id AND j.state NOT IN ('SUCCEEDED','CACHED')) THEN 'SUCCEEDED' WHEN EXISTS(SELECT 1 FROM jobs j WHERE j.build_id=builds.id AND j.state='INTERRUPTED') THEN 'INTERRUPTED' ELSE 'CANCELED' END,finished_at_us=? WHERE state='RUNNING'").bind(at_us).execute(&mut *tx).await?;
+        sqlx::query("UPDATE read_leases SET released=1 WHERE kind='build' AND (owner_operation IN (SELECT id FROM builds WHERE state NOT IN ('QUEUED','RUNNING')) OR owner_operation IN (SELECT plan_id FROM builds WHERE state NOT IN ('QUEUED','RUNNING')))").execute(&mut *tx).await?;
+        sqlx::query("DELETE FROM write_reservations WHERE build_id IN (SELECT id FROM builds WHERE state!='QUEUED')")
             .execute(&mut *tx)
             .await?;
+        sqlx::query("UPDATE write_reservations SET session_id=?,fence=fence+1 WHERE fence<9223372036854775807 AND build_id IN (SELECT id FROM builds WHERE state='QUEUED')").bind(session.to_string()).execute(&mut *tx).await?;
         tx.commit().await?;
         Ok(())
     }

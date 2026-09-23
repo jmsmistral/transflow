@@ -316,6 +316,10 @@ function validate(
     Object.keys(schema).every((k) => keywords.has(k)),
     "unsupported schema keyword",
   );
+  if (schema.$ref === "#/$defs/ExecutionJsonV1") {
+    executionJson(value);
+    return;
+  }
   if ("$ref" in schema) {
     validate(
       obj(defs[str(schema.$ref).replace(/^#\/\$defs\//u, "")]),
@@ -359,6 +363,9 @@ function validate(
       );
       break;
     }
+    case "number":
+      num(value);
+      break;
     case "boolean":
       need(typeof value === "boolean", "boolean");
       break;
@@ -431,3 +438,21 @@ describe("T012 shared contract fixtures", () => {
       "unsupported schema keyword",
     ));
 });
+
+function executionJson(value: unknown, depth = 0): void {
+  need(depth <= 64, "execution metadata nesting limit");
+  if (Array.isArray(value)) {
+    for (const item of value) executionJson(item, depth + 1);
+  } else if (value !== null && typeof value === "object") {
+    for (const item of Object.values(obj(value)))
+      executionJson(item, depth + 1);
+  } else {
+    need(
+      value === null ||
+        typeof value === "string" ||
+        typeof value === "boolean" ||
+        (typeof value === "number" && Number.isFinite(value)),
+      "JSON value",
+    );
+  }
+}

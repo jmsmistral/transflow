@@ -136,7 +136,7 @@ enum Cpu {
     Count(u32),
     Auto(String),
 }
-section!(Execution { max_jobs: u32 = 2, cpu_tokens: Cpu = Cpu::Auto("auto".into()), wall_timeout_seconds: u64 = 3600, memory_budget_mib: Option<u64> = None });
+section!(Execution { max_jobs: u32 = 2, cpu_tokens: Cpu = Cpu::Auto("auto".into()), wall_timeout_seconds: u64 = 3600, memory_budget_mib: Option<u64> = None, max_attempts: u32 = 1, retryable_classes: Vec<String> = vec![], abort_on_failure: bool = true });
 section!(Validation {
     null_policy: String = "fail".into(),
     sample_rows: u32 = 0,
@@ -255,6 +255,18 @@ impl WorkspaceConfig {
             return Err(invalid("python.version", "the supported version is 3.14"));
         }
         relative_path(&raw.python.requirements)?;
+        if !(1..=100).contains(&raw.execution.max_attempts)
+            || raw
+                .execution
+                .retryable_classes
+                .iter()
+                .any(|c| !matches!(c.as_str(), "worker_unavailable" | "transient_io"))
+        {
+            return Err(invalid(
+                "execution",
+                "max_attempts must be 1–100; retryable_classes accepts worker_unavailable and transient_io",
+            ));
+        }
         relative_path(&raw.python.lock)?;
         if raw.python.requirements == raw.python.lock {
             return Err(invalid(
@@ -400,6 +412,25 @@ impl WorkspaceConfig {
             self.raw.retention.keep_days,
             self.raw.retention.quarantine_days,
         )
+    }
+    /// Frozen job retry/failure policy. Attempts includes the initial execution.
+    pub fn failure_policy(&self) -> (tf_domain::execution::RetryPolicy, bool) {
+        use tf_domain::execution::{FailureClass, RetryPolicy};
+        let classes = self
+            .raw
+            .execution
+            .retryable_classes
+            .iter()
+            .map(|c| match c.as_str() {
+                "worker_unavailable" => FailureClass::WorkerUnavailable,
+                _ => FailureClass::TransientIo,
+            })
+            .collect();
+        // Construction validated these fields; preserve a fail-closed default defensively.
+        let retry = std::num::NonZeroU32::new(self.raw.execution.max_attempts)
+            .and_then(|n| RetryPolicy::new(n, classes).ok())
+            .unwrap_or_default();
+        (retry, self.raw.execution.abort_on_failure)
     }
     /// Resolve field-specific allowed precedence, preserving zero deadlines and absent memory.
     pub fn execution_policy(

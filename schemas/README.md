@@ -206,3 +206,9 @@ strings, with closed error/results envelopes and no data rows. Result identity,
 child metric paths, exactness, severity, timings and absent row attribution survive
 the process boundary. Protocol 1.0 and AST 1 remain unchanged. See the
 [canonical evaluator](../crates/tf-exec/CHECKS.md) for bounds and lifecycle limits.
+
+T067 adds `ExecutionResultV1` to terminal CLI envelopes, including failed and
+canceled builds. Its kind/operation/data envelope is closed; data carries recursive
+JSON execution evidence and embedded immutable plan/check metadata. UUIDs remain
+strings and measured integer timestamps/durations remain decimal strings. This is
+an additive pre-release contract change, not a released protocol-version change.

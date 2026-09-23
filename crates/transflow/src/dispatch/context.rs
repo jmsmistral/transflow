@@ -18,6 +18,7 @@ pub(super) struct Prepared {
     pub jobs: BTreeMap<JobId, Job>,
     pub capacity: tf_exec::admission::Capacity,
     pub contextual: bool,
+    pub abort_on_failure: bool,
 }
 pub(super) fn prepare(
     owner: &mut RuntimeOwner,
@@ -239,7 +240,7 @@ pub(super) fn prepare(
                 },
                 target,
                 fence,
-                RetryPolicy::default(),
+                config.failure_policy().0,
                 EventTime(0),
             ),
         );
@@ -258,6 +259,7 @@ pub(super) fn prepare(
         parents,
         jobs,
         contextual,
+        abort_on_failure: config.failure_policy().1,
         capacity: capacity.ok_or_else(|| fail("empty write set"))?,
     })
 }

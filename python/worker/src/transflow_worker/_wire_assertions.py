@@ -231,6 +231,9 @@ def validate(
         for key, rule in schema.get("properties", {}).items():
             if "const" in rule and key in value:
                 need(same(value[key], rule["const"]), "const")
+    if schema.get("$ref") == "#/$defs/ExecutionJsonV1":
+        execution_json(value)
+        return
     if "$ref" in schema:
         validate(
             definitions[schema["$ref"].removeprefix("#/$defs/")], value, definitions, depth + 1
@@ -259,6 +262,8 @@ def validate(
     elif kind == "integer":
         need(number(value) and int(value) == value, "integer")
         need(schema["minimum"] <= value <= schema["maximum"], "integer range")
+    elif kind == "number":
+        need(number(value), "finite number")
     elif kind == "boolean":
         need(type(value) is bool, "boolean")
     elif kind == "null":
@@ -285,3 +290,20 @@ def validate(
         raise ValueError("Unknown schema type")
     if "x-transflow-invariant" in schema:
         invariant(schema["x-transflow-invariant"], value)
+
+
+def execution_json(value: Any, depth: int = 0) -> None:
+    """Count payload depth, not recursive schema expansion, for execution metadata."""
+    need(depth <= 64, "execution metadata nesting limit")
+    if isinstance(value, dict):
+        for key, item in value.items():
+            need(isinstance(key, str), "JSON object key")
+            execution_json(item, depth + 1)
+    elif isinstance(value, list):
+        for item in value:
+            execution_json(item, depth + 1)
+    else:
+        need(
+            value is None or isinstance(value, str) or type(value) is bool or number(value),
+            "JSON value",
+        )

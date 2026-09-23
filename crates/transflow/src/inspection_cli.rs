@@ -188,44 +188,7 @@ pub(crate) fn execute(
         if name == "why" && targets.len() != 1 {
             return Err(failure("why requires exactly one distinct target"));
         }
-        let request = build_plan::Request {
-            python: args.get_one::<String>("python").cloned(),
-            branch,
-            mode: match args.get_one::<String>("mode").map(String::as_str) {
-                Some("selected") => tf_plan::scope::Mode::Selected,
-                Some("between") => tf_plan::scope::Mode::Between,
-                _ => tf_plan::scope::Mode::Full,
-            },
-            targets,
-            boundaries: strings(args, "boundary"),
-            exclusions: strings(args, "exclude"),
-            refresh_sources: strings(args, "refresh-source"),
-            pins: args
-                .get_many::<tf_plan::pins::PinRequest>("pin")
-                .map(|v| v.cloned().collect())
-                .unwrap_or_default(),
-            fallbacks: if args.get_flag("no-fallback") {
-                Some(vec![])
-            } else {
-                args.get_many::<BranchName>("fallback")
-                    .map(|v| v.cloned().collect())
-            },
-            force: args.get_flag("force"),
-            parameters: json!({}),
-        };
-        let options = build_plan::Options {
-            git_ref: source,
-            require_current: args
-                .get_one::<String>("boundary-policy")
-                .is_some_and(|v| v == "require_current"),
-            timeout_seconds: args.get_one::<u64>("timeout-seconds").copied(),
-            validation_timeout_seconds: args.get_one::<u64>("validation-timeout-seconds").copied(),
-            parameters: args
-                .get_many::<(String, Value)>("param")
-                .map(|v| v.cloned().collect())
-                .unwrap_or_default(),
-            explain: true,
-        };
+        let (request, options) = selection(args, branch, source, targets);
         if name == "why" {
             let completion =
                 runtime.block_on(crate::why::inspect_selection(owner, request, options))?;
@@ -446,4 +409,51 @@ fn human(v: &Value) -> Result<String, Error> {
         );
     }
     Ok(out)
+}
+
+pub(crate) fn selection(
+    args: &ArgMatches,
+    branch: BranchName,
+    source: Option<String>,
+    targets: Vec<String>,
+) -> (build_plan::Request, build_plan::Options) {
+    let request = build_plan::Request {
+        python: args.get_one::<String>("python").cloned(),
+        branch,
+        mode: match args.get_one::<String>("mode").map(String::as_str) {
+            Some("selected") => tf_plan::scope::Mode::Selected,
+            Some("between") => tf_plan::scope::Mode::Between,
+            _ => tf_plan::scope::Mode::Full,
+        },
+        targets,
+        boundaries: strings(args, "boundary"),
+        exclusions: strings(args, "exclude"),
+        refresh_sources: strings(args, "refresh-source"),
+        pins: args
+            .get_many::<tf_plan::pins::PinRequest>("pin")
+            .map(|v| v.cloned().collect())
+            .unwrap_or_default(),
+        fallbacks: if args.get_flag("no-fallback") {
+            Some(vec![])
+        } else {
+            args.get_many::<BranchName>("fallback")
+                .map(|v| v.cloned().collect())
+        },
+        force: args.get_flag("force"),
+        parameters: json!({}),
+    };
+    let options = build_plan::Options {
+        git_ref: source,
+        require_current: args
+            .get_one::<String>("boundary-policy")
+            .is_some_and(|v| v == "require_current"),
+        timeout_seconds: args.get_one::<u64>("timeout-seconds").copied(),
+        validation_timeout_seconds: args.get_one::<u64>("validation-timeout-seconds").copied(),
+        parameters: args
+            .get_many::<(String, Value)>("param")
+            .map(|v| v.cloned().collect())
+            .unwrap_or_default(),
+        explain: true,
+    };
+    (request, options)
 }

@@ -1,7 +1,7 @@
 {
-  "checked_at": "2026-09-21T10:08:49.734702+00:00",
+  "checked_at": "2026-09-23T14:42:02.997935+00:00",
   "findings": [],
-  "inventory_sha256": "3aba1ce0e9ada67a2da84f746499b6de6fbe7f8a47c8cafc4b5463b36c2ceadd",
+  "inventory_sha256": "e2c0d19ef262f2d9e73b79a9fd38ccb5c4375f6765e6acb3a27b4670dda66c00",
   "provider": "https://api.osv.dev/v1/querybatch",
   "queried": [
     "PyPI:ast-serialize@0.11.2",
@@ -182,6 +182,7 @@
     "crates.io:serde_spanned@1.1.1",
     "crates.io:sha2@0.10.9",
     "crates.io:shlex@2.0.1",
+    "crates.io:signal-hook-registry@1.4.8",
     "crates.io:siphasher@1.0.3",
     "crates.io:slab@0.4.12",
     "crates.io:smallvec@1.16.1",

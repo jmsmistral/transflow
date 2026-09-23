@@ -254,6 +254,12 @@ fn validate(schema: &Value, value: &Value, defs: &Value, depth: usize) -> bool {
         return false;
     }
     if let Some(reference) = schema["$ref"].as_str() {
+        // Execution metadata permits arbitrary JSON below a closed result envelope.
+        // Walk each value once; unfolding the recursive oneOf adds artificial schema
+        // depth and rejects otherwise shallow accepted plans/check ASTs.
+        if reference == "#/$defs/ExecutionJsonV1" {
+            return execution_json(value, 0);
+        }
         return reference
             .strip_prefix("#/$defs/")
             .is_some_and(|key| validate(&defs[key], value, defs, depth + 1));
@@ -285,6 +291,7 @@ fn validate(schema: &Value, value: &Value, defs: &Value, depth: usize) -> bool {
                 && schema["minimum"].as_f64().is_some_and(|min| n >= min)
                 && schema["maximum"].as_f64().is_some_and(|max| n <= max)
         }),
+        Some("number") => value.as_f64().is_some_and(f64::is_finite),
         Some("boolean") => value.is_boolean(),
         Some("null") => value.is_null(),
         Some("array") => value.as_array().is_some_and(|items| {
@@ -320,4 +327,15 @@ fn validate(schema: &Value, value: &Value, defs: &Value, depth: usize) -> bool {
         && schema["x-transflow-invariant"]
             .as_str()
             .is_none_or(|n| invariant(n, value))
+}
+
+fn execution_json(value: &Value, depth: usize) -> bool {
+    if depth > 64 {
+        return false;
+    }
+    match value {
+        Value::Array(values) => values.iter().all(|v| execution_json(v, depth + 1)),
+        Value::Object(values) => values.values().all(|v| execution_json(v, depth + 1)),
+        _ => true,
+    }
 }

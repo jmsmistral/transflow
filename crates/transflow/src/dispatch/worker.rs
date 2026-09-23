@@ -205,6 +205,46 @@ pub(super) fn report(c: &lifecycle::Completion<'_>) -> Value {
     json!({"transform":c.execution.as_ref().map(&summarize),"checks":c.evaluations.iter().filter_map(|e|e.report.as_ref()).map(summarize).collect::<Vec<_>>(),"skipped":c.skipped,"rejection":c.outcome.as_ref().err().map(|e|json!({"phase":format!("{:?}",e.phase),"error":e.error.to_string(),"retention_error":e.retention_error.as_ref().map(ToString::to_string)})),"evidence_error":c.evidence_error.as_ref().map(ToString::to_string)})
 }
 
+/// Only declared adapter failures or a proven temporary launch refusal are transient.
+/// Evaluator errors, protocol failures and arbitrary exception names never imply retry.
+pub(super) fn classify(c: &lifecycle::Completion<'_>) -> tf_domain::execution::FailureClass {
+    use tf_domain::execution::FailureClass as C;
+    if c.evidence_error.is_some() {
+        return C::Other;
+    }
+    if let Err(e) = &c.outcome {
+        if e.retention_error.is_some() {
+            return C::Other;
+        }
+        if matches!(e.error, lifecycle::Error::Gate) {
+            return if e.phase == tf_exec::timing::Phase::InputValidation {
+                C::InputViolation
+            } else {
+                C::OutputViolation
+            };
+        }
+    }
+    if let Some(r) = &c.execution {
+        if r.outcome == Err(tf_exec::supervisor::Failure::Unavailable) {
+            return C::WorkerUnavailable;
+        }
+        if r.outcome == Err(tf_exec::supervisor::Failure::Worker)
+            && let Some(frame) = &r.terminal
+        {
+            let m = &frame.as_json()["message"];
+            if m["code"] == "transient_io" && m["retryable"] == true {
+                return C::TransientIo;
+            }
+            return match m["code"].as_str() {
+                Some("input_schema" | "output_schema") => C::InvalidSchema,
+                Some("import" | "syntax") => C::Import,
+                _ => C::Other,
+            };
+        }
+    }
+    C::Other
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

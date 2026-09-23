@@ -382,7 +382,9 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
             try:
                 send({"type": "heartbeat"})
             except ProtocolError, OSError:
-                os._exit(1)  # Coordinator loss cannot authorize continued import work.
+                from .lifetime import disconnected
+
+                disconnected()  # Coordinator loss cannot authorize continued import work.
 
     send(
         {

@@ -63,6 +63,9 @@ impl Coordinator<'_> {
             )
         );
         self.phase_start.insert(id, instant);
+        if let Some(progress) = &self.progress {
+            let _ = progress.try_send(json!({"job":id.to_string(),"state":next.state().name()}));
+        }
         self.prepared.jobs.insert(id, next);
         Ok(())
     }
@@ -164,10 +167,14 @@ impl Coordinator<'_> {
             j.finish_canceled(j.fence(), t)
         })
     }
-    pub(super) fn failure(&mut self, id: JobId) -> Result<()> {
+    pub(super) fn failure(
+        &mut self,
+        id: JobId,
+        class: tf_domain::execution::FailureClass,
+    ) -> Result<()> {
         use tf_domain::{
             diagnostic::{Diagnostic, DiagnosticCode, Redactor},
-            execution::{FailureClass, FailureEvidence},
+            execution::FailureEvidence,
         };
         let r = Redactor::default();
         let diagnostic = Diagnostic::new(
@@ -187,15 +194,15 @@ impl Coordinator<'_> {
                     .ok_or(tf_domain::execution::StateError::InvalidEvidence)?
                     .id(),
                 j.fence(),
-                FailureEvidence {
-                    class: FailureClass::Other,
-                    diagnostic,
-                },
+                FailureEvidence { class, diagnostic },
                 t,
             )
         })
     }
     pub(super) fn contract(&mut self, id: JobId) -> Result<(tf_store::cache::Request, bool)> {
+        if let Some(request) = self.contracts.get(&id) {
+            return Ok((request.clone(), false));
+        }
         let j = &self.prepared.jobs[&id];
         let (_, resolved) = &self.prepared.declarations[&id];
         let mut checks = vec![];
@@ -245,7 +252,7 @@ impl Coordinator<'_> {
             secret_versions: BTreeMap::new(),
             checks,
         };
-        match self
+        let result = match self
             .rt
             .block_on(crate::cache::prepare_inner(
                 self.owner,
@@ -261,7 +268,9 @@ impl Coordinator<'_> {
             }
             crate::cache::Decision::Execute { request, .. } => Ok((*request, false)),
             crate::cache::Decision::Ready(r) => Ok((*r, true)),
-        }
+        }?;
+        self.contracts.insert(id, result.0.clone());
+        Ok(result)
     }
     pub(super) fn cache(
         &mut self,
@@ -311,6 +320,7 @@ impl Coordinator<'_> {
         let j = &self.prepared.jobs[&id];
         let a = &self.active[&id];
         let summary = worker::report(&c);
+        let mut failure_class = worker::classify(&c);
         repository!(
             self.owner,
             self.rt,
@@ -407,6 +417,7 @@ impl Coordinator<'_> {
                     success = true;
                 }
                 Err(error) => {
+                    failure_class = tf_domain::execution::FailureClass::PublicationConflict;
                     let mut report = summary.clone();
                     report["publication_error"] = json!(error.to_string());
                     report["stage"] = json!("publication");
@@ -436,15 +447,19 @@ impl Coordinator<'_> {
             if canceled {
                 self.cancel_job(id)?
             } else {
-                self.failure(id)?
+                self.failure(id, failure_class)?
             }
         }
         let active = self
             .active
             .remove(&id)
             .ok_or_else(|| fail("missing active job"))?;
-        for lease in active.leases {
-            repository!(self.owner, self.rt, s, s.release_read(&lease));
+        if matches!(self.prepared.jobs[&id].state(), JobState::RetryWait(_)) {
+            self.retry_leases.insert(id, active.leases);
+        } else {
+            for lease in active.leases {
+                repository!(self.owner, self.rt, s, s.release_read(&lease));
+            }
         }
         Ok(success)
     }
@@ -469,6 +484,16 @@ impl Coordinator<'_> {
         );
         for active in self.active.values_mut() {
             for lease in &mut active.leases {
+                *lease = repository!(
+                    self.owner,
+                    self.rt,
+                    s,
+                    s.renew_read(lease, now()?, 3_600_000_000)
+                );
+            }
+        }
+        for leases in self.retry_leases.values_mut() {
+            for lease in leases {
                 *lease = repository!(
                     self.owner,
                     self.rt,

@@ -101,7 +101,7 @@ impl Drop for BuildControl {
     }
 }
 impl BuildControl {
-    /// Bind to the real owner, with an explicit bounded lifetime attempt budget.
+    /// Bind to the real owner, with an explicit bounded active-attempt budget.
     /// Registering a worker or mutating a build additionally checks SQLite authority.
     pub fn new(owner: &RuntimeOwner, build: BuildId, attempt_limit: usize) -> Result<Self, Error> {
         owner.validate_paths()?;
@@ -119,6 +119,14 @@ impl BuildControl {
             limit: attempt_limit,
             workers: BTreeMap::new(),
         })
+    }
+    /// Forget a capability only after its owned supervisor has completed cleanup and
+    /// its coordinator has persisted the attempt outcome. SQLite retains its identity.
+    pub fn finished(&mut self, attempt: AttemptId) -> Result<(), Error> {
+        self.workers
+            .remove(&attempt)
+            .map(|_| ())
+            .ok_or(Error::Registration)
     }
     fn check(&self, owner: &RuntimeOwner) -> Result<(), Error> {
         owner.validate_paths()?;

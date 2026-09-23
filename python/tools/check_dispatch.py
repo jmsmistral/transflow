@@ -360,6 +360,77 @@ def end(left, right):
         assert contextual["state"] == contextual_again["state"] == "Succeeded"
         assert contextual_again["jobs"][0]["state"] == "SUCCEEDED"
         cases.append("captured context reference conservatively keys the frozen evaluation clock")
+        config_path = root / "workspace.toml"
+        ordinary_config = config_path.read_text()
+        retry_config = ordinary_config.replace(
+            "[execution]",
+            '[execution]\nmax_attempts=3\nretryable_classes=["transient_io"]\nabort_on_failure=false',
+        )
+        config_path.write_text(retry_config)
+        for name, body in originals.items():
+            (root / f"src/{name}.py").write_text(body)
+        marker = root / "retry-once"
+        retry_left = originals["left"].replace(
+            "def left(rows):",
+            f"""def left(rows):
+    from pathlib import Path
+    from transflow import TransientIOError
+    marker = Path({str(marker)!r})
+    if not marker.exists():
+        marker.write_text("failed once")
+        raise TransientIOError("temporary adapter failure")""",
+        )
+        (root / "src/left.py").write_text(retry_left)
+        retried = run(force=True)
+        assert retried["state"] == "Succeeded", retried
+        left_job = next(j for j in retried["jobs"] if j["dataset"] == dataset("curated/left"))
+        assert rows(
+            "SELECT attempt_no,state,failure_class FROM attempts "
+            "WHERE job_id=? ORDER BY attempt_no",
+            left_job["job"],
+        ) == [(1, "FAILED", "TransientIo"), (2, "SUCCEEDED", None)]
+        assert rows("SELECT count(*) FROM phase_intervals WHERE phase='RETRY_WAIT'") == [(0,)]
+        assert rows(
+            "SELECT count(*) FROM attempts a JOIN attempts b ON a.job_id=b.job_id "
+            "WHERE a.job_id=? AND a.attempt_no=1 AND b.attempt_no=2 "
+            "AND b.started_at_us-a.finished_at_us>=1000000",
+            left_job["job"],
+        ) == [(1,)]
+        cases.append("declared transient retry preserves failed attempt, exact inputs and backoff")
+        (root / "src/left.py").write_text(retry_left.replace("if not marker.exists():", "if True:"))
+        failed = run(force=True)
+        assert failed["state"] == "Failed", failed
+        by_dataset = {j["dataset"]: j for j in failed["jobs"]}
+        assert len(by_dataset[dataset("curated/left")]["attempts"]) == 3
+        assert by_dataset[dataset("curated/right")]["state"] == "SUCCEEDED"
+        assert by_dataset[dataset("curated/end")]["state"] == "BLOCKED"
+        cases.append(
+            "exhausted retries block descendants; continue policy finishes independent work"
+        )
+        (root / "src/left.py").write_text(
+            retry_left.replace("TransientIOError", "ValueError").replace(
+                "if not marker.exists():", "if True:"
+            )
+        )
+        deterministic = run(force=True)
+        assert deterministic["state"] == "Failed"
+        assert (
+            len(
+                next(j for j in deterministic["jobs"] if j["dataset"] == dataset("curated/left"))[
+                    "attempts"
+                ]
+            )
+            == 1
+        )
+        cases.append("unknown deterministic exceptions are never retried despite enabled budget")
+        config_path.write_text(ordinary_config)
+        (root / "src/items.py").write_text(original_items)
+        for name, body in originals.items():
+            (root / f"src/{name}.py").write_text(body)
+        sys.path.insert(0, str(Path(__file__).parent))
+        from check_build_commands import exercise
+
+        cases.extend(exercise(cli, root, sys.executable, probe))
         print(json.dumps({"cases": cases, "passed": len(cases)}))
 
 

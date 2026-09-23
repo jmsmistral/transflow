@@ -15,6 +15,9 @@ use tf_domain::{DatasetId, WorkspaceId};
 /// Latest supported runtime schema. Authoring registry versions are independent.
 pub const SCHEMA_VERSION: i64 = 8;
 
+/// Safe read-only build history and execution evidence.
+pub mod build_read;
+
 /// Branch-scoped retained version reuse and guarded adoption.
 pub mod cache;
 /// Default maximum wait for an externally held SQLite writer lock.

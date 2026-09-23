@@ -2,9 +2,11 @@
 
 `cancellation::BuildControl` connects the durable cancellation/publication winner
 with owned worker cleanup. The coordinator retains one control per accepted build,
-created from its real `RuntimeOwner` and an explicit lifetime attempt limit
+created from its real `RuntimeOwner` and an explicit active-attempt limit
 (1–10,000). Waiting clients observe this control; they do not own it or its worker
-futures. Metadata-only owners cannot use it.
+futures. Metadata-only owners cannot use it. After supervisor cleanup and durable
+attempt completion, `finished` releases its capability slot; retries retain bounded
+active controls while SQLite retains immutable attempt identities.
 
 Before spawn, `register` checks the exact workspace, build, attempt, coordinator
 session and fence against the accepted plan, live job/attempt and write reservation.
@@ -67,10 +69,12 @@ PID. Trusted code can escape groups; this is not hostile-code containment.
 After actual lock reacquisition, existing publication recovery establishes a new
 session, interrupts unfinished work and releases stale reservations. Old controls,
 registrations and publication intents fail their fences. Persisted PID/start
-records alone are insufficient for safe orphan signaling: full restart process
-reconciliation remains T066. Durable attempt `process_json` integration, engine
-helper dispatch, authenticated client routing and public build/serve commands
-remain T064–T067/T075. No new schema or public CLI/API is claimed by this service.
+records alone are insufficient for safe orphan signaling. T066 adds private worker
+capabilities: a mutually authenticated live worker can terminate its own group
+after the new owner fences the old session. No saved-PID signal is issued. Failed
+authentication or unavailable cleanup for a still-live worker fails closed. T067
+adds authenticated CLI routing and cleanup-aware Ctrl-C; see the
+[build/recovery guide](../transflow/BUILDS.md). HTTP/browser control remains T075.
 
 ## Verification
 

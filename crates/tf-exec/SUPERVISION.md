@@ -94,3 +94,9 @@ connection thread/buffer/spill configuration remains the adapter responsibility.
 T058 adds the `polars.execute.v1` capability and [Polars execution service](../../python/POLARS.md).
 Execute controls carry artifact-ready evidence; successful worker exit is followed
 by independent Rust candidate validation and never directly advances a head.
+
+T066 adds private recovery capability records, synced before user imports are
+authorized. Recovery authenticates the live worker for self-group termination;
+it never signals a saved PID. Recoverable workers also terminate their own group
+on coordinator disconnect so a leader cannot exit and leave managed descendants
+behind. See [cancellation and restart](CANCELLATION.md).

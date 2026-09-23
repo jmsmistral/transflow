@@ -40,8 +40,10 @@ from .declarations import (
 from .declarations import (
     transform as transform,
 )
+from .errors import TransientIOError as TransientIOError
 
 __all__ = [
+    "TransientIOError",
     "Branch",
     "Check",
     "Input",

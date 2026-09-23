@@ -291,3 +291,13 @@ def validate_CheckSampleV1(value: object) -> None:
 def validate_CheckSampleQueryV1(value: object) -> None:
     """Assert the CheckSampleQueryV1 contract, including custom formats."""
     validate_document("CheckSampleQueryV1", value)
+
+
+def validate_ExecutionJsonV1(value: object) -> None:
+    """Assert the ExecutionJsonV1 contract, including custom formats."""
+    validate_document("ExecutionJsonV1", value)
+
+
+def validate_ExecutionResultV1(value: object) -> None:
+    """Assert the ExecutionResultV1 contract, including custom formats."""
+    validate_document("ExecutionResultV1", value)

@@ -148,23 +148,36 @@ impl Store {
                 .await?;
         }
         if let Some(a) = next.attempts().last() {
-            if previous.attempts().is_empty() {
-                if a.phase() != tf_domain::execution::Phase::Starting {
+            let fresh = previous.attempts().last().map(|a| a.id()) != Some(a.id());
+            if fresh {
+                if a.phase() != tf_domain::execution::Phase::Starting
+                    || next.attempts().len() != previous.attempts().len() + 1
+                    || previous.attempts().iter().any(|a| a.outcome().is_none())
+                {
                     return Err(PublicationError::Evidence);
                 }
-                sqlx::query("INSERT INTO attempts(id,job_id,attempt_no,session_id,fence,state,started_at_us) VALUES(?,?,1,?,?,'STARTING',?)").bind(a.id().to_string()).bind(next.id().to_string()).bind(next.fence().session.to_string()).bind(i64::try_from(next.fence().generation).map_err(|_|PublicationError::Evidence)?).bind(at_us).execute(&mut *tx).await?;
-            } else if previous.attempts().last().map(|a| a.id()) != Some(a.id()) {
-                return Err(PublicationError::Evidence);
-            } else if !committed {
+                sqlx::query("INSERT INTO attempts(id,job_id,attempt_no,session_id,fence,state,started_at_us) VALUES(?,?,?,?,?,'STARTING',?)").bind(a.id().to_string()).bind(next.id().to_string()).bind(next.attempts().len() as i64).bind(next.fence().session.to_string()).bind(i64::try_from(next.fence().generation).map_err(|_|PublicationError::Evidence)?).bind(at_us).execute(&mut *tx).await?;
+            } else if !committed
+                && previous
+                    .attempts()
+                    .last()
+                    .is_some_and(|a| a.outcome().is_none())
+            {
                 let failure = match a.outcome() {
                     Some(AttemptOutcome::Failed(e)) => Some(format!("{:?}", e.class)),
                     _ => None,
                 };
-                sqlx::query("UPDATE attempts SET state=?,finished_at_us=?,failure_class=? WHERE id=? AND session_id=? AND fence=?").bind(next.state().name()).bind(terminal.then_some(at_us)).bind(failure).bind(a.id().to_string()).bind(next.fence().session.to_string()).bind(i64::try_from(next.fence().generation).map_err(|_|PublicationError::Evidence)?).execute(&mut *tx).await?;
+                let state = match a.outcome() {
+                    Some(AttemptOutcome::Failed(_)) => "FAILED",
+                    Some(AttemptOutcome::Canceled) => "CANCELED",
+                    Some(AttemptOutcome::Interrupted) => "INTERRUPTED",
+                    _ => next.state().name(),
+                };
+                sqlx::query("UPDATE attempts SET state=?,finished_at_us=?,failure_class=? WHERE id=? AND session_id=? AND fence=? AND finished_at_us IS NULL").bind(state).bind(a.outcome().is_some().then_some(at_us)).bind(failure).bind(a.id().to_string()).bind(next.fence().session.to_string()).bind(i64::try_from(next.fence().generation).map_err(|_|PublicationError::Evidence)?).execute(&mut *tx).await?;
             }
             if previous.state() != next.state() {
                 sqlx::query("UPDATE phase_intervals SET finished_at_us=?,duration_ns=? WHERE attempt_id=? AND finished_at_us IS NULL").bind(at_us).bind(duration_ns).bind(a.id().to_string()).execute(&mut *tx).await?;
-                if !terminal {
+                if matches!(next.state(), JobState::Executing(_)) {
                     sqlx::query("INSERT INTO phase_intervals(attempt_id,sequence,phase,started_at_us) SELECT ?,coalesce(max(sequence)+1,0),?,? FROM phase_intervals WHERE attempt_id=?").bind(a.id().to_string()).bind(next.state().name()).bind(at_us).bind(a.id().to_string()).execute(&mut *tx).await?;
                 }
             }

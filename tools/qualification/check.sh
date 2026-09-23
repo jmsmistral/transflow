@@ -50,4 +50,4 @@ npm --prefix tools/qualification/web run typecheck
 npm --prefix tools/qualification/web test
 npm --prefix tools/qualification/web run build
 echo "Dependency qualification passed. Native reports: $run_dir"
-echo "This includes internal build dispatch; public CLI and release conformance remain later tasks."
+echo "This includes build dispatch, public CLI and restart journeys; release conformance remains a later task."
