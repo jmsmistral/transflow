@@ -10,6 +10,7 @@ mod build_transport;
 pub mod cache;
 mod catalog;
 mod env;
+mod external;
 mod import;
 mod init;
 mod inspection_cli;
@@ -53,6 +54,7 @@ fn command() -> clap::Command {
         .about("A local build system for dataframe datasets (development scaffold)")
         .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Plan, why, graph traversal, dataset builds, execution history and retained replay are available. Serve runs a foreground CLI coordinator. HTTP UI and schedules are not implemented yet.")
         .subcommands(inspection_cli::commands())
+        .subcommand(external::command())
         .subcommand(build_cli::command())
         .subcommand(clap::Command::new("serve").disable_help_flag(true).about("Run the foreground CLI coordinator (HTTP UI and schedules are not yet connected)"))
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
@@ -505,6 +507,70 @@ pub fn run(
                             .map_err(CliError::Stdout)?;
                     }
                     return Ok(ExitCode::from(status.code()));
+                }
+                if let Some(("external", args)) = matches.subcommand() {
+                    match external::execute(args, matches.get_one::<String>("workspace")) {
+                        Ok(report) => {
+                            let errors = if report.blocked {
+                                vec![Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("External registration change is blocked")?,redactor.text("Current declarations or runtime users still reference this catalogue.")?,redactor.text("Review the impact report, update references or finish active operations, then retry.")?)]
+                            } else {
+                                vec![]
+                            };
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::external(
+                                            &version,
+                                            &context,
+                                            report.value.clone(),
+                                            &errors,
+                                        )?
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                writeln!(stdout, "{}", report.human()).map_err(CliError::Stdout)?;
+                            }
+                            return Ok(if report.blocked {
+                                ExitCode::FAILURE
+                            } else {
+                                ExitCode::SUCCESS
+                            });
+                        }
+                        Err(error) => {
+                            let diagnostic = if let preparation::Error::Validation(error) = error {
+                                error.diagnostic(&redactor)?
+                            } else {
+                                Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("External registration operation could not finish")?,redactor.text(&error.to_string())?,redactor.text("Use an explicit provider path, registered local dataset and unique provider alias. Provider IDs must match; use external show to inspect locator availability. Removal requires --yes and may need the consumer environment.")?)
+                            };
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::failure(
+                                            &version,
+                                            ExitStatus::Failure,
+                                            &context,
+                                            &[diagnostic],
+                                        )?
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                stderr
+                                    .write_all(
+                                        render_diagnostic(
+                                            &diagnostic,
+                                            &context,
+                                            intent.verbose,
+                                            false,
+                                        )
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stderr)?;
+                            }
+                            return Ok(ExitCode::FAILURE);
+                        }
+                    }
                 }
                 if let Some(("catalog", args)) = matches.subcommand()
                     && args.subcommand_name() != Some("sync")

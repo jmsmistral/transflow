@@ -369,3 +369,51 @@ fn lifecycle_collisions_tombstones_and_revision_cursors() {
     );
     assert!(updated.resolve("raw/one").is_err());
 }
+
+#[test]
+fn external_tombstones_keep_identity_but_leave_runtime_projection_and_reject_retargeting() {
+    let original = parse(&external(1, "external/market/orders"));
+    let e = original.external_registrations().next().unwrap();
+    let text = original.render_external_remove(e.id()).unwrap();
+    let removed = RegistrySnapshot::parse(workspace(), &text).unwrap();
+    assert_eq!(removed.external_registrations().count(), 0);
+    assert_eq!(removed.external_history().next().unwrap().key(), e.key());
+    assert!(removed.external_history().next().unwrap().is_tombstone());
+    assert_eq!(
+        removed
+            .resolve("external/market/orders")
+            .unwrap_err()
+            .kind(),
+        RegistryErrorKind::Tombstone
+    );
+    let source = tf_domain::SourceSnapshotId::from_bytes([3; 16]);
+    assert_eq!(
+        removed.sdk_projection(source).unwrap()["entries"],
+        serde_json::json!([])
+    );
+    assert!(
+        tf_catalog::candidate::RegistryProposal::lifecycle(&original, source, text.clone()).is_ok()
+    );
+    let erased = "format_version=1\n".to_owned();
+    assert!(tf_catalog::candidate::RegistryProposal::lifecycle(&original, source, erased).is_err());
+    let changed = text.replace(&id(7), &id(8));
+    assert!(
+        tf_catalog::candidate::RegistryProposal::lifecycle(&original, source, changed).is_err()
+    );
+    assert!(
+        tf_catalog::candidate::RegistryProposal::lifecycle(
+            &removed,
+            source,
+            format!(
+                "format_version=1\n{}",
+                external(1, "external/market/orders")
+            )
+        )
+        .is_err()
+    );
+    let conflict = external(2, "external/market/new").replace(
+        &WorkspaceId::from_bytes([2; 16]).to_string(),
+        &WorkspaceId::from_bytes([4; 16]).to_string(),
+    );
+    assert!(RegistrySnapshot::parse(workspace(), &format!("{text}{conflict}")).is_err());
+}

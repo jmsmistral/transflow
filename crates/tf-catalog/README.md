@@ -81,3 +81,13 @@ foreign policies, semantic hashing, file moves/runtime deletion, bounded input a
 5,000-dataset lookup/order invariance. These establish A45/A50/A53 parser prerequisites.
 Code discovery, graph validation, SDK snapshot integration and registry mutation
 journaling remain later tasks; this parser does not implement authoring CLI commands.
+
+## T069 foreign lifecycle
+
+Explicit add/remove rendering preserves provider UUIDs and selector policy. Each
+provider alias reserves one workspace UUID. Optional `tombstone = true` retains
+a removed registration; omission keeps older active records and fingerprints
+unchanged. `external_registrations()` yields active bindings and `external_history()`
+includes tombstones. Runtime SDK projections exclude removed registrations.
+The guarded local locator writer keeps paths outside registry metadata. See the
+[external CLI guide](../transflow/EXTERNAL.md) for supported commands and recovery.

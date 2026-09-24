@@ -33,3 +33,6 @@ pub mod input_bindings;
 
 /// Context-bound, paginated declared-graph traversal.
 pub mod traversal;
+
+/// Guarded machine-local provider locator updates.
+pub mod local_write;

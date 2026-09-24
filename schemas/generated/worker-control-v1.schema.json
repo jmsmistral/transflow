@@ -1325,6 +1325,10 @@
                 "workspace.validate",
                 "catalog.sync",
                 "catalog.sync.check",
+                "external.add",
+                "external.list",
+                "external.show",
+                "external.remove",
                 "catalog.list",
                 "catalog.show",
                 "catalog.rename",
@@ -1404,6 +1408,9 @@
                 },
                 {
                   "$ref": "#/$defs/ExecutionResultV1"
+                },
+                {
+                  "$ref": "#/$defs/ExternalResultV1"
                 }
               ]
             },
@@ -1449,6 +1456,10 @@
                 "workspace.validate",
                 "catalog.sync",
                 "catalog.sync.check",
+                "external.add",
+                "external.list",
+                "external.show",
+                "external.remove",
                 "catalog.list",
                 "catalog.show",
                 "catalog.rename",
@@ -1499,6 +1510,9 @@
                 },
                 {
                   "$ref": "#/$defs/ExecutionResultV1"
+                },
+                {
+                  "$ref": "#/$defs/ExternalResultV1"
                 }
               ]
             },
@@ -1544,6 +1558,10 @@
                 "workspace.validate",
                 "catalog.sync",
                 "catalog.sync.check",
+                "external.add",
+                "external.list",
+                "external.show",
+                "external.remove",
                 "catalog.list",
                 "catalog.show",
                 "catalog.rename",
@@ -5529,6 +5547,142 @@
         "kind",
         "operation",
         "data"
+      ],
+      "additionalProperties": false
+    },
+    "ExternalEntryV1": {
+      "type": "object",
+      "properties": {
+        "registration_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "reference": {
+          "$ref": "#/$defs/DiagnosticText"
+        },
+        "c_reference": {
+          "$ref": "#/$defs/DiagnosticText"
+        },
+        "provider_workspace_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "provider_dataset_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "provider_display_path": {
+          "$ref": "#/$defs/DiagnosticText"
+        },
+        "default_branch": {
+          "$ref": "#/$defs/DiagnosticText"
+        },
+        "fallback_override": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DiagnosticText"
+              },
+              "maxItems": 1000,
+              "minItems": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tombstone": {
+          "type": "boolean"
+        },
+        "locator_status": {
+          "enum": [
+            "unconfigured",
+            "unavailable",
+            "identity_mismatch",
+            "dataset_unavailable",
+            "available"
+          ]
+        },
+        "replica_status": {
+          "const": "not_inspected"
+        }
+      },
+      "required": [
+        "registration_id",
+        "reference",
+        "c_reference",
+        "provider_workspace_id",
+        "provider_dataset_id",
+        "provider_display_path",
+        "default_branch",
+        "fallback_override",
+        "tombstone",
+        "locator_status",
+        "replica_status"
+      ],
+      "additionalProperties": false
+    },
+    "ExternalResultV1": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "external"
+        },
+        "operation": {
+          "enum": [
+            "add",
+            "list",
+            "show",
+            "remove"
+          ]
+        },
+        "applied": {
+          "type": "boolean"
+        },
+        "registry_fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExternalEntryV1"
+          },
+          "maxItems": 100,
+          "minItems": 0
+        },
+        "total": {
+          "$ref": "#/$defs/Count"
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/DiagnosticText"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "impact_count": {
+          "$ref": "#/$defs/Count"
+        },
+        "blockers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DiagnosticText"
+          },
+          "maxItems": 64,
+          "minItems": 0
+        }
+      },
+      "required": [
+        "kind",
+        "operation",
+        "applied",
+        "registry_fingerprint",
+        "entries",
+        "total",
+        "next_cursor",
+        "impact_count",
+        "blockers"
       ],
       "additionalProperties": false
     }

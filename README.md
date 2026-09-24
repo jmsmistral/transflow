@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. HTTP/UI, foreign-data consumption, scheduling, other transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
+**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. Explicit [external registration](crates/transflow/EXTERNAL.md) is available (T069), with stable provider identity, private local locators and removal previews. HTTP/UI, foreign-data consumption, scheduling, other transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
 
 Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
 Package installation and workspace environment checks reject other minors.
@@ -194,7 +194,7 @@ T065–T067 add retry/continue policy, restart recovery and the public [build CL
 
 [Snapshot-bound C references](python/CATALOG.md) support explicit aliases, namespace prefixes and separate workspace test contexts without database access.
 
-Workspace-local [catalogue editor generations](crates/tf-catalog/EDITOR.md) now have a Rust renderer and atomic refresh service (T031 implementation). Installed-SDK mypy qualification is automated; native VS Code/Emacs qualification is still pending.
+Workspace-local [catalogue editor generations](crates/tf-catalog/EDITOR.md) now have a Rust renderer and atomic refresh service (T031 implementation). Installed-SDK mypy qualification is automated; native VS Code/Emacs qualification and automatic editor integration are deferred until after the first end-to-end version.
 
 The shared [structural validation service](crates/tf-catalog/VALIDATION.md) (T032) checks the complete captured local graph and issues context-bound certificates. Invalid submissions preserve the previous graph for display but block reuse; runtime schema/data checks remain explicitly deferred. Public validation and additive synchronization are available through the
 [preparation lifecycle](crates/transflow/PREPARATION.md). Build orchestration is now exposed by the build CLI.

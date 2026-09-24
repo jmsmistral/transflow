@@ -301,3 +301,13 @@ def validate_ExecutionJsonV1(value: object) -> None:
 def validate_ExecutionResultV1(value: object) -> None:
     """Assert the ExecutionResultV1 contract, including custom formats."""
     validate_document("ExecutionResultV1", value)
+
+
+def validate_ExternalEntryV1(value: object) -> None:
+    """Assert the ExternalEntryV1 contract, including custom formats."""
+    validate_document("ExternalEntryV1", value)
+
+
+def validate_ExternalResultV1(value: object) -> None:
+    """Assert the ExternalResultV1 contract, including custom formats."""
+    validate_document("ExternalResultV1", value)

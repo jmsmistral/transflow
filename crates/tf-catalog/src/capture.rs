@@ -100,6 +100,7 @@ impl Guard {
 /// Retained source bytes and validated identity. Every reopen verifies all manifest-listed bytes.
 #[derive(Debug)]
 pub struct SourceSnapshot {
+    registration: bool,
     directory: PathBuf,
     manifest: Manifest,
 }
@@ -115,7 +116,7 @@ impl SourceSnapshot {
             return Err(CaptureError::Changed);
         }
         let index = SourceIndex::enumerate(workspace)?;
-        let paths = allowlist(workspace, &index)?;
+        let paths = capture_paths(workspace, &index, self.registration)?;
         if paths
             .iter()
             .map(|p| path_text(p))
@@ -193,6 +194,24 @@ impl SourceSnapshot {
     ) -> Result<Self, CaptureError> {
         Self::capture_internal(workspace, limits, None, Some(destination), |_| Ok(()))
     }
+    /// Authoring-only registration capture may precede environment locking. Missing lock
+    /// membership is guarded, and reopening this snapshot never relaxes execution capture rules.
+    pub fn registration(
+        workspace: &Workspace,
+        destination: Option<&Path>,
+    ) -> Result<Self, CaptureError> {
+        let git = crate::git::inspect(workspace).map_err(|_| CaptureError::Changed)?;
+        let result = Self::capture_inner(
+            workspace,
+            CaptureLimits::default(),
+            git,
+            destination,
+            true,
+            |_| Ok(()),
+        )?;
+        result.verify_working_copy(workspace, false)?;
+        Ok(result)
+    }
     /// Captured source-root file metadata for the discovery request. Authoring/lock files stay private.
     pub fn discovery_files(&self) -> serde_json::Value {
         serde_json::Value::Array(self.manifest.files.iter().filter(|e| self.manifest.source_roots.iter().any(|root| Path::new(&e.path).starts_with(root))).map(|e|serde_json::json!({"path":e.path,"sha256":e.sha256,"byte_length":e.bytes.to_string()})).collect())
@@ -230,10 +249,20 @@ impl SourceSnapshot {
         limits: CaptureLimits,
         git: Option<crate::git::GitProvenance>,
         destination_runtime: Option<&Path>,
+        observer: impl FnMut(&Path) -> std::io::Result<()>,
+    ) -> Result<Self, CaptureError> {
+        Self::capture_inner(workspace, limits, git, destination_runtime, false, observer)
+    }
+    fn capture_inner(
+        workspace: &Workspace,
+        limits: CaptureLimits,
+        git: Option<crate::git::GitProvenance>,
+        destination_runtime: Option<&Path>,
+        registration: bool,
         mut observer: impl FnMut(&Path) -> std::io::Result<()>,
     ) -> Result<Self, CaptureError> {
         let before = SourceIndex::enumerate(workspace)?;
-        let files = allowlist(workspace, &before)?;
+        let files = capture_paths(workspace, &before, registration)?;
         let source_root = open_directory(workspace.root())?;
         let runtime = workspace.root().join(".transflow/runtime");
         let _runtime = open_relative(&source_root, Path::new(".transflow/runtime"), true)?;
@@ -313,7 +342,7 @@ impl SourceSnapshot {
             let fresh = Workspace::load(workspace.root(), Some(workspace.root()))?;
             if fresh.config().id() != workspace.config().id()
                 || SourceIndex::enumerate(&fresh)? != before
-                || allowlist(&fresh, &before)? != files
+                || capture_paths(&fresh, &before, registration)? != files
             {
                 return Err(CaptureError::Changed);
             }
@@ -351,6 +380,7 @@ impl SourceSnapshot {
             fs::rename(&staging, &final_path)?;
             File::open(&parent)?.sync_all()?;
             Ok(Self {
+                registration,
                 directory: final_path,
                 manifest,
             })
@@ -433,6 +463,7 @@ impl SourceSnapshot {
             return Err(CaptureError::Integrity);
         }
         Ok(Self {
+            registration: false,
             directory,
             manifest,
         })
@@ -496,6 +527,22 @@ fn path_text(path: &Path) -> Result<String, CaptureError> {
     path.to_str()
         .map(str::to_owned)
         .ok_or(CaptureError::Integrity)
+}
+fn capture_paths(
+    workspace: &Workspace,
+    index: &SourceIndex,
+    registration: bool,
+) -> Result<Vec<PathBuf>, CaptureError> {
+    let mut paths = allowlist(workspace, index)?;
+    if registration {
+        let lock = PathBuf::from(workspace.config().dependency_paths().1);
+        match fs::symlink_metadata(workspace.root().join(&lock)) {
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => paths.retain(|p| p != &lock),
+            Err(e) => return Err(e.into()),
+            Ok(_) => (),
+        }
+    }
+    Ok(paths)
 }
 fn allowlist(workspace: &Workspace, index: &SourceIndex) -> Result<Vec<PathBuf>, CaptureError> {
     let mut files: Vec<_> = index.files().iter().map(|f| f.path().to_owned()).collect();

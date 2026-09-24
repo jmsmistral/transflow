@@ -23,6 +23,8 @@ use tf_exec::{
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
+    #[error("{0}")]
+    External(&'static str),
     #[error(
         "Catalogue report exceeds its display limit; reduce --limit or inspect an exact identity"
     )]

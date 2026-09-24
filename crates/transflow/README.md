@@ -71,3 +71,5 @@ model/renderer; real validate/sync integration tests now cover graph detection a
 
 Local Parquet copy staging is available through `dataset import --prepare-only`.
 See [import preparation](IMPORTS.md); normalization and publication remain later tasks.
+
+Explicit [external registration](EXTERNAL.md) supports add/list/show/remove without provider imports. Provider resolution, copies and foreign execution remain later work.

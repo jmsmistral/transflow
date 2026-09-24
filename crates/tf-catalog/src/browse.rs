@@ -36,7 +36,7 @@ pub fn page(
 }
 /// Detached registry entries; callers separately describe retained/runtime state.
 pub fn entries(registry: &RegistrySnapshot) -> Vec<Value> {
-    let mut entries:Vec<_>=registry.datasets().map(|d|json!({"workspace_id":d.key().workspace_id().to_string(),"dataset_id":d.key().dataset_id().to_string(),"path":d.path().as_str(),"kind":d.kind(),"origin":"local","tombstone":d.is_tombstone(),"alias_count":registry.aliases(d.key().dataset_id()).len().to_string(),"aliases":registry.aliases(d.key().dataset_id()).into_iter().take(8).collect::<Vec<_>>()})).chain(registry.external_registrations().map(|e|json!({"workspace_id":e.key().workspace_id().to_string(),"dataset_id":e.key().dataset_id().to_string(),"path":e.alias().as_str(),"kind":"external","origin":"external","tombstone":false,"aliases":[],"alias_count":"0"}))).collect();
+    let mut entries:Vec<_>=registry.datasets().map(|d|json!({"workspace_id":d.key().workspace_id().to_string(),"dataset_id":d.key().dataset_id().to_string(),"path":d.path().as_str(),"kind":d.kind(),"origin":"local","tombstone":d.is_tombstone(),"alias_count":registry.aliases(d.key().dataset_id()).len().to_string(),"aliases":registry.aliases(d.key().dataset_id()).into_iter().take(8).collect::<Vec<_>>()})).chain(registry.external_history().map(|e|json!({"workspace_id":e.key().workspace_id().to_string(),"dataset_id":e.key().dataset_id().to_string(),"path":e.alias().as_str(),"kind":"external","origin":"external","tombstone":e.is_tombstone(),"aliases":[],"alias_count":"0"}))).collect();
     entries.sort_by(|a, b| a["path"].as_str().cmp(&b["path"].as_str()));
     entries
 }

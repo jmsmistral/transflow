@@ -798,3 +798,79 @@ def orders():
     result = cli(workspace, "validate", "--python", sys.executable, ok=False)
     assert result["exit_status"] != 0
     assert files(workspace) == before
+
+
+def test_external_removal_checks_consumer_inputs_and_retains_foreign_identity(
+    workspace: Path,
+) -> None:
+    provider = workspace.parent / "provider"
+    cli(provider, "init", str(provider))
+    (provider / ".transflow/catalog.toml").write_text(
+        f"format_version=1\n[[datasets]]\nid='{uuid4()}'\npath='raw/orders'\nkind='transform'\n"
+    )
+    (provider / "src/poison.py").write_text("raise RuntimeError('provider must never import')\n")
+    registered = cli(
+        workspace,
+        "external",
+        "add",
+        "--workspace",
+        str(provider),
+        "--dataset",
+        "raw/orders",
+        "--as",
+        "market.orders",
+    )["result"]["entries"][0]
+    source(
+        workspace,
+        "consumer.py",
+        """from transflow import transform, Input, Output
+from transflow.catalog import C
+@transform(foreign=Input(C.external.market.orders), output=Output("curated/orders"))
+def consume(foreign):
+    raise AssertionError("consumer body must never run")
+""",
+    )
+    args = ["external", "remove", "market.orders", "--python", sys.executable]
+    before = (workspace / ".transflow/catalog.toml").read_bytes()
+    for confirmation in [[], ["--yes"]]:
+        blocked = cli(workspace, *args, *confirmation, ok=False)["result"]
+        assert blocked["impact_count"] == "1" and blocked["blockers"]
+        assert not blocked["applied"]
+        assert (workspace / ".transflow/catalog.toml").read_bytes() == before
+    source(workspace, "consumer.py", "# consumer deliberately removed\n")
+    removed = cli(workspace, *args, "--yes")["result"]
+    assert removed["entries"][0]["registration_id"] == registered["registration_id"]
+    assert removed["entries"][0]["tombstone"]
+    assert not (provider / ".transflow/runtime/catalog.sqlite").exists()
+
+
+def test_external_removal_blocks_active_read_leases(workspace: Path) -> None:
+    provider = workspace.parent / "provider"
+    cli(provider, "init", str(provider))
+    (provider / ".transflow/catalog.toml").write_text(
+        f"format_version=1\n[[datasets]]\nid='{uuid4()}'\npath='raw/orders'\nkind='transform'\n"
+    )
+    cli(
+        workspace,
+        "external",
+        "add",
+        "--workspace",
+        str(provider),
+        "--dataset",
+        "raw/orders",
+        "--as",
+        "market.orders",
+    )
+    with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db, db:
+        db.execute("INSERT INTO artifacts VALUES(?,'{}','[]',0,0,0,'VERIFIED')", ("e" * 64,))
+        db.execute(
+            "INSERT INTO read_leases "
+            "(id,version_id,artifact_digest,owner_operation,renewed_at_us,expires_at_us,fence) "
+            "VALUES(?,NULL,?,'synthetic lease',1,9223372036854775807,1)",
+            (str(uuid4()), "e" * 64),
+        )
+    before = (workspace / ".transflow/catalog.toml").read_bytes()
+    for confirmation in [[], ["--yes"]]:
+        result = cli(workspace, "external", "remove", "market.orders", *confirmation, ok=False)
+        assert result["result"]["blockers"] and not result["result"]["applied"]
+        assert (workspace / ".transflow/catalog.toml").read_bytes() == before

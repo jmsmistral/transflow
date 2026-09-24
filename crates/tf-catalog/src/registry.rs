@@ -132,6 +132,8 @@ struct RawAlias {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct RawExternal {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    tombstone: bool,
     id: String,
     alias: String,
     provider_workspace_id: String,
@@ -169,6 +171,7 @@ impl LocalDataset {
 /// Explicit foreign read boundary. Machine-local locators are never stored here.
 #[derive(Clone, Debug)]
 pub struct ExternalRegistration {
+    tombstone: bool,
     id: ExternalRegistrationId,
     alias: DatasetPath,
     key: DatasetKey,
@@ -177,6 +180,10 @@ pub struct ExternalRegistration {
     fallback: Option<Vec<BranchName>>,
 }
 impl ExternalRegistration {
+    /// Removed registrations reserve their alias and retain origin identity.
+    pub fn is_tombstone(&self) -> bool {
+        self.tombstone
+    }
     /// Stable local registration identity, independent of provider dataset identity.
     pub fn id(&self) -> ExternalRegistrationId {
         self.id
@@ -340,6 +347,7 @@ impl RegistrySnapshot {
             names.insert(name, Name::Alias(id));
         }
         let mut registrations = BTreeMap::new();
+        let mut providers = BTreeMap::new();
         for (index, r) in raw.external_registrations.iter().enumerate() {
             let loc = format!("/external_registrations/{index}");
             let id: ExternalRegistrationId =
@@ -369,6 +377,20 @@ impl RegistrySnapshot {
             if alias.as_str().split('/').count() < 3 {
                 return Err(error(RegistryErrorKind::Invalid, format!("{loc}/alias")));
             }
+            let provider_alias = alias
+                .as_str()
+                .split('/')
+                .nth(1)
+                .ok_or_else(|| error(RegistryErrorKind::Invalid, &loc))?;
+            if providers
+                .insert(provider_alias.to_owned(), provider)
+                .is_some_and(|old| old != provider)
+            {
+                return Err(error(
+                    RegistryErrorKind::Invalid,
+                    format!("{loc}/provider_workspace_id"),
+                ));
+            }
             claim(&mut claimed_names, alias.clone(), format!("{loc}/alias"))?;
             let display_path = path(
                 &r.provider_display_path,
@@ -392,10 +414,18 @@ impl RegistrySnapshot {
                         .collect::<Result<Vec<_>>>()
                 })
                 .transpose()?;
-            names.insert(alias.clone(), Name::External(id));
+            names.insert(
+                alias.clone(),
+                if r.tombstone {
+                    Name::Tombstone
+                } else {
+                    Name::External(id)
+                },
+            );
             external.insert(
                 id,
                 ExternalRegistration {
+                    tombstone: r.tombstone,
                     id,
                     alias,
                     key: DatasetKey::new(provider, dataset),
@@ -442,6 +472,10 @@ impl RegistrySnapshot {
     }
     /// Read-only foreign registrations in stable registration-ID order.
     pub fn external_registrations(&self) -> impl Iterator<Item = &ExternalRegistration> {
+        self.external.values().filter(|e| !e.is_tombstone())
+    }
+    /// All foreign identities, including reserved removed aliases.
+    pub fn external_history(&self) -> impl Iterator<Item = &ExternalRegistration> {
         self.external.values()
     }
     /// Exact registered local ID lookup; deleted identities never become a replacement.
@@ -567,6 +601,43 @@ impl RegistrySnapshot {
         raw.datasets.sort_by(|a, b| a.id.cmp(&b.id));
         self.render_raw(&raw)
     }
+    /// Explicit addition. The full parser enforces identity, alias ownership and policy syntax.
+    pub fn render_external_add(
+        &self,
+        registration: ExternalRegistrationId,
+        alias: &DatasetPath,
+        provider: &LocalDataset,
+        default_branch: &BranchName,
+        fallback: Option<&[BranchName]>,
+    ) -> Result<String> {
+        if provider.is_tombstone() {
+            return Err(error(RegistryErrorKind::Tombstone, "/external_add"));
+        }
+        let mut raw = self.raw.clone();
+        raw.external_registrations.push(RawExternal {
+            tombstone: false,
+            id: registration.to_string(),
+            alias: alias.as_str().to_owned(),
+            provider_workspace_id: provider.key().workspace_id().to_string(),
+            provider_dataset_id: provider.key().dataset_id().to_string(),
+            provider_display_path: provider.path().as_str().to_owned(),
+            default_branch: default_branch.as_str().to_owned(),
+            fallback_override: fallback.map(|v| v.iter().map(|b| b.as_str().to_owned()).collect()),
+        });
+        raw.external_registrations.sort_by(|a, b| a.id.cmp(&b.id));
+        self.render_raw(&raw)
+    }
+    /// Reserve the removed alias forever; retained provenance is never deleted or retargeted.
+    pub fn render_external_remove(&self, id: ExternalRegistrationId) -> Result<String> {
+        let mut raw = self.raw.clone();
+        let item = raw
+            .external_registrations
+            .iter_mut()
+            .find(|e| e.id == id.to_string())
+            .ok_or_else(|| error(RegistryErrorKind::Missing, "/external_remove"))?;
+        item.tombstone = true;
+        self.render_raw(&raw)
+    }
     /// Explicit rename of an active local identity. Full parse rejects every name collision.
     pub fn render_rename(
         &self,
@@ -647,6 +718,9 @@ impl RegistrySnapshot {
         }
         for e in &raw.external_registrations {
             text.push_str("\n[[external_registrations]]\n");
+            if e.tombstone {
+                text.push_str("tombstone = true\n");
+            }
             for (key, value) in [
                 ("id", &e.id),
                 ("alias", &e.alias),

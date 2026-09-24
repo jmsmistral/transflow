@@ -6,7 +6,7 @@ use tf_domain::diagnostic::{Diagnostic, ExitStatus, RequestContext, SafeText};
 /// Initial complete-result envelope format, independent of the worker protocol.
 pub const CLI_ENVELOPE_VERSION: u32 = 1;
 /// Implemented CLI operations. This does not advertise dataset/coordinator capabilities.
-pub const CLI_CAPABILITIES: [&str; 30] = [
+pub const CLI_CAPABILITIES: &[&str] = &[
     "cli.help",
     "cli.version",
     "cli.diagnostics.v1",
@@ -17,6 +17,10 @@ pub const CLI_CAPABILITIES: [&str; 30] = [
     "workspace.validate",
     "catalog.sync",
     "catalog.sync.check",
+    "external.add",
+    "external.list",
+    "external.show",
+    "external.remove",
     "catalog.list",
     "catalog.show",
     "catalog.rename",
@@ -153,6 +157,26 @@ impl CliEnvelope {
         errors: &[Diagnostic],
     ) -> Result<Self, ProtocolError> {
         validate_document("CatalogResultV1", &result)?;
+        Self::encode(
+            version,
+            if errors.is_empty() {
+                ExitStatus::Success
+            } else {
+                ExitStatus::Failure
+            },
+            ctx,
+            result,
+            errors.iter().map(diagnostic).collect(),
+        )
+    }
+    /// Closed external registration inspection or lifecycle result with explicit impact/blocking diagnostics.
+    pub fn external(
+        version: &SafeText,
+        ctx: &RequestContext,
+        result: Value,
+        errors: &[Diagnostic],
+    ) -> Result<Self, ProtocolError> {
+        validate_document("ExternalResultV1", &result)?;
         Self::encode(
             version,
             if errors.is_empty() {

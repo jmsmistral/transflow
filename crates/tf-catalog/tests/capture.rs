@@ -209,3 +209,15 @@ fn edits_before_a_later_file_is_copied_are_detected() {
     assert!(matches!(result, Err(CaptureError::Changed)));
     assert_eq!(fs::read_dir(t.parent()).unwrap().count(), 0);
 }
+
+#[test]
+fn registration_capture_guards_missing_lock_without_weakening_execution_capture() {
+    let t = Tree::new();
+    fs::remove_file(t.0.join("requirements.lock")).unwrap();
+    let w = Workspace::load(&t.0, Some(&t.0)).unwrap();
+    assert!(SourceSnapshot::capture(&w, CaptureLimits::default()).is_err());
+    let registration = SourceSnapshot::registration(&w, None).unwrap();
+    registration.verify_working_copy(&w, false).unwrap();
+    fs::write(t.0.join("requirements.lock"), "new lock").unwrap();
+    assert!(registration.verify_working_copy(&w, false).is_err());
+}

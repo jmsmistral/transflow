@@ -693,3 +693,80 @@ fn lifecycle_rename_and_tombstone_recover_exact_ids_without_allocations() {
         });
     }
 }
+
+#[test]
+fn external_add_and_remove_recover_exact_registration_after_interrupted_rename() {
+    let tree = Tree::new();
+    runtime().block_on(async {
+        let provider = RegistrySnapshot::parse(
+            WorkspaceId::from_bytes([7; 16]),
+            &format!(
+                "format_version=1\n[[datasets]]\nid='{}'\npath='raw/orders'\nkind='transform'\n",
+                dataset_id()
+            ),
+        )
+        .unwrap();
+        let registration = tf_domain::ExternalRegistrationId::from_bytes([9; 16]);
+        let mut owner = tree.owner();
+        for remove in [false, true] {
+            let workspace = Workspace::load(&tree.0, Some(&tree.0)).unwrap();
+            let capture = SourceSnapshot::registration(&workspace, None).unwrap();
+            let registry = RegistrySnapshot::parse(
+                workspace_id(),
+                std::str::from_utf8(&tree.bytes()).unwrap(),
+            )
+            .unwrap();
+            let replacement = if remove {
+                registry.render_external_remove(registration).unwrap()
+            } else {
+                registry
+                    .render_external_add(
+                        registration,
+                        &"external/market/orders".parse().unwrap(),
+                        provider.resolve_output("raw/orders").unwrap(),
+                        &"master".parse().unwrap(),
+                        None,
+                    )
+                    .unwrap()
+            };
+            let proposal = tf_catalog::candidate::RegistryProposal::lifecycle(
+                &registry,
+                capture.id().unwrap(),
+                replacement.clone(),
+            )
+            .unwrap();
+            let id = RequestId::from_bytes([if remove { 11 } else { 10 }; 16]);
+            let stopped = reconcile_with_observer(
+                owner,
+                ReconcileRequest {
+                    capture,
+                    proposal,
+                    context: WriteContext::WorkingTree,
+                    id,
+                    at_us: 123,
+                },
+                |boundary| {
+                    if boundary == Boundary::Renamed {
+                        Err(io::Error::other("synthetic interruption"))
+                    } else {
+                        Ok(())
+                    }
+                },
+            )
+            .await
+            .unwrap();
+            assert!(stopped.outcome.is_err());
+            owner = stopped.owner;
+            assert_eq!(
+                recover(&mut owner, 456).await.unwrap(),
+                vec![RecoveryOutcome::Indexed(id)]
+            );
+            assert_eq!(tree.bytes(), replacement.as_bytes());
+            let current = RegistrySnapshot::parse(workspace_id(), &replacement).unwrap();
+            let e = current.external_history().next().unwrap();
+            assert_eq!(e.id(), registration);
+            assert_eq!(e.is_tombstone(), remove);
+            assert_eq!(e.key(), provider.resolve("raw/orders").unwrap().key());
+        }
+    });
+}

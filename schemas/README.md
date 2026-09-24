@@ -212,3 +212,5 @@ canceled builds. Its kind/operation/data envelope is closed; data carries recurs
 JSON execution evidence and embedded immutable plan/check metadata. UUIDs remain
 strings and measured integer timestamps/durations remain decimal strings. This is
 an additive pre-release contract change, not a released protocol-version change.
+
+T069 adds bounded `ExternalResultV1`/`ExternalEntryV1` CLI contracts and four external-registration capabilities. Private locator paths are excluded; replica state is explicitly not inspected. Worker protocol remains 1.0.

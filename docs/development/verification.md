@@ -682,3 +682,36 @@ refresh of the editor type overlay and retained browse graph; explicit catalogue
 sync currently performs it. This concerns tooling metadata, not dataset cache
 reuse or successful execution. The broader language-server/extensions remain
 later tasks; this qualification is for the existing Python typing integration.
+
+
+## Owner-approved editor deferral (2026-09-24)
+
+The owner deferred editor-environment work until after the first end-to-end version.
+This supersedes the earlier T033/T068 native-editor blocking notes. T031 moves to G3
+with native VS Code/Emacs qualification and automatic editor-overlay integration
+retained alongside T108. Existing T033 and T068 implementation/local checks and
+owner-confirmed CI support their completed status. No editor result is claimed.
+Non-editor browse-graph refresh remains under T073, independent of editor setup.
+
+
+## T069 explicit external registration (2026-09-24)
+
+The public CLI now supports external add/list/show/remove with provider UUID ownership,
+private UUID-keyed locators, default branch/fallback policy, bounded reports and retained
+removal tombstones. Provider inspection never imports code or opens its runtime writer.
+Registration can precede consumer lock/environment setup; removal checks consumer
+references and active runtime users, then uses existing journal recovery.
+
+The full contributor gate passes on macOS arm64/Python 3.14.7: 44 specification,
+27 safety and 12 Rust-boundary regressions; 359 Rust tests plus one documentation
+test; 810 Python, 311 web and 54 installed CLI tests, with formatting, linting,
+type checks, generated-contract and build verification. Five new native CLI cases,
+filesystem guards, missing-lock membership and interrupted add/remove recovery are
+included. Two installed cases prove consumer C references and leases block removal.
+No package version changed; the schema corpus has 257 cases. Earlier schema-bound
+and fixture-count failures were corrected before the successful complete run.
+
+See [the measured receipt](evidence/t069-macos-arm64.json) for commands, exact scope and limitations. No provider
+version resolution, replicas, foreign execution, native editor pass or full G1
+closure is claimed. The owner monitors CI; T069 remains unchecked pending that
+confirmation. Editor deferral and T033/T068 completion are recorded separately above.

@@ -404,6 +404,22 @@ impl RegistryProposal {
             .map_err(|_| error("Lifecycle replacement registry is invalid", vec![]))?;
         let before: BTreeMap<_, _> = registry.datasets().map(|d| (d.key(), d.kind())).collect();
         let after: BTreeMap<_, _> = updated.datasets().map(|d| (d.key(), d.kind())).collect();
+        let foreign: BTreeMap<_, _> = updated.external_history().map(|e| (e.id(), e)).collect();
+        if registry.external_history().any(|old| {
+            foreign.get(&old.id()).is_none_or(|new| {
+                old.key() != new.key()
+                    || old.alias() != new.alias()
+                    || old.provider_display_path() != new.provider_display_path()
+                    || old.default_branch() != new.default_branch()
+                    || old.fallback_override() != new.fallback_override()
+                    || (old.is_tombstone() && !new.is_tombstone())
+            })
+        }) {
+            return Err(error(
+                "Lifecycle mutation cannot replace or erase foreign identities",
+                vec![],
+            ));
+        }
         if before != after {
             return Err(error(
                 "Lifecycle mutation cannot change dataset identities or kinds",

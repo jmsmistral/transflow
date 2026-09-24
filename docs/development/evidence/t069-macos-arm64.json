@@ -1,0 +1,41 @@
+{
+  "task": "T069",
+  "date": "2026-09-24",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "a4d3f141b48387e3df7db79de75b2af13d0f778e",
+  "specification_base": "3536aee3f6ea5f52505e4f418967122f61b954bd",
+  "result": "local verification passed",
+  "gate_complete": false,
+  "ci": "pending owner confirmation; no workflow polling",
+  "commands": [
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check.sh",
+      "result": "Passed 44 specification regressions, 27 safety regressions, 12 Rust boundary regressions; rustfmt/check/Clippy and 359 Rust tests plus one doc test; Ruff/mypy (58 source files), 810 Python tests; 311 web tests plus type/lint/format/production build verification; 54 installed CLI tests.",
+      "log": "/private/tmp/t069-verified.log",
+      "sha256": "0f44fa1cf6281f26a094a6e4003c2e7eadc14f390175bcc77aa084e6f1b3829e"
+    }
+  ],
+  "coverage": [
+    "five native CLI registration cases, including identical names/UUIDs across distinct providers, no provider imports or writer, locator privacy/status/repair, configured default versus Git feature, fallback overrides, alias collisions, tombstones and pagination",
+    "registration capture permits and guards missing dependency lock; execution capture remains strict",
+    "guarded local locator replacement rejects changed bytes, symlinks and replaced directories and cleans temporary files",
+    "external add/remove recovery after interrupted registry rename preserves exact identity",
+    "installed consumer C input and active read lease prevent removal without deleting retained metadata",
+    "shared cross-language corpus has 257 cases; external reports reject private locator paths"
+  ],
+  "limits": [
+    "Provider metadata only; versions, copy leases, replicas and foreign execution/replay remain T070-T072.",
+    "Replica status is explicitly not inspected.",
+    "Removal conservatively blocks current consumer references to the provider key and active runtime users.",
+    "Interruption can leave an unused local locator; no implicit registration or retargeting. Non-cooperating editor compare/rename race remains as documented.",
+    "Native editor and automatic overlay work deferred by owner; no editor observations claimed.",
+    "No additional native engine qualification was run for this metadata-only change; full native engine/release and foreign G1 qualification remain separate."
+  ],
+  "resolved_during_verification": [
+    "Initial sandboxed coordinator tests needed approved local socket/process access.",
+    "Missing-lock registration capture guard was corrected while execution captures remain strict.",
+    "Shared schema subset requires explicit array minima; corrected and verified.",
+    "Conformance fixture count updated from 255 to 257."
+  ]
+}

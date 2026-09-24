@@ -614,6 +614,44 @@ impl LocalConfig {
         }
         Ok(value)
     }
+    /// Render a machine-only locator update, preserving Python and secret references.
+    pub fn render_provider(text: &str, id: WorkspaceId, path: &Path) -> ConfigResult<String> {
+        let mut local = Self::parse(text)?;
+        local
+            .external_workspaces
+            .insert(id.to_string(), path.to_owned());
+        let quote = |s: &str| {
+            serde_json::to_string(s)
+                .map_err(|_| invalid("transflow.local.toml", "cannot render local settings"))
+        };
+        let mut rendered = String::new();
+        if let Some(p) = local.python.executable {
+            rendered.push_str(&format!(
+                "[python]\nexecutable = {}\n",
+                quote(
+                    p.to_str()
+                        .ok_or_else(|| invalid("python", "locator must be UTF-8"))?
+                )?
+            ));
+        }
+        rendered.push_str("\n[external_workspaces]\n");
+        for (id, p) in local.external_workspaces {
+            rendered.push_str(&format!(
+                "{} = {}\n",
+                quote(&id)?,
+                quote(
+                    p.to_str()
+                        .ok_or_else(|| invalid("external_workspaces", "locator must be UTF-8"))?
+                )?
+            ));
+        }
+        rendered.push_str("\n[secret_references]\n");
+        for (name, reference) in local.secret_references {
+            rendered.push_str(&format!("{} = {}\n", quote(&name)?, quote(&reference)?));
+        }
+        Self::parse(&rendered)?;
+        Ok(rendered)
+    }
     /// Interpreter locator; the environment service must report and fingerprint its identity.
     pub fn interpreter(&self) -> Option<&Path> {
         self.python.executable.as_deref()
