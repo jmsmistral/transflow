@@ -652,3 +652,16 @@ sync supplies these optional caches; guarded automatic refresh is tracked under
 T073, alongside existing native editor prerequisites. Public dataset inspection,
 HTTP/UI and foreign-data work remain open. This evidence does not close G1 or
 claim CI success. The owner monitors CI; previous unconfirmed results stay pending.
+
+
+## T056–T064 completion reconciliation (2026-09-24)
+
+The owner-confirmed T064 CI revision contains T056–T064 and runs their retained
+contributor and native regression suites. Their task checkboxes are now complete
+for their recorded scopes. Earlier notes requiring separate historical CI receipts
+were unnecessarily restrictive: later cumulative qualification is sufficient when
+the implementation and applicable checks are retained. The [reconciliation receipt](evidence/t056-t064-completion-reconciliation.json)
+records verified ancestry and the existing T064 CI receipt, without inventing
+outcomes for older workflow runs. No workflows were polled and no code changed.
+T065–T068 CI remains unconfirmed; T068 also retains its documented editor and
+automatic tooling-cache integration prerequisites.
