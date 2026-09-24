@@ -665,3 +665,20 @@ records verified ancestry and the existing T064 CI receipt, without inventing
 outcomes for older workflow runs. No workflows were polled and no code changed.
 T065–T068 CI remains unconfirmed; T068 also retains its documented editor and
 automatic tooling-cache integration prerequisites.
+
+
+## T065–T068 owner-confirmed CI (2026-09-24)
+
+The owner explicitly confirmed that CI workflows passed for all these tasks.
+The [receipt](evidence/t065-t068-owner-ci.json) records their implementation/specification
+pairs without polling or inventing job IDs. T065–T067 are complete; T068's CI
+obligation is satisfied. This supersedes earlier pending-CI notes.
+
+T068 remains open through its T033 → T031 prerequisite: actual VS Code and Emacs
+completion, typo, isolation and refresh observations are still required by the
+[manual checklist](manual-acceptance.md). Existing mypy/renderer tests do not
+substitute for those editor observations. Ordinary builds also need guarded
+refresh of the editor type overlay and retained browse graph; explicit catalogue
+sync currently performs it. This concerns tooling metadata, not dataset cache
+reuse or successful execution. The broader language-server/extensions remain
+later tasks; this qualification is for the existing Python typing integration.
