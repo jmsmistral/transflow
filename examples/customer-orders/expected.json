@@ -1,0 +1,12 @@
+{
+  "datasets": ["curated/customer_orders", "raw/customers", "raw/orders"],
+  "rows": [
+    {"order_id": 1001, "customer_id": 1, "customer_name": "Ada", "order_date": "2026-09-18", "amount": 1742},
+    {"order_id": 1002, "customer_id": 2, "customer_name": "Grace", "order_date": "2026-09-18", "amount": 9117}
+  ],
+  "checks": [
+    ["customer_age", "input", "customers", "PASS"],
+    ["customer_pk", "input", "customers", "PASS"],
+    ["order_pk", "output", null, "PASS"]
+  ]
+}

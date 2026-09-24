@@ -21,6 +21,9 @@ PIP_VERSION = "26.2.1"
 RESOLVER_VERSION = "7.6.1"
 LOCK_PREFIX = "# transflow-lock-v1 "
 MAX_TEXT = 16 * 1024 * 1024
+# Canonical validation is a runtime service, even when user code imports only Polars.
+# Keep this standard-library module self-contained: the CLI embeds it before install.
+MANAGED_PACKAGES = {"duckdb": "1.5.5"}
 
 
 class EnvironmentError(ValueError):
@@ -209,7 +212,9 @@ def lock_environment(
     ) as temporary:
         stage = Path(temporary)
         captured = stage / "requirements.in"
-        captured.write_text(source_bytes)
+        captured.write_text(
+            source_bytes + "\n" + "\n".join(f"{n}=={v}" for n, v in MANAGED_PACKAGES.items()) + "\n"
+        )
         resolved = stage / "requirements.lock"
         arguments = [
             sys.executable,
@@ -366,7 +371,12 @@ def _lock_state(root: Path, requirements: str, lock: str) -> tuple[str, dict[str
         )
     if info.get("requirements_sha256") != _digest(_relative(root, requirements)):
         raise EnvironmentError("Dependency input changed after locking; run env lock then env sync")
-    return text, _lock_pins(body)
+    pins = _lock_pins(body)
+    if any(pins.get(name) != version for name, version in MANAGED_PACKAGES.items()):
+        raise EnvironmentError(
+            "Dependency lock lacks the qualified managed check engine; run env lock then env sync"
+        )
+    return text, pins
 
 
 def sync_environment(

@@ -12,6 +12,7 @@ from typing import Any
 
 from .canonical import artifact_digest, file_digest
 from .discovery import DiscoveryError, _directory
+from .environment import MANAGED_PACKAGES
 from .polars_adapter import _file
 
 
@@ -43,7 +44,7 @@ def pinned_files(request: dict[str, Any]) -> tuple[list[str], list[tuple[int, in
 
 def connect(request: dict[str, Any], paths: list[str]) -> Any:
     duckdb = importlib.import_module("duckdb")
-    if duckdb.__version__ != "1.5.5":
+    if duckdb.__version__ != MANAGED_PACKAGES["duckdb"]:
         raise CheckError("engine_version", "Canonical checks require the qualified DuckDB version")
     temporary = _directory(request["spill_directory"], private=True)
     if any(temporary.iterdir()):

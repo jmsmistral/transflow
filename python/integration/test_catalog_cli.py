@@ -35,6 +35,7 @@ def workspace(tmp_path: Path, wheel: Path) -> Path:
     config = root / "workspace.toml"
     config.write_text(config.read_text().replace('version = "3.14"', f'version = "{MINOR}"'))
     (root / "wheels").mkdir()
+    fixture_wheel(root / "wheels", "duckdb", "1.5.5")
     fixture_wheel(root / "wheels", "transflow_fixture_leaf", "1.0.0")
     (root / "requirements.in").write_text("transflow-fixture-leaf==1.0.0\n")
     lock(root)

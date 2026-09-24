@@ -45,9 +45,10 @@ cargo build --locked --offline -p tf-exec --example lifecycle_probe
 "$python_bin" -I -B python/tools/check_lifecycle.py "$CARGO_TARGET_DIR/debug/examples/lifecycle_probe" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" > "$run_dir/expectation-lifecycle.json"
 cargo build --locked --offline -p transflow --bin transflow --example dispatch_probe
 "$python_bin" -I -B python/tools/check_dispatch.py "$CARGO_TARGET_DIR/debug/examples/dispatch_probe" "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" > "$run_dir/build-dispatch.json"
+"$python_bin" -I -B python/tools/check_developer_core.py "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" --output "$run_dir/developer-core.json"
 node tools/qualification/web/patch-elk.mjs
 npm --prefix tools/qualification/web run typecheck
 npm --prefix tools/qualification/web test
 npm --prefix tools/qualification/web run build
 echo "Dependency qualification passed. Native reports: $run_dir"
-echo "This includes build dispatch, public CLI and restart journeys; release conformance remains a later task."
+echo "This includes build dispatch, public CLI, restart and customer-orders journeys; release conformance remains a later task."

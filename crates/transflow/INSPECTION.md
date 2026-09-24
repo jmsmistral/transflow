@@ -2,8 +2,8 @@
 
 T054 exposes the existing shared preparation, freshness and traversal services.
 The commands use the installed matched worker and prepared environment. They import
-captured trusted Python declarations, but never call a producer function. Build
-execution remains later work.
+captured trusted Python declarations, but never call a producer function. Execution
+is exposed separately by the [build commands](BUILDS.md).
 
 ```bash
 transflow plan curated/customer_orders
@@ -110,7 +110,8 @@ has exit status one. Neither command accepts `--wait` or `--no-wait`.
 
 See [verification evidence](../../docs/development/verification.md) for actual checks
 and CI status. The synthetic publication example is contributor-only test support;
-it is not an installed command or a public build interface.
+it is not an installed command. See the
+[customer-orders walkthrough](../../examples/customer-orders/README.md) for public builds.
 
 T056 plans include resolved job/CPU/thread capacity, optional estimated memory
 budget, independent validation/interactive/discovery timers and winning origins.

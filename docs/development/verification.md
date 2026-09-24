@@ -623,3 +623,32 @@ worker protocol 1.0, AST 1 and specification 1.1.2 are unchanged.
 Run worker-heavy contributor/CLI/native suites sequentially. CI remains with the
 owner; no workflow polling is performed and Linux results are not inferred from
 local macOS success. Earlier unconfirmed CI remains explicitly pending.
+
+
+## T068 customer-orders acceptance (2026-09-24)
+
+The contributor aggregate passes on macOS arm64: 349 Rust tests plus one doc test,
+806 Python tests, 309 web tests and 52 installed CLI tests, with document, safety,
+boundary, lint/type and build checks. Final Clippy and native qualification cover
+the subsequent standalone build diagnostic refinement. The full native run
+`target/qualification/runs/native.FzeHVw` passes its existing 36 dispatch/public/
+recovery cases and 28 new customer-orders cases (14 per no-Git/Git variant).
+
+See the [runnable example](../../examples/customer-orders/README.md),
+[acceptance runner](../../python/tools/check_developer_core.py) and
+[measured receipt](evidence/t068-macos-arm64.json). Native CI runs the same journey
+and retains its JSON commands/registry/rows/heads/check histories, including on
+failure. Run worker-heavy suites sequentially.
+
+Clean-start testing found missing managed check-engine resolution: explicit env
+lock now includes the qualified DuckDB pin without editing authored requirements.
+Sync/check reject incomplete old locks and request explicit lock/sync; builds
+never install. Three environment regressions cover the fix and failure preservation.
+Standalone builds now retain structural diagnostic locations and cycle codes.
+
+The runner records a remaining integration gap: ordinary builds do not refresh
+editor overlays or retained catalogue-browse graph pointers. Explicit catalogue
+sync supplies these optional caches; guarded automatic refresh is tracked under
+T073, alongside existing native editor prerequisites. Public dataset inspection,
+HTTP/UI and foreign-data work remain open. This evidence does not close G1 or
+claim CI success. The owner monitors CI; previous unconfirmed results stay pending.

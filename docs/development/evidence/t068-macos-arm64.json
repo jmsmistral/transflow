@@ -1,0 +1,115 @@
+{
+  "task": "T068",
+  "date": "2026-09-24",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "c61383dead2a75e902b367961ec259d99d2f6030",
+  "specification_base": "e180c485fcc53ea14ff53efdb3be22a8c484cad2",
+  "result": "local verification passed",
+  "gate_complete": false,
+  "commands": [
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check.sh",
+      "result": "Passed 44 specification regressions, 27 safety regressions, 12 Rust boundary regressions, Rust fmt/check/Clippy and 349 tests plus one doc test, Ruff/mypy (58 source files), 806 Python tests, 309 web tests/type/lint/build/deterministic asset verification, and 52 installed CLI tests. /private/tmp/t068-check.log. Final standalone validation diagnostic refinement was subsequently compiled/linted and covered by the native walkthrough."
+    },
+    {
+      "command": "cargo clippy --locked --offline -p transflow --all-targets -- -D warnings",
+      "result": "Passed after the standalone build diagnostic refinement. /private/tmp/t068-clippy-final.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh",
+      "result": "Passed full native engine/resource/declaration/normalization/Polars/check/lifecycle/web qualification, 36 existing dispatch/public/recovery cases and 28 new developer-core cases. /private/tmp/t068-native.log."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh; specification checker; final runner Ruff/format/mypy",
+      "result": "Passed final safety and 27 regressions (573 public candidates, 641 locked versions, two existing exceptions), specification validation and final runner static checks. /private/tmp/t068-safety-final.log and /private/tmp/t068-spec-final.log."
+    }
+  ],
+  "native_report": "target/qualification/runs/native.FzeHVw/developer-core.json",
+  "native_report_sha256": "c89c8176222078375d4007623caf4dc56e15f44fc323964ec41b1264eff36f3c",
+  "native_cli_sha256": "66c3fd2f80001bab3333bcd7f70d484e43befa4b171d62d86d81c463090b09b1",
+  "native_wheel_sha256": "de7971d472ce04d89e2007a93b869d1bbf8dadbaa75d8a1a55a8c8037e4de9a9",
+  "variants": [
+    {
+      "name": "no-git",
+      "passed": 14,
+      "command_count": 37,
+      "post_build_tooling": {
+        "editor_overlay": false,
+        "browse_graph": false
+      },
+      "rows": [
+        {
+          "order_id": 1001,
+          "customer_id": 1,
+          "customer_name": "Ada",
+          "order_date": "2026-09-18",
+          "amount": 1742
+        },
+        {
+          "order_id": 1002,
+          "customer_id": 2,
+          "customer_name": "Grace",
+          "order_date": "2026-09-18",
+          "amount": 9117
+        }
+      ]
+    },
+    {
+      "name": "git-feature",
+      "passed": 14,
+      "command_count": 37,
+      "post_build_tooling": {
+        "editor_overlay": false,
+        "browse_graph": false
+      },
+      "rows": [
+        {
+          "order_id": 1001,
+          "customer_id": 1,
+          "customer_name": "Ada",
+          "order_date": "2026-09-18",
+          "amount": 1742
+        },
+        {
+          "order_id": 1002,
+          "customer_id": 2,
+          "customer_name": "Grace",
+          "order_date": "2026-09-18",
+          "amount": 9117
+        }
+      ]
+    }
+  ],
+  "cases_per_variant": [
+    "fresh public build registers exactly three outputs and persists exact rows/pins/checks",
+    "public validation, plan, catalogue, lineage and execution inspection succeed",
+    "selected repeat reuses original version and check timestamps without source refresh",
+    "selected force executes the join and all checks while preserving source heads",
+    "explicit full matches default scope and refreshes always sources",
+    "between force executes only after its boundary and pins the side input",
+    "isolated branch executes captured helper edit and uses labelled master fallback",
+    "helper-only edit invalidates selected cache; reverting reuses its retained version",
+    "age 200 blocks invocation; last-good output and producer success survive",
+    "duplicate ID blocks invocation; last-good output and producer success survive",
+    "forced output FAIL quarantines the candidate and preserves last-good bytes/head",
+    "unknown input refuses validate/plan/build before registration or producer execution",
+    "duplicate producer refuses validate/plan/build before registration or producer execution",
+    "cycle refuses validate/plan/build before registration or producer execution"
+  ],
+  "fixes_found": [
+    "Fresh init requirements contained Polars but omitted the managed DuckDB check engine. Explicit lock now merges its existing qualified pin; sync/check refuse incomplete old locks. Three environment regressions cover unchanged authored input, conflicting pins preserving the lock, and missing managed pins refusing before installation.",
+    "Standalone build flattened structural validation diagnostics. It now reuses the shared source-location/cycle diagnostic; final native fixtures assert specific unresolved-input, duplicate-producer and cycle failures for validate/plan/build."
+  ],
+  "runner_corrections": [
+    "Python macOS SQLite read-only URI could not recreate missing WAL sidecars after refused commands; inspection uses an existing-database connection with PRAGMA query_only=ON. No domain SQL writes are allowed.",
+    "Structural fixtures use one producer per module and assert the specific failure, avoiding false success at the earlier module-shape guard. Empty user logs are valid."
+  ],
+  "limits": [
+    "T033 remains gated by T031/T108 native editor qualification; full G1 remains T073 after foreign-data work.",
+    "Both variants observed missing post-build editor overlay and catalogue-browse graph caches. Explicit catalog sync generates these optional tooling caches; guarded automatic refresh is recorded under T073.",
+    "Public dataset preview/history, browser serve --open and external registration remain later tasks. The runner verifies retained rows through real Parquet reads.",
+    "A12 covers selected reuse/helper invalidation; A58 covers this graph; A59 covers always sources. Broader matrices retain their existing lower-level qualification.",
+    "No CI workflows were polled. T068 CI and earlier unconfirmed T065-T067/T061 CI remain owner-monitored; local macOS does not establish Linux qualification."
+  ]
+}

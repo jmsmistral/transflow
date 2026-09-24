@@ -263,7 +263,12 @@ pub fn run(
                             (report.status, Some(report.value), report.human)
                         }
                         Err(error) => {
-                            errors.push(Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Build operation could not complete")?,redactor.text(&error.to_string())?,redactor.text("Inspect the selected workspace, retained build evidence and coordinator status before retrying.")?));
+                            let diagnostic = if let Some(validation) = error.validation() {
+                                validation.diagnostic(&redactor)?
+                            } else {
+                                Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Build operation could not complete")?,redactor.text(&error.to_string())?,redactor.text("Inspect the selected workspace, retained build evidence and coordinator status before retrying.")?)
+                            };
+                            errors.push(diagnostic);
                             (ExitStatus::Failure, None, String::new())
                         }
                     };

@@ -56,6 +56,8 @@ def fixture_wheel(root: Path, name: str, version: str, requires: str | None = No
 def workspace(tmp_path: Path) -> Path:
     (tmp_path / ".transflow/runtime").mkdir(parents=True)
     (tmp_path / "wheels").mkdir()
+    # Package-management fixture only; real engine execution is qualified separately.
+    fixture_wheel(tmp_path / "wheels", "duckdb", "1.5.5")
     fixture_wheel(tmp_path / "wheels", "transflow_fixture_leaf", "1.0.0")
     fixture_wheel(tmp_path / "wheels", "transflow_fixture_leaf", "2.0.0")
     fixture_wheel(
@@ -103,20 +105,58 @@ def active(root: Path) -> Path:
 def test_offline_cold_setup_locks_transitive_hashes_and_verifies_actual_state(
     workspace: Path, wheel: Path
 ) -> None:
-    assert lock(workspace)["packages"] == 2
+    assert lock(workspace)["packages"] == 3
     original = (workspace / "requirements.lock").read_bytes()
     assert "transflow-fixture-leaf==1.0.0" in original.decode()
-    assert lock(workspace)["packages"] == 2
+    assert lock(workspace)["packages"] == 3
     assert (workspace / "requirements.lock").read_bytes() == original
     report = sync(workspace, wheel)
-    assert report["packages"] == 3
+    assert report["packages"] == 4
     assert check(workspace)["fingerprint"] == report["fingerprint"]
     installed = inspect_environment(active(workspace))
     assert installed["packages"] == {
+        "duckdb": "1.5.5",
         "transflow": __version__,
         "transflow-fixture-leaf": "1.0.0",
         "transflow-fixture-root": "1.0.0",
     }
+
+
+def test_managed_check_engine_is_locked_without_rewriting_user_input(workspace: Path) -> None:
+    before = (workspace / "requirements.in").read_bytes()
+    lock(workspace)
+    assert "duckdb==1.5.5" in (workspace / "requirements.lock").read_text()
+    assert (workspace / "requirements.in").read_bytes() == before
+
+
+def test_conflicting_managed_engine_preserves_previous_lock(workspace: Path) -> None:
+    lock(workspace)
+    previous = (workspace / "requirements.lock").read_bytes()
+    with (workspace / "requirements.in").open("a") as stream:
+        stream.write("duckdb==1.0.0\n")
+    with pytest.raises(EnvironmentError, match="Package preparation failed"):
+        lock(workspace)
+    assert (workspace / "requirements.lock").read_bytes() == previous
+
+
+def test_old_lock_without_managed_engine_refuses_before_installation(
+    workspace: Path, wheel: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import re
+
+    lock(workspace)
+    path = workspace / "requirements.lock"
+    path.write_text(re.sub(r"duckdb==[^\n]*\n(?:[ \t]+[^\n]*\n)*", "", path.read_text()))
+
+    def forbidden(*args: object, **kwargs: object) -> None:
+        raise AssertionError("unqualified lock must never invoke pip")
+
+    monkeypatch.setattr("transflow_worker.environment._run", forbidden)
+    with pytest.raises(EnvironmentError, match="managed check engine"):
+        sync(workspace, wheel)
+    with pytest.raises(EnvironmentError, match="managed check engine"):
+        check(workspace)
+    assert not (workspace / ".transflow/runtime/environment.json").exists()
 
 
 def test_installed_byte_and_interpreter_drift_fail_without_installation(

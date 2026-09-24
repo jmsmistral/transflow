@@ -15,6 +15,13 @@ runtime caches. Unknown flags, editable/direct-URL requirements and nested input
 files are rejected in this initial contract. The `transflow` distribution must not
 appear in dependency inputs or locks; it is supplied separately.
 
+T068 locks the qualified DuckDB 1.5.5 check engine alongside user requirements,
+including custom inputs that do not mention it. The captured resolver input adds
+the managed pin; the authored requirements file is unchanged. A conflicting user
+pin fails resolution and preserves the previous lock. Sync/check reject older
+locks missing this engine and request explicit lock/sync. No build-time install
+or format/version change is introduced.
+
 Sync requires `--runtime-wheel PATH` while no release bundle is published. It
 validates the wheel's distribution/version and presence of both modules, captures
 its bytes, installs locked dependencies and that wheel explicitly via pip, checks
@@ -35,7 +42,7 @@ and preserves the previous environment. Old generations are retained for later G
 state without running pip or importing packages. It detects altered/added/missing
 files, missing SDK metadata, interpreter/config drift and mutable editable installs.
 It never executes installed `.pth` files during inspection. A mismatch requires an
-explicit sync; ordinary builds will consume this same check in their later service.
+explicit sync; ordinary builds use this same check before execution.
 
 The initial lock is target-specific: changing Python patch/ABI/platform requires an
 explicit lock for that target. Package outputs are not exposed as raw diagnostic

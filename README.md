@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** The local developer core now includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator (T065–T067). Polars builds run checks and preserve last-good output on failure. HTTP/UI, scheduling, other transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
+**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. HTTP/UI, foreign-data consumption, scheduling, other transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
 
 Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
 Package installation and workspace environment checks reject other minors.
@@ -17,9 +17,9 @@ Package installation and workspace environment checks reject other minors.
 
 Write Python transforms, declare their input and output datasets, and build a target without managing a separate catalogue namespace for every source directory. Transflow is designed to validate the dependency graph, resolve exact input versions, run checks, preserve the previous successful output when a build fails, and explain what needs rebuilding.
 
-The intended architecture is a Rust coordinator/CLI with Python workers for Polars, pandas and DuckDB, SQLite metadata, immutable Parquet files, and a local browser UI. Git will be supported but not required. Registered datasets from other workspaces will be consumed as read boundaries rather than automatically executing another workspace's code.
+The intended architecture is a Rust coordinator/CLI with Python workers for Polars, pandas and DuckDB, SQLite metadata, immutable Parquet files, and a local browser UI. Git is supported but not required. Registered datasets from other workspaces will be consumed as read boundaries rather than automatically executing another workspace's code.
 
-An example of the proposed authoring API is:
+An example of the supported Polars authoring API is:
 
 ```python
 import polars as pl
