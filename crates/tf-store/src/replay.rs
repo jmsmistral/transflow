@@ -10,9 +10,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::{Connection, Row, SqliteConnection};
 use std::collections::BTreeSet;
-use tf_domain::{
-    BranchName, BuildId, DatasetKey, RequestId, SourceSnapshotId, VersionId, WorkspaceId,
-};
+use tf_domain::{BranchName, BuildId, DatasetKey, RequestId, SourceSnapshotId, WorkspaceId};
 use tf_protocol::canonical::{ContentDigest, DigestKind, canonical_json};
 
 /// A replay cannot silently replace missing or mismatched original evidence.
@@ -194,7 +192,6 @@ fn validate(m: &ReplayManifest) -> Result<(), Error> {
     let mut aliases = BTreeSet::new();
     for b in m.boundaries()? {
         if !scope.contains(b.consumer.dataset_id().to_string().as_str())
-            || b.input.dataset.workspace_id() != b.consumer.workspace_id()
             || b.input.alias.is_empty()
             || b.input.alias.len() > 1024
             || b.input.alias.chars().any(char::is_control)
@@ -227,14 +224,29 @@ async fn original_source(db: &mut SqliteConnection, build: BuildId) -> Result<So
         environment: json(r.try_get(6)?)?,
     })
 }
-async fn check_boundary(db: &mut SqliteConnection, b: &Boundary) -> Result<VersionId, Error> {
-    let matches:i64=sqlx::query_scalar("SELECT count(*) FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id WHERE v.id=? AND d.id=? AND d.workspace_id=? AND v.artifact_digest=?")
-        .bind(&b.version).bind(&b.dataset).bind(&b.workspace).bind(&b.artifact).fetch_one(db).await?;
+async fn check_boundary(db: &mut SqliteConnection, b: &Boundary) -> Result<ReadTarget, Error> {
+    let local: i64 = sqlx::query_scalar("SELECT count(*) FROM workspaces WHERE id=?")
+        .bind(&b.workspace)
+        .fetch_one(&mut *db)
+        .await?;
+    let matches: i64 = if local == 1 {
+        sqlx::query_scalar("SELECT count(*) FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id WHERE v.id=? AND d.id=? AND d.workspace_id=? AND v.artifact_digest=?").bind(&b.version).bind(&b.dataset).bind(&b.workspace).bind(&b.artifact).fetch_one(&mut *db).await?
+    } else {
+        sqlx::query_scalar("SELECT count(*) FROM replicas WHERE version_id=? AND dataset_id=? AND workspace_id=? AND artifact_digest=? AND copy_state='VERIFIED'").bind(&b.version).bind(&b.dataset).bind(&b.workspace).bind(&b.artifact).fetch_one(&mut *db).await?
+    };
     if matches != 1 {
         return Err(Error::Evidence);
     }
-    b.version.parse().map_err(|_| Error::Evidence)
+    Ok(if local == 1 {
+        ReadTarget::Version(b.version.parse().map_err(|_| Error::Evidence)?)
+    } else {
+        ReadTarget::Artifact(
+            ContentDigest::from_hex(DigestKind::Artifact, &b.artifact)
+                .map_err(|_| Error::Evidence)?,
+        )
+    })
 }
+
 impl Store {
     /// Freeze complete accepted boundary evidence once. The caller supplies original effective
     /// scope/parameters and all resolved boundaries during acceptance, not during later replay.
@@ -352,13 +364,13 @@ impl Store {
         }
         let mut leases = Vec::with_capacity(lease_ids.len());
         for (b, id) in manifest.0.boundaries.iter().zip(lease_ids) {
-            let version = check_boundary(&mut tx, b).await?;
+            let target = check_boundary(&mut tx, b).await?;
             let lease = retention::lease_in_transaction(
                 &mut tx,
                 *id,
                 operation,
                 LeaseKind::Build,
-                ReadTarget::Version(version),
+                target,
                 now_us,
                 expires,
             )

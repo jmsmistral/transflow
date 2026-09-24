@@ -713,5 +713,27 @@ and fixture-count failures were corrected before the successful complete run.
 
 See [the measured receipt](evidence/t069-macos-arm64.json) for commands, exact scope and limitations. No provider
 version resolution, replicas, foreign execution, native editor pass or full G1
-closure is claimed. The owner monitors CI; T069 remains unchecked pending that
-confirmation. Editor deferral and T033/T068 completion are recorded separately above.
+closure was claimed by T069. The owner confirmed its CI on 2026-09-24; see
+[the owner receipt](evidence/t069-owner-ci.json). Editor deferral and T033/T068
+completion are recorded separately above.
+
+
+## T070–T072 provider resolution, replicas and foreign boundaries (2026-09-24)
+
+Provider metadata uses authenticated bounded requests under the existing runtime owner,
+or transient metadata-only ownership when unowned. Copies preserve origin metadata and
+are strictly verified before atomic replica/local-pin visibility and provider release.
+Schema 9 keeps local job-input constraints while adding foreign tuples. Public plans,
+checks, builds, pin/replay and optional upstream provenance now compose these services.
+Fresh reads cannot silently use offline latest; exact retained reads preserve origin.
+
+The full contributor gate passed: 365 Rust tests plus one doc test, 812 Python,
+312 web and 54 installed CLI tests, alongside specification/safety/boundary, formatting,
+linting, type and build checks. Native qualification passed, including 36 dispatch,
+28 customer-orders and all 12 new foreign-data scenarios. Final focused checks also
+passed after hardening branch-label validation.
+
+The [combined measured receipt](evidence/t070-t072-macos-arm64.json) records actual commands,
+results and remaining qualification. The native runner is now part of
+`tools/qualification/check.sh`. CI is handed to the owner after both pushes. No full G1,
+HTTP/UI, schedule, native editor or release completion is inferred from these tasks.

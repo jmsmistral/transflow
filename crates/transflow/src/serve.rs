@@ -62,6 +62,7 @@ pub(crate) fn execute(
             build,
             json_mode,
             endpoint.commands.clone(),
+            endpoint.providers.clone(),
         ))?;
         owner = c.owner;
         c.result.map_err(failure)?;
@@ -73,6 +74,7 @@ pub(crate) fn execute(
         );
     }
     while !stopped.load(Ordering::Acquire) {
+        crate::provider::drain(&mut owner, &rt, &endpoint.providers)?;
         if let Ok(request) = endpoint.requests.try_recv() {
             let parsed = crate::command().try_get_matches_from(
                 std::iter::once("transflow".to_owned())
@@ -104,6 +106,7 @@ pub(crate) fn execute(
                         accepted.build,
                         json_mode,
                         endpoint.commands.clone(),
+                        endpoint.providers.clone(),
                     ))?;
                     owner = c.owner;
                     c.result.map_err(failure)?;

@@ -39,8 +39,21 @@ pub async fn inspect_source(
     request: Request,
     git_ref: Option<String>,
 ) -> Result<Completion<Traversal>, Error> {
+    let completion = inspect_expanded(owner, request, git_ref, false).await?;
+    Ok(Completion {
+        owner: completion.owner,
+        result: completion.result.map(|(graph, _)| graph),
+    })
+}
+/// Explicit read-only foreign expansion over the same captured declaration graph.
+pub(crate) async fn inspect_expanded(
+    owner: RuntimeOwner,
+    request: Request,
+    git_ref: Option<String>,
+    expand: bool,
+) -> Result<Completion<(Traversal, Option<serde_json::Value>)>, Error> {
     tokio::task::spawn_blocking(move || {
-        let owner = owner;
+        let mut owner = owner;
         let result = (|| {
             owner.validate_paths().map_err(failure)?;
             if owner.registration().mode() == CoordinatorMode::MetadataOnly {
@@ -83,13 +96,25 @@ pub async fn inspect_source(
             };
             let graph =
                 Graph::validated(&inspected.graph, &context, request.branch).map_err(failure)?;
-            graph
+            let traversal = graph
                 .traverse(tf_catalog::traversal::Request {
                     start: graph.resolve(&request.start).map_err(failure)?,
                     direction: request.direction,
                     depth: request.depth,
                 })
-                .map_err(failure)
+                .map_err(failure)?;
+            let expanded = if expand {
+                Some(crate::foreign_lineage::expand(
+                    &mut owner,
+                    &workspace,
+                    &inspected.registry,
+                    &inspected.graph,
+                    &traversal,
+                )?)
+            } else {
+                None
+            };
+            Ok((traversal, expanded))
         })();
         Completion { owner, result }
     })

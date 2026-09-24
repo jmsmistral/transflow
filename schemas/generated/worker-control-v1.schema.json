@@ -3104,7 +3104,10 @@
           "const": true
         },
         "external_expanded": {
-          "const": false
+          "type": "boolean"
+        },
+        "foreign_provenance": {
+          "$ref": "#/$defs/ExecutionJsonV1"
         }
       },
       "required": [
@@ -3583,6 +3586,9 @@
                 "enum": [
                   "unknown"
                 ]
+              },
+              "origin_workspace": {
+                "$ref": "#/$defs/Uuid"
               }
             },
             "required": [

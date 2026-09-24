@@ -258,7 +258,7 @@ def test_foreign_boundaries_and_unrelated_invalid_graph(workspace: Path) -> None
     graph = inspect(workspace, "upstream", "curated/end")
     assert graph["nodes"][1]["external"]
     failed = cli(workspace, "plan", "curated/end", "--python", sys.executable, ok=False)
-    assert "Foreign read boundary" in json.dumps(failed)
+    assert "Provider locator is missing" in json.dumps(failed)
     why = inspect(workspace, "why", "external/demo/value")
     assert why["status"] is None and why["planning_error"]
     source(workspace, "local.py", DECLARATION)

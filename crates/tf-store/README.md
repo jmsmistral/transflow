@@ -19,7 +19,7 @@ workspace initialization and robust ownership/path protection remain separate ta
 
 ## Schema and migrations
 
-Eight additive migrations install 53 logical tables: source/catalogue projections,
+Nine forward migrations install 53 logical tables: source/catalogue projections,
 versions/heads, builds/jobs/attempts, checks, scheduling, events/outbox, pins/audit,
 registry mutation journals, foreign replicas/leases, frozen publication/check
 links, read retention, replay, cache associations and computation comparison evidence. Publication is implemented below; scheduler, retention and replica-copy
@@ -115,3 +115,11 @@ check envelopes, private bounded samples, certificate keys, explicit reuse recor
 and failed-candidate retention roots. Original evaluation times never change on
 reuse. Diagnostic reads require explicit intent and return warnings; safe evidence
 reads do not load row values. Consumer failures cannot rewrite provider results.
+
+
+[T070–T072 foreign data](../transflow/EXTERNAL.md) uses the existing foreign-version
+and replica tables for an immutable metadata copy journal and verified visibility.
+Replica installation and local artifact lease acquisition share one transaction.
+Schema 9 adds qualified foreign job bindings with a composite replica foreign key;
+local version/parent-job constraints survive upgrade. Planning, dispatch lease renewal
+and replay validate origin identity before using artifact-only local leases.

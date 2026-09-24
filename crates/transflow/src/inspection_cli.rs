@@ -34,6 +34,7 @@ pub(crate) fn commands() -> Vec<Command> {
                         "Capture a Git ref without changing the checkout; requires --branch",
                     ));
             if matches!(name, "upstream" | "downstream") {
+                if name=="upstream" {cmd=cmd.arg(Arg::new("expand-external").long("expand-external").action(ArgAction::SetTrue).help("Expand version-labelled provider provenance without importing source or copying ancestor data"));}
                 cmd = cmd.arg(Arg::new("reference").required_unless_present("help")).arg(
                     Arg::new("depth")
                         .long("depth")
@@ -161,7 +162,7 @@ pub(crate) fn execute(
         .build()
         .map_err(failure)?;
     let value = if matches!(name, "upstream" | "downstream") {
-        let completion = runtime.block_on(graph_query::inspect_source(
+        let completion = runtime.block_on(graph_query::inspect_expanded(
             owner,
             graph_query::Request {
                 python: args.get_one::<String>("python").cloned(),
@@ -178,8 +179,15 @@ pub(crate) fn execute(
                 depth: args.get_one::<u64>("depth").copied(),
             },
             source,
+            name == "upstream" && args.get_flag("expand-external"),
         ))?;
-        graph_value(name, &completion.result?)?
+        let (traversal, expanded) = completion.result?;
+        let mut value = graph_value(name, &traversal)?;
+        if let Some(expanded) = expanded {
+            value["external_expanded"] = json!(true);
+            value["foreign_provenance"] = expanded;
+        }
+        value
     } else {
         let mut targets = strings(args, "targets");
         targets.extend(strings(args, "target"));
@@ -255,7 +263,7 @@ fn plan_value(name: &str, plan: &tf_store::planning::DraftPlan) -> Result<Value,
         .map(|d| json!({"dataset":d.key().dataset_id().to_string(),"path":d.path().as_str()}))
         .collect::<Vec<_>>();
     let writes=plan.writes.iter().map(|w|Ok(json!({"dataset":w.dataset,"path":path(&w.dataset)?,"job":w.job,"expected_generation":w.generation.to_string(),"bindings":w.bindings,"parameters":plan.context["parameters"][&w.dataset],"resources":plan.context["resources"][&w.dataset]}))).collect::<Result<Vec<_>,Error>>()?;
-    let reads=plan.reads.iter().map(|r|Ok(json!({"consumer":r.consumer,"consumer_path":path(&r.consumer)?,"alias":r.alias,"dataset":r.dataset,"path":path(&r.dataset)?,"version":r.version,"artifact":r.artifact,"starting_branch":r.provenance["starting_branch"],"resolved_branch":r.provenance["resolved_branch"],"resolution":r.provenance["resolution"]["kind"],"currentness":"unknown"}))).collect::<Result<Vec<_>,Error>>()?;
+    let reads=plan.reads.iter().map(|r|Ok(json!({"consumer":r.consumer,"consumer_path":path(&r.consumer)?,"alias":r.alias,"dataset":r.dataset,"path":if r.provenance["workspace"]==plan.workspace {path(&r.dataset)?}else{registry.external_registrations().find(|e|e.key().dataset_id().to_string()==r.dataset && e.key().workspace_id().to_string()==r.provenance["workspace"]).ok_or_else(||failure("missing external label"))?.alias().to_string()},"origin_workspace":r.provenance["workspace"],"version":r.version,"artifact":r.artifact,"starting_branch":r.provenance["starting_branch"],"resolved_branch":r.provenance["resolved_branch"],"resolution":r.provenance["resolution"]["kind"],"currentness":"unknown"}))).collect::<Result<Vec<_>,Error>>()?;
     let warnings = if reads.is_empty() {
         vec![]
     } else {
@@ -337,7 +345,19 @@ fn human(v: &Value) -> Result<String, Error> {
                 ));
             }
         }
-        out.push_str(&format!("All requested pages delivered; depth omitted {} nodes and {} edges. Foreign provenance was not expanded.\n",v["omitted_nodes"].as_str().unwrap_or("0"),v["omitted_edges"].as_str().unwrap_or("0")));
+        if let Some(nodes) = v["foreign_provenance"]["nodes"].as_array() {
+            for node in nodes {
+                out.push_str(&format!(
+                    "  Foreign {}:{} @ {}: {}; source {} (read-only)\n",
+                    safe(node["workspace"].as_str().unwrap_or("unknown"))?,
+                    safe(node["dataset"].as_str().unwrap_or("unknown"))?,
+                    safe(node["version"].as_str().unwrap_or("unresolved"))?,
+                    safe(node["availability"].as_str().unwrap_or("unknown"))?,
+                    safe(node["source_availability"].as_str().unwrap_or("unknown"))?
+                ));
+            }
+        }
+        out.push_str(&format!("All requested pages delivered; depth omitted {} nodes and {} edges. Foreign provenance expansion: {}.\n",v["omitted_nodes"].as_str().unwrap_or("0"),v["omitted_edges"].as_str().unwrap_or("0"),if v["external_expanded"]==true {"included as read-only version-labelled metadata"}else{"not requested"}));
     } else {
         out.push_str(&format!(
             "Draft {} ({}); expires at {} UTC microseconds.\nMode: {}; force: {}.\n",

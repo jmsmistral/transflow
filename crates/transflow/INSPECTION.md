@@ -71,8 +71,8 @@ The CLI does not invent future writer, clock or secret-version policies. Where
 those semantics or legacy comparison evidence are absent, logic/currentness stays
 unknown. `require_available` reports that limitation with warnings on boundary
 reads. `require_current` rejects stale or unassessable boundaries without executing
-them. Provider resolution/replication remains later work: a selected foreign input
-refuses planning with its consumer and alias, while unrelated foreign declarations
+them. Selected foreign inputs resolve through provider ownership and verified local replicas;
+missing providers fail fresh planning, while retained exact pins can use local bytes. Unrelated foreign declarations
 do not prevent local planning. Graph and why still expose the boundary.
 
 ## Graph output
@@ -89,7 +89,9 @@ edges, requested depth, exact omitted counts, and distinct scope/delivery comple
 All requested pages are delivered even when depth is supplied. No default semantic
 node or byte truncation is added. The CLI builds one complete result in memory,
 linear in the admitted graph; existing source/discovery admission bounds still
-apply. Provider lineage expansion is not implemented.
+apply. Explicit `upstream --expand-external` adds bounded, version-labelled read-only
+provider provenance with unavailable source/ancestor labels. It never imports provider
+source or copies ancestor data; see [external data](EXTERNAL.md) for limits.
 
 ## Streams and contracts
 

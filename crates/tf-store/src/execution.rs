@@ -197,9 +197,10 @@ impl Store {
         for i in &r.contract.inputs {
             let binding = json!({"version":i.version.to_string(),"artifact":i.artifact.hex(),"dataset":i.dataset.dataset_id().to_string(),"workspace":i.dataset.workspace_id().to_string(),"resolution":i.resolution});
             let encoded = binding.to_string();
-            sqlx::query("INSERT INTO job_inputs(job_id,alias,version_id,binding_json) VALUES(?,?,?,?) ON CONFLICT DO NOTHING").bind(r.job.to_string()).bind(&i.alias).bind(i.version.to_string()).bind(&encoded).execute(&mut *tx).await?;
+            let foreign = i.dataset.workspace_id() != r.target.dataset.workspace_id();
+            sqlx::query("INSERT INTO job_inputs(job_id,alias,version_id,binding_json,foreign_workspace_id,foreign_dataset_id,foreign_version_id) VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING").bind(r.job.to_string()).bind(&i.alias).bind((!foreign).then(||i.version.to_string())).bind(&encoded).bind(foreign.then(||i.dataset.workspace_id().to_string())).bind(foreign.then(||i.dataset.dataset_id().to_string())).bind(foreign.then(||i.version.to_string())).execute(&mut *tx).await?;
             let row = sqlx::query(
-                "SELECT version_id,binding_json FROM job_inputs WHERE job_id=? AND alias=?",
+                "SELECT coalesce(version_id,foreign_version_id),binding_json FROM job_inputs WHERE job_id=? AND alias=?",
             )
             .bind(r.job.to_string())
             .bind(&i.alias)
@@ -355,7 +356,11 @@ impl Store {
             .map_err(|_| PublicationError::Evidence)?;
         publication::authority(&mut tx, workspace, session).await?;
         for r in &plan.reads {
-            let n=sqlx::query("UPDATE read_leases SET renewed_at_us=?,expires_at_us=max(expires_at_us,?),fence=fence+1 WHERE fence<9223372036854775807 AND owner_operation=? AND id=? AND version_id=? AND EXISTS(SELECT 1 FROM dataset_versions v WHERE v.id=read_leases.version_id AND v.artifact_digest=?) AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g JOIN dataset_versions v ON v.artifact_digest=g.digest WHERE v.id=read_leases.version_id) AND released=0 AND expires_at_us>? AND kind='build'").bind(at_us).bind(at_us.checked_add(3_600_000_000).ok_or(PublicationError::Evidence)?).bind(&plan.id).bind(&r.lease).bind(&r.version).bind(&r.artifact).bind(at_us).execute(&mut *tx).await?.rows_affected();
+            let n = if r.provenance["workspace"] == plan.workspace {
+                sqlx::query("UPDATE read_leases SET renewed_at_us=?,expires_at_us=max(expires_at_us,?),fence=fence+1 WHERE fence<9223372036854775807 AND owner_operation=? AND id=? AND version_id=? AND EXISTS(SELECT 1 FROM dataset_versions v WHERE v.id=read_leases.version_id AND v.artifact_digest=?) AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g JOIN dataset_versions v ON v.artifact_digest=g.digest WHERE v.id=read_leases.version_id) AND released=0 AND expires_at_us>? AND kind='build'").bind(at_us).bind(at_us.checked_add(3_600_000_000).ok_or(PublicationError::Evidence)?).bind(&plan.id).bind(&r.lease).bind(&r.version).bind(&r.artifact).bind(at_us).execute(&mut *tx).await?.rows_affected()
+            } else {
+                sqlx::query("UPDATE read_leases SET renewed_at_us=?,expires_at_us=max(expires_at_us,?),fence=fence+1 WHERE fence<9223372036854775807 AND owner_operation=? AND id=? AND artifact_digest=? AND EXISTS(SELECT 1 FROM replicas r WHERE r.artifact_digest=read_leases.artifact_digest AND r.workspace_id=? AND r.dataset_id=? AND r.version_id=? AND r.copy_state='VERIFIED') AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g WHERE g.digest=read_leases.artifact_digest) AND released=0 AND expires_at_us>? AND kind='build'").bind(at_us).bind(at_us.checked_add(3_600_000_000).ok_or(PublicationError::Evidence)?).bind(&plan.id).bind(&r.lease).bind(&r.artifact).bind(r.provenance["workspace"].as_str().ok_or(PublicationError::Evidence)?).bind(&r.dataset).bind(&r.version).bind(at_us).execute(&mut *tx).await?.rows_affected()
+            };
             if n != 1 {
                 return Err(PublicationError::Evidence);
             }

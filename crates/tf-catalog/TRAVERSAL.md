@@ -35,7 +35,9 @@ ordered-map/set lookup costs; it does not recurse or enumerate full paths.
 Foreign nodes have an explicit boundary marker. Upstream traversal ends there;
 downstream traversal starting at a registered foreign node can show its known local
 consumers. No provider workspace is opened, no provider graph is inferred, and no
-foreign producer runs. Optional explicit foreign provenance expansion is later work.
+foreign producer runs. T072 composes optional explicit provenance expansion at the
+application layer (`upstream --expand-external`), without changing this local
+validated traversal or its executable boundaries.
 
 `Traversal::page` delivers up to 100 nodes and 100 edges per page. Both streams have
 independent offsets in the same cursor, so a high-alias node cannot cause unbounded

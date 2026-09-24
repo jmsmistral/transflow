@@ -17,6 +17,8 @@ impl std::error::Error for InputError {}
 pub enum PolicyOrigin {
     /// Explicit build/schedule tail, including an explicit empty tail.
     BuildOverride,
+    /// Explicit foreign registration fallback tail.
+    Registration,
     /// Authored rule for this input's starting branch.
     StartingBranch,
     /// Authored workspace default when no starting-branch rule exists.
@@ -55,6 +57,29 @@ impl BranchPolicySnapshot {
             return Err(InputError);
         }
         Ok(Self { defaults, rules })
+    }
+    /// Provider policy: omitted uses registration; CURRENT uses the consumer branch.
+    /// Consumer build overrides never enter this decision.
+    pub fn external(
+        &self,
+        output: &BranchName,
+        registered: &BranchName,
+        declared: BranchSelector,
+        permission: FallbackPermission,
+        fallback: Option<&[BranchName]>,
+    ) -> Result<InputPolicy, InputError> {
+        let start = match &declared {
+            BranchSelector::Omitted => registered.clone(),
+            BranchSelector::Current => output.clone(),
+            BranchSelector::Named(n) => n.clone(),
+        };
+        let mut policy = self.local(&start, BranchSelector::Current, permission, fallback)?;
+        policy.output = output.clone();
+        policy.declared = declared;
+        if fallback.is_some() {
+            policy.origin = PolicyOrigin::Registration;
+        }
+        Ok(policy)
     }
     /// Normalize a local binding. Named inputs use their own policy even when named like output.
     pub fn local(

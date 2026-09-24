@@ -86,6 +86,8 @@ impl Drop for CancelOnDrop {
 /// Explicit estimates for optional admission budgets; these are not hard OS limits.
 #[derive(Default)]
 pub struct Options {
+    /// Authenticated metadata-only requests served by this same runtime owner.
+    pub providers: Option<crate::provider::Mailbox>,
     /// Per-job estimated peak bytes, required only with a configured memory budget.
     pub memory_estimates: BTreeMap<JobId, u64>,
     /// Bounded best-effort phase observations; terminal storage remains authoritative.
@@ -244,6 +246,9 @@ fn execute(
             .checked_sub(Duration::from_millis(100))
             .unwrap_or_else(Instant::now);
         loop {
+            if let Some(providers) = &options.providers {
+                crate::provider::drain(coordinator.owner, rt, providers).map_err(fail)?;
+            }
             if let Some(commands) = &options.commands {
                 while let Ok(command) = commands.lock().map_err(fail)?.try_recv() {
                     if command.build == build_id {
@@ -337,7 +342,11 @@ fn execute(
                             new_id()?,
                             RequestId::from_bytes(*build_id.as_bytes()),
                             LeaseKind::Build,
-                            ReadTarget::Version(i.version),
+                            if i.dataset.workspace_id() == request.target.dataset.workspace_id() {
+                                ReadTarget::Version(i.version)
+                            } else {
+                                ReadTarget::Artifact(i.artifact)
+                            },
                             now()?,
                             3_600_000_000
                         )

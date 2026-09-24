@@ -26,6 +26,7 @@ pub(crate) struct Submission {
 }
 pub(crate) struct Endpoint {
     pub commands: Mailbox,
+    pub providers: crate::provider::Mailbox,
     pub requests: Receiver<Submission>,
     pub busy: Arc<AtomicBool>,
     stop: Arc<AtomicBool>,
@@ -71,6 +72,7 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
     let busy = Arc::new(AtomicBool::new(!persistent));
     let occupied = busy.clone();
     let (commands, rx) = mpsc::sync_channel(16);
+    let (providers, provider_rx) = mpsc::sync_channel(16);
     let (requests, submissions) = mpsc::sync_channel(1);
     let thread = std::thread::spawn(move || {
         while !stopped.load(Ordering::Acquire) {
@@ -96,12 +98,23 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
                                         | "operation"
                                         | "build"
                                         | "args"
+                                        | "provider"
                                 )
                             })
                         }) {
                             return Err(failure("unsupported coordinator request fields"));
                         }
                         match request["operation"].as_str() {
+                            Some("provider") => {
+                                let request = serde_json::from_value(request["provider"].clone())
+                                    .map_err(failure)?;
+                                let (tx, rx) = mpsc::sync_channel(1);
+                                providers
+                                    .try_send(crate::provider::Command { request, reply: tx })
+                                    .map_err(|_| failure("provider metadata queue is full"))?;
+                                let result=rx.recv_timeout(Duration::from_secs(10)).map_err(|_|failure("Provider metadata request timed out; retry when the coordinator is ready"))?.map_err(failure)?;
+                                Ok(json!({"ok":true,"result":result}))
+                            }
                             Some("cancel") => {
                                 let build = request["build"]
                                     .as_str()
@@ -164,13 +177,14 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
     });
     Ok(Endpoint {
         commands: Arc::new(Mutex::new(rx)),
+        providers: Arc::new(Mutex::new(provider_rx)),
         requests: submissions,
         busy,
         stop,
         thread: Some(thread),
     })
 }
-fn call(
+pub(crate) fn call(
     root: &Path,
     workspace: WorkspaceId,
     mut request: Value,
@@ -189,7 +203,13 @@ fn call(
         .set_write_timeout(Some(Duration::from_secs(2)))
         .map_err(failure)?;
     stream
-        .set_read_timeout(Some(Duration::from_secs(3600)))
+        .set_read_timeout(Some(Duration::from_secs(
+            if request["operation"] == "provider" {
+                15
+            } else {
+                3600
+            },
+        )))
         .map_err(failure)?;
     write(&mut stream, &request)?;
     let response = read(&mut stream)?;

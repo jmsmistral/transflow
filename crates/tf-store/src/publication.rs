@@ -63,7 +63,8 @@ pub struct InputProvenance {
 /// Dependency role shared with alias-qualified planning bindings.
 pub use tf_domain::input::InputRole;
 impl InputProvenance {
-    fn value(&self) -> Value {
+    /// Canonical alias-qualified provenance retained in plans and publications.
+    pub fn value(&self) -> Value {
         json!({"alias":self.alias,"workspace":self.dataset.workspace_id().to_string(),"dataset":self.dataset.dataset_id().to_string(),"version":self.version.to_string(),"artifact":self.artifact.hex(),"declared_branch":self.declared_branch,"starting_branch":self.starting_branch.as_str(),"resolved_branch":self.resolved_branch.as_str(),"role":self.role.name(),"resolution":self.resolution})
     }
 }

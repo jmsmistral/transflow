@@ -165,3 +165,59 @@ fn excessive_policies_and_invalid_aliases_fail_explicitly() {
         assert!(InputBindingKey::new(consumer, alias.into()).is_err());
     }
 }
+
+#[test]
+fn foreign_defaults_current_named_and_registration_override_are_independent() {
+    for (selector, start, tail) in [
+        (
+            BranchSelector::Omitted,
+            "develop",
+            names(&["develop", "stable", "master"]),
+        ),
+        (
+            BranchSelector::Current,
+            "feature",
+            names(&["feature", "develop"]),
+        ),
+        (
+            BranchSelector::Named(name("master")),
+            "master",
+            names(&["master"]),
+        ),
+    ] {
+        let p = policy()
+            .external(
+                &name("feature"),
+                &name("develop"),
+                selector.clone(),
+                FallbackPermission::Allowed,
+                None,
+            )
+            .unwrap();
+        assert_eq!(p.start(), &name(start));
+        assert_eq!(p.candidates(), tail);
+        assert_eq!(p.declared(), &selector);
+        assert_eq!(p.output(), &name("feature"));
+        let overridden = policy()
+            .external(
+                &name("feature"),
+                &name("develop"),
+                selector.clone(),
+                FallbackPermission::Allowed,
+                Some(&names(&["override"])),
+            )
+            .unwrap();
+        assert_eq!(overridden.candidates(), names(&[start, "override"]));
+        assert_eq!(overridden.origin(), PolicyOrigin::Registration);
+        let strict = policy()
+            .external(
+                &name("feature"),
+                &name("develop"),
+                selector,
+                FallbackPermission::Prohibited,
+                Some(&names(&["override"])),
+            )
+            .unwrap();
+        assert_eq!(strict.candidates(), names(&[start]));
+    }
+}

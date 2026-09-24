@@ -217,6 +217,39 @@ async fn resolve(
     Ok((Some(version), digest))
 }
 impl Store {
+    /// Recover a fenced copy capability for authenticated metadata transport.
+    /// UUIDs are operation-scoped; other lease kinds cannot be controlled here.
+    pub async fn copy_lease(
+        &mut self,
+        id: RequestId,
+        operation: RequestId,
+        fence: i64,
+    ) -> Result<ReadLease> {
+        let row = sqlx::query("SELECT version_id,artifact_digest,expires_at_us FROM read_leases WHERE id=? AND owner_operation=? AND fence=? AND kind='copy' AND released=0")
+            .bind(id.to_string()).bind(operation.to_string()).bind(fence).fetch_optional(&mut self.db).await?.ok_or(RetentionError::Lease)?;
+        let version: Option<String> = row.try_get(0)?;
+        let version: Option<VersionId> = version
+            .map(|s| s.parse().map_err(|_| RetentionError::Lease))
+            .transpose()?;
+        let digest = if let Some(v) = version {
+            let d: String =
+                sqlx::query_scalar("SELECT artifact_digest FROM dataset_versions WHERE id=?")
+                    .bind(v.to_string())
+                    .fetch_one(&mut self.db)
+                    .await?;
+            artifact(&d)?
+        } else {
+            artifact(&row.try_get::<String, _>(1)?)?
+        };
+        Ok(ReadLease {
+            id,
+            operation,
+            fence,
+            version,
+            artifact: digest,
+            expires: row.try_get(2)?,
+        })
+    }
     /// Read a head/exact identity and acquire its lease in one write transaction.
     pub async fn acquire_read(
         &mut self,

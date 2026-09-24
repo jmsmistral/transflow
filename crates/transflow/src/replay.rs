@@ -56,7 +56,19 @@ pub(crate) async fn prepare(
                     lease_id,
                     plan.id.parse().map_err(failure)?,
                     tf_store::retention::LeaseKind::Plan,
-                    tf_store::retention::ReadTarget::Version(r.version.parse().map_err(failure)?),
+                    if r.provenance["workspace"] == workspace.to_string() {
+                        tf_store::retention::ReadTarget::Version(
+                            r.version.parse().map_err(failure)?,
+                        )
+                    } else {
+                        tf_store::retention::ReadTarget::Artifact(
+                            tf_protocol::canonical::ContentDigest::from_hex(
+                                tf_protocol::canonical::DigestKind::Artifact,
+                                &r.artifact,
+                            )
+                            .map_err(failure)?,
+                        )
+                    },
                     now,
                     900_000_000,
                 )

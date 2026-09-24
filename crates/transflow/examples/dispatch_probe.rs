@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Some(code)=settings["replace_source"].as_str(){std::fs::write(root.join("src/items.py"),code).map_err(|e|e.to_string())?;}
         let cancel=Cancellation::default();
         if settings["cancel"]==true{cancel.cancel();}
-        let c=transflow::dispatch::run_with_options(c.owner,accepted.build,cancel,transflow::dispatch::Options{progress:None,commands:None,memory_estimates:settings["estimate"].as_u64().map(|n|accepted.plan.writes.iter().map(|w|Ok((w.job.parse().map_err(|_|"invalid job")?,n))).collect::<Result<_,String>>()).transpose()?.unwrap_or_default()}).await.map_err(|e|e.to_string())?;
+        let c=transflow::dispatch::run_with_options(c.owner,accepted.build,cancel,transflow::dispatch::Options{progress:None,commands:None,providers:None,memory_estimates:settings["estimate"].as_u64().map(|n|accepted.plan.writes.iter().map(|w|Ok((w.job.parse().map_err(|_|"invalid job")?,n))).collect::<Result<_,String>>()).transpose()?.unwrap_or_default()}).await.map_err(|e|e.to_string())?;
         let r=c.result.map_err(|e|e.to_string())?;
         Ok::<_,String>(json!({"build":r.build.to_string(),"state":format!("{:?}",r.state),"jobs":r.jobs.iter().map(|j|json!({"job":j.id().to_string(),"dataset":j.target().dataset.dataset_id().to_string(),"state":j.state().name(),"attempts":j.attempts().iter().map(|a|a.id().to_string()).collect::<Vec<_>>()})).collect::<Vec<_>>()}))
     });

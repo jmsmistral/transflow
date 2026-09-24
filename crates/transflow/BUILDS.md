@@ -104,4 +104,6 @@ parameters, selection and boundary versions on the requested destination branch.
 Planned parents execute again within that same historical scope. It does not read a
 new checkout or substitute latest inputs. Missing retained inputs/environment or
 conflicting destination guards fail explicitly. This cannot guarantee deterministic
-hidden external I/O; secret delivery and foreign replay remain separate work.
+hidden external I/O; secret delivery remains separate work. Registered foreign inputs
+use verified local replicas and retain exact origin identity for offline pin/replay;
+fresh unpinned builds still require provider resolution. See [external data](EXTERNAL.md).

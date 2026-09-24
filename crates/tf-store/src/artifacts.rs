@@ -293,6 +293,51 @@ impl ArtifactStore {
         observer(Boundary::CandidateSynced)?;
         Ok(candidate)
     }
+    /// Copy sealed provider bytes into independently owned files, preserving the exact
+    /// canonical manifest. No hard links or producer evaluation is involved.
+    pub fn copy_from(
+        &self,
+        provider: &ArtifactStore,
+        expected: ContentDigest,
+        id: RequestId,
+    ) -> Result<VerifiedArtifact> {
+        self.copy_from_observed(provider, expected, id, |_| Ok(()))
+    }
+    /// Same copy with durability observations for fault injection and integration evidence.
+    pub fn copy_from_observed(
+        &self,
+        provider: &ArtifactStore,
+        expected: ContentDigest,
+        id: RequestId,
+        mut observer: impl FnMut(Boundary) -> std::io::Result<()>,
+    ) -> Result<VerifiedArtifact> {
+        let verified = provider.verify(expected)?;
+        let hex = expected.hex();
+        let prefix = directory(provider.root()?, &hex[..2], false)?;
+        let source = directory(&prefix, &hex, false)?;
+        let paths = verified.manifest()["files"]
+            .as_array()
+            .ok_or(ArtifactError::Metadata)?
+            .iter()
+            .map(|f| {
+                f["path"]
+                    .as_str()
+                    .map(PathBuf::from)
+                    .ok_or(ArtifactError::Metadata)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let candidate = self.prepare(
+            &source,
+            &paths,
+            verified.manifest()["writer"].clone(),
+            id,
+            &mut observer,
+        )?;
+        if candidate.digest()? != expected || candidate.manifest() != verified.manifest() {
+            return Err(ArtifactError::Integrity);
+        }
+        candidate.install(observer)
+    }
     /// Full hashes, exact membership, schema and decoded row counts. No cross-build cache.
     pub fn verify(&self, digest: ContentDigest) -> Result<VerifiedArtifact> {
         if digest.kind() != DigestKind::Artifact {

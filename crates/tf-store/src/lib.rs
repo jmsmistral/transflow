@@ -13,13 +13,15 @@ use std::{
 use tf_domain::{DatasetId, WorkspaceId};
 
 /// Latest supported runtime schema. Authoring registry versions are independent.
-pub const SCHEMA_VERSION: i64 = 8;
+pub const SCHEMA_VERSION: i64 = 9;
 
 /// Safe read-only build history and execution evidence.
 pub mod build_read;
 
 /// Branch-scoped retained version reuse and guarded adoption.
 pub mod cache;
+/// Provider export metadata and verified foreign replicas.
+pub mod foreign;
 /// Default maximum wait for an externally held SQLite writer lock.
 pub const BUSY_TIMEOUT: Duration = Duration::from_millis(250);
 /// Storage failure with safe summary and retained technical source.

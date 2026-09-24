@@ -84,7 +84,7 @@ impl Reader {
                 let checks = checks(&mut tx, &aid).await?;
                 attempts.push(json!({"id":aid,"number":a.try_get::<i64,_>("attempt_no")?,"state":a.try_get::<String,_>("state")?,"failure_class":a.try_get::<Option<String>,_>("failure_class")?,"started_us":a.try_get::<i64,_>("started_at_us")?.to_string(),"finished_us":a.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"phases":phases,"checks":checks,"report":a.try_get::<Option<String>,_>("process_json")?.map(parse).transpose()?}));
             }
-            let inputs=sqlx::query("SELECT alias,version_id,binding_json FROM job_inputs WHERE job_id=? ORDER BY alias").bind(&id).fetch_all(&mut *tx).await?.iter().map(|i|Ok(json!({"alias":i.try_get::<String,_>(0)?,"version":i.try_get::<String,_>(1)?,"binding":parse(i.try_get(2)?)?}))).collect::<Result<Vec<_>>>()?;
+            let inputs=sqlx::query("SELECT alias,coalesce(version_id,foreign_version_id),binding_json FROM job_inputs WHERE job_id=? ORDER BY alias").bind(&id).fetch_all(&mut *tx).await?.iter().map(|i|Ok(json!({"alias":i.try_get::<String,_>(0)?,"version":i.try_get::<String,_>(1)?,"binding":parse(i.try_get(2)?)?}))).collect::<Result<Vec<_>>>()?;
             let produced:Option<String>=sqlx::query_scalar("SELECT v.id FROM dataset_versions v JOIN attempts a ON a.id=v.attempt_id WHERE a.job_id=? AND a.state='SUCCEEDED'").bind(&id).fetch_optional(&mut *tx).await?;
             let reused = sqlx::query(
                 "SELECT version_id,original_attempt_id FROM cached_jobs WHERE job_id=?",

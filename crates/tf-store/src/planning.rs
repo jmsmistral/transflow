@@ -460,7 +460,27 @@ async fn check(db: &mut SqliteConnection, plan: &DraftPlan, now: i64) -> Result<
         return Err(conflict("retention clock moved backwards"));
     }
     for read in &plan.reads {
-        let valid:i64=sqlx::query_scalar("SELECT count(*) FROM read_leases l JOIN dataset_versions v ON v.id=l.version_id JOIN datasets d ON d.id=v.dataset_id WHERE l.id=? AND l.owner_operation=? AND l.version_id=? AND v.artifact_digest=? AND l.released=0 AND l.expires_at_us>? AND v.dataset_id=? AND d.workspace_id=? AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g WHERE g.digest=v.artifact_digest)").bind(&read.lease).bind(&plan.id).bind(&read.version).bind(&read.artifact).bind(now).bind(&read.dataset).bind(&plan.workspace).fetch_one(&mut *db).await?;
+        let origin = read.provenance["workspace"]
+            .as_str()
+            .ok_or_else(|| conflict("missing input origin"))?;
+        origin
+            .parse::<WorkspaceId>()
+            .map_err(|_| conflict("invalid input origin"))?;
+        if read.semantic["origin_workspace"] != origin
+            || read.semantic["origin_dataset"] != read.dataset
+            || read.provenance["dataset"] != read.dataset
+            || read.provenance["version"] != read.version
+            || read.semantic["version"] != read.version
+            || read.provenance["artifact"] != read.artifact
+            || read.semantic["artifact"] != read.artifact
+        {
+            return Err(conflict("input provenance identity mismatch"));
+        }
+        let valid: i64 = if origin == plan.workspace {
+            sqlx::query_scalar("SELECT count(*) FROM read_leases l JOIN dataset_versions v ON v.id=l.version_id JOIN datasets d ON d.id=v.dataset_id WHERE l.id=? AND l.owner_operation=? AND l.version_id=? AND v.artifact_digest=? AND l.released=0 AND l.expires_at_us>? AND v.dataset_id=? AND d.workspace_id=? AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g WHERE g.digest=v.artifact_digest)").bind(&read.lease).bind(&plan.id).bind(&read.version).bind(&read.artifact).bind(now).bind(&read.dataset).bind(&plan.workspace).fetch_one(&mut *db).await?
+        } else {
+            sqlx::query_scalar("SELECT count(*) FROM read_leases l JOIN replicas r ON r.artifact_digest=l.artifact_digest WHERE l.id=? AND l.owner_operation=? AND l.artifact_digest=? AND l.released=0 AND l.expires_at_us>? AND r.workspace_id=? AND r.dataset_id=? AND r.version_id=? AND r.copy_state='VERIFIED' AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g WHERE g.digest=l.artifact_digest)").bind(&read.lease).bind(&plan.id).bind(&read.artifact).bind(now).bind(origin).bind(&read.dataset).bind(&read.version).fetch_one(&mut *db).await?
+        };
         if valid != 1 {
             return Err(conflict(
                 "an exact input lease expired or its original bytes are unavailable",

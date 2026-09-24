@@ -1510,6 +1510,7 @@ name = "transflow"
 version = "0.0.0-dev"
 dependencies = [
  "clap",
+ "serde",
  "serde_json",
  "sqlx",
  "tf-catalog",

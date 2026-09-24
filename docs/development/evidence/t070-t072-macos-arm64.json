@@ -1,0 +1,126 @@
+{
+  "tasks": [
+    "T070",
+    "T071",
+    "T072"
+  ],
+  "date": "2026-09-24",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "bf11e0606705b5ea0d2c0414e08fd74160d10f74",
+  "specification_base": "0ee433e787ffd04e007a0665d6917cf2801c71f4",
+  "runtime_schema": 9,
+  "result": "local contributor and native qualification passed",
+  "gate_complete": false,
+  "ci": "pending owner confirmation; no workflow polling",
+  "commands": [
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check.sh",
+      "result": "Passed 44 specification regressions, 27 safety regressions, 12 Rust boundary regressions; rustfmt/check/Clippy and 365 Rust tests plus one doc test; Ruff/mypy (59 source files), 812 Python tests; 312 web tests plus type/lint/format/production build verification; 54 installed CLI tests. Cross-language conformance corpus: 258 cases.",
+      "log": "/private/tmp/t070-full.log",
+      "sha256": "89010c27b8fb01744609a34c3755bc641f0df9c1989806878986001ce6d8cbb8"
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh",
+      "result": "Passed native Rust/Python/Parquet probes, 16 DuckDB and 10 resource tests, declaration returns, 7 normalization checks, 22 Polars checks, 29 expectation checks, 21 lifecycle cases, 36 dispatch scenarios, 28 developer-core walkthrough cases, all 12 foreign-data scenarios, and five web qualification tests plus typecheck/build.",
+      "log": "/private/tmp/t070-native.log",
+      "sha256": "556b0559acfadd1ede441088c186e026324ac22bd612e8dc65befa4eaeeedf2c"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings; cargo test -p tf-exec --test foreign --locked --offline; target/python/py314/bin/python -m ruff check --config python/pyproject.toml python/tools/check_foreign.py; target/python/py314/bin/python -m ruff format --config python/pyproject.toml --check python/tools/check_foreign.py; target/python/py314/bin/python -m mypy --config-file python/pyproject.toml",
+      "result": "Passed after final branch-label validation hardening: Clippy, four storage/lease/copy/migration regressions, Ruff and mypy (59 source files).",
+      "log": "/private/tmp/t070-final-followup.log",
+      "sha256": "beb08fdf41e1684158bd10f00f69006752ebf8307f5b5df8d6c88540df2468be"
+    }
+  ],
+  "coverage": [
+    "Provider-owned atomic selection/copy leases, renewal fencing and expiry across metadata-only restarts; old provider version GC exclusion.",
+    "Independent sealed copies, strict digest/schema/row-count checks, interruption at five durability boundaries, invisible partial state and retry recovery.",
+    "Local replica pin plus provenance durability, conflicting origin metadata refusal, local GC exclusion and collection-race refusal.",
+    "Schema-8 local job bindings survive schema-9 upgrade with local foreign keys intact.",
+    "Native two-workspace full/force, provider import poison, consumer checks, branch/fallback selectors, aliases, live coordinator, origin-labelled plans and upstream metadata, missing providers, offline pins/replay and corrupt replicas."
+  ],
+  "limits": [
+    "Same-machine explicit locators only; no remote provider discovery or provider producer execution.",
+    "Provider metadata request frames are capped at 1 MiB, immutable export records at 768 KiB. Copy leases last 15 minutes and renew every 30 seconds; an unavailable/busy metadata endpoint fails explicitly.",
+    "Graph expansion is metadata-only, bounded and explicitly labels missing provider/ancestor/source availability. Source contents and diagnostic samples are not copied.",
+    "Replica availability does not imply provider currentness. Local retention roots remain necessary.",
+    "T073 still owns the complete G1 gate and automatic non-editor browse metadata refresh. T031/T108 editor work remains owner-deferred."
+  ],
+  "dependency_evidence": "Added a direct Serde edge for the closed metadata transport. All 641 external package versions are unchanged; existing license and advisory observations are preserved with updated lock/inventory hashes, without claiming a new advisory fetch.",
+  "resolved_during_verification": [
+    "Registered the direct Serde dependency in the composition boundary allowlist and rebound dependency evidence without changing external package versions.",
+    "Updated graph schema fixtures and plan evidence fixtures for expanded lineage and strict origin validation.",
+    "Preserved static SQL in the schema-upgrade regression and corrected native CLI assertions to match actual report shapes.",
+    "Allowed provider branch display-name changes while retaining immutable branch UUID/content checks and the first-observed offline label; regression passed in the final focused run."
+  ],
+  "native_reports": {
+    "build-dispatch.json": {
+      "sha256": "580957e187d81142ebbf28662840a8ce8c4b4e0326af97cf9b24514803204964",
+      "passed": 36,
+      "cases": 36
+    },
+    "declaration-returns.json": {
+      "sha256": "232bf921c903a9582b07b5ea32478ae8f462e8427389c17434fdaa8724089cd1",
+      "result": "pass"
+    },
+    "developer-core.json": {
+      "sha256": "a04bbaca5b4391f3fded3c11889414fe3527f7d26dc5fbdb29abc37e9eeea1e4",
+      "passed": 28
+    },
+    "duckdb-capabilities.json": {
+      "sha256": "740eadcc9827fcbfa7e02504b91f35a76ad5bb2e2a0abf4ea65fb78f8c138388"
+    },
+    "expectation-evaluation.json": {
+      "sha256": "7a4a2557bbcd0821c9aec892ce65e1d93d1ddb23b92feb182739576b6cf5727f",
+      "checks": 29,
+      "result": "pass"
+    },
+    "expectation-lifecycle.json": {
+      "sha256": "9de4b3a37b2e0f99d656733cf3e8a973683b368ab9f6ce7ddb58f37885982965",
+      "cases": 21,
+      "result": "passed"
+    },
+    "foreign-data.json": {
+      "sha256": "b7871547ff5571630c2764369d765b96c970ef1351a76bd894bab2c4dc6cea39",
+      "cases": 12,
+      "result": "passed"
+    },
+    "normalization.json": {
+      "sha256": "2447c9a8d40de5116acc8331bfd5d308a3e9b23cd768f3eec4056d7b51652f73",
+      "checks": 7,
+      "result": "pass"
+    },
+    "polars-execution.json": {
+      "sha256": "6fd8a78b7be35cd00f639e1a20e093f5720604413da669b0f0eed187a256ebed",
+      "checks": 22,
+      "result": "pass"
+    },
+    "python.json": {
+      "sha256": "312871696aee979da94c8b82dd9486cfcbab1cb2cd00a68bc8aae93d4892fcb0",
+      "checks": 6
+    },
+    "resource-capabilities.json": {
+      "sha256": "83fe7b2d28e41fbc7bb5654a249d583c9d970511e6b1144951fea9f2d04238a7"
+    },
+    "rust.json": {
+      "sha256": "4dd991651dab8967e196f53586bd5a307fb451600ed30ef583b205425dc0ff2e",
+      "checks": 10
+    }
+  },
+  "native_report_directory": "target/qualification/runs/native.mPLB1v",
+  "foreign_scenarios": [
+    "full_force_copies_verified_bytes_preserves_origin_and_never_imports_provider",
+    "plan_reports_foreign_origin_and_alias",
+    "upstream_expands_exact_read_only_provenance_without_ancestor_copies",
+    "registered_current_named_and_strict_provider_policy_are_independent_of_consumer_override",
+    "registration_override_repeated_aliases_validation_dependency_and_qualified_pins",
+    "consumer_checks_preserve_last_good_and_provider_output_certificates",
+    "existing_provider_coordinator_serves_metadata_without_second_writer",
+    "mismatched_provider_uuid_is_rejected_for_fresh_resolution",
+    "fresh_resolution_observes_new_head_while_equal_bytes_keep_distinct_origin_versions",
+    "offline_exact_pin_and_faithful_replay_survive_provider_removal_but_fresh_latest_fails",
+    "unavailable_provider_lineage_is_explicit",
+    "corrupt_replica_cannot_satisfy_offline_pin"
+  ]
+}

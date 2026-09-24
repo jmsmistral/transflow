@@ -197,7 +197,7 @@ fn pinned_boundary_lease_is_promoted_and_earlier_fallback_arrival_invalidates_dr
             version: VersionId::from_bytes([10; 16]).to_string(),
             artifact: ticket.artifact().hex(),
             lease: lease.to_string(),
-            semantic: json!({}),
+            semantic: json!({"consumer_workspace":workspace().to_string(),"consumer_dataset":plan.writes[0].dataset,"alias":"rows","origin_workspace":workspace().to_string(),"origin_dataset":DatasetId::from_bytes([10;16]).to_string(),"version":VersionId::from_bytes([10;16]).to_string(),"artifact":ticket.artifact().hex(),"declared":{"kind":"omitted","name":null},"starting_branch":"master","resolved_branch":"master","role":"data"}),
             provenance: json!({"alias":"rows","workspace":workspace().to_string(),"dataset":DatasetId::from_bytes([10;16]).to_string(),"version":VersionId::from_bytes([10;16]).to_string(),"artifact":ticket.artifact().hex(),"declared_branch":{"kind":"omitted","name":null},"starting_branch":"master","resolved_branch":"master","role":"data","resolution":{"kind":"exact_pin"}}),
         });
         plan.guards.push(

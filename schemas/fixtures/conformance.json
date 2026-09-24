@@ -4365,7 +4365,7 @@
       "omitted_edges": "0",
       "scope_complete": true,
       "delivery_complete": true,
-      "external_expanded": true
+      "external_expanded": "yes"
     }
   },
   {
@@ -6040,5 +6040,60 @@
       "blockers": []
     },
     "valid": false
+  },
+  {
+    "name": "graph-expanded-foreign-provenance",
+    "schema": "GraphResultV1",
+    "valid": true,
+    "value": {
+      "kind": "graph",
+      "direction": "upstream",
+      "workspace": "01010101-0101-0101-0101-010101010101",
+      "source": "01010101-0101-0101-0101-010101010101",
+      "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "registry_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "certificate_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "branch": "master",
+      "start": "pending:raw/input",
+      "depth": "0",
+      "nodes": [
+        {
+          "identity": "pending:raw/input",
+          "paths": [
+            "raw/input"
+          ],
+          "depth": "0",
+          "external": false,
+          "producer": true
+        }
+      ],
+      "edges": [],
+      "total_nodes": "1",
+      "total_edges": "0",
+      "omitted_nodes": "0",
+      "omitted_edges": "0",
+      "scope_complete": true,
+      "delivery_complete": true,
+      "external_expanded": true,
+      "foreign_provenance": {
+        "nodes": [
+          {
+            "workspace": "02020202-0202-0202-0202-020202020202",
+            "dataset": "03030303-0303-0303-0303-030303030303",
+            "version": "04040404-0404-0404-0404-040404040404",
+            "depth": "1",
+            "availability": "metadata_available",
+            "source_availability": "metadata_only",
+            "executable": false,
+            "upstream_input_count": "0",
+            "depth_limited": false
+          }
+        ],
+        "edges": [],
+        "context": "provider_heads_then_exact_provenance",
+        "data_copied": false,
+        "producer_execution": false
+      }
+    }
   }
 ]

@@ -94,7 +94,7 @@ pub(crate) fn failure(e: impl std::fmt::Display) -> Error {
         validation: None,
     }
 }
-fn id<T: std::str::FromStr>() -> Result<T, Error> {
+pub(crate) fn id<T: std::str::FromStr>() -> Result<T, Error> {
     discovery::random_id()
         .map_err(failure)?
         .parse()
@@ -229,13 +229,31 @@ pub(crate) async fn prepare_captured(
         check_semantics: validation::CHECK_SEMANTICS,
     };
     let graph_scope = Graph::validated(&graph, &context, &request.branch).map_err(failure)?;
-    let bindings = tf_catalog::input_bindings::local_read_bindings(
+    let mut bindings = tf_catalog::input_bindings::local_read_bindings(
         &graph,
         &context,
         &request.branch,
         request.fallbacks.as_deref(),
     )
     .map_err(failure)?;
+    // Qualify explicit pins without contacting providers. Exact pins need no live policy.
+    let empty_policy =
+        tf_domain::input::BranchPolicySnapshot::new(vec![], BTreeMap::new()).map_err(failure)?;
+    for definition in graph.candidate().definitions() {
+        let consumer = registered(&definition.output)?;
+        for input in &definition.inputs {
+            let origin = registered(&input.identity)?;
+            if origin.workspace_id() != workspace.config().id() {
+                let key = InputBindingKey::new(consumer, input.alias.clone()).map_err(failure)?;
+                let (_, selection) =
+                    crate::replicas::selection(&proposed, input, &key, &request.branch)?;
+                bindings.insert(
+                    key,
+                    selection.binding(origin.workspace_id(), &empty_policy)?,
+                );
+            }
+        }
+    }
     let resolve = |refs: &[String]| -> Result<BTreeSet<CandidateIdentity>, Error> {
         refs.iter()
             .map(|r| {
@@ -430,18 +448,46 @@ pub(crate) async fn prepare_captured(
         }
         let key = InputBindingKey::new(registered(&selected.consumer)?, selected.alias.clone())
             .map_err(failure)?;
-        let binding = bindings
-            .get(&key)
-            .ok_or_else(|| failure(format!("Foreign read boundary {}#{} requires provider resolution, which is not available yet; provider code is never executed", proposed.resolve_output(&format!("dataset:{}", key.consumer().dataset_id())).map(|d| d.path().to_string()).unwrap_or_else(|_| key.consumer().dataset_id().to_string()), key.alias())))?
-            .clone();
         let lease: RequestId = id()?;
         let read_request = ReadRequest {
             lease,
             operation: plan_id,
             kind: LeaseKind::Plan,
-            now_us: now,
+            now_us: preparation::now().map_err(failure)?,
             ttl_us: 900_000_000,
         };
+        if registered(&selected.parent)?.workspace_id() != workspace_id {
+            if options.require_current {
+                return Err(failure(
+                    "Foreign boundary currentness is unassessable; use require_available to resolve and copy the provider version",
+                ));
+            }
+            let input = graph
+                .candidate()
+                .definitions()
+                .iter()
+                .find(|d| d.output == selected.consumer)
+                .and_then(|d| d.inputs.iter().find(|i| i.alias == selected.alias))
+                .ok_or_else(|| failure("missing external declaration"))?;
+            let (origin, selection) =
+                crate::replicas::selection(&proposed, input, &key, &request.branch)?;
+            reads.push(
+                crate::replicas::prepare(
+                    store,
+                    &workspace,
+                    origin,
+                    selection,
+                    pins.get(&key).copied(),
+                    read_request,
+                )
+                .await?,
+            );
+            continue;
+        }
+        let binding = bindings
+            .get(&key)
+            .ok_or_else(|| failure("missing local input binding"))?
+            .clone();
         let read = if let Some(version) = pins.get(&key) {
             store
                 .resolve_pin(binding, *version, &writes_set, read_request)

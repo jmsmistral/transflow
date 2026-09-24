@@ -119,6 +119,7 @@ impl ResolvedRead {
     pub fn provenance(&self) -> InputProvenance {
         let policy = &self.binding.policy;
         let origin = match policy.origin() {
+            PolicyOrigin::Registration => "registration",
             PolicyOrigin::BuildOverride => "build_override",
             PolicyOrigin::StartingBranch => "starting_branch",
             PolicyOrigin::WorkspaceDefault => "workspace_default",
@@ -189,6 +190,32 @@ pub struct ReadRequest {
     pub ttl_us: i64,
 }
 impl Store {
+    /// Resolve a foreign request under its provider's owner. Reuse the local atomic
+    /// selector/lease transaction, then restore the consumer-qualified provenance.
+    pub async fn resolve_export(
+        &mut self,
+        provider: tf_domain::WorkspaceId,
+        mut binding: InputBinding,
+        pin: Option<VersionId>,
+        request: ReadRequest,
+    ) -> Result<ResolvedRead, ResolutionError> {
+        if binding.dataset.workspace_id() != provider || !matches!(request.kind, LeaseKind::Copy) {
+            return Err(ResolutionError::Context);
+        }
+        let original = binding.key.clone();
+        binding.key =
+            tf_domain::input::InputBindingKey::new(binding.dataset, original.alias().into())
+                .map_err(|_| ResolutionError::Context)?;
+        let mut read = if let Some(version) = pin {
+            self.resolve_pin(binding, version, &BTreeSet::new(), request)
+                .await?
+        } else {
+            self.resolve_input(binding, &BTreeSet::new(), request)
+                .await?
+        };
+        read.binding.key = original;
+        Ok(read)
+    }
     /// Local read boundary only. The owner serializes this with publication/collection.
     /// No filesystem scan, check evaluator or user function runs inside the transaction.
     pub async fn resolve_input(

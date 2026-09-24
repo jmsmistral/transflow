@@ -198,7 +198,10 @@ pub(super) fn prepare(
                     .ok_or_else(|| fail("required boundary is unresolved"))?;
                 if input.identity
                     != tf_catalog::candidate::CandidateIdentity::Registered(
-                        tf_domain::DatasetKey::new(config.id(), r.dataset.parse().map_err(fail)?),
+                        tf_domain::DatasetKey::new(
+                            text(&r.provenance, "workspace")?.parse().map_err(fail)?,
+                            r.dataset.parse().map_err(fail)?,
+                        ),
                     )
                 {
                     return Err(fail("wrong boundary input identity"));

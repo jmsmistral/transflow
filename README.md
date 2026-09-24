@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. Explicit [external registration](crates/transflow/EXTERNAL.md) is available (T069), with stable provider identity, private local locators and removal previews. HTTP/UI, foreign-data consumption, scheduling, other transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
+**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. [External datasets](crates/transflow/EXTERNAL.md) support explicit registration, provider-owned resolution, verified local copies, consumer checks, offline exact pins/replay and read-only upstream provenance (T069–T072). Foreign producer code never runs in consumer builds. HTTP/UI, scheduling, other transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
 
 Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
 Package installation and workspace environment checks reject other minors.
@@ -296,6 +296,8 @@ metadata stays unknown. Public `why`/`plan` commands are exposed by T054; unasse
 T053 adds [internal upstream/downstream traversal](crates/tf-catalog/TRAVERSAL.md).
 Depth is the shortest edge-hop distance, with the starting dataset at zero.
 Omitted depth includes every reachable local node and registered foreign boundary.
+Add `--expand-external` to `upstream` to read version-labelled provider provenance;
+this imports no provider source and copies no ancestor data.
 Context-bound pagination preserves unique nodes and every input alias, including
 validation-only and named-branch edges. The public graph commands are available through T054.
 
