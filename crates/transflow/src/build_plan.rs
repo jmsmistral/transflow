@@ -626,11 +626,14 @@ pub(crate) async fn prepare_captured(
     {
         return Err(failure("environment changed during planning"));
     }
-    store.save_draft(&plan).await.map_err(failure)?;
+    store
+        .save_draft(&plan)
+        .await
+        .map_err(|e| failure(format!("Saving build draft: {e}")))?;
     store
         .check_draft(&plan, preparation::now().map_err(failure)?)
         .await
-        .map_err(failure)?;
+        .map_err(|e| failure(format!("Checking build draft: {e}")))?;
     owned.close().await.map_err(failure)?;
     Ok(plan)
 }
@@ -675,13 +678,13 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
         .map_err(failure)?
         .load_draft(plan_id)
         .await
-        .map_err(failure)?;
+        .map_err(|e| failure(format!("Loading build draft: {e}")))?;
     owned
         .repository()
         .map_err(failure)?
         .check_draft(&plan, preparation::now().map_err(failure)?)
         .await
-        .map_err(failure)?;
+        .map_err(|e| failure(format!("Checking build draft: {e}")))?;
     owned.close().await.map_err(failure)?;
     if plan.workspace != workspace.config().id().to_string() {
         return Err(failure("saved draft belongs to another workspace"));
@@ -845,13 +848,13 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
         store
             .register_dataset(config.id(), dataset.key().dataset_id(), now)
             .await
-            .map_err(failure)?;
+            .map_err(|e| failure(format!("Registering build dataset: {e}")))?;
     }
     let build = id()?;
     store
         .accept_draft(&plan, build, id()?, session, now)
         .await
-        .map_err(failure)?;
+        .map_err(|e| failure(format!("Accepting build draft: {e}")))?;
     owned.close().await.map_err(failure)?;
     Ok(Accepted { build, plan })
 }

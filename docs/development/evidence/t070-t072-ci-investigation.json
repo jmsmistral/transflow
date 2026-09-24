@@ -1,0 +1,87 @@
+{
+  "tasks": [
+    "T070",
+    "T071",
+    "T072"
+  ],
+  "date": "2026-09-24",
+  "implementation_base": "2f9e7eaa301430999ad9ea46b60a234368a933e8",
+  "specification_base": "c97e2a1e459176bc14a0d1486977660470245b66",
+  "reported_failure": {
+    "source": "owner-supplied workflow screenshot; no run ID or remote logs retrieved",
+    "job": "native (ubuntu-24.04-arm, 3.14.7)",
+    "step": "Run native probes",
+    "location": "python/tools/check_build_commands.py:316, forced build immediately after terminal cancellation through persistent coordinator",
+    "diagnostic": "Build preparation failed: The runtime database operation failed",
+    "other_native_jobs_shown": "macos-15 and ubuntu-24.04 passed"
+  },
+  "root_cause": "Unconfirmed. Neither original native dispatch nor repeated local cancellation/storage exercises reproduced the failure.",
+  "result": "diagnostic follow-up; original CI failure remains unresolved",
+  "platform": "macOS arm64 / Python 3.14.7",
+  "changes": [
+    "Numeric SQLite/OS error codes or fixed driver categories replace unclassified database failures without exposing raw SQL, bound values or private error text.",
+    "Draft save/load/check/acceptance and dataset registration failures identify their operation.",
+    "Real SQLite regression covers 100 writer reopen/register/close cycles concurrent with two status readers performing 100 open/read/close cycles each.",
+    "Real SQLite and driver error tests verify private error text remains absent from public diagnostics."
+  ],
+  "commands": [
+    {
+      "command": "cargo build --locked --offline -p transflow --bin transflow --example dispatch_probe; target/qualification/py314/bin/python -I -B python/tools/check_dispatch.py target/debug/examples/dispatch_probe target/debug/transflow target/qualification/runs/native.mPLB1v/wheels/transflow-0.0.0.dev0-py3-none-any.whl target/qualification/wheelhouse",
+      "result": "Passed all 36 native dispatch scenarios with numeric SQLite diagnostics; operation labels added afterward.",
+      "log": "/private/tmp/ci-fix-dispatch.log",
+      "sha256": "8cdd075bd206296620692b36f18c0496fb95b0fa5ce488730b18c611d9fef607"
+    },
+    {
+      "command": "target/qualification/py314/bin/python /private/tmp/ci-cancel-stress.py",
+      "result": "Passed 30 consecutive real persistent-coordinator cancel/TooLate/new-forced-build cycles with numeric diagnostics in a disposable workspace.",
+      "log": "/private/tmp/ci-cancel-stress.log",
+      "sha256": "0f1d076184351b0ca1b840649e0a08f54d48dbe4f29497d14f7275ea5d3c1b3b"
+    },
+    {
+      "command": "cargo test -q -p tf-store --test storage writer_reopens_while_status_readers_connect_and_close --locked --offline (30 consecutive runs)",
+      "result": "All 30 runs passed: 3000 writer and 6000 reader opens across the runs. Log retains the last run.",
+      "log": "/private/tmp/ci-fix-storage-stress.log",
+      "sha256": "22e4e9e43c4823fe52d405079938c5c77a08e0a0c59a59507514ed29cb482257"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed after replacing disallowed unwrap/expect use in new tests with error propagation.",
+      "log": "/private/tmp/ci-fix-clippy.log",
+      "sha256": "1e0437d4eeb7f39adb1c55280e9a50a8b192344dbeaec203aaaa7f1d4bf2b815"
+    },
+    {
+      "command": "cargo fmt --all -- --check; cargo test --workspace --locked --offline",
+      "result": "Passed formatting and 367 Rust tests plus one doc test, including both new storage diagnostics/concurrency regressions.",
+      "log": "/private/tmp/ci-fix-rust.log",
+      "sha256": "ac84965e6c2598ef78a73cdeee7fba883db037e1be525ce28082439b10acc1ae"
+    },
+    {
+      "command": "bash tools/check-cli.sh",
+      "result": "Passed all 54 installed CLI integration tests.",
+      "log": "/private/tmp/ci-fix-cli.log",
+      "sha256": "2cf6f2e7a71c1b076f129f4adbd0964669a634c9bd6e8c6cc5acb401257805be"
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+      "result": "Passed 27 safety regressions and public artifact/dependency/generated-contract checks.",
+      "log": "/private/tmp/ci-fix-safety.log",
+      "sha256": "6cb61594a310f0250b628528d004647c39636c69643a4afb6fa3b93140e864d3"
+    },
+    {
+      "command": "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Specification 1.1.2 checks passed.",
+      "log": "/private/tmp/ci-fix-spec.log",
+      "sha256": "3ad505fbb531fe2f278cc73223bc6a41f1643ef61d875f5fb5555722bb14c8ce"
+    }
+  ],
+  "limits": [
+    "Linux ARM is not available locally; the next owner-monitored CI run remains necessary.",
+    "No retry, timeout, database constraint, workflow assertion or native scenario was weakened.",
+    "Existing SQLite schema 9, protocol 1.0, AST 1 and specification 1.1.2 are unchanged.",
+    "T070-T072 checkboxes remain open. No claim of a root-cause fix or passing Linux ARM CI."
+  ],
+  "stress_script": {
+    "path": "/private/tmp/ci-cancel-stress.py",
+    "sha256": "e27bc14f78a06ff42788e18b1492e09f56e0394a3dc7776d4fd599ca1fc59a9b"
+  }
+}

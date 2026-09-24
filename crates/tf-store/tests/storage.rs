@@ -25,6 +25,37 @@ fn workspace() -> WorkspaceId {
 fn dataset() -> DatasetId {
     DatasetId::from_bytes([2; 16])
 }
+#[test]
+fn database_diagnostics_retain_codes_without_private_error_text() -> Result {
+    runtime()?.block_on(async {
+        let dir = ScratchDirectory::new()?;
+        let path = dir.path().join("runtime.sqlite");
+        Store::open(&path).await?.close().await?;
+        let mut db = raw(&path).await?;
+        let error = sqlx::query("SELECT private_sensitive_column FROM workspaces")
+            .fetch_all(&mut db)
+            .await
+            .err()
+            .ok_or("unknown private column unexpectedly succeeded")?;
+        assert!(error.to_string().contains("private_sensitive_column"));
+        let safe = StoreError::from(error).to_string();
+        assert!(safe.contains("SQLite code 1"));
+        assert!(!safe.contains("private_sensitive_column"));
+        assert!(
+            StoreError::from(sqlx::Error::RowNotFound)
+                .to_string()
+                .contains("expected row missing")
+        );
+        let io = StoreError::from(sqlx::Error::Io(std::io::Error::other(
+            "private filesystem detail",
+        )))
+        .to_string();
+        assert!(io.contains("I/O error"));
+        assert!(!io.contains("private filesystem detail"));
+        db.close().await?;
+        Ok(())
+    })
+}
 async fn raw(path: &std::path::Path) -> std::result::Result<SqliteConnection, sqlx::Error> {
     support::database::connect(path).await
 }
@@ -303,6 +334,52 @@ fn busy_wait_is_bounded_and_reader_snapshot_does_not_block_writer() -> Result {
         store.close().await?;
         Ok(())
     })
+}
+#[test]
+fn writer_reopens_while_status_readers_connect_and_close() -> Result {
+    let dir = ScratchDirectory::new()?;
+    let path = dir.path().join("runtime.sqlite");
+    runtime()?.block_on(async {
+        let mut store = Store::open(&path).await?;
+        store.register_workspace(workspace(), "root", 0).await?;
+        store.register_dataset(workspace(), dataset(), 0).await?;
+        store.close().await
+    })?;
+    let ready = std::sync::Barrier::new(3);
+    std::thread::scope(|scope| {
+        let mut readers = Vec::new();
+        for _ in 0..2 {
+            let path = &path;
+            let ready = &ready;
+            readers.push(scope.spawn(move || {
+                ready.wait();
+                runtime()?.block_on(async {
+                    for _ in 0..100 {
+                        let mut reader = tf_store::Reader::open_existing(path).await?;
+                        assert!(reader.contains_dataset(workspace(), dataset()).await?);
+                        reader.close().await?;
+                    }
+                    Ok::<_, StoreError>(())
+                })
+            }));
+        }
+        ready.wait();
+        let result = runtime()?.block_on(async {
+            for at in 0..100 {
+                let mut store = Store::open(&path).await?;
+                store.register_workspace(workspace(), "root", at).await?;
+                store.close().await?;
+            }
+            Ok::<_, StoreError>(())
+        });
+        for reader in readers {
+            reader
+                .join()
+                .map_err(|_| StoreError::Io(std::io::Error::other("status reader panicked")))??;
+        }
+        result
+    })?;
+    Ok(())
 }
 #[test]
 fn database_symlink_is_rejected_before_open() -> Result {

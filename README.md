@@ -160,6 +160,8 @@ contracts; canonical hashing is next in T015.
 T013 passes [local verification](docs/development/evidence/t013-macos-arm64.json)
 and all five [CI workflows](docs/development/evidence/t013-ci.json).
 
+Database errors now include safe numeric database/OS codes or fixed driver categories;
+build draft errors also identify the failed persistence operation.
 CLI options and the current JSON/error contract are documented in the
 [CLI guide](crates/transflow/README.md). `--json` is available for implemented commands;
 unavailable commands still fail clearly without starting work.

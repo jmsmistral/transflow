@@ -28,7 +28,7 @@ pub const BUSY_TIMEOUT: Duration = Duration::from_millis(250);
 #[derive(Debug, thiserror::Error)]
 pub enum StoreError {
     /// SQLite rejected an operation; source is for controlled diagnostics only.
-    #[error("The runtime database operation failed")]
+    #[error("The runtime database operation failed ({})", database_code(.0))]
     Database(#[from] sqlx::Error),
     /// The path could not be validated or opened.
     #[error("The runtime storage path is unavailable")]
@@ -48,6 +48,29 @@ pub enum StoreError {
     /// Bounded data or repository preconditions failed.
     #[error("The runtime repository request is invalid or exceeds its limit")]
     InvalidRequest,
+}
+// SQLite extended numeric codes aid diagnosis without exposing SQL, paths or bound values.
+fn database_code(error: &sqlx::Error) -> String {
+    if let Some(code) = error
+        .as_database_error()
+        .and_then(|e| e.code())
+        .and_then(|code| code.parse::<u32>().ok())
+    {
+        return format!("SQLite code {code}");
+    }
+    match error {
+        sqlx::Error::Io(e) => match e.raw_os_error() {
+            Some(code) => format!("I/O code {code}"),
+            None => "I/O error".into(),
+        },
+        sqlx::Error::RowNotFound => "expected row missing".into(),
+        sqlx::Error::ColumnDecode { .. } | sqlx::Error::Decode(_) => "decoding error".into(),
+        sqlx::Error::ColumnNotFound(_) | sqlx::Error::ColumnIndexOutOfBounds { .. } => {
+            "column mismatch".into()
+        }
+        sqlx::Error::WorkerCrashed => "database worker stopped".into(),
+        _ => "driver error".into(),
+    }
 }
 /// Repository result.
 pub type Result<T> = std::result::Result<T, StoreError>;

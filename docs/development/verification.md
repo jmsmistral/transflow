@@ -737,3 +737,26 @@ The [combined measured receipt](evidence/t070-t072-macos-arm64.json) records act
 results and remaining qualification. The native runner is now part of
 `tools/qualification/check.sh`. CI is handed to the owner after both pushes. No full G1,
 HTTP/UI, schedule, native editor or release completion is inferred from these tasks.
+
+
+## T070–T072 Linux ARM CI investigation (2026-09-24)
+
+The owner reported a failure in the Ubuntu 24.04 ARM/Python 3.14.7 native job
+following the T070–T072 push; the same screenshot shows successful macOS and Linux
+x86-64 native jobs. The failure occurs in the existing public persistent-coordinator
+journey: after cancellation settles, the next forced `raw/items` build fails during
+preparation with a generic database error. The foreign-data runner had not run yet.
+
+The original 36-case dispatch journey passed locally. A disposable persistent
+coordinator also passed 30 consecutive cancel/terminal-cancel/new-forced-build cycles.
+Thirty runs of a concurrent storage fixture passed (100 writer opens and 200 reader
+opens per run). These results do not reproduce or resolve the Linux ARM failure.
+
+The diagnostic follow-up preserves numeric SQLite/OS codes and fixed driver failure
+categories, without raw SQL, bound values or private error messages. Draft save,
+load, guard and acceptance errors include their operation. Storage regressions cover
+concurrent status readers and diagnostic redaction. No retry, timeout, storage
+constraint or workflow check was weakened. See the [investigation receipt](evidence/t070-t072-ci-investigation.json).
+Final verification passed: formatting, Clippy, 367 Rust tests plus one doc test,
+54 installed CLI tests, specification validation and 27 safety regressions.
+The root cause and Linux ARM rerun remain outstanding; T070–T072 stay unchecked.
