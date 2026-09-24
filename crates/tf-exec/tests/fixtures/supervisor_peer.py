@@ -76,24 +76,34 @@ else:
             time.sleep(0.005)
     if mode == "phase_regression":
         send({"type": "phase", "phase": "setup"})
-    if mode in {"descendant", "quiet_descendant", "cancel"}:
+    if mode in {"descendant", "quiet_descendant", "quiet_stopped_descendant", "cancel"}:
         child = os.fork()
         if child == 0:
-            if mode == "quiet_descendant":
+            if mode in {"quiet_descendant", "quiet_stopped_descendant"}:
                 channel.close()
                 os.close(1)
                 os.close(2)
-                def term_received(_signal, _frame):
-                    (root / "term.time").write_text(str(time.monotonic()))
-                signal.signal(signal.SIGTERM, term_received)
-            else:
-                signal.signal(signal.SIGTERM, signal.SIG_IGN)
+            signal.signal(signal.SIGTERM, signal.SIG_IGN)
+            if mode == "quiet_stopped_descendant":
+                # Leader exit can HUP/CONT an orphaned stopped group. Keep this
+                # fixture alive and stopped so only supervisor KILL ends it.
+                signal.signal(signal.SIGHUP, signal.SIG_IGN)
+                def stay_stopped(_signal, _frame):
+                    os.kill(os.getpid(), signal.SIGSTOP)
+                signal.signal(signal.SIGCONT, stay_stopped)
             (root / "descendant.pid").write_text(str(os.getpid()))
+            if mode == "quiet_stopped_descendant":
+                # Cannot emit heartbeats or handle signals while grace elapses.
+                os.kill(os.getpid(), signal.SIGSTOP)
             while True:
                 time.sleep(0.05)
                 (root / "pulse").write_text(str(time.monotonic()))
         while not (root / "descendant.pid").exists():
             time.sleep(0.005)
+        if mode == "quiet_stopped_descendant":
+            # Acknowledge the actual stop before allowing leader completion.
+            waited, status = os.waitpid(child, os.WUNTRACED)
+            assert waited == child and os.WIFSTOPPED(status)
         if mode == "cancel":
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             while True:

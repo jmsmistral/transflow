@@ -760,3 +760,29 @@ constraint or workflow check was weakened. See the [investigation receipt](evide
 Final verification passed: formatting, Clippy, 367 Rust tests plus one doc test,
 54 installed CLI tests, specification validation and 27 safety regressions.
 The root cause and Linux ARM rerun remain outstanding; T070–T072 stay unchecked.
+
+
+## macOS supervisor grace assertion (2026-09-24)
+
+The owner supplied results for implementation `e39f745df522f2fd5f3e09c515dd81de9733a1c4`:
+all three native jobs passed, including Linux ARM, while macOS Rust tests failed
+`heartbeat_silence_is_diagnostic_and_success_cleans_descendants`. This confirms the
+native rerun; it does not establish the earlier database error's cause.
+
+The grace assertion used the difference between the child's Python SIGTERM-handler
+time and its last heartbeat write. Neither event is guaranteed prompt scheduling.
+A child deliberately stopped after TERM reproduced the old assertion failure even
+though cleanup retained its grace. The corrected test uses a separate monotonic
+supervisor interval, recorded after TERM and immediately before KILL, excluding
+later reaping/draining. It checks the entire configured 250 ms, successful cleanup,
+closed logs and stopped descendants. The final regression also uses `waitpid` with
+`WUNTRACED` to confirm a quiet descendant is already stopped before leader completion;
+it cannot emit heartbeats or handle Python signals during cleanup. No timeout,
+termination policy or early-exit guard changed. See the [measured receipt](evidence/supervision-grace-ci.json).
+
+Local verification passed: 367 Rust tests plus one doc test, all 11 final supervision
+tests, 20 consecutive runs of the corrected regression, Clippy, formatting,
+specification validation and 27 safety regressions.
+
+T070–T072 remain pending final owner-confirmed CI after this follow-up. Editor work
+remains deferred and T073 has not started.

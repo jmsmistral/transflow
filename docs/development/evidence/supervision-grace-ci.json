@@ -1,0 +1,75 @@
+{
+  "date": "2026-09-24",
+  "tasks": [
+    "T055",
+    "T070",
+    "T071",
+    "T072"
+  ],
+  "implementation_base": "e39f745df522f2fd5f3e09c515dd81de9733a1c4",
+  "specification_base": "5d72d54634a6bee14d906ba8b25d6bb389d79165",
+  "platform": "macOS arm64",
+  "owner_ci_report": {
+    "source": "owner-supplied screenshots for e39f745; no workflow polling",
+    "native_jobs": "macos-15, ubuntu-24.04 and ubuntu-24.04-arm / Python 3.14.7 passed",
+    "overall": "12 successful checks, one failed check",
+    "failure": "Rust backend & CLI / workspace (macos-15): heartbeat_silence_is_diagnostic_and_success_cleans_descendants, closed pipes must not shorten group grace"
+  },
+  "cause": "The assertion used child signal-handler/heartbeat times as a clock for supervisor grace. Delayed or stopped child execution can fail that assertion despite the configured grace being retained.",
+  "fix": [
+    "Record monotonic termination_grace_elapsed after TERM signaling and before KILL; exclude subsequent reap/drain time.",
+    "Assert the full configured 250 ms for quiet running and stopped descendants, successful outcome, stopped processes and complete logs.",
+    "Confirm the stopped fixture using waitpid(WUNTRACED) before leader completion; ignore orphan-group HUP and stop again on CONT so only supervisor KILL ends it.",
+    "Remove signal-handler timestamp/heartbeat scheduling assumptions; termination policy, timeouts, cleanup ordering and early-exit guards are unchanged."
+  ],
+  "commands": [
+    {
+      "command": "cargo test -p tf-exec --test supervision heartbeat_silence_is_diagnostic_and_success_cleans_descendants --locked --offline -- --exact --nocapture (old assertion with injected post-TERM stop)",
+      "result": "Expected failure reproduced: closed pipes must not shorten group grace.",
+      "log": "/private/tmp/supervision-before.log",
+      "sha256": "cf7db4dcdd11e6d12cc56ebd4609cb03ea07078375f65927b8d5c267b679b3b4"
+    },
+    {
+      "command": "cargo test --workspace --locked --offline",
+      "result": "Passed 367 Rust tests plus one doc test. Final stopped-fixture synchronization was refined afterward and is covered by the final supervision run.",
+      "log": "/private/tmp/supervision-workspace.log",
+      "sha256": "333d8d348dab2eb30fa5d18681d491da7e5cfa814b2ad879154be55033a5d1ce"
+    },
+    {
+      "command": "cargo test -p tf-exec --test supervision --locked --offline",
+      "result": "All 11 supervision tests passed with the final synchronized stopped-child fixture.",
+      "log": "/private/tmp/supervision-stopped-final.log",
+      "sha256": "3ffb9a2293b2fadde621a15683b12aea3ebcb033ba457ebfddaff64cd054da34"
+    },
+    {
+      "command": "cargo test -q -p tf-exec --test supervision heartbeat_silence_is_diagnostic_and_success_cleans_descendants --locked --offline -- --exact (20 consecutive runs)",
+      "result": "All 20 repetitions passed; no retries of failed runs.",
+      "log": "/private/tmp/supervision-stopped-stress.log",
+      "sha256": "743556945a6fed34676bae1b38282896abbbe4c032b85549a894846f9f942b8f"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed after final fixture changes; formatting also passed.",
+      "log": "/private/tmp/supervision-stopped-clippy.log",
+      "sha256": "fce724e270999cdbbee4a782862dc7c8a4c1107b4d145556d9b91b42c26054ae"
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+      "result": "Passed 27 safety regressions and public artifact/dependency/generated-contract checks.",
+      "log": "/private/tmp/supervision-safety.log",
+      "sha256": "9f4431de4088885ef19506ae5e4ed02832effe0ffbccb47dab97f55792e2ea0f"
+    },
+    {
+      "command": "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Specification 1.1.2 checks passed.",
+      "log": "/private/tmp/supervision-spec.log",
+      "sha256": "7c70e4470c0cc414053d9ce785fe6da7b127acb8471fabd8eb50126fb07841a1"
+    }
+  ],
+  "limits": [
+    "New CI remains owner-monitored.",
+    "The earlier Linux ARM database failure did not recur on this rerun; its original cause remains unproven.",
+    "No worker protocol, schema or specification version change."
+  ],
+  "result": "local verification passed; new CI pending owner confirmation"
+}

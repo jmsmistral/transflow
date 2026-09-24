@@ -186,6 +186,9 @@ pub struct Report {
     pub threads: Option<u32>,
     /// Time spent terminating and draining the worker, outside its phase budget.
     pub cleanup_elapsed: Duration,
+    /// Monotonic interval from completion of TERM signaling to KILL escalation.
+    /// Excludes reaping and log draining; may be shorter when the group has exited.
+    pub termination_grace_elapsed: Duration,
 }
 impl Default for Report {
     fn default() -> Self {
@@ -203,6 +206,7 @@ impl Default for Report {
             timeout: None,
             threads: None,
             cleanup_elapsed: Duration::ZERO,
+            termination_grace_elapsed: Duration::ZERO,
         }
     }
 }
@@ -729,6 +733,7 @@ fn run_inner(
         }
         thread::sleep(Duration::from_millis(2));
     }
+    report.termination_grace_elapsed = grace_start.elapsed();
     if let Err(e) = owned.signal(rustix::process::Signal::KILL) {
         cleanup = Err(e);
     }

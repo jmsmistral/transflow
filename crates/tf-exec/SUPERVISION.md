@@ -87,7 +87,11 @@ and coordinator disconnect during a slow import. CI runs the same suite on the
 supported macOS/Linux matrix; local evidence records only platforms actually run.
 
 T056 reports typed phase timeout evidence, the actual pre-import thread limit and
-cleanup duration. Phase timers exclude cleanup/grace. POLARS, OpenMP and common
+cleanup duration. `Report.termination_grace_elapsed` separately measures the
+monotonic interval after TERM signaling and before KILL escalation, excluding
+reaping and final log draining. The regression checks this interval for both
+running and stopped descendants with closed pipes; child heartbeat timing is
+not a grace-period clock. Phase timers exclude cleanup/grace. POLARS, OpenMP and common
 BLAS/NumExpr/Accelerate environment limits are set before Python starts. DuckDB
 connection thread/buffer/spill configuration remains the adapter responsibility.
 

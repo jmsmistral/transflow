@@ -112,13 +112,19 @@ fn redaction_handles_split_secrets_nonce_and_binary_log_bytes() {
 }
 #[test]
 fn heartbeat_silence_is_diagnostic_and_success_cleans_descendants() {
-    for mode in ["silent", "descendant", "quiet_descendant"] {
+    for mode in [
+        "silent",
+        "descendant",
+        "quiet_descendant",
+        "quiet_stopped_descendant",
+    ] {
         let root = Scratch::create().unwrap();
         let mut request = launch(root.path(), mode);
         request.policy.heartbeat_warning = Duration::from_millis(30);
-        if mode == "quiet_descendant" {
+        if mode.starts_with("quiet_") {
             request.policy.termination_grace = Duration::from_millis(250);
         }
+        let grace = request.policy.termination_grace;
         let report = supervisor::run(request, Cancellation::default());
         assert_eq!(report.outcome, Ok(()), "{mode}: {report:?}");
         if mode == "silent" {
@@ -129,21 +135,15 @@ fn heartbeat_silence_is_diagnostic_and_success_cleans_descendants() {
                 .parse()
                 .unwrap();
             assert!(stopped(pid));
-            if mode == "quiet_descendant" {
-                // Its final pulse must occur well into the requested 250 ms grace,
-                // even though this descendant closed both inherited log pipes.
-                let term: f64 = fs::read_to_string(root.path().join("term.time"))
-                    .unwrap()
-                    .parse()
-                    .unwrap();
-                let pulse: f64 = fs::read_to_string(root.path().join("pulse"))
-                    .unwrap()
-                    .parse()
-                    .unwrap();
+            if mode.starts_with("quiet_") {
+                // Python signal handling and heartbeat writes may be scheduled late,
+                // or not at all after TERM. Measure the supervisor's own interval;
+                // a live/stopped descendant with closed pipes must get full grace.
                 assert!(
-                    pulse - term >= 0.10,
-                    "closed pipes must not shorten group grace"
+                    report.termination_grace_elapsed >= grace,
+                    "{mode}: closed pipes must not shorten group grace: {report:?}"
                 );
+                assert!(report.logs_complete, "{mode}: {report:?}");
             }
         }
     }
