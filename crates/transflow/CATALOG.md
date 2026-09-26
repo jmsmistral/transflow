@@ -21,12 +21,17 @@ tombstones remain inspectable but cannot resolve as active pipeline inputs.
 
 Local entries include retained version counts and up to ten recent version IDs
 with schema availability. Provider versions are explicitly uninspected. Branch
-context is the configured workspace default; selecting/resolving build branches
-remains later work. Producer locations come from digest-verified retained graph
+context is the configured workspace default, independently of a build's selected
+branch. Producer locations come from digest-verified retained graph
 and source snapshots and are always labelled potentially stale. These are display
 facts, never authorization to execute old definitions after failed validation.
 Read-only SQLite queries can create WAL/shared-memory coordination sidecars; they
 never create a missing runtime database, migrate it or change domain rows.
+
+Ordinary builds refresh the current browse graph before execution using the
+reconciled registry and guarded source capture. Explicit `catalog sync` also
+refreshes it. Invalid candidates and stale plans preserve the previous graph;
+historical Git-ref builds and replay do not replace the current-authoring view.
 
 Rename/removal first capture and structurally validate the current complete graph.
 Without `--yes`, the command returns an impact preview and leaves authoring, graph,
@@ -43,14 +48,14 @@ or saved schedules/views exist. Precise template/view reference analysis belongs
 to their later repositories; an unknown future active use is not assumed safe.
 Removal moves the local identity/path/kind into registry tombstones and removes
 aliases targeting it. No dataset version, artifact, source capture or history row
-is deleted. External-registration removal is a separate later command.
+is deleted. External-registration removal uses [external remove](EXTERNAL.md).
 
 Mutations use the same expected-old/new registry journal and runtime ownership as
 sync. Lifecycle intents contain no allocated IDs; recovery verifies the exact
 replacement digest and complete retained identity set. A failure after registry
 replacement retains that durable change and may leave editor refresh incomplete;
 retry/recovery does not allocate replacement identities. The previous graph stays
-retained for stale display. A subsequent valid sync records the new graph.
+retained for stale display. A subsequent valid sync or ordinary build records the new graph.
 
 Human and `CatalogResultV1` JSON results include preview/applied state, blockers,
 impact counts and up to 64 source references. Full structural validation is not

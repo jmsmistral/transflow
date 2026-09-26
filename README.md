@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. [External datasets](crates/transflow/EXTERNAL.md) support explicit registration, provider-owned resolution, leased direct reads without input replication, consumer checks, provider-dependent exact pins/replay and read-only upstream provenance (T069–T072). Foreign producer code never runs in consumer builds. HTTP/UI, scheduling, other transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
+**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. [External datasets](crates/transflow/EXTERNAL.md) support explicit registration, provider-owned resolution, leased direct reads without input replication, consumer checks, provider-dependent exact pins/replay and read-only upstream provenance (T069–T072). Foreign producer code never runs in consumer builds. Ordinary builds refresh retained catalogue browsing metadata; fixed Git-ref builds and replay preserve the current browse view. The [G1 qualification matrix](docs/development/g1-qualification.md) records core coverage and later-gate exclusions. HTTP/UI, scheduling, other transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
 
 Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
 Package installation and workspace environment checks reject other minors.
@@ -86,7 +86,7 @@ Keep the canonical specification in a sibling checkout directly under `~/dev/`. 
 
 Read the [specification document map](../transflow-spec/README.md) and [engineering agreement](../transflow-spec/AGENTS.md) before implementation. [AGENTS.md](AGENTS.md) is the short agent entry point. The specification is also hosted at [jmsmistral/transflow-spec](https://github.com/jmsmistral/transflow-spec). Detailed specification files are not duplicated here.
 
-Specification baseline: **1.1.2**. See its task ledger for intended scope; unchecked tasks are not delivered features. End users of a future installed release will not need the specification checkout.
+Specification baseline: **1.1.3**. See its task ledger for intended scope; unchecked tasks are not delivered features. End users of a future installed release will not need the specification checkout.
 
 ## Development checks
 
@@ -203,25 +203,26 @@ The shared [structural validation service](crates/tf-catalog/VALIDATION.md) (T03
 
 [Catalogue browsing and lifecycle commands](crates/transflow/CATALOG.md) provide revision-bound pages, exact retained identity lookup, rename previews/aliases and explicit guarded tombstones.
 
-## Local import preparation
+## Local Parquet imports
 
-T035 adds `dataset import <path-or-id> --path <file-or-glob> --prepare-only`.
-It copies and validates local Parquet files, registers an explicit imported
-identity after graph validation, and retains preparation metadata. It accepts
-valid zero-row files and detects observable source changes. This is staging only;
-no dataset version, branch head or quality certificate is published. See the
-[import preparation guide](crates/transflow/IMPORTS.md) for setup and limitations.
+`dataset import <path-or-id> --path <file-or-glob>` now publishes an immutable
+local version that transforms can consume. It registers an imported identity after
+graph validation, validates exact Parquet schemas/values, installs durable bytes,
+and atomically updates the selected branch head and publication event. Reimports
+keep the dataset identity and retain earlier versions. Failed imports preserve the
+last good head. Valid zero-row files are allowed; require nonempty data with an
+explicit consumer expectation. `--prepare-only` retains private staging without
+publishing. See the [import guide](crates/transflow/IMPORTS.md).
 
-T036 now normalizes imported Arrow/Parquet schemas, validates exact value ranges,
-and retains logical schema fingerprints in preparation manifests. It preserves
+Local file imports deliberately copy externally mutable files into managed storage.
+Registered external workspace datasets instead use leased provider reads without
+copying input data. Neither path executes a provider transform during a consumer build.
+
+The [normalization service](crates/tf-store/NORMALIZATION.md) preserves supported
 null/NaN, integer/decimal precision, timestamp units/timezones and nested values,
-with explicit unsupported-adapter errors. See [normalization and capabilities](crates/tf-store/NORMALIZATION.md).
-Polars builds and quality-check execution are available; standalone imported-data publication remains separate work.
-
-The T037 storage foundation now supports ordered multi-file immutable artifacts,
-strict integrity verification and durable installation with safe byte deduplication.
-See the [artifact guide](crates/tf-store/ARTIFACTS.md). This internal service does
-not yet make imported data publicly buildable; Polars transform outputs use the build CLI.
+and rejects incompatible or lossy types. The [artifact service](crates/tf-store/ARTIFACTS.md)
+provides ordered multi-file artifacts, strict integrity verification and durable
+installation with byte deduplication.
 
 T038 adds the internal per-dataset publication transaction: owner fencing,
 reservation/head guards, exact check linkage and durable event replay. Failed or

@@ -793,7 +793,8 @@
               "enum": [
                 "uncompressed",
                 "snappy",
-                "zstd"
+                "zstd",
+                "preserved"
               ]
             },
             "row_group_size": {
@@ -1334,6 +1335,7 @@
                 "catalog.rename",
                 "catalog.remove",
                 "dataset.import.prepare",
+                "dataset.import",
                 "branch.list",
                 "branch.create",
                 "branch.rename",
@@ -1411,6 +1413,9 @@
                 },
                 {
                   "$ref": "#/$defs/ExternalResultV1"
+                },
+                {
+                  "$ref": "#/$defs/ImportPublicationResultV1"
                 }
               ]
             },
@@ -1465,6 +1470,7 @@
                 "catalog.rename",
                 "catalog.remove",
                 "dataset.import.prepare",
+                "dataset.import",
                 "branch.list",
                 "branch.create",
                 "branch.rename",
@@ -1567,6 +1573,7 @@
                 "catalog.rename",
                 "catalog.remove",
                 "dataset.import.prepare",
+                "dataset.import",
                 "branch.list",
                 "branch.create",
                 "branch.rename",
@@ -5689,6 +5696,86 @@
         "next_cursor",
         "impact_count",
         "blockers"
+      ],
+      "additionalProperties": false
+    },
+    "ImportPublicationResultV1": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "import_publication"
+        },
+        "status": {
+          "const": "published"
+        },
+        "published": {
+          "const": true
+        },
+        "import_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "source_snapshot_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "schema_normalization": {
+          "const": "complete"
+        },
+        "source_snapshot_limitation": {
+          "const": true
+        },
+        "registered": {
+          "type": "boolean"
+        },
+        "file_count": {
+          "$ref": "#/$defs/Count"
+        },
+        "row_count": {
+          "$ref": "#/$defs/Count"
+        },
+        "byte_count": {
+          "$ref": "#/$defs/Count"
+        },
+        "version_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "artifact_digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "generation": {
+          "$ref": "#/$defs/Count"
+        }
+      },
+      "required": [
+        "kind",
+        "status",
+        "published",
+        "import_id",
+        "workspace_id",
+        "dataset_id",
+        "path",
+        "branch",
+        "source_snapshot_id",
+        "schema_normalization",
+        "source_snapshot_limitation",
+        "registered",
+        "file_count",
+        "row_count",
+        "byte_count",
+        "version_id",
+        "artifact_digest",
+        "generation"
       ],
       "additionalProperties": false
     }

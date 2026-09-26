@@ -69,7 +69,7 @@ mismatches and missing diagnostics. Actual executable tests verify stream separa
 context, flags and safe usage errors. A synthetic cycle exercises the same domain
 model/renderer; real validate/sync integration tests now cover graph detection and A46/A65 preparation workflows.
 
-Local Parquet copy staging is available through `dataset import --prepare-only`.
-See [import preparation](IMPORTS.md); normalization and publication remain later tasks.
+Local Parquet imports publish consumable immutable versions by default; optional
+`--prepare-only` retains private staging. See [imports](IMPORTS.md).
 
-Explicit [external registration](EXTERNAL.md) supports add/list/show/remove without provider imports. Provider resolution, copies and foreign execution remain later work.
+Explicit [external registration](EXTERNAL.md) supports add/list/show/remove without provider imports. Builds resolve exact provider versions under renewable leases and read provider files directly without copying inputs or executing provider code.

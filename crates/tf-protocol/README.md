@@ -120,7 +120,7 @@ this module does not evaluate data or compile SQL.
 T061's private canonical evaluator contracts and `duckdb.checks.v1` capability
 carry application-compiled aggregate requests and exact count/error responses.
 The parent verifies complete identity/digest/shape evidence before returning check
-results. The shared structural corpus now has 258 cases. This protocol module
+results. The shared structural corpus now has 264 cases. This protocol module
 still performs no SQL or file evaluation; [tf-exec owns that service](../tf-exec/CHECKS.md).
 
 T063 adds the negotiated `duckdb.samples.v1` capability for bounded private sample
@@ -130,3 +130,6 @@ use typed scalar cells, explicit projection policy and at most 20 rows/16 column
 T072 adds optional origin workspace labels to plan reads and enables explicit foreign
 provenance in graph results. The private metadata service has closed authenticated
 requests; no worker-protocol major/minor change is involved.
+
+T073 adds published local-import results and the `dataset.import` CLI capability.
+Import artifacts can report preserved physical encoding; no quality PASS is implied.

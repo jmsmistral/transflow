@@ -1,6 +1,7 @@
 //! CLI argument handling, human diagnostics and versioned JSON results.
 //! Help/version require no workspace I/O. Application services remain later work.
 mod branch;
+mod browse;
 mod build_cli;
 mod build_logs;
 /// Shared guarded local draft and acceptance pipeline.
@@ -14,6 +15,7 @@ mod external;
 mod external_reads;
 mod foreign_lineage;
 mod import;
+mod import_publish;
 mod init;
 mod inspection_cli;
 mod plan_parameters;
@@ -82,7 +84,7 @@ fn command() -> clap::Command {
             .subcommand(clap::Command::new("sync").disable_help_flag(true).about("Install locked wheels and the explicit matched Transflow wheel"))
             .subcommand(clap::Command::new("check").disable_help_flag(true).about("Reject interpreter, lock or installed-file drift without installation")))
         .subcommand(clap::Command::new("dataset").disable_help_flag(true).subcommand_required(true).about("Dataset operations")
-            .subcommand(clap::Command::new("import").disable_help_flag(true).about("Prepare copied local Parquet files; publication is not available yet")
+            .subcommand(clap::Command::new("import").disable_help_flag(true).about("Publish an immutable copy of local Parquet files")
                 .arg(Arg::new("reference").required(true))
                 .arg(Arg::new("path").long("path").required(true).value_name("FILE_OR_GLOB"))
                 .arg(Arg::new("branch").long("branch"))
@@ -414,7 +416,23 @@ pub fn run(
                                     )
                                     .map_err(CliError::Stdout)?;
                             } else {
-                                writeln!(stdout,"Prepared {} file(s), {} rows, {} bytes for {} on branch {}.\nStaging: {}\nNo data version or branch head was published. Logical schema is normalized; data checks remain pending. Use a producer-provided atomic snapshot for strong consistency against concurrent external writers.",value["file_count"].as_str().unwrap_or(""),value["row_count"].as_str().unwrap_or(""),value["byte_count"].as_str().unwrap_or(""),redactor.text(value["path"].as_str().unwrap_or("unknown"))?.as_str(),redactor.text(value["branch"].as_str().unwrap_or("unknown"))?.as_str(),value["staging_path"].as_str().unwrap_or("")).map_err(CliError::Stdout)?;
+                                if value["published"] == true {
+                                    writeln!(
+                                        stdout,
+                                        "Published {} row(s) as version {} for {} on branch {}.",
+                                        value["row_count"].as_str().unwrap_or(""),
+                                        value["version_id"].as_str().unwrap_or(""),
+                                        redactor
+                                            .text(value["path"].as_str().unwrap_or("unknown"))?
+                                            .as_str(),
+                                        redactor
+                                            .text(value["branch"].as_str().unwrap_or("unknown"))?
+                                            .as_str()
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                                } else {
+                                    writeln!(stdout,"Prepared {} file(s), {} rows, {} bytes for {} on branch {}.\nStaging: {}\nNo data version or branch head was published. Logical schema is normalized; data checks remain pending. Use a producer-provided atomic snapshot for strong consistency against concurrent external writers.",value["file_count"].as_str().unwrap_or(""),value["row_count"].as_str().unwrap_or(""),value["byte_count"].as_str().unwrap_or(""),redactor.text(value["path"].as_str().unwrap_or("unknown"))?.as_str(),redactor.text(value["branch"].as_str().unwrap_or("unknown"))?.as_str(),value["staging_path"].as_str().unwrap_or("")).map_err(CliError::Stdout)?;
+                                }
                             }
                             return Ok(ExitCode::SUCCESS);
                         }
@@ -871,7 +889,7 @@ pub fn run(
             // Never dump Clap's error: it can echo secret values or terminal controls.
             let d=Diagnostic::new(DiagnosticCode::CliUsage,redactor.text("The command could not be understood")?,
                 redactor.text("An argument is unknown, missing, or invalid. Run help to inspect the implemented commands.")?,
-                redactor.text("Run transflow --help to see the available options. Dataset builds and the coordinator are not implemented yet.")?);
+                redactor.text("Run transflow --help to see the available options. Use build for dataset execution and serve for a persistent CLI coordinator.")?);
             if intent.json {
                 let envelope = CliEnvelope::failure(&version, ExitStatus::Usage, &context, &[d])?;
                 stdout

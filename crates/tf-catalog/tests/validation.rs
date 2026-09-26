@@ -15,6 +15,119 @@ fn workspace() -> WorkspaceId {
 fn source() -> SourceSnapshotId {
     SourceSnapshotId::from_bytes([2; 16])
 }
+
+#[test]
+fn browse_graph_guards_preserve_previous_generation_and_remove_private_staging() {
+    use std::{fs, os::unix::fs::symlink};
+    use tf_catalog::{editor::EditorError, graph_cache};
+    use tf_domain::RequestId;
+
+    let path = std::env::temp_dir().join(format!("tf-graph-guards-{}", std::process::id()));
+    fs::create_dir(&path).unwrap();
+    let path = path.canonicalize().unwrap();
+    fs::create_dir_all(path.join(".transflow/runtime")).unwrap();
+    let cache = path.join(".transflow/runtime/graphs");
+    let old = Fixture::new(vec![definition("old", "old", vec![])]);
+    let new = Fixture::new(vec![definition("new", "new", vec![])]);
+    let old_graph = validation::validate(&old.request()).unwrap();
+    let new_graph = validation::validate(&new.request()).unwrap();
+    graph_cache::retain(
+        &path,
+        source(),
+        &old_graph,
+        &old.discovery,
+        RequestId::from_bytes([1; 16]),
+        || Ok(()),
+    )
+    .unwrap();
+    let original = graph_cache::latest(&path).unwrap().unwrap();
+    for stop in 1..=2 {
+        let mut calls = 0;
+        assert!(
+            graph_cache::retain(
+                &path,
+                source(),
+                &new_graph,
+                &new.discovery,
+                RequestId::from_bytes([stop + 1; 16]),
+                || {
+                    calls += 1;
+                    if calls == stop {
+                        Err(EditorError::Conflict)
+                    } else {
+                        Ok(())
+                    }
+                }
+            )
+            .is_err()
+        );
+        assert_eq!(graph_cache::latest(&path).unwrap().unwrap(), original);
+        assert!(
+            fs::read_dir(&cache).unwrap().all(|e| !e
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .starts_with('.'))
+        );
+    }
+    graph_cache::retain(
+        &path,
+        source(),
+        &new_graph,
+        &new.discovery,
+        RequestId::from_bytes([4; 16]),
+        || Ok(()),
+    )
+    .unwrap();
+    assert_eq!(
+        graph_cache::latest(&path).unwrap().unwrap()["discovery"],
+        new.discovery
+    );
+    // A replaced cache directory cannot redirect activation into the replacement.
+    let mut calls = 0;
+    assert!(
+        graph_cache::retain(
+            &path,
+            source(),
+            &old_graph,
+            &old.discovery,
+            RequestId::from_bytes([5; 16]),
+            || {
+                calls += 1;
+                if calls == 2 {
+                    fs::rename(&cache, path.join("retained-graphs")).unwrap();
+                    fs::create_dir(&cache).unwrap();
+                }
+                Ok(())
+            }
+        )
+        .is_err()
+    );
+    assert!(fs::read_dir(&cache).unwrap().next().is_none());
+    assert_eq!(
+        fs::read_dir(path.join("retained-graphs"))
+            .unwrap()
+            .filter(|e| e
+                .as_ref()
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .starts_with('.'))
+            .count(),
+        0
+    );
+    fs::remove_dir(&cache).unwrap();
+    fs::rename(path.join("retained-graphs"), &cache).unwrap();
+    let current = fs::read_link(cache.join("current")).unwrap();
+    let original_bytes = fs::read(cache.join(&current)).unwrap();
+    fs::write(cache.join(&current), b"{}").unwrap();
+    assert!(graph_cache::latest(&path).is_err());
+    fs::write(cache.join(&current), original_bytes).unwrap();
+    fs::remove_file(cache.join("current")).unwrap();
+    symlink("../../outside.json", cache.join("current")).unwrap();
+    assert!(graph_cache::latest(&path).is_err());
+    fs::remove_dir_all(path).unwrap();
+}
 fn registry() -> RegistrySnapshot {
     RegistrySnapshot::parse(workspace(), "format_version=1\n").unwrap()
 }

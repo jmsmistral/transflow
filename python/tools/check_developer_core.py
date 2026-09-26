@@ -186,6 +186,22 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
         ).is_file(),
         "browse_graph": (root / ".transflow/runtime/graphs/current").is_file(),
     }
+    browse = root / ".transflow/runtime/graphs/current"
+    assert j.report["post_build_tooling"]["browse_graph"]
+    assert not j.report["post_build_tooling"]["editor_overlay"]
+    retained = json.loads(browse.read_text())
+    assert retained["source_snapshot_id"] == retained["discovery"]["source_snapshot_id"]
+    captured_registry = (
+        root
+        / ".transflow/runtime/source-snapshots"
+        / retained["source_snapshot_id"]
+        / "files/.transflow/catalog.toml"
+    )
+    assert captured_registry.read_bytes() == (root / ".transflow/catalog.toml").read_bytes()
+    assert j.invoke("catalog", "show", TARGET)["result"]["entries"][0]["producer"]["path"] == (
+        "src/transforms/curated/customer_orders.py"
+    )
+    j.passed("first build refreshes browse metadata with registered IDs and matching source")
     registry = j.registry()
     output = j.job(first)
     observed = j.data(output["version"])
@@ -208,9 +224,11 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
         "fresh public build registers exactly three outputs and persists exact rows/pins/checks"
     )
 
+    browse_before = browse.read_bytes()
     j.invoke("validate", "--python", sys.executable)
     plan = j.invoke("plan", TARGET, "--mode", "selected", "--python", sys.executable)
     assert plan["result"]["plan_id"]
+    assert browse.read_bytes() == browse_before
     catalog = j.invoke("catalog", "show", TARGET)["result"]["entries"]
     assert len(catalog) == 1 and catalog[0]["dataset_id"] == registry[TARGET]
     assert catalog[0]["recent_versions"][0]["id"] == output["version"]
@@ -254,6 +272,7 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
     assert all(j.heads()[path] == before[path] for path in ("raw/customers", "raw/orders"))
     j.passed("between force executes only after its boundary and pins the side input")
 
+    committed = None
     if git:
         git_run(
             "add",
@@ -265,6 +284,7 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
             ".gitignore",
         )
         git_run("commit", "--no-gpg-sign", "-m", "Add customer-orders pipeline")
+        committed = git_run("rev-parse", "HEAD").strip()
         assert ".transflow/runtime/" not in git_run("ls-files")
         git_run("switch", "-c", "feature/customer-name-cleanup")
     branch = "feature/customer-name-cleanup" if git else "experiment"
@@ -293,6 +313,10 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
     assert j.job(changed)["state"] == "SUCCEEDED"
     assert j.job(changed)["version"] != feature["version"]
     assert [r["customer_name"] for r in j.data(j.job(changed)["version"])] == ["ada", "grace"]
+    display_source = json.loads(browse.read_text())["source_snapshot_id"]
+    assert (
+        root / ".transflow/runtime/source-snapshots" / display_source / "files/src/common/names.py"
+    ).read_text() == helper.read_text()
     helper.write_text(upper)
     restored = j.build(TARGET, "--mode", "selected", "--branch", branch)
     assert j.job(restored)["state"] == "CACHED"
@@ -379,6 +403,7 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
         for extra, definition in zip(extras, definitions, strict=True):
             extra.write_text("from transflow import transform, Input, Output\n" + definition)
         registry_bytes = (root / ".transflow/catalog.toml").read_bytes()
+        browse_before = browse.read_bytes()
         attempts = j.rows("SELECT count(*) FROM attempts")
         for command in ("validate", "plan", "build"):
             args = [] if command == "validate" else [TARGET, "--branch", branch]
@@ -387,14 +412,189 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
             assert any(d["sources"] for d in failure["diagnostics"]), failure
         assert (root / ".transflow/catalog.toml").read_bytes() == registry_bytes
         assert j.rows("SELECT count(*) FROM attempts") == attempts
+        assert browse.read_bytes() == browse_before
         assert j.heads(branch) == heads and j.heads() == master
         for extra in extras:
             extra.unlink()
         j.passed(f"{label} refuses validate/plan/build before registration or producer execution")
+
+    # A stale draft must not replace the last structurally valid display graph.
+    saved = j.invoke("plan", TARGET, "--branch", branch, "--python", sys.executable)["result"]
+    browse_before = browse.read_bytes()
+    helper.write_text(upper + "\n# edited after planning\n")
+    j.invoke("build", "--plan", saved["plan_id"], code=1)
+    assert browse.read_bytes() == browse_before
+    helper.write_text(upper)
+    j.passed("stale plan refusal preserves the browse graph")
+
+    # Retained execution must not overwrite the current authoring display context.
+    consumer.write_text("deliberately invalid current source !!!\n")
+    replayed = j.invoke("build", "replay", first["id"], "--branch", "historical")["result"]["data"]
+    assert replayed["state"] == "SUCCEEDED" and replayed["source"] == first["source"]
+    assert browse.read_bytes() == browse_before
+    assert consumer.read_text() == "deliberately invalid current source !!!\n"
+    consumer.write_text(original_consumer)
+    j.passed("replay executes frozen source without replacing current browse metadata")
+
+    if git:
+        assert committed is not None
+        status = git_run("status", "--porcelain")
+        historical = j.build(TARGET, "--git-ref", committed, "--branch", "committed")
+        assert historical["state"] == "SUCCEEDED"
+        assert j.data(j.job(historical)["version"]) == observed
+        assert browse.read_bytes() == browse_before
+        assert git_run("status", "--porcelain") == status
+        assert git_run("branch", "--show-current").strip() == branch
+        j.passed(
+            "explicit Git-ref build uses committed helpers and preserves checkout/browse graph"
+        )
+
+        pending = root / "src/pending.py"
+        pending.write_text(
+            "import polars as pl\nfrom transflow import transform, Output\n"
+            "@transform(output=Output('pending/unregistered'))\n"
+            "def pending(): return pl.DataFrame({'id': [1]}).lazy()\n"
+        )
+        git_run("add", "src/pending.py")
+        git_run("commit", "--no-gpg-sign", "-m", "Unregistered fixed-source fixture")
+        registry_bytes = (root / ".transflow/catalog.toml").read_bytes()
+        attempts = j.rows("SELECT count(*) FROM attempts")
+        refused = j.invoke(
+            "build",
+            "pending/unregistered",
+            "--git-ref",
+            "HEAD",
+            "--branch",
+            "unregistered",
+            "--python",
+            sys.executable,
+            code=1,
+        )
+        assert "registered IDs" in refused["diagnostics"][0]["reason"]
+        assert (root / ".transflow/catalog.toml").read_bytes() == registry_bytes
+        assert j.rows("SELECT count(*) FROM attempts") == attempts
+        assert browse.read_bytes() == browse_before
+        j.passed(
+            "unregistered fixed source fails before registry edits, browse refresh or execution"
+        )
     assert j.rows("SELECT count(*) FROM write_reservations") == [(0,)]
     assert j.registry() == registry
     if not git:
         assert not (root / ".git").exists() and shutil.which("git", path=j.env["PATH"]) is None
+    exercise_imports(j)
+
+
+def exercise_imports(j: Journey) -> None:
+    """Explicit file imports become immutable input boundaries through the public CLI."""
+    export = j.root.parent / "export"
+    export.mkdir()
+
+    def write_inputs(empty: bool = False) -> None:
+        subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-c",
+                "import polars as p,sys; from pathlib import Path; "
+                "d=p.DataFrame({'id':p.Series([],dtype=p.Int64) "
+                "if sys.argv[2]=='empty' else [1,2]}); "
+                "[d.write_parquet(Path(sys.argv[1])/name) "
+                "for name in ('one.parquet','two.parquet')]",
+                str(export),
+                "empty" if empty else "rows",
+            ],
+            check=True,
+            timeout=30,
+        )
+
+    write_inputs()
+    (j.root / "src/import_consumer.py").write_text(
+        "from transflow import transform, Input, Output, Check\n"
+        "from transflow import expectations as E\nfrom transflow.catalog import C\n"
+        "@transform(rows=Input(C.raw.imported, "
+        "checks=Check(E.row_count().gt(0), name='Nonempty')), "
+        "output=Output('curated/imported'))\ndef consume(rows): return rows\n"
+    )
+
+    def imported(*extra: str, code: int = 0) -> dict[str, Any]:
+        return j.invoke(
+            "dataset",
+            "import",
+            "raw/imported",
+            "--path",
+            str(export / "*.parquet"),
+            "--branch",
+            "imports",
+            "--python",
+            sys.executable,
+            *extra,
+            code=code,
+        )
+
+    first = imported()["result"]
+    assert first["published"] and first["row_count"] == "4" and first["file_count"] == "2"
+    assert j.heads("imports")["raw/imported"] == first["version_id"]
+    provenance = json.loads(
+        j.rows(
+            "SELECT manifest_json FROM source_snapshots WHERE id=?", first["source_snapshot_id"]
+        )[0][0]
+    )
+    assert provenance["source_root"] == str(export)
+    assert provenance["source_files"] == ["one.parquet", "two.parquet"]
+    assert j.rows(
+        "SELECT import_id,attempt_id FROM dataset_versions WHERE id=?", first["version_id"]
+    ) == [(first["import_id"], None)]
+    assert j.rows(
+        "SELECT count(*) FROM version_check_results WHERE version_id=?", first["version_id"]
+    ) == [(0,)]
+    assert not list((j.root / ".transflow/runtime/import-staging").iterdir())
+    j.passed("multi-file import publishes an immutable version and explicit import provenance")
+    for path in export.iterdir():
+        path.unlink()
+    built = j.build("curated/imported", "--branch", "imports", "--force")
+    assert built["state"] == "SUCCEEDED" and len(built["jobs"]) == 1
+    assert j.job(built, "curated/imported")["inputs"][0]["version"] == first["version_id"]
+    j.passed(
+        "full force consumes imported bytes after original files disappear without refreshing them"
+    )
+    prior = j.heads("imports")
+    (export / "bad.parquet").write_bytes(b"invalid parquet")
+    imported(code=1)
+    assert j.heads("imports") == prior
+    (export / "bad.parquet").unlink()
+    j.passed("corrupt reimport preserves every previous head")
+    write_inputs(empty=True)
+    prepared = imported("--prepare-only")["result"]
+    assert not prepared["published"] and prepared["row_count"] == "0"
+    assert j.heads("imports") == prior
+    second = imported()["result"]
+    assert second["published"] and second["row_count"] == "0"
+    assert (
+        second["dataset_id"] == first["dataset_id"] and second["version_id"] != first["version_id"]
+    )
+    j.passed(
+        "preparation remains nonpublishing and a valid empty reimport advances the same identity"
+    )
+    failure = j.build("curated/imported", "--branch", "imports", code=1)
+    assert failure["state"] == "FAILED"
+    assert j.heads("imports")["curated/imported"] == prior["curated/imported"]
+    assert j.job(failure, "curated/imported")["attempts"][0]["report"]["transform"] is None
+    j.passed("nonempty consumer expectation blocks an empty imported version before the function")
+    pinned = j.build(
+        "curated/imported",
+        "--branch",
+        "imports",
+        "--force",
+        "--pin",
+        f"curated/imported#rows={first['version_id']}",
+    )
+    assert pinned["state"] == "SUCCEEDED"
+    replay = j.invoke("build", "replay", built["id"], "--branch", "import-replay")["result"]["data"]
+    assert (
+        replay["state"] == "SUCCEEDED"
+        and replay["jobs"][0]["inputs"][0]["version"] == first["version_id"]
+    )
+    j.passed("imported historical pins and replay retain original immutable bytes")
 
 
 def main() -> None:
@@ -419,7 +619,7 @@ def main() -> None:
             return hashlib.file_digest(stream, "sha256").hexdigest()
 
     report: dict[str, Any] = {
-        "task": "T068",
+        "tasks": ["T068", "T073"],
         "gate_complete": False,
         "variants": [],
         "platform": platform.platform(),
@@ -432,8 +632,8 @@ def main() -> None:
             if p.is_file()
         },
         "limits": [
-            "Native editor prerequisites remain open",
-            "Foreign-data G1 work remains",
+            "Native editor qualification and automatic editor overlays are deferred to G3",
+            "Foreign-data scenarios run in the separate direct-read suite",
             "Dataset preview/history and browser serving are not implemented",
             "This run does not establish remote CI or release qualification",
         ],

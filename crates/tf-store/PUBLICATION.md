@@ -49,13 +49,15 @@ After actual new OS ownership, recovery fences the old session, abandons prepare
 intents, interrupts nonterminal attempts/jobs/builds, and releases old reservations.
 Committed versions/success/events survive. Orphans and interrupted staging are
 retained, invisible, for later retention/GC work. T057 [cancellation](../tf-exec/CANCELLATION.md) connects durable requests to live
-owned process-group cleanup; restart orphan cleanup remains T066. This storage
+owned process-group cleanup; restart orphan cleanup is integrated through T066. This storage
 recovery does not claim to have killed old workers.
 
-These are backend foundations. Accepted-plan composition, worker execution and
-canonical check evaluation remain T049/T055–T064. There is no public `build` or
-import-publication command yet. The test fixture seeds those future planner/worker
-records explicitly, then runs the actual artifact/publication/ownership services.
+Public builds compose accepted plans, supervised workers and canonical checks
+through these services. T073 adds explicit local imports with `import_id` provenance:
+no transform attempt or quality PASS is fabricated. Imports share the atomic
+head/event/outbox helper and enforce owner, branch/head, reservation and GC guards.
+The storage fixture seeds planner/worker records to isolate visibility failures;
+separate native CLI journeys test the complete public composition.
 Recovery tests prove process-crash behavior on actual local filesystems, not power
 loss, malicious owner writes or filesystem/device flush reliability.
 

@@ -302,6 +302,15 @@ impl PreparedFiles {
     pub fn files(&self) -> Value {
         json!(self.copied.iter().map(|f|json!({"path":f.name,"sha256":f.digest,"byte_length":f.guard.len.to_string(),"row_count":f.rows.to_string()})).collect::<Vec<_>>())
     }
+    /// Descriptor-bound copied bytes for the standard immutable artifact installer.
+    /// Keep this stage alive until installation finishes, then dropping it cleans its copies.
+    pub fn publication_files(&self) -> Result<(File, Vec<PathBuf>), ImportError> {
+        self.verify_copies()?;
+        Ok((
+            self.directory.try_clone()?,
+            self.copied.iter().map(|f| PathBuf::from(&f.name)).collect(),
+        ))
+    }
     /// Normalized logical schema for the exact copied bytes.
     pub fn schema(&self) -> Result<&NormalizedSchema, ImportError> {
         self.schema.as_ref().ok_or(ImportError::Metadata)

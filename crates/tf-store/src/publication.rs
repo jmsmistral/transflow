@@ -637,13 +637,6 @@ impl Store {
             return Err(PublicationError::Evidence);
         }
         let checks = check_results(&mut tx, request).await?;
-        let previous: Option<String> = sqlx::query_scalar(
-            "SELECT version_id FROM dataset_heads WHERE branch_id=? AND dataset_id=?",
-        )
-        .bind(t.branch.to_string())
-        .bind(t.dataset.dataset_id().to_string())
-        .fetch_optional(&mut *tx)
-        .await?;
         sqlx::query("INSERT INTO dataset_versions(id,dataset_id,artifact_digest,attempt_id,source_snapshot_id,published_at_us,compute_fingerprint,check_fingerprint) VALUES(?,?,?,?,?,?,?,?)").bind(i.version().to_string()).bind(t.dataset.dataset_id().to_string()).bind(i.artifact().hex()).bind(i.attempt().to_string()).bind(i.binding().source.to_string()).bind(request.at_us).bind(&request.contract.compute_fingerprint).bind(&request.contract.check_fingerprint).execute(&mut *tx).await?;
         for input in &request.contract.inputs {
             sqlx::query("INSERT INTO version_inputs(output_version_id,alias,origin_workspace_id,origin_dataset_id,origin_version_id,artifact_digest,declared_branch_json,starting_branch,resolved_branch,role,resolution_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)").bind(i.version().to_string()).bind(&input.alias).bind(input.dataset.workspace_id().to_string()).bind(input.dataset.dataset_id().to_string()).bind(input.version.to_string()).bind(input.artifact.hex()).bind(encoded(&input.declared_branch)?).bind(input.starting_branch.as_str()).bind(input.resolved_branch.as_str()).bind(input.role.name()).bind(encoded(&input.resolution)?).execute(&mut *tx).await?;
@@ -655,41 +648,16 @@ impl Store {
                 .execute(&mut *tx)
                 .await?;
         }
-        let generation = num(t.expected_generation)?
-            .checked_add(1)
-            .ok_or(PublicationError::Conflict)?;
-        let changed = if t.expected_generation == 0 {
-            sqlx::query("INSERT INTO dataset_heads VALUES(?,?,?,?) ON CONFLICT DO NOTHING")
-                .bind(t.branch.to_string())
-                .bind(t.dataset.dataset_id().to_string())
-                .bind(i.version().to_string())
-                .bind(generation)
-                .execute(&mut *tx)
-                .await?
-                .rows_affected()
-        } else {
-            sqlx::query("UPDATE dataset_heads SET version_id=?,generation=? WHERE branch_id=? AND dataset_id=? AND generation=?").bind(i.version().to_string()).bind(generation).bind(t.branch.to_string()).bind(t.dataset.dataset_id().to_string()).bind(num(t.expected_generation)?).execute(&mut *tx).await?.rows_affected()
-        };
-        if changed != 1 {
-            return Err(PublicationError::Conflict);
-        }
-        let event = RequestId::from_bytes(*i.version().as_bytes());
-        let payload = encoded(
-            &json!({"version_id":i.version().to_string(),"artifact_digest":i.artifact().hex(),"dataset_id":t.dataset.dataset_id().to_string(),"branch_id":t.branch.to_string(),"generation":generation.to_string()}),
-        )?;
-        sqlx::query("INSERT INTO events(id,type,payload_json,causation_id,correlation_id,wall_time_us) VALUES(?,'dataset.published',?,?,?,?)").bind(event.to_string()).bind(&payload).bind(i.attempt().to_string()).bind(i.build().to_string()).bind(request.at_us).execute(&mut *tx).await?;
-        sqlx::query("INSERT INTO head_changes VALUES(?,?,?,?,?,?,?,?)")
-            .bind(event.to_string())
-            .bind(t.branch.to_string())
-            .bind(t.dataset.dataset_id().to_string())
-            .bind(previous)
-            .bind(i.version().to_string())
-            .bind(generation)
-            .bind("publication")
-            .bind(request.at_us)
-            .execute(&mut *tx)
-            .await?;
-        sqlx::query("INSERT INTO outbox_deliveries(event_id,target,payload_json,schema_version,attempts,next_attempt_at_us) VALUES(?,'publication',?,1,0,?)").bind(event.to_string()).bind(payload).bind(request.at_us).execute(&mut *tx).await?;
+        let receipt = publish_head(
+            &mut tx,
+            t,
+            i.version(),
+            i.artifact().hex(),
+            i.attempt().to_string(),
+            i.build().to_string(),
+            request.at_us,
+        )
+        .await?;
         sqlx::query("UPDATE publication_intents SET state='COMMITTED' WHERE attempt_id=?")
             .bind(i.attempt().to_string())
             .execute(&mut *tx)
@@ -704,11 +672,7 @@ impl Store {
             .execute(&mut *tx)
             .await?;
         tx.commit().await?;
-        Ok(PublicationReceipt {
-            version: i.version(),
-            generation: generation as u64,
-            event,
-        })
+        Ok(receipt)
     }
     /// Serialized cancellation: committed outputs remain immutable; only future commits are blocked.
     pub async fn cancel_publications(
@@ -981,4 +945,67 @@ async fn committed(
             .parse()
             .map_err(|_| PublicationError::Evidence)?,
     }))
+}
+
+/// Shared atomic head/event/outbox visibility for checked attempts and explicit imports.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "One transaction's explicit publication identities"
+)]
+pub(crate) async fn publish_head(
+    db: &mut SqliteConnection,
+    t: tf_domain::execution::OutputTarget,
+    version: VersionId,
+    artifact: String,
+    causation: String,
+    correlation: String,
+    at_us: i64,
+) -> Result<PublicationReceipt> {
+    let previous: Option<String> = sqlx::query_scalar(
+        "SELECT version_id FROM dataset_heads WHERE branch_id=? AND dataset_id=?",
+    )
+    .bind(t.branch.to_string())
+    .bind(t.dataset.dataset_id().to_string())
+    .fetch_optional(&mut *db)
+    .await?;
+    let generation = num(t.expected_generation)?
+        .checked_add(1)
+        .ok_or(PublicationError::Conflict)?;
+    let changed = if t.expected_generation == 0 {
+        sqlx::query("INSERT INTO dataset_heads VALUES(?,?,?,?) ON CONFLICT DO NOTHING")
+            .bind(t.branch.to_string())
+            .bind(t.dataset.dataset_id().to_string())
+            .bind(version.to_string())
+            .bind(generation)
+            .execute(&mut *db)
+            .await?
+            .rows_affected()
+    } else {
+        sqlx::query("UPDATE dataset_heads SET version_id=?,generation=? WHERE branch_id=? AND dataset_id=? AND generation=?").bind(version.to_string()).bind(generation).bind(t.branch.to_string()).bind(t.dataset.dataset_id().to_string()).bind(num(t.expected_generation)?).execute(&mut *db).await?.rows_affected()
+    };
+    if changed != 1 {
+        return Err(PublicationError::Conflict);
+    }
+    let event = RequestId::from_bytes(*version.as_bytes());
+    let payload = encoded(
+        &json!({"version_id":version.to_string(),"artifact_digest":artifact,"dataset_id":t.dataset.dataset_id().to_string(),"branch_id":t.branch.to_string(),"generation":generation.to_string()}),
+    )?;
+    sqlx::query("INSERT INTO events(id,type,payload_json,causation_id,correlation_id,wall_time_us) VALUES(?,'dataset.published',?,?,?,?)").bind(event.to_string()).bind(&payload).bind(causation).bind(correlation).bind(at_us).execute(&mut *db).await?;
+    sqlx::query("INSERT INTO head_changes VALUES(?,?,?,?,?,?,?,?)")
+        .bind(event.to_string())
+        .bind(t.branch.to_string())
+        .bind(t.dataset.dataset_id().to_string())
+        .bind(previous)
+        .bind(version.to_string())
+        .bind(generation)
+        .bind("publication")
+        .bind(at_us)
+        .execute(&mut *db)
+        .await?;
+    sqlx::query("INSERT INTO outbox_deliveries(event_id,target,payload_json,schema_version,attempts,next_attempt_at_us) VALUES(?,'publication',?,1,0,?)").bind(event.to_string()).bind(payload).bind(at_us).execute(&mut *db).await?;
+    Ok(PublicationReceipt {
+        version,
+        generation: generation as u64,
+        event,
+    })
 }

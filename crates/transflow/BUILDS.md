@@ -6,6 +6,15 @@ scope, executes required checks and waits for publication. No separate trust,
 discovery or catalogue-sync command is required. The initial execution adapter is
 Polars; failed checks or attempts preserve the last successful head.
 
+Current-working-tree builds also refresh retained catalogue browsing metadata
+under the same source and registry guards. `catalog show` can report producer
+locations without importing code. A stale plan or invalid graph preserves the
+last valid display metadata; it cannot make that graph eligible for execution.
+Explicit Git-ref builds and replay keep their frozen source and preserve the
+current browse pointer and working-copy registry. A Git-ref source with new
+unregistered outputs must first have its registry synced and committed. Automatic
+editor-overlay generation remains deferred; explicit `catalog sync` provides it.
+
 ```bash
 transflow build curated/orders --branch development
 transflow build curated/orders --force --json

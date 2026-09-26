@@ -512,14 +512,49 @@ Path({str(path)!r}).write_bytes(b"changed while preparing")
     assert not list((workspace / ".transflow/runtime/import-staging").iterdir())
 
 
-def test_import_requires_explicit_preparation_mode(workspace: Path) -> None:
-    before = files(workspace)
+def test_import_missing_source_fails_without_registering_or_publishing(workspace: Path) -> None:
+    before = (workspace / ".transflow/catalog.toml").read_bytes()
     result = cli(
         workspace, "dataset", "import", "raw/input", "--path", "anything.parquet", ok=False
     )
     assert result["exit_status"] == 1
-    assert "--prepare-only" in json.dumps(result)
-    assert files(workspace) == before
+    assert (workspace / ".transflow/catalog.toml").read_bytes() == before
+
+
+def test_import_publishes_real_version_and_preserves_head_after_bad_input(workspace: Path) -> None:
+    path = parquet_input(workspace)
+    result = cli(
+        workspace, "dataset", "import", "raw/input", "--path", str(path), "--python", sys.executable
+    )["result"]
+    assert result["published"] and result["row_count"] == "2"
+    with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db:
+        assert db.execute("SELECT version_id FROM dataset_heads").fetchall() == [
+            (result["version_id"],)
+        ]
+        assert db.execute("SELECT import_id,attempt_id FROM dataset_versions").fetchall() == [
+            (result["import_id"], None)
+        ]
+        assert db.execute("SELECT count(*) FROM check_results").fetchone() == (0,)
+    assert not list((workspace / ".transflow/runtime/import-staging").iterdir())
+    path.write_bytes(b"invalid parquet")
+    assert (
+        cli(
+            workspace,
+            "dataset",
+            "import",
+            "raw/input",
+            "--path",
+            str(path),
+            "--python",
+            sys.executable,
+            ok=False,
+        )["exit_status"]
+        == 1
+    )
+    with closing(sqlite3.connect(workspace / ".transflow/runtime/catalog.sqlite")) as db:
+        assert db.execute("SELECT version_id FROM dataset_heads").fetchall() == [
+            (result["version_id"],)
+        ]
 
 
 def plan_probe(root: Path, operation: str, reference: str, *args: str) -> dict[str, Any]:

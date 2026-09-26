@@ -703,11 +703,12 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
         return Err(failure("saved source identity changed"));
     }
     let replay = plan.context["replay_of"].is_string();
+    let fixed = replay || capture.git().is_some_and(|g| g.requested_ref().is_some());
     if !replay {
         preparation::verify_selection(&capture, &workspace, true).map_err(failure)?;
     }
     let current_registry = std::fs::read(root.join(".transflow/catalog.toml")).map_err(failure)?;
-    if !replay
+    if !fixed
         && current_registry != plan.registry.as_bytes()
         && current_registry != plan.replacement.as_bytes()
     {
@@ -780,10 +781,15 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
     if proposal.replacement() != plan.replacement {
         return Err(failure("saved additive registry proposal changed"));
     }
+    if fixed && !replay && proposal.changes_registry() {
+        return Err(failure(
+            "This source selection needs registered IDs; sync and commit its registry first",
+        ));
+    }
     preparation::validate(&proposed, &capture, &plan.discovery, &env)
         .map_err(crate::build_plan::preparation_failure)?;
     // Registry durability shares its existing recovery-journal pipeline. No new UUID allocation.
-    if !replay && current_registry != plan.replacement.as_bytes() {
+    if !fixed && current_registry != plan.replacement.as_bytes() {
         crate::reconcile::execute_owned(
             owner,
             crate::reconcile::ReconcileRequest {
@@ -802,12 +808,12 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
         plan.source.parse().map_err(failure)?,
     )
     .map_err(failure)?;
-    if !replay {
+    if !fixed {
         capture
             .verify_working_copy(&workspace, true)
             .map_err(failure)?;
     }
-    if !replay
+    if !fixed
         && std::fs::read(root.join(".transflow/catalog.toml")).map_err(failure)?
             != plan.replacement.as_bytes()
     {
@@ -840,16 +846,28 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
             )
             .map_err(failure)?;
     }
-    if !replay {
+    if !fixed {
         capture
             .verify_working_copy(&workspace, true)
             .map_err(failure)?;
     }
-    if !replay
+    if !fixed
         && std::fs::read(root.join(".transflow/catalog.toml")).map_err(failure)?
             != plan.replacement.as_bytes()
     {
         return Err(failure("catalogue changed before acceptance"));
+    }
+    if !fixed {
+        crate::browse::refresh(
+            owner,
+            &workspace,
+            &capture,
+            &proposed,
+            &plan.discovery,
+            &env,
+            id()?,
+        )
+        .map_err(preparation_failure)?;
     }
     let session = owner.registration().session().map_err(failure)?;
     let mut owned = owner.open_store().await.map_err(failure)?;

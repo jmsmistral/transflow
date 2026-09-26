@@ -1,4 +1,4 @@
-//! Explicit preparation only; publication consumes this staging in later services.
+//! Explicit import preparation and guarded publication of immutable local file copies.
 use crate::preparation;
 use serde_json::{Value, json};
 use std::path::Path;
@@ -25,10 +25,8 @@ pub(crate) enum Error {
     Selection(#[from] tf_catalog::local_files::SelectionError),
     #[error(transparent)]
     Copy(#[from] tf_store::imports::ImportError),
-    #[error(
-        "Import publication is not implemented yet; use --prepare-only to copy and validate staging without publishing data"
-    )]
-    Publication,
+    #[error(transparent)]
+    Publication(#[from] crate::build_plan::Error),
     #[error(
         "Import requires an absent local path or existing imported identity; producing, foreign and tombstoned paths cannot be replaced"
     )]
@@ -80,9 +78,7 @@ impl From<environment::EnvironmentError> for Error {
     }
 }
 pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Result<Value, Error> {
-    if !args.get_flag("prepare-only") {
-        return Err(Error::Publication);
-    }
+    let prepare_only = args.get_flag("prepare-only");
     let workspace = Workspace::load(&std::env::current_dir()?, explicit.map(Path::new))?;
     let mut owner = RuntimeOwner::acquire(
         workspace.root(),
@@ -92,6 +88,7 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?;
+    runtime.block_on(crate::recovery::recover(&mut owner))?;
     if runtime
         .block_on(crate::reconcile::recover(&mut owner, preparation::now()?))?
         .iter()
@@ -159,6 +156,17 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
         Some((&registry, &overlay)),
     )?;
     let original_id = inspected.capture.id()?;
+    let branch = if prepare_only {
+        branch
+    } else {
+        tf_catalog::git::output_branch(
+            workspace.config(),
+            inspected.capture.git(),
+            args.get_one::<String>("branch").map(|_| &branch),
+            false,
+        )
+        .map_err(preparation::Error::from)?
+    };
     let expected = if registered {
         replacement
     } else {
@@ -181,7 +189,7 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
     {
         return Err(preparation::Error::Context.into());
     }
-    let completed = runtime.block_on(crate::reconcile::reconcile(
+    let mut completed = runtime.block_on(crate::reconcile::reconcile(
         owner,
         crate::reconcile::ReconcileRequest {
             capture: inspected.capture,
@@ -197,7 +205,8 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
         original_id,
     )?;
     original.verify_working_copy(&workspace, registered)?;
-    let final_capture = SourceSnapshot::capture(&workspace, CaptureLimits::default())?;
+    let final_capture = tf_catalog::git::capture_working_tree(&workspace, CaptureLimits::default())
+        .map_err(preparation::Error::from)?;
     original.verify_working_copy(&workspace, registered)?;
     if !original.same_inputs_except_registry(&final_capture)
         || final_capture.read(Path::new(".transflow/catalog.toml"), 16 * 1024 * 1024)?
@@ -207,6 +216,7 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
     }
     inspected.result["source_snapshot_id"] = final_capture.id()?.to_string().into();
     let projection = overlay.sdk_projection(final_capture.id()?)?;
+    inspected.result["catalog_fingerprint"] = projection["catalog_fingerprint"].clone();
     preparation::rebind(
         &mut inspected.result,
         projection["catalog_fingerprint"]
@@ -218,6 +228,27 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
     files.verify_sources()?;
     files.verify_copies()?;
     completed.owner.validate_paths()?;
+    if !prepare_only {
+        return crate::import_publish::publish(
+            &mut completed.owner,
+            &runtime,
+            &workspace,
+            &final_capture,
+            &files,
+            crate::import_publish::Context {
+                request,
+                dataset: id,
+                path: &path,
+                branch: &branch,
+                registered,
+                selection: &selection,
+                environment: &inspected.env,
+                python: &inspected.python,
+                environment_request: &inspected.environment_request,
+            },
+        )
+        .map_err(Error::from);
+    }
     EditorCache::open(workspace.root())?.refresh(
         &Overlay::render(&projection)?,
         request,

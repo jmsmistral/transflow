@@ -118,13 +118,13 @@ impl Report {
         Ok(text)
     }
 }
-fn limits() -> CaptureLimits {
+pub(crate) fn limits() -> CaptureLimits {
     CaptureLimits {
         file_bytes: 16 * 1024 * 1024,
         total_bytes: 256 * 1024 * 1024,
     }
 }
-fn text(capture: &SourceSnapshot, path: &str) -> Result<String, Error> {
+pub(crate) fn text(capture: &SourceSnapshot, path: &str) -> Result<String, Error> {
     String::from_utf8(capture.read(Path::new(path), 16 * 1024 * 1024)?).map_err(|_| Error::Context)
 }
 pub(crate) fn validate(

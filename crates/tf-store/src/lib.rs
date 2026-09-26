@@ -22,6 +22,8 @@ pub mod build_read;
 pub mod cache;
 /// Provider export and retained foreign metadata.
 pub mod foreign;
+/// Atomic publication of explicitly imported, verified immutable bytes.
+pub mod import_publication;
 /// Default maximum wait for an externally held SQLite writer lock.
 pub const BUSY_TIMEOUT: Duration = Duration::from_millis(250);
 /// Storage failure with safe summary and retained technical source.

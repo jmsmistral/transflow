@@ -311,3 +311,8 @@ def validate_ExternalEntryV1(value: object) -> None:
 def validate_ExternalResultV1(value: object) -> None:
     """Assert the ExternalResultV1 contract, including custom formats."""
     validate_document("ExternalResultV1", value)
+
+
+def validate_ImportPublicationResultV1(value: object) -> None:
+    """Assert the ImportPublicationResultV1 contract, including custom formats."""
+    validate_document("ImportPublicationResultV1", value)

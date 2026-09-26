@@ -60,14 +60,18 @@ the join runs. The source version remains published and the derived last-good
 head remains available. Duplicate customer IDs behave the same way. Force still
 runs required checks; it cannot override a failed output check.
 
-Public dataset preview/history commands, `serve --open` and external registration
-are not delivered yet. Use `build show` for execution/check history; the acceptance
-runner reads actual retained Parquet to verify values. The current `serve` is a
-headless CLI coordinator. Runtime C references resolve after registration, but
-editor overlays and retained catalogue-browse graph caches currently refresh via
-optional `catalog sync --python /path/to/prepared/python`, not ordinary builds.
-Automatic refresh and native editor qualification remain G1 follow-up work.
-Foreign-data qualification remains separate work.
+Public dataset preview/history commands and `serve --open` are not delivered yet.
+Use `build show` for execution/check history; the acceptance runner reads actual
+retained Parquet to verify values. The current `serve` is a headless CLI
+coordinator. [External registration and direct reads](../../crates/transflow/EXTERNAL.md)
+are available and have a separate two-workspace qualification journey.
+
+Ordinary builds refresh retained catalogue-browse metadata after guarded registry
+reconciliation. `catalog show` can then report producer locations without importing
+Python. Invalid candidates and stale plans preserve the last valid display graph;
+Git-ref builds and replay preserve the current authoring display. Runtime C refs
+resolve after registration. Editor overlays still require explicit `catalog sync`;
+automatic overlays and native editor qualification are deferred to T031/T108/G3.
 
 ## Contributor acceptance
 

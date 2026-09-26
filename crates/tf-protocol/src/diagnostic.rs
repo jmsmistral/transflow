@@ -26,6 +26,7 @@ pub const CLI_CAPABILITIES: &[&str] = &[
     "catalog.rename",
     "catalog.remove",
     "dataset.import.prepare",
+    "dataset.import",
     "branch.list",
     "branch.create",
     "branch.rename",
@@ -209,13 +210,21 @@ impl CliEnvelope {
             errors.iter().map(diagnostic).collect(),
         )
     }
-    /// Prepared copied local files, explicitly not a publication or successful data check.
+    /// Local import result distinguishes private preparation from a published version.
+    /// Neither form fabricates a successful data-quality check.
     pub fn import_preparation(
         version: &SafeText,
         ctx: &RequestContext,
         result: Value,
     ) -> Result<Self, ProtocolError> {
-        validate_document("ImportPreparationResultV1", &result)?;
+        validate_document(
+            if result["published"] == true {
+                "ImportPublicationResultV1"
+            } else {
+                "ImportPreparationResultV1"
+            },
+            &result,
+        )?;
         Self::encode(version, ExitStatus::Success, ctx, result, vec![])
     }
     /// Complete captured inspection. Graph delivery has no extra semantic byte/node cap;

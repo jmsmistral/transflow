@@ -813,3 +813,41 @@ upgrade with preserved legacy files. Full verification still reads provider byte
 no performance or Linux qualification claim is made.
 
 See [the measured receipt](evidence/direct-external-reads.json). CI is handed to the owner after both repository pushes under standing authorization.
+
+
+## T073 developer-core qualification (2026-09-27)
+
+The owner confirmed all workflows for the direct-read implementation `88723bd`
+and specification `609258c`; the [owner receipt](evidence/direct-external-reads-owner-ci.json)
+closes T070–T072 using that cumulative revision, without polling workflows.
+
+T073 adds the [G1 coverage matrix and failure report](g1-qualification.md). Current
+build acceptance now refreshes retained browse metadata under source/registry/owner
+checks. Fixed Git-ref builds use their captured source and preserve the current
+checkout and browse pointer. Explicit local Parquet imports now publish consumable
+immutable versions using import provenance and the shared atomic head/event/outbox
+service. Default imports intentionally copy mutable files; registered foreign
+inputs retain their separate leased direct-read behavior without input copies.
+
+All local contributor gates passed on macOS arm64/Python 3.14.7: 371 Rust tests
+plus one documentation test, 824 Python tests, 318 web tests and 55 installed CLI
+tests. Formatting, Clippy, Ruff/mypy, production builds, specification validation,
+44 specification regressions, 27 safety regressions and 12 boundary regressions
+passed. The aggregate initially stopped at the shared fixture-count inventory;
+after adding the six import cases, the final Rust/Python/web/CLI gates ran separately.
+The exact commands, logs and hashes are in [the T073 receipt](evidence/t073-macos-arm64.json).
+
+Native qualification passed 48 developer-core scenarios, 36 dispatch/public-build
+scenarios and 15 direct foreign-read scenarios, alongside actual engine,
+normalization, expectation, resource and web probes. Final review retained original
+import selection paths and rechecked the selection root after installation;
+Clippy/Ruff/mypy and all 48 core scenarios passed again after this refinement.
+Tests prove valid empty imports, immutable historical input pins/replay, blocking
+consumer expectations and preservation of old heads on invalid reimport, stale
+owner/head, reservation and late SQL failure. Browse guards/path tampering preserve
+prior display metadata; invalid current graphs never authorize execution.
+
+T073 awaits owner-confirmed CI for this new revision. Linux qualification is not
+inferred from these local runs. Native editor setup/automatic overlays remain
+T031/T108/G3; HTTP/UI, scheduling, other adapters, public GC/backup and release
+packaging remain later gates. No new performance or universal memory claim is made.

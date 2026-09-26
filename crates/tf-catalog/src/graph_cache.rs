@@ -13,6 +13,24 @@ use std::{
 use tf_domain::{RequestId, SourceSnapshotId};
 use tf_protocol::canonical::{canonical_json, file_digest};
 
+/// Clean only this operation's private staging entries; retained generations survive failure.
+struct Staging<'a> {
+    directory: &'a File,
+    graph: Option<String>,
+    pointer: Option<String>,
+}
+impl Drop for Staging<'_> {
+    fn drop(&mut self) {
+        for name in [self.graph.as_ref(), self.pointer.as_ref()]
+            .into_iter()
+            .flatten()
+        {
+            let _ =
+                rustix::fs::unlinkat(self.directory, name.as_str(), rustix::fs::AtFlags::empty());
+        }
+    }
+}
+
 /// Persist only a successfully validated graph, then atomically update its display pointer.
 /// This cache is not execution authority; failed validation never activates prior evidence.
 pub fn retain(
@@ -60,6 +78,11 @@ pub fn retain(
         )
         .map_err(std::io::Error::from)?,
     );
+    let mut staging = Staging {
+        directory: &cache,
+        graph: Some(stage.clone()),
+        pointer: None,
+    };
     file.write_all(&bytes)?;
     file.sync_all()?;
     guard()?;
@@ -67,6 +90,7 @@ pub fn retain(
     // Content-addressed bytes make replacement idempotent; no current pointer changes yet.
     rustix::fs::renameat(&cache, stage.as_str(), &cache, name.as_str())
         .map_err(std::io::Error::from)?;
+    staging.graph = None;
     cache.sync_all()?;
     let read = File::from(
         rustix::fs::openat(
@@ -87,10 +111,12 @@ pub fn retain(
     }
     let pointer = format!(".current-{request}");
     rustix::fs::symlinkat(name.as_str(), &cache, pointer.as_str()).map_err(std::io::Error::from)?;
+    staging.pointer = Some(pointer.clone());
     guard()?;
     check()?;
     rustix::fs::renameat(&cache, pointer.as_str(), &cache, "current")
         .map_err(std::io::Error::from)?;
+    staging.pointer = None;
     cache.sync_all()?;
     Ok(())
 }
