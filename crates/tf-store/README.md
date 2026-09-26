@@ -117,9 +117,8 @@ reuse. Diagnostic reads require explicit intent and return warnings; safe eviden
 reads do not load row values. Consumer failures cannot rewrite provider results.
 
 
-[T070–T072 foreign data](../transflow/EXTERNAL.md) uses the existing foreign-version
-and replica tables for an immutable metadata copy journal and verified visibility.
-Replica installation and local artifact lease acquisition share one transaction.
-Schema 9 adds qualified foreign job bindings with a composite replica foreign key;
-local version/parent-job constraints survive upgrade. Planning, dispatch lease renewal
-and replay validate origin identity before using artifact-only local leases.
+[T070–T072 foreign data](../transflow/EXTERNAL.md) retains immutable foreign metadata
+without installing local input artifacts. Schema 10 retargets qualified foreign
+job-input FKs from replicas to foreign_versions while preserving history and legacy
+files. Local version/parent-job constraints remain intact. The application obtains
+and renews provider leases; retained metadata alone cannot grant a local data read.

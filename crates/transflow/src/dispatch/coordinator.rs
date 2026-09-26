@@ -276,6 +276,7 @@ impl Coordinator<'_> {
         &mut self,
         r: &tf_store::cache::Request,
         artifacts: &ArtifactStore,
+        foreign: &crate::external_reads::Reads,
     ) -> Result<bool> {
         let lookup = repository!(
             self.owner,
@@ -287,7 +288,10 @@ impl Coordinator<'_> {
             tf_store::cache::Lookup::Miss => return Ok(false),
             tf_store::cache::Lookup::Reused(r) => r,
             tf_store::cache::Lookup::Candidate(c) => {
-                let checked = artifacts.verify(c.artifact()).map_err(fail);
+                let checked = artifacts.verify(c.artifact()).map_err(fail).and_then(|v| {
+                    foreign.check().map_err(fail)?;
+                    Ok(v)
+                });
                 let adopted = match checked {
                     Ok(v) => {
                         let mut owned = self.rt.block_on(self.owner.open_store()).map_err(fail)?;
@@ -316,6 +320,7 @@ impl Coordinator<'_> {
         id: JobId,
         c: tf_exec::lifecycle::Completion<'_>,
         canceled: bool,
+        foreign: &crate::external_reads::Reads,
     ) -> Result<bool> {
         let j = &self.prepared.jobs[&id];
         let a = &self.active[&id];
@@ -372,7 +377,13 @@ impl Coordinator<'_> {
                 self.rt,
                 request,
                 approved,
-                || now().map_err(|_| tf_exec::lifecycle::Error::Contract),
+                || {
+                    // Installation/verification may be long: check protection again at commit.
+                    foreign
+                        .check()
+                        .map_err(|_| tf_exec::lifecycle::Error::Contract)?;
+                    now().map_err(|_| tf_exec::lifecycle::Error::Contract)
+                },
                 |store| {
                     self.rt.block_on(store.persist_execution(
                         &previous,

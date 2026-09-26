@@ -1,0 +1,140 @@
+{
+  "date": "2026-09-27",
+  "tasks": [
+    "T070",
+    "T071",
+    "T072"
+  ],
+  "specification": "1.1.3",
+  "runtime_schema": 10,
+  "implementation_base": "482a283b9ca2ba6f22e72cec5824bc39b140218c",
+  "specification_base": "5fb4e1e0ef4898ac1750011dce6991a8000dd1a1",
+  "platform": "macOS arm64 / Python 3.14.7 / Rust 1.98.1",
+  "behavior": [
+    "Metadata-only registration and planning; external artifact bytes stay in provider storage.",
+    "Exact provider versions are strictly verified and read directly under renewable leases through checks, streaming materialisation, publication and cleanup.",
+    "Provider lease loss cancels the build, preserves heads and releases reservations; expiry protects against abandoned crash state.",
+    "Replay and pins require the original provider version; old replica bytes never provide an offline fallback.",
+    "Schema 10 preserves local/foreign job history and legacy replica bytes while retargeting foreign FKs to metadata.",
+    "Public external add/list/show/remove syntax stays unchanged; private provider direct-read service is version 2; worker protocol 1.0 and AST 1 unchanged."
+  ],
+  "commands": [
+    {
+      "command": "bash tools/check-rust.sh",
+      "result": "Passed 368 Rust tests plus one doc test; boundary checks, formatting, standalone storage compilation and Clippy passed. Final dispatcher changes separately covered below.",
+      "log": "/tmp/tf-direct-rust-gate.log",
+      "sha256": "a2e9ed3d9585bacf2a53822d3d22db7d517abbbd506d5f5a94cce16c9031c064"
+    },
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "Passed 812 Python tests, Ruff, mypy and offline package checks.",
+      "log": "/tmp/tf-direct-python-gate.log",
+      "sha256": "7d9f2c6d748aa7c4a0265f0d606d75af1bb38757209f0c22b2d6c1f1c532750a"
+    },
+    {
+      "command": "bash tools/check-cli.sh",
+      "result": "Passed 54 installed CLI tests.",
+      "log": "/tmp/tf-direct-cli-gate.log",
+      "sha256": "0c51c688e195d8965cdd5b4f67d3f405d65a001b9726ab64798e827bbef18237"
+    },
+    {
+      "command": "python/tools/check_foreign.py target/debug/transflow <prepared-wheel> target/qualification/wheelhouse --output target/direct-foreign-data.json",
+      "result": "Passed all 15 direct-read acceptance scenarios against final code.",
+      "log": "/tmp/tf-direct-native-final.log",
+      "sha256": "87a392842d864e06aa1ad4c1fa2ce836d3280a966195217817de55e597d862c7"
+    },
+    {
+      "command": "python/tools/check_dispatch.py target/debug/examples/dispatch_probe target/debug/transflow <prepared-wheel> target/qualification/wheelhouse",
+      "result": "Passed 36 native dispatch/public-build scenarios against final code.",
+      "log": "/tmp/tf-direct-dispatch.json",
+      "sha256": "580957e187d81142ebbf28662840a8ce8c4b4e0326af97cf9b24514803204964"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed after final dispatcher/replay changes; final cargo fmt --all -- --check and Ruff also passed.",
+      "log": "/tmp/tf-direct-clippy-final.log",
+      "sha256": "c8c81321ef9562558b684a2beb53431c073841b7fb19d00c601b947f2dc760d6"
+    },
+    {
+      "command": "cargo test -p transflow --lib --locked --offline",
+      "result": "Passed all five application unit tests against final code.",
+      "log": "/tmp/tf-direct-final-unit.log",
+      "sha256": "166b65fb9512545766f60cd9cfbe6c9eb784f519bad05f3b90c9e1c91ce6af18"
+    },
+    {
+      "command": "python -B -m unittest discover -s ../transflow-spec/tools/tests -v",
+      "result": "Passed 44 specification checker regressions.",
+      "log": "/tmp/tf-direct-spec-tests.log",
+      "sha256": "2b4d1152a76b66790d797e6d4fc1f2ea114d2618d01b16af8607a15677530f77"
+    },
+    {
+      "command": "bash tools/check-safety.sh",
+      "result": "Passed 27 safety regressions and generated-contract/privacy/dependency checks.",
+      "log": "/tmp/tf-direct-safety.log",
+      "sha256": "bb3f770a35cf1bca5ea3f79c49280264dba59f428abcc67acd314368a4e96dd2"
+    }
+  ],
+  "foreign_cases": [
+    "full_force_reads_provider_bytes_without_replication_or_provider_imports",
+    "plan_reports_foreign_origin_and_alias",
+    "upstream_expands_exact_read_only_provenance_without_ancestor_copies",
+    "registered_current_named_and_strict_provider_policy_are_independent_of_consumer_override",
+    "registration_override_repeated_aliases_validation_dependency_and_qualified_pins",
+    "consumer_checks_preserve_last_good_and_provider_output_certificates",
+    "existing_provider_coordinator_serves_metadata_without_second_writer",
+    "direct_reader_cancel_preserves_heads_and_releases_protection",
+    "direct_reader_renewal-loss_preserves_heads_and_releases_protection",
+    "mismatched_provider_uuid_is_rejected_for_fresh_resolution",
+    "fresh_resolution_observes_new_head_while_equal_bytes_keep_distinct_origin_versions",
+    "exact_pin_and_replay_require_provider_and_never_substitute_a_new_head",
+    "unavailable_provider_lineage_is_explicit",
+    "planning_uses_metadata_but_corrupt_provider_bytes_prevent_execution",
+    "replay_refuses_missing_exact_provider_bytes"
+  ],
+  "dispatch_cases": [
+    "full diamond publishes exact parent versions and complete evidence",
+    "whole-job reuse creates no attempts",
+    "force executes despite identical bytes",
+    "selected scope binds explicit historical pin exactly",
+    "between scope publishes only descendants and releases boundary leases",
+    "unresolved boundary refuses before any producer or branch creation",
+    "invalid complete graph starts no producer",
+    "accepted capture executes despite later checkout edits",
+    "pre-dispatch cancellation starts no attempts and cleans reservations",
+    "input FAIL retains evidence and prevents producer invocation",
+    "output FAIL retains invisible bytes and blocks planned descendants without fallback",
+    "exact WARN violation permits publication",
+    "independent ready siblings overlap under two job reservations",
+    "live sink phase and durable cancellation preserve head and release leases",
+    "explicit memory estimates admit jobs and missing estimates cleanly refuse",
+    "always-refresh source runs again and children bind its new version",
+    "every planned binding resolves from this build despite older retained heads",
+    "captured context reference conservatively keys the frozen evaluation clock",
+    "declared transient retry preserves failed attempt, exact inputs and backoff",
+    "exhausted retries block descendants; continue policy finishes independent work",
+    "unknown deterministic exceptions are never retried despite enabled budget",
+    "one public build registers and publishes a newly declared output without manual sync",
+    "public build performs implicit discovery, checks and publication with history",
+    "saved draft executes exactly once; overrides and silent replanning are refused",
+    "no-wait without persistent coordinator refuses before plan mutation",
+    "restart resumes untouched accepted queues; offline cancellation starts no producer",
+    "replay keeps the historical boundary version and selected scope",
+    "replay uses retained original source and scope despite an invalid later checkout",
+    "changed checkout invalidates a saved draft instead of silently replanning",
+    "log inspection refuses symlink substitution",
+    "public WARN and cached original checks stay visible; FAIL reports retain the last good head",
+    "Ctrl-C cancels only the waiting build and waits for durable cleanup",
+    "real coordinator kill fences interrupted work and authenticates orphan cleanup",
+    "persistent control rejects an invalid capability before mutation",
+    "persistent no-wait owns work after client exit; authenticated cancel and wait work",
+    "cancellation during retry backoff preserves completed failure history and releases reservations"
+  ],
+  "limits": [
+    "CI for this revision remains owner-monitored and unconfirmed; no Linux result inferred from local macOS tests.",
+    "Full integrity verification still scans provider bytes before execution; no performance benchmark or zero-I/O claim.",
+    "Historical replay depends on provider availability and retention; no remote/cloud filesystem support added.",
+    "Legacy replicas are preserved, not automatically deleted. Consumer outputs may legitimately equal input bytes.",
+    "HTTP/UI, schedules, additional engines and deferred editor qualification remain future tasks."
+  ],
+  "result": "local verification passed; CI pending owner confirmation"
+}

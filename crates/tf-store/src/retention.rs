@@ -37,7 +37,7 @@ pub enum LeaseKind {
     Query,
     /// Draft read protection, not draft validity.
     Plan,
-    /// Provider copy/export.
+    /// Legacy copy pin retained for old runtime compatibility.
     Copy,
     /// Active build read.
     Build,
@@ -217,15 +217,15 @@ async fn resolve(
     Ok((Some(version), digest))
 }
 impl Store {
-    /// Recover a fenced copy capability for authenticated metadata transport.
+    /// Recover a fenced provider read capability for authenticated metadata transport.
     /// UUIDs are operation-scoped; other lease kinds cannot be controlled here.
-    pub async fn copy_lease(
+    pub async fn external_read_lease(
         &mut self,
         id: RequestId,
         operation: RequestId,
         fence: i64,
     ) -> Result<ReadLease> {
-        let row = sqlx::query("SELECT version_id,artifact_digest,expires_at_us FROM read_leases WHERE id=? AND owner_operation=? AND fence=? AND kind='copy' AND released=0")
+        let row = sqlx::query("SELECT version_id,artifact_digest,expires_at_us FROM read_leases WHERE id=? AND owner_operation=? AND fence=? AND kind='query' AND released=0")
             .bind(id.to_string()).bind(operation.to_string()).bind(fence).fetch_optional(&mut self.db).await?.ok_or(RetentionError::Lease)?;
         let version: Option<String> = row.try_get(0)?;
         let version: Option<VersionId> = version
@@ -450,12 +450,12 @@ async fn roots(
             .await?;
     }
     let digests:Vec<String>=sqlx::query_scalar(r#"SELECT artifact_digest FROM dataset_versions WHERE id IN (SELECT id FROM retained_work)
- UNION SELECT i.artifact_digest FROM version_inputs i JOIN retained_work r ON r.id=i.output_version_id
+ UNION SELECT i.artifact_digest FROM version_inputs i JOIN retained_work r ON r.id=i.output_version_id WHERE i.origin_workspace_id=(SELECT id FROM workspaces)
  UNION SELECT artifact_digest FROM pins WHERE artifact_digest IS NOT NULL AND (expires_at_us IS NULL OR expires_at_us>?)
  UNION SELECT artifact_digest FROM read_leases WHERE artifact_digest IS NOT NULL AND released=0 AND expires_at_us>?
  UNION SELECT p.artifact_digest FROM publication_intents p JOIN attempts a ON a.id=p.attempt_id JOIN jobs j ON j.id=a.job_id JOIN builds b ON b.id=j.build_id WHERE p.state='PREPARED' AND b.state IN ('QUEUED','RUNNING')
  UNION SELECT artifact_digest FROM failed_check_candidates
- UNION SELECT json_extract(i.value,'$.artifact') FROM publication_contracts c JOIN jobs j ON j.id=c.job_id JOIN builds b ON b.id=j.build_id,json_each(c.contract_json,'$.inputs') i WHERE b.state IN ('QUEUED','RUNNING') LIMIT 100001"#).bind(now).bind(now).fetch_all(&mut *db).await?;
+ UNION SELECT json_extract(i.value,'$.artifact') FROM publication_contracts c JOIN jobs j ON j.id=c.job_id JOIN builds b ON b.id=j.build_id,json_each(c.contract_json,'$.inputs') i WHERE b.state IN ('QUEUED','RUNNING') AND json_extract(i.value,'$.workspace')=(SELECT id FROM workspaces) LIMIT 100001"#).bind(now).bind(now).fetch_all(&mut *db).await?;
     let sources:Vec<String>=sqlx::query_scalar("SELECT source_snapshot_id FROM dataset_versions WHERE id IN (SELECT id FROM retained_work) UNION SELECT source_snapshot_id FROM pins WHERE source_snapshot_id IS NOT NULL AND (expires_at_us IS NULL OR expires_at_us>?) UNION SELECT p.source_snapshot_id FROM build_plans p JOIN builds b ON b.plan_id=p.id WHERE b.state IN ('QUEUED','RUNNING') AND p.source_snapshot_id IS NOT NULL LIMIT 100001").bind(now).fetch_all(&mut *db).await?;
     if digests.len() > 100_000 || sources.len() > 100_000 {
         return Err(RetentionError::ClockOrLimit);

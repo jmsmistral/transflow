@@ -105,5 +105,6 @@ Planned parents execute again within that same historical scope. It does not rea
 new checkout or substitute latest inputs. Missing retained inputs/environment or
 conflicting destination guards fail explicitly. This cannot guarantee deterministic
 hidden external I/O; secret delivery remains separate work. Registered foreign inputs
-use verified local replicas and retain exact origin identity for offline pin/replay;
+read provider files directly under renewable leases and retain exact origin identity;
+pins/replay require the provider and original version to remain available;
 fresh unpinned builds still require provider resolution. See [external data](EXTERNAL.md).

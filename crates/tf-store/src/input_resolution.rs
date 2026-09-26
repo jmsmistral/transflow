@@ -199,7 +199,7 @@ impl Store {
         pin: Option<VersionId>,
         request: ReadRequest,
     ) -> Result<ResolvedRead, ResolutionError> {
-        if binding.dataset.workspace_id() != provider || !matches!(request.kind, LeaseKind::Copy) {
+        if binding.dataset.workspace_id() != provider || !matches!(request.kind, LeaseKind::Query) {
             return Err(ResolutionError::Context);
         }
         let original = binding.key.clone();

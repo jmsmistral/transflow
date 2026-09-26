@@ -359,7 +359,8 @@ impl Store {
             let n = if r.provenance["workspace"] == plan.workspace {
                 sqlx::query("UPDATE read_leases SET renewed_at_us=?,expires_at_us=max(expires_at_us,?),fence=fence+1 WHERE fence<9223372036854775807 AND owner_operation=? AND id=? AND version_id=? AND EXISTS(SELECT 1 FROM dataset_versions v WHERE v.id=read_leases.version_id AND v.artifact_digest=?) AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g JOIN dataset_versions v ON v.artifact_digest=g.digest WHERE v.id=read_leases.version_id) AND released=0 AND expires_at_us>? AND kind='build'").bind(at_us).bind(at_us.checked_add(3_600_000_000).ok_or(PublicationError::Evidence)?).bind(&plan.id).bind(&r.lease).bind(&r.version).bind(&r.artifact).bind(at_us).execute(&mut *tx).await?.rows_affected()
             } else {
-                sqlx::query("UPDATE read_leases SET renewed_at_us=?,expires_at_us=max(expires_at_us,?),fence=fence+1 WHERE fence<9223372036854775807 AND owner_operation=? AND id=? AND artifact_digest=? AND EXISTS(SELECT 1 FROM replicas r WHERE r.artifact_digest=read_leases.artifact_digest AND r.workspace_id=? AND r.dataset_id=? AND r.version_id=? AND r.copy_state='VERIFIED') AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g WHERE g.digest=read_leases.artifact_digest) AND released=0 AND expires_at_us>? AND kind='build'").bind(at_us).bind(at_us.checked_add(3_600_000_000).ok_or(PublicationError::Evidence)?).bind(&plan.id).bind(&r.lease).bind(&r.artifact).bind(r.provenance["workspace"].as_str().ok_or(PublicationError::Evidence)?).bind(&r.dataset).bind(&r.version).bind(at_us).execute(&mut *tx).await?.rows_affected()
+                // Remote lease renewal belongs to the coordinator's provider read guard.
+                continue;
             };
             if n != 1 {
                 return Err(PublicationError::Evidence);

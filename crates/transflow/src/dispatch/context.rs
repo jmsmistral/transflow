@@ -206,15 +206,17 @@ pub(super) fn prepare(
                 {
                     return Err(fail("wrong boundary input identity"));
                 }
-                let digest = tf_protocol::canonical::ContentDigest::from_hex(
-                    DigestKind::Artifact,
-                    &r.artifact,
-                )
-                .map_err(fail)?;
-                tf_store::artifacts::ArtifactStore::open(&root)
-                    .map_err(fail)?
-                    .verify(digest)
+                if r.provenance["workspace"] == plan.workspace {
+                    let digest = tf_protocol::canonical::ContentDigest::from_hex(
+                        DigestKind::Artifact,
+                        &r.artifact,
+                    )
                     .map_err(fail)?;
+                    tf_store::artifacts::ArtifactStore::open(&root)
+                        .map_err(fail)?
+                        .verify(digest)
+                        .map_err(fail)?;
+                }
             } else {
                 return Err(fail("unknown input binding kind"));
             }

@@ -50,7 +50,7 @@ pub(crate) fn expand(
                 CandidateIdentity::Registered(k) => k,
                 CandidateIdentity::Pending(_) => DatasetKey::new(workspace.config().id(), id()?),
             };
-            let (origin, selection) = crate::replicas::selection(
+            let (origin, selection) = crate::external_reads::selection(
                 registry,
                 input,
                 &InputBindingKey::new(consumer, input.alias.clone()).map_err(failure)?,
@@ -118,7 +118,7 @@ pub(crate) fn expand(
             let reply = provider::call(
                 &path,
                 origin.workspace_id(),
-                Request::Resolve {
+                Request::ResolveRead {
                     binding: Box::new(selection.clone()),
                     pin: None,
                     lease: lease.clone(),

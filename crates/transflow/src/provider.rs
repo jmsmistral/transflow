@@ -22,19 +22,19 @@ use tf_store::retention::LeaseKind;
 #[serde(tag = "action", rename_all = "snake_case", deny_unknown_fields)]
 pub(crate) enum Request {
     /// Resolve and lease one exact origin. Selection is provider-owned.
-    Resolve {
+    ResolveRead {
         binding: Box<Selection>,
         pin: Option<String>,
         lease: String,
         operation: String,
     },
-    /// Renew one copy lease generation.
+    /// Renew one provider read lease generation.
     Renew {
         lease: String,
         operation: String,
         fence: i64,
     },
-    /// Release one copy lease generation.
+    /// Release one provider read lease generation.
     Release {
         lease: String,
         operation: String,
@@ -160,7 +160,7 @@ pub(crate) async fn service(owner: &mut RuntimeOwner, request: Request) -> Resul
             "Provider workspace UUID changed; repair the explicit provider locator",
         ));
     }
-    if let Request::Resolve {
+    if let Request::ResolveRead {
         binding, pin: None, ..
     } = &request
     {
@@ -177,7 +177,7 @@ pub(crate) async fn service(owner: &mut RuntimeOwner, request: Request) -> Resul
     let mut owned = owner.open_store().await.map_err(failure)?;
     let store = owned.repository().map_err(failure)?;
     let result = match request {
-        Request::Resolve {
+        Request::ResolveRead {
             binding,
             pin,
             lease,
@@ -195,7 +195,7 @@ pub(crate) async fn service(owner: &mut RuntimeOwner, request: Request) -> Resul
                     ReadRequest {
                         lease: lease.parse().map_err(failure)?,
                         operation: operation.parse().map_err(failure)?,
-                        kind: LeaseKind::Copy,
+                        kind: LeaseKind::Query,
                         now_us: crate::preparation::now().map_err(failure)?,
                         ttl_us: 900_000_000,
                     },
@@ -207,7 +207,7 @@ pub(crate) async fn service(owner: &mut RuntimeOwner, request: Request) -> Resul
                 .await
                 .map_err(failure)?;
             Ok(
-                json!({"protocol":1,"workspace":identity.to_string(),"metadata":metadata,"provenance":read.provenance().value(),"semantic":read.semantic_value(),"lease":lease,"operation":operation,"fence":0}),
+                json!({"protocol":2,"workspace":identity.to_string(),"metadata":metadata,"provenance":read.provenance().value(),"semantic":read.semantic_value(),"lease":lease,"operation":operation,"fence":0}),
             )
         }
         Request::Renew {
@@ -216,7 +216,7 @@ pub(crate) async fn service(owner: &mut RuntimeOwner, request: Request) -> Resul
             fence,
         } => {
             let ticket = store
-                .copy_lease(
+                .external_read_lease(
                     lease.parse().map_err(failure)?,
                     operation.parse().map_err(failure)?,
                     fence,
@@ -232,7 +232,7 @@ pub(crate) async fn service(owner: &mut RuntimeOwner, request: Request) -> Resul
                 .await
                 .map_err(failure)?;
             Ok(
-                json!({"fence":fence.checked_add(1).ok_or_else(||failure("copy lease fence exhausted"))?}),
+                json!({"fence":fence.checked_add(1).ok_or_else(||failure("provider read lease fence exhausted"))?}),
             )
         }
         Request::Release {
@@ -241,7 +241,7 @@ pub(crate) async fn service(owner: &mut RuntimeOwner, request: Request) -> Resul
             fence,
         } => {
             let ticket = store
-                .copy_lease(
+                .external_read_lease(
                     lease.parse().map_err(failure)?,
                     operation.parse().map_err(failure)?,
                     fence,

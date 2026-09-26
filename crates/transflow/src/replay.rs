@@ -11,12 +11,33 @@ fn id() -> Result<RequestId, Error> {
         .map_err(failure)
 }
 pub(crate) async fn prepare(
+    owner: RuntimeOwner,
+    original: BuildId,
+    destination: BranchName,
+) -> Result<build_plan::Completion<build_plan::Accepted>, Error> {
+    // Provider IPC/lease cleanup may block; keep it off the async coordinator executor.
+    tokio::task::spawn_blocking(move || {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .map_err(failure)?;
+        rt.block_on(prepare_inner(owner, original, destination))
+    })
+    .await
+    .map_err(failure)?
+}
+async fn prepare_inner(
     mut owner: RuntimeOwner,
     original: BuildId,
     destination: BranchName,
 ) -> Result<build_plan::Completion<build_plan::Accepted>, Error> {
     crate::recovery::recover(&mut owner).await?;
     let workspace = owner.workspace_id().map_err(failure)?;
+    let config = tf_catalog::workspace::Workspace::load(
+        owner.workspace_root(),
+        Some(owner.workspace_root()),
+    )
+    .map_err(failure)?;
     let now = crate::preparation::now().map_err(failure)?;
     let mut owned = owner.open_store().await.map_err(failure)?;
     let store = owned.repository().map_err(failure)?;
@@ -48,27 +69,21 @@ pub(crate) async fn prepare(
     }
     // Reacquire original boundaries only: later heads never enter the replay plan.
     let mut leases = vec![];
+    let mut draft_pins = crate::external_reads::DraftPins::new(&config, &plan.id);
     let prepared = async {
         for r in &mut plan.reads {
             let lease_id = id()?;
+            if r.provenance["workspace"] != workspace.to_string() {
+                crate::external_reads::pin_replay(store, &config, r, &plan.id).await?;
+                draft_pins.add(r);
+                continue;
+            }
             let lease = store
                 .acquire_read(
                     lease_id,
                     plan.id.parse().map_err(failure)?,
                     tf_store::retention::LeaseKind::Plan,
-                    if r.provenance["workspace"] == workspace.to_string() {
-                        tf_store::retention::ReadTarget::Version(
-                            r.version.parse().map_err(failure)?,
-                        )
-                    } else {
-                        tf_store::retention::ReadTarget::Artifact(
-                            tf_protocol::canonical::ContentDigest::from_hex(
-                                tf_protocol::canonical::DigestKind::Artifact,
-                                &r.artifact,
-                            )
-                            .map_err(failure)?,
-                        )
-                    },
+                    tf_store::retention::ReadTarget::Version(r.version.parse().map_err(failure)?),
                     now,
                     900_000_000,
                 )
@@ -81,6 +96,7 @@ pub(crate) async fn prepare(
             }
             r.lease = lease_id.to_string();
         }
+        // Acceptance and dispatch reacquire provider leases; metadata alone never grants a read.
         store.save_draft(&plan).await.map_err(failure)?;
         Ok::<_, Error>(())
     }
@@ -92,6 +108,7 @@ pub(crate) async fn prepare(
     }
     owned.close().await.map_err(failure)?;
     prepared?;
+    draft_pins.retain();
     build_plan::accept(owner, plan.id.parse().map_err(failure)?).await
 }
 pub(crate) fn execute(

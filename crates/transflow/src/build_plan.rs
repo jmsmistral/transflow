@@ -246,7 +246,7 @@ pub(crate) async fn prepare_captured(
             if origin.workspace_id() != workspace.config().id() {
                 let key = InputBindingKey::new(consumer, input.alias.clone()).map_err(failure)?;
                 let (_, selection) =
-                    crate::replicas::selection(&proposed, input, &key, &request.branch)?;
+                    crate::external_reads::selection(&proposed, input, &key, &request.branch)?;
                 bindings.insert(
                     key,
                     selection.binding(origin.workspace_id(), &empty_policy)?,
@@ -441,6 +441,7 @@ pub(crate) async fn prepare_captured(
         .iter()
         .map(registered)
         .collect::<Result<BTreeSet<_>, _>>()?;
+    let mut draft_pins = crate::external_reads::DraftPins::new(&workspace, &plan_id.to_string());
     let mut reads = Vec::new();
     for selected in &scope.bindings {
         if selected.planned || retained.contains(&selected.consumer) {
@@ -459,7 +460,7 @@ pub(crate) async fn prepare_captured(
         if registered(&selected.parent)?.workspace_id() != workspace_id {
             if options.require_current {
                 return Err(failure(
-                    "Foreign boundary currentness is unassessable; use require_available to resolve and copy the provider version",
+                    "Foreign boundary currentness is unassessable; use require_available to resolve and read the provider version",
                 ));
             }
             let input = graph
@@ -470,9 +471,9 @@ pub(crate) async fn prepare_captured(
                 .and_then(|d| d.inputs.iter().find(|i| i.alias == selected.alias))
                 .ok_or_else(|| failure("missing external declaration"))?;
             let (origin, selection) =
-                crate::replicas::selection(&proposed, input, &key, &request.branch)?;
+                crate::external_reads::selection(&proposed, input, &key, &request.branch)?;
             reads.push(
-                crate::replicas::prepare(
+                crate::external_reads::prepare(
                     store,
                     &workspace,
                     origin,
@@ -482,6 +483,9 @@ pub(crate) async fn prepare_captured(
                 )
                 .await?,
             );
+            if let Some(read) = reads.last() {
+                draft_pins.add(read);
+            }
             continue;
         }
         let binding = bindings
@@ -635,6 +639,7 @@ pub(crate) async fn prepare_captured(
         .await
         .map_err(|e| failure(format!("Checking build draft: {e}")))?;
     owned.close().await.map_err(failure)?;
+    draft_pins.retain();
     Ok(plan)
 }
 fn registered(identity: &CandidateIdentity) -> Result<DatasetKey, Error> {
@@ -813,7 +818,17 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
     if environment::inspect(&root, &python, &env_request).map_err(failure)? != env {
         return Err(failure("environment changed during acceptance"));
     }
+    // Acceptance reacquires exact provider versions; it never consults newer heads or replicas.
+    let foreign = crate::external_reads::Reads::open(
+        &workspace,
+        &plan,
+        tf_exec::supervisor::Cancellation::default(),
+        false,
+    )?;
     for read in &plan.reads {
+        if read.provenance["workspace"] != plan.workspace {
+            continue;
+        }
         tf_store::artifacts::ArtifactStore::open(&root)
             .map_err(failure)?
             .verify(
@@ -850,6 +865,8 @@ async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Ac
             .await
             .map_err(|e| failure(format!("Registering build dataset: {e}")))?;
     }
+    foreign.record(store).await?;
+    foreign.check()?;
     let build = id()?;
     store
         .accept_draft(&plan, build, id()?, session, now)

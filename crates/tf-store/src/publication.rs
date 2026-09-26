@@ -43,7 +43,7 @@ type Result<T> = std::result::Result<T, PublicationError>;
 pub struct InputProvenance {
     /// Input alias within this producer.
     pub alias: String,
-    /// Origin identity, even for a verified local replica.
+    /// Qualified input identity, independent of storage location.
     pub dataset: DatasetKey,
     /// Exact retained publication identity.
     pub version: VersionId,
@@ -807,14 +807,14 @@ pub(crate) async fn validate_inputs(
             crate::retention::version_available(db, input.version)
                 .await
                 .map_err(|_| PublicationError::Evidence)?;
+            crate::retention::available(db, input.artifact)
+                .await
+                .map_err(|_| PublicationError::Evidence)?;
         }
-        crate::retention::available(db, input.artifact)
-            .await
-            .map_err(|_| PublicationError::Evidence)?;
         let valid: i64 = if input.dataset.workspace_id() == workspace {
             sqlx::query_scalar("SELECT count(*) FROM dataset_versions WHERE dataset_id=? AND id=? AND artifact_digest=?").bind(input.dataset.dataset_id().to_string()).bind(input.version.to_string()).bind(input.artifact.hex()).fetch_one(&mut *db).await?
         } else {
-            sqlx::query_scalar("SELECT count(*) FROM replicas WHERE workspace_id=? AND dataset_id=? AND version_id=? AND artifact_digest=? AND copy_state='VERIFIED'").bind(input.dataset.workspace_id().to_string()).bind(input.dataset.dataset_id().to_string()).bind(input.version.to_string()).bind(input.artifact.hex()).fetch_one(&mut *db).await?
+            sqlx::query_scalar("SELECT count(*) FROM foreign_versions WHERE workspace_id=? AND dataset_id=? AND version_id=? AND manifest_digest=?").bind(input.dataset.workspace_id().to_string()).bind(input.dataset.dataset_id().to_string()).bind(input.version.to_string()).bind(input.artifact.hex()).fetch_one(&mut *db).await?
         };
         if valid != 1 {
             return Err(PublicationError::Evidence);

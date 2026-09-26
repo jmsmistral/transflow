@@ -232,7 +232,7 @@ async fn check_boundary(db: &mut SqliteConnection, b: &Boundary) -> Result<ReadT
     let matches: i64 = if local == 1 {
         sqlx::query_scalar("SELECT count(*) FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id WHERE v.id=? AND d.id=? AND d.workspace_id=? AND v.artifact_digest=?").bind(&b.version).bind(&b.dataset).bind(&b.workspace).bind(&b.artifact).fetch_one(&mut *db).await?
     } else {
-        sqlx::query_scalar("SELECT count(*) FROM replicas WHERE version_id=? AND dataset_id=? AND workspace_id=? AND artifact_digest=? AND copy_state='VERIFIED'").bind(&b.version).bind(&b.dataset).bind(&b.workspace).bind(&b.artifact).fetch_one(&mut *db).await?
+        sqlx::query_scalar("SELECT count(*) FROM foreign_versions WHERE version_id=? AND dataset_id=? AND workspace_id=? AND manifest_digest=?").bind(&b.version).bind(&b.dataset).bind(&b.workspace).bind(&b.artifact).fetch_one(&mut *db).await?
     };
     if matches != 1 {
         return Err(Error::Evidence);
@@ -364,6 +364,10 @@ impl Store {
         }
         let mut leases = Vec::with_capacity(lease_ids.len());
         for (b, id) in manifest.0.boundaries.iter().zip(lease_ids) {
+            if b.workspace != manifest.0.source.workspace {
+                // Foreign replay must use the application provider-read service.
+                return Err(Error::Evidence);
+            }
             let target = check_boundary(&mut tx, b).await?;
             let lease = retention::lease_in_transaction(
                 &mut tx,

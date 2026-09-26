@@ -65,13 +65,13 @@ pub struct PlannedRead {
     pub consumer: String,
     /// Consumer alias.
     pub alias: String,
-    /// Local input identity (foreign replication is a later service).
+    /// Input dataset identity, qualified by provenance.workspace.
     pub dataset: String,
     /// Exact retained version.
     pub version: String,
     /// Verified physical digest.
     pub artifact: String,
-    /// Original draft lease ID.
+    /// Draft lease ID in the owning workspace (provider for foreign reads).
     pub lease: String,
     /// Semantic per-alias identity, independent of presentational metadata.
     pub semantic: Value,
@@ -479,7 +479,8 @@ async fn check(db: &mut SqliteConnection, plan: &DraftPlan, now: i64) -> Result<
         let valid: i64 = if origin == plan.workspace {
             sqlx::query_scalar("SELECT count(*) FROM read_leases l JOIN dataset_versions v ON v.id=l.version_id JOIN datasets d ON d.id=v.dataset_id WHERE l.id=? AND l.owner_operation=? AND l.version_id=? AND v.artifact_digest=? AND l.released=0 AND l.expires_at_us>? AND v.dataset_id=? AND d.workspace_id=? AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g WHERE g.digest=v.artifact_digest)").bind(&read.lease).bind(&plan.id).bind(&read.version).bind(&read.artifact).bind(now).bind(&read.dataset).bind(&plan.workspace).fetch_one(&mut *db).await?
         } else {
-            sqlx::query_scalar("SELECT count(*) FROM read_leases l JOIN replicas r ON r.artifact_digest=l.artifact_digest WHERE l.id=? AND l.owner_operation=? AND l.artifact_digest=? AND l.released=0 AND l.expires_at_us>? AND r.workspace_id=? AND r.dataset_id=? AND r.version_id=? AND r.copy_state='VERIFIED' AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g WHERE g.digest=l.artifact_digest)").bind(&read.lease).bind(&plan.id).bind(&read.artifact).bind(now).bind(origin).bind(&read.dataset).bind(&read.version).fetch_one(&mut *db).await?
+            // Provider leases are checked by composition before acceptance/execution.
+            sqlx::query_scalar("SELECT count(*) FROM foreign_versions WHERE workspace_id=? AND dataset_id=? AND version_id=? AND manifest_digest=?").bind(origin).bind(&read.dataset).bind(&read.version).bind(&read.artifact).fetch_one(&mut *db).await?
         };
         if valid != 1 {
             return Err(conflict(

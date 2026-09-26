@@ -11,20 +11,20 @@ pub mod cache;
 mod catalog;
 mod env;
 mod external;
+mod external_reads;
 mod foreign_lineage;
 mod import;
 mod init;
 mod inspection_cli;
 mod plan_parameters;
 mod preparation;
-/// Metadata-only provider control and replica preparation.
+/// Metadata-only provider control and leased direct reads.
 pub mod provider;
 /// Registry durability and recovery application service.
 pub mod reconcile;
 /// Fenced startup reconciliation and authenticated orphan cleanup.
 pub mod recovery;
 mod replay;
-mod replicas;
 mod serve;
 use std::{
     ffi::OsString,

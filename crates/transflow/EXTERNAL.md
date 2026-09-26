@@ -64,33 +64,36 @@ non-cooperating editors. Local settings are normalized, so comments/formatting m
 
 ## Consuming registered data
 
-Ordinary `plan` and `build` resolve selected external inputs, acquire provider copy
-leases and install verified local replicas. Omitted input branches use the registered
-default; `Branch.CURRENT` uses the consumer branch name in the provider, and named
-branches use their own provider policy. A registration fallback override wins over
-provider policy; `stop_branch_fallback=True` suppresses every tail. Consumer build
-fallback overrides do not change provider selection. Full/force build only local jobs.
+Ordinary `plan` resolves selected external inputs and retains safe version metadata
+and an expiring provider read pin, without copying or scanning whole data files.
+`build` reads the exact provider files directly. Omitted input branches use the
+registered default; `Branch.CURRENT` maps the consumer branch into the provider,
+and named branches use provider policy. Registration fallback overrides win;
+`stop_branch_fallback=True` suppresses all tails. Full/force execute local jobs only.
 
-The running provider coordinator serves authenticated metadata requests under its
-existing ownership. An idle provider uses a transient metadata-only owner. Neither
-path imports provider modules or starts producers/schedules. A provider occupied by
-an operation without a metadata endpoint fails explicitly; retry when it is ready.
+The running provider coordinator handles authenticated metadata/lease requests;
+an idle provider uses transient metadata-only ownership. Neither imports provider
+Python nor starts producers or schedules. Busy providers without a metadata endpoint
+fail explicitly. Both coordinators must support the direct-read service version 2.
 
-Copies use independent files, strict SHA-256/manifest/schema/row-count verification,
-sealed staging and atomic installation. A durable copy journal precedes file access;
-only verified replicas plus a local read pin become usable. Copy leases renew every
-30 seconds with a 15-minute expiry and are released after local durability. Interrupted
-copies remain unavailable and can be retried; unreferenced objects remain GC candidates.
-Origin UUIDs, exact input provenance, source digest and safe output certificate
-identities/outcomes are retained. Branch UUIDs remain authoritative across provider
-branch renames; retained offline metadata keeps the first observed display name.
-Provider source contents, samples and logs are not copied.
+Before execution or cache reuse, SHA-256/manifest/schema/row-count verification scans
+the exact selected bytes. The engine then reads provider paths, with provider leases
+renewing every 30 seconds and expiring after fifteen minutes. Protection lasts through
+input checks, lazy streaming materialisation, output checks and worker cleanup.
+Renewal loss, identity mismatch and unavailable/corrupt files fail closed. Normal
+completion/cancellation releases the leases; crashes leave bounded expiring pins.
 
-Fresh unpinned plans must contact the provider even if a replica exists. A retained
-exact `--pin 'curated/result#input_alias=VERSION_UUID'` or `build replay BUILD_UUID
---branch replayed` uses verified local bytes offline. This proves local availability,
-not provider currentness. Local retention still applies. Consumer input checks remain
-independent of the provider's original output checks.
+No external input artifacts are copied, hard-linked or otherwise replicated into the
+consumer object store. Only origin identities, publication time, schema/counts,
+source digests, exact input provenance and safe output certificate metadata remain
+locally. Consumer outputs are materialised normally, even if their bytes happen to
+match an input. Provider source contents, samples and logs are not copied.
+
+Fresh planning contacts the provider. Exact `--pin` and `build replay` also require
+the provider and the original version; they never substitute newer data or an old
+local replica. Historical provenance remains inspectable independently of provider
+availability. Provider retention controls long-term replay availability. Zero rows
+are valid; a nonempty requirement belongs in an explicit input expectation.
 
 `upstream curated/result --expand-external` adds read-only, version-labelled ancestor
 metadata, with workspace/dataset/version visited keys. Missing providers, ancestor
@@ -101,7 +104,9 @@ graph and executable build scope are unchanged. JSON includes `foreign_provenanc
 human output lists qualified versions and availability. Plan read records include
 `origin_workspace` and the local external alias.
 
-Runtime schema 9 retains separate qualified foreign job bindings while preserving
-local-version foreign keys; existing schema-8 job inputs migrate transactionally.
-Native editor setup and automatic overlay refresh are deferred until after the first
-end-to-end version; explicit catalogue sync and runtime C remain available.
+Runtime schema 10 retains qualified foreign job bindings against metadata, preserving
+local-version foreign keys and migrating old history. Legacy replica records/files
+are left untouched for explicit retention/cleanup but never used for consumption.
+The legacy JSON `replica_status: not_inspected` field remains for wire compatibility;
+human list/show identifies provider direct storage and does not claim inspected data.
+Native editor setup and automatic overlay refresh remain deferred.

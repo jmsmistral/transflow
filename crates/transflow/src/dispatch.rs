@@ -174,12 +174,30 @@ fn execute(
                 }
             }
         }
+        let workspace = tf_catalog::workspace::Workspace::load(
+            owner.workspace_root(),
+            Some(owner.workspace_root()),
+        )
+        .map_err(fail)?;
+        let mut draft_pins = crate::external_reads::DraftPins::new(&workspace, &prepared.plan.id);
+        for read in &prepared.plan.reads {
+            draft_pins.add(read);
+        }
+        let foreign =
+            crate::external_reads::Reads::open(&workspace, &prepared.plan, cancel.clone(), true)
+                .map_err(fail)?;
+        let mut owned = rt.block_on(owner.open_store()).map_err(fail)?;
+        rt.block_on(foreign.record(owned.repository().map_err(fail)?))
+            .map_err(fail)?;
+        rt.block_on(owned.close()).map_err(fail)?;
+        // Release replaced draft pins even when verification fails before dispatch.
+        drop(draft_pins);
         let artifacts = ArtifactStore::open(owner.workspace_root()).map_err(fail)?;
         let attempts = owner.workspace_root().join(".transflow/runtime/attempts");
         worker::private(&attempts)?;
-        Ok((prepared, artifacts, attempts))
+        Ok((prepared, artifacts, attempts, foreign))
     })();
-    let (prepared, artifacts, attempts) = match ready {
+    let (prepared, artifacts, attempts, foreign) = match ready {
         Ok(v) => v,
         Err(error) => {
             if let Err(cleanup) = cancel_unstarted(owner, rt, build_id) {
@@ -241,11 +259,20 @@ fn execute(
                 .map_err(fail)?;
         let mut handles = BTreeMap::new();
         let mut abort = false;
+        let mut provider_failure = None;
         let mut renewed = Instant::now();
         let mut cancellation_checked = Instant::now()
             .checked_sub(Duration::from_millis(100))
             .unwrap_or_else(Instant::now);
         loop {
+            if let Err(error) = foreign.check() {
+                provider_failure = Some(error.to_string());
+                if !abort {
+                    rt.block_on(control.request(coordinator.owner))
+                        .map_err(fail)?;
+                    abort = true;
+                }
+            }
             if let Some(providers) = &options.providers {
                 crate::provider::drain(coordinator.owner, rt, providers).map_err(fail)?;
             }
@@ -328,12 +355,23 @@ fn execute(
                 }
                 let (request, reuse) = coordinator.contract(*id)?;
                 repository!(coordinator.owner, rt, s, s.bind_execution_inputs(&request));
-                if reuse && coordinator.cache(&request, &artifacts)? {
+                if foreign.check().is_err() {
+                    continue;
+                }
+                if reuse && coordinator.cache(&request, &artifacts, &foreign)? {
                     continue;
                 }
                 let mut inputs = vec![];
                 let mut leases = vec![];
                 for i in &request.contract.inputs {
+                    if i.dataset.workspace_id() != request.target.dataset.workspace_id() {
+                        inputs.push(
+                            foreign
+                                .verify(&request.target.dataset.dataset_id().to_string(), &i.alias)
+                                .map_err(fail)?,
+                        );
+                        continue;
+                    }
                     let lease = repository!(
                         coordinator.owner,
                         rt,
@@ -342,11 +380,7 @@ fn execute(
                             new_id()?,
                             RequestId::from_bytes(*build_id.as_bytes()),
                             LeaseKind::Build,
-                            if i.dataset.workspace_id() == request.target.dataset.workspace_id() {
-                                ReadTarget::Version(i.version)
-                            } else {
-                                ReadTarget::Artifact(i.artifact)
-                            },
+                            ReadTarget::Version(i.version),
                             now()?,
                             3_600_000_000
                         )
@@ -463,7 +497,15 @@ fn execute(
                             .map_err(fail)?;
                         abort = true;
                     }
-                    let success = coordinator.finish(id, *completion, abort)?;
+                    if let Err(error) = foreign.check() {
+                        provider_failure = Some(error.to_string());
+                        if !abort {
+                            rt.block_on(control.request(coordinator.owner))
+                                .map_err(fail)?;
+                            abort = true;
+                        }
+                    }
+                    let success = coordinator.finish(id, *completion, abort, &foreign)?;
                     handles
                         .remove(&id)
                         .ok_or_else(|| fail("missing worker join"))?
@@ -513,6 +555,9 @@ fn execute(
             s,
             s.finish_dispatch(&jobs, build.state(), now()?)
         );
+        if let Some(error) = provider_failure {
+            return Err(fail(error));
+        }
         Ok(Report {
             build: build_id,
             state: build.state(),

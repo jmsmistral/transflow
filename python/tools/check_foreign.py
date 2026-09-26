@@ -1,4 +1,4 @@
-"""Real two-workspace provider/replica/build/replay acceptance (T070–T072)."""
+"""Real two-workspace provider/direct-read/build/replay acceptance (T070–T072)."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import time
 import tomllib
 from contextlib import closing
 from pathlib import Path
@@ -129,7 +130,7 @@ def main() -> None:
         )
         definition = consumer / "src/result.py"
         header = (
-            "from transflow import transform, Input, Output, Check, Branch\n"
+            "import polars as pl\nfrom transflow import transform, Input, Output, Check, Branch\n"
             "from transflow import expectations as E\nfrom transflow.catalog import C\n"
         )
 
@@ -137,7 +138,8 @@ def main() -> None:
             definition.write_text(
                 header + f"@transform(x=Input(C.external.market.base{selector}, "
                 f'checks=[Check({check}, "consumer-check")]), '
-                'output=Output("curated/result"))\ndef result(x): return x\n'
+                'output=Output("curated/result"))\n'
+                'def result(x): return x.select((pl.col("id")+10).alias("id"))\n'
             )
 
         source()
@@ -151,15 +153,17 @@ def main() -> None:
         assert first["state"] == "SUCCEEDED", first
         assert len(first["jobs"]) == 1
         assert rows(provider, "SELECT count(*) FROM attempts") == provider_attempts
+        assert rows(consumer, "SELECT count(*) FROM replicas") == [(0,)]
         assert rows(
             consumer,
-            "SELECT workspace_id,dataset_id,version_id,artifact_digest,copy_state FROM replicas",
-        ) == [(provider_id, dataset, version, artifact, "VERIFIED")]
+            "SELECT workspace_id,dataset_id,version_id,manifest_digest,availability "
+            "FROM foreign_versions",
+        ) == [(provider_id, dataset, version, artifact, "METADATA_ONLY")]
         assert rows(consumer, "SELECT starting_branch,resolved_branch FROM version_inputs") == [
             ("master", "master")
         ]
         assert rows(
-            provider, "SELECT count(*) FROM read_leases WHERE kind='copy' AND released=0"
+            provider, "SELECT count(*) FROM read_leases WHERE kind='query' AND released=0"
         ) == [(0,)]
         local_file = (
             consumer / ".transflow/runtime/objects" / artifact[:2] / artifact / "part-00000.parquet"
@@ -167,9 +171,9 @@ def main() -> None:
         provider_file = (
             provider / ".transflow/runtime/objects" / artifact[:2] / artifact / "part-00000.parquet"
         )
-        assert local_file.read_bytes() == provider_file.read_bytes()
-        assert local_file.stat().st_ino != provider_file.stat().st_ino
-        passed("full_force_copies_verified_bytes_preserves_origin_and_never_imports_provider")
+        assert not local_file.exists(), "external input was replicated into consumer storage"
+        assert provider_file.is_file()
+        passed("full_force_reads_provider_bytes_without_replication_or_provider_imports")
         plan = run(
             consumer, "plan", "curated/result", "--branch", "feature", "--python", sys.executable
         )["result"]
@@ -189,7 +193,7 @@ def main() -> None:
         assert expanded["external_expanded"]
         assert len(expanded["foreign_provenance"]["nodes"]) == 2
         assert all(n["executable"] is False for n in expanded["foreign_provenance"]["nodes"])
-        assert rows(consumer, "SELECT count(*) FROM replicas") == [(1,)]
+        assert rows(consumer, "SELECT count(*) FROM replicas") == [(0,)]
         passed("upstream_expands_exact_read_only_provenance_without_ancestor_copies")
         source(", branch=Branch.CURRENT")
         # Provider's initialized policy falls back to master; consumer --no-fallback must not leak.
@@ -224,7 +228,8 @@ def main() -> None:
         definition.write_text(
             header + "@transform(x=Input(C.external.market.base), "
             'y=Input(C.external.market.strict, role="validation"), '
-            'output=Output("curated/result"))\ndef result(x): return x\n'
+            'output=Output("curated/result"))\n'
+            'def result(x): return x.select((pl.col("id")+10).alias("id"))\n'
         )
         build(consumer, "curated/result", "--branch", "aliases", ok=False)
         build(
@@ -278,6 +283,88 @@ def main() -> None:
         finally:
             server.send_signal(signal.SIGINT)
             server.communicate(timeout=20)
+        # Gate actual lazy materialisation on observable files, not timing assumptions.
+        # The transform returns before this callback runs, exercising the full read lifetime.
+        for scenario in ("cancel", "renewal-loss"):
+            marker, gate = root / f"{scenario}.ready", root / f"{scenario}.continue"
+            definition.write_text(
+                header + "from pathlib import Path\nimport time\n"
+                f"def gated(frame):\n    Path({str(marker)!r}).write_text('ready')\n"
+                f"    while not Path({str(gate)!r}).exists(): time.sleep(0.02)\n"
+                "    return frame\n"
+                "@transform(x=Input(C.external.market.base), output=Output('curated/result'))\n"
+                "def result(x): return x.map_batches(gated)\n"
+            )
+            heads = rows(consumer, "SELECT version_id FROM dataset_heads")
+            process = subprocess.Popen(
+                [
+                    cli,
+                    "--workspace",
+                    consumer,
+                    "build",
+                    "curated/result",
+                    "--branch",
+                    scenario,
+                    "--force",
+                    "--python",
+                    sys.executable,
+                    "--json",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            try:
+                deadline = time.monotonic() + 45
+                while not marker.exists():
+                    assert process.poll() is None, process.communicate()
+                    assert time.monotonic() < deadline, "lazy reader did not become ready"
+                    time.sleep(0.02)
+                operation = rows(
+                    consumer, "SELECT plan_id FROM builds ORDER BY created_at_us DESC LIMIT 1"
+                )[0][0]
+                lease_sql = (
+                    "SELECT fence,released FROM read_leases "
+                    "WHERE owner_operation=? AND kind='query' AND released=0"
+                )
+                assert rows(provider, lease_sql, operation), (
+                    "no provider protection during materialisation"
+                )
+                if scenario == "cancel":
+                    process.send_signal(signal.SIGINT)
+                else:
+                    deadline = time.monotonic() + 45
+                    while not any(fence > 0 for fence, _ in rows(provider, lease_sql, operation)):
+                        assert process.poll() is None, process.communicate()
+                        assert time.monotonic() < deadline, "active provider lease did not renew"
+                        time.sleep(0.05)
+                    # Inject provider-side lease loss in this disposable runtime database.
+                    # Mutation is complete before the next renewal; no production hook is added.
+                    with closing(
+                        sqlite3.connect(provider / ".transflow/runtime/catalog.sqlite")
+                    ) as db:
+                        db.execute(
+                            "UPDATE read_leases SET released=1 WHERE owner_operation=?",
+                            (operation,),
+                        )
+                        db.commit()
+                stdout, stderr = process.communicate(timeout=50)
+                assert process.returncode != 0, (stdout, stderr)
+                if scenario == "renewal-loss":
+                    assert "lease renewal failed" in stdout, stdout
+                assert rows(consumer, "SELECT version_id FROM dataset_heads") == heads
+                assert rows(provider, lease_sql, operation) == []
+                assert rows(consumer, "SELECT count(*) FROM write_reservations") == [(0,)]
+                assert rows(consumer, "SELECT state FROM builds WHERE plan_id=?", operation) == [
+                    ("CANCELED",)
+                ]
+                passed(f"direct_reader_{scenario}_preserves_heads_and_releases_protection")
+            finally:
+                gate.touch()
+                if process.poll() is None:
+                    process.send_signal(signal.SIGINT)
+                    process.communicate(timeout=20)
+        source()
         # Same locator, wrong identity must fail rather than reuse a cached latest replica.
         config = provider / "workspace.toml"
         saved = config.read_text()
@@ -299,17 +386,16 @@ def main() -> None:
         assert rows(
             provider, "SELECT version_id FROM dataset_heads WHERE dataset_id=?", dataset
         ) == [(latest,)]
-        assert rows(consumer, "SELECT count(*),count(DISTINCT artifact_digest) FROM replicas") == [
-            (2, 1)
-        ]
+        assert rows(
+            consumer, "SELECT count(*),count(DISTINCT manifest_digest) FROM foreign_versions"
+        ) == [(2, 1)]
+        assert rows(consumer, "SELECT count(*) FROM replicas") == [(0,)]
         passed("fresh_resolution_observes_new_head_while_equal_bytes_keep_distinct_origin_versions")
-        provider.rename(root / "provider-unavailable")
-        build(consumer, "curated/result", "--branch", "offline", ok=False)
         pinned = build(
             consumer,
             "curated/result",
             "--branch",
-            "offline",
+            "historical",
             "--pin",
             f"curated/result#x={version}",
         )
@@ -318,14 +404,20 @@ def main() -> None:
             "data"
         ]
         assert replay["state"] == "SUCCEEDED", replay
-        assert rows(
+        assert all(b["version"] == version for b in replay["jobs"][0]["inputs"])
+        provider.rename(root / "provider-unavailable")
+        build(consumer, "curated/result", "--branch", "offline", ok=False)
+        build(
             consumer,
-            "SELECT DISTINCT origin_workspace_id,origin_dataset_id,origin_version_id "
-            "FROM version_inputs",
-        ) == [(provider_id, dataset, version)]
-        passed(
-            "offline_exact_pin_and_faithful_replay_survive_provider_removal_but_fresh_latest_fails"
+            "curated/result",
+            "--branch",
+            "offline",
+            "--pin",
+            f"curated/result#x={version}",
+            ok=False,
         )
+        run(consumer, "build", "replay", first["id"], "--branch", "offline-replay", ok=False)
+        passed("exact_pin_and_replay_require_provider_and_never_substitute_a_new_head")
         unavailable = run(
             consumer,
             "upstream",
@@ -340,9 +432,21 @@ def main() -> None:
             unavailable["foreign_provenance"]["nodes"][0]["availability"] == "provider_unavailable"
         )
         passed("unavailable_provider_lineage_is_explicit")
-        # Required retained bytes must still be strictly verified on the offline path.
-        local_file.chmod(0o600)
-        local_file.write_bytes(b"corrupt")
+        (root / "provider-unavailable").rename(provider)
+        # Full data verification remains strict at execution, while plan is metadata-only.
+        original_bytes = provider_file.read_bytes()
+        provider_file.chmod(0o600)
+        provider_file.write_bytes(b"corrupt")
+        before = rows(consumer, "SELECT count(*) FROM attempts")
+        run(
+            consumer,
+            "plan",
+            "curated/result",
+            "--branch",
+            "metadata-only",
+            "--python",
+            sys.executable,
+        )
         build(
             consumer,
             "curated/result",
@@ -352,7 +456,25 @@ def main() -> None:
             f"curated/result#x={version}",
             ok=False,
         )
-        passed("corrupt_replica_cannot_satisfy_offline_pin")
+        assert rows(consumer, "SELECT count(*) FROM attempts") == before
+        failed_operation = rows(
+            consumer, "SELECT plan_id FROM builds ORDER BY created_at_us DESC LIMIT 1"
+        )[0][0]
+        assert rows(
+            provider,
+            "SELECT count(*) FROM read_leases WHERE owner_operation=? AND released=0",
+            failed_operation,
+        ) == [(0,)]
+        provider_file.write_bytes(original_bytes)
+        provider_file.chmod(0o400)
+        passed("planning_uses_metadata_but_corrupt_provider_bytes_prevent_execution")
+        # Missing exact files fail even when newer metadata exists; no fallback or local replica.
+        provider_file.parent.chmod(0o700)
+        provider_file.rename(provider_file.with_suffix(".unavailable"))
+        run(consumer, "build", "replay", first["id"], "--branch", "missing-bytes", ok=False)
+        provider_file.with_suffix(".unavailable").rename(provider_file)
+        provider_file.parent.chmod(0o500)
+        passed("replay_refuses_missing_exact_provider_bytes")
     report["result"] = "passed"
     args.output.write_text(json.dumps(report, indent=2) + "\n")
 

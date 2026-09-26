@@ -13,14 +13,14 @@ use std::{
 use tf_domain::{DatasetId, WorkspaceId};
 
 /// Latest supported runtime schema. Authoring registry versions are independent.
-pub const SCHEMA_VERSION: i64 = 9;
+pub const SCHEMA_VERSION: i64 = 10;
 
 /// Safe read-only build history and execution evidence.
 pub mod build_read;
 
 /// Branch-scoped retained version reuse and guarded adoption.
 pub mod cache;
-/// Provider export metadata and verified foreign replicas.
+/// Provider export and retained foreign metadata.
 pub mod foreign;
 /// Default maximum wait for an externally held SQLite writer lock.
 pub const BUSY_TIMEOUT: Duration = Duration::from_millis(250);
@@ -274,7 +274,7 @@ impl Reader {
         }
         Ok(Self { db })
     }
-    /// Bounded retained version/schema information; external replicas are a separate service.
+    /// Bounded retained version/schema information; foreign metadata is exposed by the provider service.
     pub async fn catalog_metadata(
         &mut self,
         workspace: WorkspaceId,

@@ -157,7 +157,7 @@ impl Report {
             }
         );
         for e in self.value["entries"].as_array().into_iter().flatten() {
-            text.push_str(&format!("{} ({})\n  Provider: {} / {}\n  Default branch: {}; locator: {}; replica: not inspected{}\n",e["reference"].as_str().unwrap_or(""),e["c_reference"].as_str().unwrap_or(""),e["provider_workspace_id"].as_str().unwrap_or(""),e["provider_dataset_id"].as_str().unwrap_or(""),e["default_branch"].as_str().unwrap_or(""),e["locator_status"].as_str().unwrap_or(""),if e["tombstone"]==true { "; removed" } else { "" }));
+            text.push_str(&format!("{} ({})\n  Provider: {} / {}\n  Default branch: {}; locator: {}; storage: provider (direct read); data: not inspected{}\n",e["reference"].as_str().unwrap_or(""),e["c_reference"].as_str().unwrap_or(""),e["provider_workspace_id"].as_str().unwrap_or(""),e["provider_dataset_id"].as_str().unwrap_or(""),e["default_branch"].as_str().unwrap_or(""),e["locator_status"].as_str().unwrap_or(""),if e["tombstone"]==true { "; removed" } else { "" }));
         }
         for e in self.value["entries"].as_array().into_iter().flatten() {
             let policy = match e["fallback_override"].as_array() {

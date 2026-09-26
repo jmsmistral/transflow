@@ -786,3 +786,30 @@ specification validation and 27 safety regressions.
 
 T070–T072 remain pending final owner-confirmed CI after this follow-up. Editor work
 remains deferred and T073 has not started.
+
+## Direct external reads — specification 1.1.3 (2026-09-27)
+
+The owner-approved replacement of automatic replicas is implemented for T070–T072.
+Provider metadata selection and exact renewable read leases now feed provider file
+paths directly to workers. No external input copies are installed. Planning reads
+metadata only; execution keeps full byte verification. Provider-dependent pins/replay
+fail when exact original data is unavailable. Schema 10 preserves historical local
+and foreign bindings and legacy bytes; private provider protocol 2 distinguishes
+direct readers from old copy clients. The public registration CLI is unchanged.
+
+Local macOS arm64/Python 3.14.7 verification passed: 368 Rust tests plus one
+doc test, 812 Python tests, 54 installed CLI tests, all 15 direct-read
+scenarios and 36 native dispatch/public-build scenarios. The final
+dispatcher/replay refinements passed application unit tests, Clippy/formatting and
+the complete native suites. Specification checks and 44 regressions, 27 safety
+regressions, Ruff/mypy, contract drift and dependency/privacy checks passed.
+
+The direct-read suite proves no copied artifact, exact old-version replay after head
+advance, provider unavailability/corruption refusal, cancellation and renewal loss
+during lazy materialisation, release of replaced draft pins on pre-dispatch failure,
+and preserved output heads/reservations. Rust tests cover fenced provider restart,
+GC exclusion, metadata conflicts, no local read grant from metadata, and schema 8/9
+upgrade with preserved legacy files. Full verification still reads provider bytes;
+no performance or Linux qualification claim is made.
+
+See [the measured receipt](evidence/direct-external-reads.json). CI is handed to the owner after both repository pushes under standing authorization.
