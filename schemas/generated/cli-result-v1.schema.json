@@ -7201,6 +7201,163 @@
       "additionalProperties": {
         "$ref": "#/$defs/ExecutionJsonV1"
       }
+    },
+    "ScratchpadBindingV1": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "version_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "artifact_digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "artifact_root": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "manifest": {
+          "$ref": "#/$defs/ArtifactManifestV1"
+        }
+      },
+      "required": [
+        "alias",
+        "workspace_id",
+        "dataset_id",
+        "version_id",
+        "artifact_digest",
+        "artifact_root",
+        "manifest"
+      ],
+      "additionalProperties": false
+    },
+    "ScratchpadRequestV1": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "request_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sql": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16384
+        },
+        "parameters": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "maxLength": 4096
+              }
+            ]
+          },
+          "minItems": 0
+        },
+        "bindings": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/ScratchpadBindingV1"
+          }
+        },
+        "result_directory": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      },
+      "required": [
+        "format_version",
+        "request_id",
+        "sql",
+        "parameters",
+        "bindings",
+        "result_directory"
+      ],
+      "additionalProperties": false
+    },
+    "ScratchpadResultV1": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "request_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "row_count": {
+          "$ref": "#/$defs/Count"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "bindings": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "properties": {
+              "alias": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 63
+              },
+              "workspace_id": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "dataset_id": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "version_id": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "artifact_digest": {
+                "$ref": "#/$defs/Sha256"
+              }
+            },
+            "required": [
+              "alias",
+              "workspace_id",
+              "dataset_id",
+              "version_id",
+              "artifact_digest"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "format_version",
+        "request_id",
+        "row_count",
+        "truncated",
+        "bindings"
+      ],
+      "additionalProperties": false
     }
   },
   "$ref": "#/$defs/CliEnvelopeV1"

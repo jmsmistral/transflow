@@ -1,0 +1,67 @@
+{
+  "task": "T079",
+  "date": "2026-09-27",
+  "specification": "1.1.3",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "2a27e38",
+  "specification_base": "e0e8d1b",
+  "ci": "Pending owner confirmation after push; no workflows polled",
+  "native": {
+    "result": "pass",
+    "cases": [
+      "10 analytical SELECT/WITH/group/join/window/subquery fixtures",
+      "bound parameters remain data",
+      "additional explicit version views retain separate binding identities",
+      "42 AST denials and five engine defence-in-depth denials",
+      "write denial preserves provider and outside bytes; no producer/cwd imports",
+      "private failures, corrupt bindings and duplicate aliases fail closed",
+      "lossy timestamp, nested input and case-colliding fields refused",
+      "Arrow result retains exact u64, precision-38 decimal, ns timestamp and null",
+      "row and encoded-byte output caps report truncation without publishing",
+      "exact multi-file manifests work and changed provider bytes fail"
+    ],
+    "python": "3.14.7",
+    "duckdb": "1.5.5",
+    "pyarrow": "25.0.1"
+  },
+  "verification": {
+    "python": "884 tests passed in full run; 18 socket tests failed under sandbox and packaging inventory required two new modules. All 34 discovery/packaging tests then passed outside sandbox, covering every failure. 903 unique Python tests passed across those runs.",
+    "python_static": "Ruff, formatting and strict mypy pass; final mypy checked 66 files.",
+    "web": "349 tests, typecheck, lint, formatting and reproducible production build passed.",
+    "shared_contract_fixtures": 293,
+    "rust": "Formatting, compilation, standalone storage, Clippy and 12 boundary regressions passed. All 382 workspace tests plus one doc test passed outside sandbox after the initial socket/process permission failures.",
+    "native": "10 scenario groups passed against the actual installed wheel, DuckDB 1.5.5 and PyArrow 25.0.1.",
+    "cli": "All 58 installed CLI/API integration tests passed with local coordinator sockets available.",
+    "documents": "Specification/link validation and all 44 checker regressions passed after the linked evidence receipt was created.",
+    "safety": "All 27 regressions and the privacy/dependency/generated-contract gate passed after refreshing the reviewed schema input digest. Dependency pins and the 641-version inventory are unchanged."
+  },
+  "commands": [
+    "bash tools/check-python.sh",
+    "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/tests/test_discovery.py python/tests/test_packaging.py",
+    "bash tools/check-rust.sh",
+    "cargo test --workspace --locked --offline",
+    "bash tools/check-web.sh",
+    "bash tools/check-cli.sh",
+    "target/qualification/py314/bin/python -I -B python/tools/check_scratchpad.py /tmp/t079-wheels/transflow-0.0.0.dev0-py3-none-any.whl --output /tmp/t079-native.json",
+    "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+    "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests",
+    "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+    "git diff --check; git -C ../transflow-spec diff --check"
+  ],
+  "limits": [
+    "No query HTTP endpoint, UI or coordinator lease/lifecycle integration; T080 owns those.",
+    "Only macOS arm64 run locally; native CI matrix result remains owner-monitored.",
+    "PyArrow 25.0.1 is required by the helper but existing workspace locks are unchanged.",
+    "No general hostile-SQL sandbox, computation-memory ceiling or whole A32 qualification is claimed.",
+    "The full native aggregate was not repeated; the new installed-wheel probe is integrated into it and was run directly."
+  ],
+  "result": "Required local gates passed, including targeted completion runs after corrected failures",
+  "corrections": [
+    "Added required minItems to the private parameter schema for the shared validator profile.",
+    "Used the explicit qualified PyArrow pin and accepted Polars large-string/binary physical types.",
+    "Installed native engines offline into the disposable helper environment; nested venv system-site-packages does not inherit the qualification venv.",
+    "Updated the exact wheel inventory for the two added production modules and contract fixture count for seven added cases.",
+    "Refreshed the intentional shared schema input hash; created the linked receipt before final document regressions."
+  ]
+}

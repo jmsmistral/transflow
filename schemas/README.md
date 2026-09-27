@@ -19,6 +19,14 @@ The [HTTP guide](../crates/tf-api/README.md) describes authentication and contex
 
 ## Independent versions and compatibility
 
+T079 adds the closed `ScratchpadBindingV1`, `ScratchpadRequestV1` and
+`ScratchpadResultV1` private helper carriers. Seven shared fixtures cover exact
+version identities, explicit scalar parameters, unknown fields and version
+rejection. Arrow IPC carries capped result values without JSON precision loss.
+These are internal helper documents, not new HTTP endpoints or advertised worker
+control operations; public query lifecycle integration remains T080. See the
+[SQL helper guide](../python/worker/SQL.md). Protocol 1.0 and API v1 are unchanged.
+
 [`versions.json`](versions.json) records independent baselines:
 
 | Format | Baseline | Status |

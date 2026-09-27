@@ -6502,5 +6502,526 @@
       "resync_required": false
     },
     "valid": false
+  },
+  {
+    "name": "scratchpad-binding",
+    "schema": "ScratchpadBindingV1",
+    "value": {
+      "alias": "dataset",
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "dataset_id": "00000000-0000-4000-8000-000000000001",
+      "version_id": "00000000-0000-4000-8000-000000000001",
+      "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "artifact_root": "/private/synthetic/artifact",
+      "manifest": {
+        "format_version": 1,
+        "logical_schema": {
+          "format_version": 1,
+          "fields": [
+            {
+              "name": "id",
+              "logical_type": {
+                "type": "u64"
+              },
+              "nullable": false
+            },
+            {
+              "name": "details",
+              "logical_type": {
+                "type": "struct",
+                "fields": [
+                  {
+                    "name": "items",
+                    "logical_type": {
+                      "type": "list",
+                      "element": {
+                        "name": "item",
+                        "logical_type": {
+                          "type": "decimal",
+                          "precision": 38,
+                          "scale": 4
+                        },
+                        "nullable": true
+                      }
+                    },
+                    "nullable": true
+                  }
+                ]
+              },
+              "nullable": true,
+              "metadata": {
+                "description": "Synthetic"
+              }
+            }
+          ]
+        },
+        "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "files": [
+          {
+            "path": "part-000.parquet",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "byte_length": "9007199254740993",
+            "row_count": "0"
+          },
+          {
+            "path": "parts/part-001.parquet",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "byte_length": "9007199254740993",
+            "row_count": "0"
+          }
+        ],
+        "writer": {
+          "engine": "polars",
+          "version": "1.44.2",
+          "compression": "zstd",
+          "row_group_size": "100000"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "scratchpad-request",
+    "schema": "ScratchpadRequestV1",
+    "value": {
+      "format_version": 1,
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "sql": "SELECT count(*) FROM dataset",
+      "parameters": [],
+      "bindings": [
+        {
+          "alias": "dataset",
+          "workspace_id": "00000000-0000-4000-8000-000000000001",
+          "dataset_id": "00000000-0000-4000-8000-000000000001",
+          "version_id": "00000000-0000-4000-8000-000000000001",
+          "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "artifact_root": "/private/synthetic/artifact",
+          "manifest": {
+            "format_version": 1,
+            "logical_schema": {
+              "format_version": 1,
+              "fields": [
+                {
+                  "name": "id",
+                  "logical_type": {
+                    "type": "u64"
+                  },
+                  "nullable": false
+                },
+                {
+                  "name": "details",
+                  "logical_type": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "name": "items",
+                        "logical_type": {
+                          "type": "list",
+                          "element": {
+                            "name": "item",
+                            "logical_type": {
+                              "type": "decimal",
+                              "precision": 38,
+                              "scale": 4
+                            },
+                            "nullable": true
+                          }
+                        },
+                        "nullable": true
+                      }
+                    ]
+                  },
+                  "nullable": true,
+                  "metadata": {
+                    "description": "Synthetic"
+                  }
+                }
+              ]
+            },
+            "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "files": [
+              {
+                "path": "part-000.parquet",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "byte_length": "9007199254740993",
+                "row_count": "0"
+              },
+              {
+                "path": "parts/part-001.parquet",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "byte_length": "9007199254740993",
+                "row_count": "0"
+              }
+            ],
+            "writer": {
+              "engine": "polars",
+              "version": "1.44.2",
+              "compression": "zstd",
+              "row_group_size": "100000"
+            }
+          }
+        }
+      ],
+      "result_directory": "/private/synthetic/query"
+    },
+    "valid": true
+  },
+  {
+    "name": "scratchpad-result",
+    "schema": "ScratchpadResultV1",
+    "value": {
+      "format_version": 1,
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "row_count": "1",
+      "truncated": false,
+      "bindings": [
+        {
+          "alias": "dataset",
+          "workspace_id": "00000000-0000-4000-8000-000000000001",
+          "dataset_id": "00000000-0000-4000-8000-000000000001",
+          "version_id": "00000000-0000-4000-8000-000000000001",
+          "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "scratchpad-unknown-setting",
+    "schema": "ScratchpadRequestV1",
+    "value": {
+      "format_version": 1,
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "sql": "SELECT count(*) FROM dataset",
+      "parameters": [],
+      "bindings": [
+        {
+          "alias": "dataset",
+          "workspace_id": "00000000-0000-4000-8000-000000000001",
+          "dataset_id": "00000000-0000-4000-8000-000000000001",
+          "version_id": "00000000-0000-4000-8000-000000000001",
+          "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "artifact_root": "/private/synthetic/artifact",
+          "manifest": {
+            "format_version": 1,
+            "logical_schema": {
+              "format_version": 1,
+              "fields": [
+                {
+                  "name": "id",
+                  "logical_type": {
+                    "type": "u64"
+                  },
+                  "nullable": false
+                },
+                {
+                  "name": "details",
+                  "logical_type": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "name": "items",
+                        "logical_type": {
+                          "type": "list",
+                          "element": {
+                            "name": "item",
+                            "logical_type": {
+                              "type": "decimal",
+                              "precision": 38,
+                              "scale": 4
+                            },
+                            "nullable": true
+                          }
+                        },
+                        "nullable": true
+                      }
+                    ]
+                  },
+                  "nullable": true,
+                  "metadata": {
+                    "description": "Synthetic"
+                  }
+                }
+              ]
+            },
+            "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "files": [
+              {
+                "path": "part-000.parquet",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "byte_length": "9007199254740993",
+                "row_count": "0"
+              },
+              {
+                "path": "parts/part-001.parquet",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "byte_length": "9007199254740993",
+                "row_count": "0"
+              }
+            ],
+            "writer": {
+              "engine": "polars",
+              "version": "1.44.2",
+              "compression": "zstd",
+              "row_group_size": "100000"
+            }
+          }
+        }
+      ],
+      "result_directory": "/private/synthetic/query",
+      "enable_external_access": true
+    },
+    "valid": false
+  },
+  {
+    "name": "scratchpad-moving-input",
+    "schema": "ScratchpadBindingV1",
+    "value": {
+      "alias": "dataset",
+      "workspace_id": "00000000-0000-4000-8000-000000000001",
+      "dataset_id": "00000000-0000-4000-8000-000000000001",
+      "version_id": "latest",
+      "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "artifact_root": "/private/synthetic/artifact",
+      "manifest": {
+        "format_version": 1,
+        "logical_schema": {
+          "format_version": 1,
+          "fields": [
+            {
+              "name": "id",
+              "logical_type": {
+                "type": "u64"
+              },
+              "nullable": false
+            },
+            {
+              "name": "details",
+              "logical_type": {
+                "type": "struct",
+                "fields": [
+                  {
+                    "name": "items",
+                    "logical_type": {
+                      "type": "list",
+                      "element": {
+                        "name": "item",
+                        "logical_type": {
+                          "type": "decimal",
+                          "precision": 38,
+                          "scale": 4
+                        },
+                        "nullable": true
+                      }
+                    },
+                    "nullable": true
+                  }
+                ]
+              },
+              "nullable": true,
+              "metadata": {
+                "description": "Synthetic"
+              }
+            }
+          ]
+        },
+        "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "files": [
+          {
+            "path": "part-000.parquet",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "byte_length": "9007199254740993",
+            "row_count": "0"
+          },
+          {
+            "path": "parts/part-001.parquet",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "byte_length": "9007199254740993",
+            "row_count": "0"
+          }
+        ],
+        "writer": {
+          "engine": "polars",
+          "version": "1.44.2",
+          "compression": "zstd",
+          "row_group_size": "100000"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "scratchpad-numeric-parameter",
+    "schema": "ScratchpadRequestV1",
+    "value": {
+      "format_version": 1,
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "sql": "SELECT count(*) FROM dataset",
+      "parameters": [
+        1.5
+      ],
+      "bindings": [
+        {
+          "alias": "dataset",
+          "workspace_id": "00000000-0000-4000-8000-000000000001",
+          "dataset_id": "00000000-0000-4000-8000-000000000001",
+          "version_id": "00000000-0000-4000-8000-000000000001",
+          "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "artifact_root": "/private/synthetic/artifact",
+          "manifest": {
+            "format_version": 1,
+            "logical_schema": {
+              "format_version": 1,
+              "fields": [
+                {
+                  "name": "id",
+                  "logical_type": {
+                    "type": "u64"
+                  },
+                  "nullable": false
+                },
+                {
+                  "name": "details",
+                  "logical_type": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "name": "items",
+                        "logical_type": {
+                          "type": "list",
+                          "element": {
+                            "name": "item",
+                            "logical_type": {
+                              "type": "decimal",
+                              "precision": 38,
+                              "scale": 4
+                            },
+                            "nullable": true
+                          }
+                        },
+                        "nullable": true
+                      }
+                    ]
+                  },
+                  "nullable": true,
+                  "metadata": {
+                    "description": "Synthetic"
+                  }
+                }
+              ]
+            },
+            "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "files": [
+              {
+                "path": "part-000.parquet",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "byte_length": "9007199254740993",
+                "row_count": "0"
+              },
+              {
+                "path": "parts/part-001.parquet",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "byte_length": "9007199254740993",
+                "row_count": "0"
+              }
+            ],
+            "writer": {
+              "engine": "polars",
+              "version": "1.44.2",
+              "compression": "zstd",
+              "row_group_size": "100000"
+            }
+          }
+        }
+      ],
+      "result_directory": "/private/synthetic/query"
+    },
+    "valid": false
+  },
+  {
+    "name": "scratchpad-unknown-version",
+    "schema": "ScratchpadRequestV1",
+    "value": {
+      "format_version": 2,
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "sql": "SELECT count(*) FROM dataset",
+      "parameters": [],
+      "bindings": [
+        {
+          "alias": "dataset",
+          "workspace_id": "00000000-0000-4000-8000-000000000001",
+          "dataset_id": "00000000-0000-4000-8000-000000000001",
+          "version_id": "00000000-0000-4000-8000-000000000001",
+          "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "artifact_root": "/private/synthetic/artifact",
+          "manifest": {
+            "format_version": 1,
+            "logical_schema": {
+              "format_version": 1,
+              "fields": [
+                {
+                  "name": "id",
+                  "logical_type": {
+                    "type": "u64"
+                  },
+                  "nullable": false
+                },
+                {
+                  "name": "details",
+                  "logical_type": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "name": "items",
+                        "logical_type": {
+                          "type": "list",
+                          "element": {
+                            "name": "item",
+                            "logical_type": {
+                              "type": "decimal",
+                              "precision": 38,
+                              "scale": 4
+                            },
+                            "nullable": true
+                          }
+                        },
+                        "nullable": true
+                      }
+                    ]
+                  },
+                  "nullable": true,
+                  "metadata": {
+                    "description": "Synthetic"
+                  }
+                }
+              ]
+            },
+            "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "files": [
+              {
+                "path": "part-000.parquet",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "byte_length": "9007199254740993",
+                "row_count": "0"
+              },
+              {
+                "path": "parts/part-001.parquet",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "byte_length": "9007199254740993",
+                "row_count": "0"
+              }
+            ],
+            "writer": {
+              "engine": "polars",
+              "version": "1.44.2",
+              "compression": "zstd",
+              "row_group_size": "100000"
+            }
+          }
+        }
+      ],
+      "result_directory": "/private/synthetic/query"
+    },
+    "valid": false
   }
 ]

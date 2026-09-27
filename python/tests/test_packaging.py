@@ -128,6 +128,8 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
             "check_adapter",
             "check_samples",
             "checks",
+            "scratchpad",
+            "sql_policy",
             "polars_adapter",
             "lifetime",
         )

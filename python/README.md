@@ -74,3 +74,10 @@ T022 adds `transflow_worker.source_index`, an immutable pre-import module index
 using the selected interpreter’s stdlib and identifier rules. It accepts explicit
 captured paths, does not import user code, and rejects conflicting roots/modules
 and SDK/runtime shadowing. Actual discovery remains T027.
+
+## Restricted SQL helper
+
+T079 adds the private [SQL validator and isolated helper](worker/SQL.md). It uses
+DuckDB 1.5.5 and optional PyArrow 25.0.1 from the native qualification environment.
+It is not a public query command; T080 owns coordinator/query lifecycle integration.
+Existing workspace dependency locks are unchanged.

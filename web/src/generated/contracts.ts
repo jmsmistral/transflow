@@ -277,3 +277,12 @@ export type ApiPreviewV1 = { readonly "workspace": Uuid; readonly "origin_worksp
 
 // prettier-ignore
 export type JsonObject = { readonly [key: string]: ExecutionJsonV1 };
+
+// prettier-ignore
+export type ScratchpadBindingV1 = { readonly "alias": string; readonly "workspace_id": Uuid; readonly "dataset_id": Uuid; readonly "version_id": Uuid; readonly "artifact_digest": Sha256; readonly "artifact_root": string; readonly "manifest": ArtifactManifestV1 };
+
+// prettier-ignore
+export type ScratchpadRequestV1 = { readonly "format_version": 1; readonly "request_id": Uuid; readonly "sql": string; readonly "parameters": ReadonlyArray<(null | boolean | string)>; readonly "bindings": ReadonlyArray<ScratchpadBindingV1>; readonly "result_directory": string };
+
+// prettier-ignore
+export type ScratchpadResultV1 = { readonly "format_version": 1; readonly "request_id": Uuid; readonly "row_count": Count; readonly "truncated": boolean; readonly "bindings": ReadonlyArray<{ readonly "alias": string; readonly "workspace_id": Uuid; readonly "dataset_id": Uuid; readonly "version_id": Uuid; readonly "artifact_digest": Sha256 }> };

@@ -466,3 +466,18 @@ def validate_ApiPreviewV1(value: object) -> None:
 def validate_JsonObject(value: object) -> None:
     """Assert the JsonObject contract, including custom formats."""
     validate_document("JsonObject", value)
+
+
+def validate_ScratchpadBindingV1(value: object) -> None:
+    """Assert the ScratchpadBindingV1 contract, including custom formats."""
+    validate_document("ScratchpadBindingV1", value)
+
+
+def validate_ScratchpadRequestV1(value: object) -> None:
+    """Assert the ScratchpadRequestV1 contract, including custom formats."""
+    validate_document("ScratchpadRequestV1", value)
+
+
+def validate_ScratchpadResultV1(value: object) -> None:
+    """Assert the ScratchpadResultV1 contract, including custom formats."""
+    validate_document("ScratchpadResultV1", value)
