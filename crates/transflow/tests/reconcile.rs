@@ -90,6 +90,19 @@ impl Tree {
     fn bytes(&self) -> Vec<u8> {
         fs::read(self.registry()).unwrap()
     }
+    fn assert_store_closed(&self) {
+        // With no other connections, SQLite removes both sidecars on its last close.
+        // Check immediately: a queued background shutdown is not a completed close.
+        for suffix in ["-wal", "-shm"] {
+            assert!(
+                !self
+                    .0
+                    .join(format!(".transflow/runtime/catalog.sqlite{suffix}"))
+                    .exists(),
+                "SQLite connection still open after reconciliation/recovery returned"
+            );
+        }
+    }
 }
 impl Drop for Tree {
     fn drop(&mut self) {
@@ -246,11 +259,13 @@ fn edit_at_final_guard_conflicts_and_recovery_preserves_user_bytes() {
             .await
             .unwrap();
             assert!(c.outcome.is_err());
+            t.assert_store_closed();
             let mut owner = c.owner;
             assert_eq!(
                 recover(&mut owner, 456).await.unwrap(),
                 vec![RecoveryOutcome::Conflict(mutation_id())]
             );
+            t.assert_store_closed();
             assert!(!indexed(&mut owner).await);
             assert_eq!(state(&mut owner).await, Some(MutationState::Conflict));
         });
@@ -280,6 +295,7 @@ fn io_failure_before_rename_or_index_remains_recoverable_with_exact_ids() {
             .await
             .unwrap();
             assert!(c.outcome.is_err());
+            t.assert_store_closed();
             let mut owner = c.owner;
             let renamed = matches!(boundary, Boundary::Renamed | Boundary::BeforeIndex);
             assert_eq!(t.bytes(), if renamed { new } else { old });
@@ -302,6 +318,45 @@ fn io_failure_before_rename_or_index_remains_recoverable_with_exact_ids() {
                 .ends_with(".tmp"))
         );
     }
+}
+
+#[test]
+fn recovery_database_failure_closes_store_before_immediate_retry() {
+    let t = Tree::new();
+    let request = t.request();
+    runtime().block_on(async {
+        let completed = reconcile_with_observer(t.owner(), request, |boundary| {
+            if boundary == Boundary::JournalPrepared {
+                Err(io::Error::other("synthetic interruption before rename"))
+            } else {
+                Ok(())
+            }
+        })
+        .await
+        .unwrap();
+        assert!(completed.outcome.is_err());
+        t.assert_store_closed();
+        let mut owner = completed.owner;
+        let original = t.bytes();
+        use sqlx::{Connection, SqliteConnection, sqlite::SqliteConnectOptions};
+        let options = SqliteConnectOptions::new().filename(t.0.join(".transflow/runtime/catalog.sqlite"));
+        let mut db = SqliteConnection::connect_with(&options).await.unwrap();
+        sqlx::raw_sql("CREATE TRIGGER fail_recovery BEFORE UPDATE ON catalog_mutations BEGIN SELECT RAISE(ABORT,'synthetic recovery failure'); END;")
+            .execute(&mut db).await.unwrap();
+        db.close().await.unwrap();
+        let error = recover(&mut owner, 456).await.unwrap_err();
+        assert!(matches!(error, transflow::reconcile::ReconcileError::Store(_)));
+        t.assert_store_closed();
+        let mut db = SqliteConnection::connect_with(&options).await.unwrap();
+        sqlx::query("DROP TRIGGER fail_recovery").execute(&mut db).await.unwrap();
+        db.close().await.unwrap();
+        assert_eq!(
+            recover(&mut owner, 789).await.unwrap(),
+            vec![RecoveryOutcome::NotApplied(mutation_id())]
+        );
+        t.assert_store_closed();
+        assert_eq!(t.bytes(), original);
+    });
 }
 #[test]
 fn fixed_source_metadata_owner_and_symlink_registry_cannot_write() {

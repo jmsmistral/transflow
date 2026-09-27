@@ -196,26 +196,34 @@ where
         index_ids,
     };
     let mut store = owner.open_store().await?;
-    store
-        .repository()?
-        .register_workspace(workspace, &root_identity, request.at_us)
-        .await?;
-    store
-        .repository()?
-        .prepare_catalog_mutation(&mutation)
-        .await?;
-    let work = step(Work { write, observer }, Step::Stage, &mut store)?;
-    let work = step(work, Step::Rename, &mut store)?;
-    let work = step(work, Step::Sync, &mut store)?;
-    store.repository()?.catalog_replaced(request.id).await?;
-    let work = step(work, Step::BeforeIndex, &mut store)?;
-    store
-        .repository()?
-        .index_catalog_mutation(request.id, request.at_us)
-        .await?;
-    let _work = step(work, Step::Indexed, &mut store)?;
-    store.close().await?;
-    Ok(ReconcileOutcome::Indexed(request.id))
+    // SQLx drop only queues worker shutdown. Await closure before returning the owner,
+    // including guard/IO failures, so immediate recovery cannot race the old connection.
+    let outcome: Result<ReconcileOutcome> = async {
+        store
+            .repository()?
+            .register_workspace(workspace, &root_identity, request.at_us)
+            .await?;
+        store
+            .repository()?
+            .prepare_catalog_mutation(&mutation)
+            .await?;
+        let work = step(Work { write, observer }, Step::Stage, &mut store)?;
+        let work = step(work, Step::Rename, &mut store)?;
+        let work = step(work, Step::Sync, &mut store)?;
+        store.repository()?.catalog_replaced(request.id).await?;
+        let work = step(work, Step::BeforeIndex, &mut store)?;
+        store
+            .repository()?
+            .index_catalog_mutation(request.id, request.at_us)
+            .await?;
+        let _work = step(work, Step::Indexed, &mut store)?;
+        Ok(ReconcileOutcome::Indexed(request.id))
+    }
+    .await;
+    let closed = store.close().await;
+    let outcome = outcome?;
+    closed?;
+    Ok(outcome)
 }
 /// Recovery only reads/syncs authoring state. It never renames, allocates or overwrites files.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -236,69 +244,78 @@ pub async fn recover(owner: &mut RuntimeOwner, at_us: i64) -> Result<Vec<Recover
     let root = owner.workspace_root().to_owned();
     let workspace = owner.workspace_id()?;
     let mut store = owner.open_store().await?;
-    let mut outcomes = Vec::new();
-    for mutation in store.repository()?.pending_catalog_mutations().await? {
-        if mutation.workspace != workspace {
-            return Err(ReconcileError::Authority);
-        }
-        let id = mutation.id;
-        let root = root.clone();
-        let outcome =
-            tokio::task::spawn_blocking(move || -> std::result::Result<_, RegistryWriteError> {
-                let selected = Workspace::load(&root, Some(&root))
+    let outcome: Result<Vec<RecoveryOutcome>> = async {
+        let mut outcomes = Vec::new();
+        for mutation in store.repository()?.pending_catalog_mutations().await? {
+            if mutation.workspace != workspace {
+                return Err(ReconcileError::Authority);
+            }
+            let id = mutation.id;
+            let root = root.clone();
+            let outcome = tokio::task::spawn_blocking(
+                move || -> std::result::Result<_, RegistryWriteError> {
+                    let selected = Workspace::load(&root, Some(&root))
+                        .map_err(|_| RegistryWriteError::Conflict)?;
+                    if selected.config().id() != mutation.workspace {
+                        return Err(RegistryWriteError::Conflict);
+                    }
+                    let file = RegistryFile::open(&root)?;
+                    let bytes = file.read()?;
+                    let digest = registry_digest(&bytes)?;
+                    if digest == mutation.old_digest {
+                        return Ok(RecoveryOutcome::NotApplied(id));
+                    }
+                    if digest != mutation.new_digest {
+                        return Ok(RecoveryOutcome::Conflict(id));
+                    }
+                    let registry = RegistrySnapshot::parse(
+                        mutation.workspace,
+                        std::str::from_utf8(&bytes).map_err(|_| RegistryWriteError::Conflict)?,
+                    )
                     .map_err(|_| RegistryWriteError::Conflict)?;
-                if selected.config().id() != mutation.workspace {
-                    return Err(RegistryWriteError::Conflict);
-                }
-                let file = RegistryFile::open(&root)?;
-                let bytes = file.read()?;
-                let digest = registry_digest(&bytes)?;
-                if digest == mutation.old_digest {
-                    return Ok(RecoveryOutcome::NotApplied(id));
-                }
-                if digest != mutation.new_digest {
-                    return Ok(RecoveryOutcome::Conflict(id));
-                }
-                let registry = RegistrySnapshot::parse(
-                    mutation.workspace,
-                    std::str::from_utf8(&bytes).map_err(|_| RegistryWriteError::Conflict)?,
-                )
-                .map_err(|_| RegistryWriteError::Conflict)?;
-                let ids: BTreeSet<_> = registry.datasets().map(|d| d.key().dataset_id()).collect();
-                if ids != mutation.index_ids.iter().copied().collect()
-                    || mutation.assignments.iter().any(|(path, id)| {
-                        registry.resolve(path.as_str()).map_or(true, |r| {
-                            r.key().dataset_id() != *id
-                                || r.key().workspace_id() != mutation.workspace
+                    let ids: BTreeSet<_> =
+                        registry.datasets().map(|d| d.key().dataset_id()).collect();
+                    if ids != mutation.index_ids.iter().copied().collect()
+                        || mutation.assignments.iter().any(|(path, id)| {
+                            registry.resolve(path.as_str()).map_or(true, |r| {
+                                r.key().dataset_id() != *id
+                                    || r.key().workspace_id() != mutation.workspace
+                            })
                         })
-                    })
-                {
-                    return Ok(RecoveryOutcome::Conflict(id));
-                }
-                file.sync(&mutation.new_digest)?;
-                Ok(RecoveryOutcome::Indexed(id))
-            })
+                    {
+                        return Ok(RecoveryOutcome::Conflict(id));
+                    }
+                    file.sync(&mutation.new_digest)?;
+                    Ok(RecoveryOutcome::Indexed(id))
+                },
+            )
             .await?;
-        let outcome = match outcome {
-            Ok(outcome) => outcome,
-            Err(RegistryWriteError::Conflict) => RecoveryOutcome::Conflict(id),
-            Err(e) => return Err(e.into()),
-        };
-        match outcome {
-            RecoveryOutcome::Indexed(_) => {
-                store
-                    .repository()?
-                    .index_catalog_mutation(id, at_us)
-                    .await?
+            let outcome = match outcome {
+                Ok(outcome) => outcome,
+                Err(RegistryWriteError::Conflict) => RecoveryOutcome::Conflict(id),
+                Err(e) => return Err(e.into()),
+            };
+            match outcome {
+                RecoveryOutcome::Indexed(_) => {
+                    store
+                        .repository()?
+                        .index_catalog_mutation(id, at_us)
+                        .await?
+                }
+                RecoveryOutcome::NotApplied(_) | RecoveryOutcome::Conflict(_) => {
+                    store.repository()?.catalog_conflict(id).await?
+                }
             }
-            RecoveryOutcome::NotApplied(_) | RecoveryOutcome::Conflict(_) => {
-                store.repository()?.catalog_conflict(id).await?
-            }
+            outcomes.push(outcome);
         }
-        outcomes.push(outcome);
+        Ok(outcomes)
     }
-    store.close().await?;
-    Ok(outcomes)
+    .await;
+    // Preserve the recovery failure, but always finish closing its SQLite worker first.
+    let closed = store.close().await;
+    let outcome = outcome?;
+    closed?;
+    Ok(outcome)
 }
 
 /// Run reconciliation on a caller-owned blocking worker, retaining the actual owner.
