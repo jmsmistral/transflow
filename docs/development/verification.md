@@ -1,5 +1,46 @@
 # Contributor verification
 
+## Verification workflow
+
+Work in one substantial task or two closely related tasks unless the owner
+explicitly requests a larger batch. Read the selected task's acceptance criteria
+and choose the required checks before editing.
+
+1. During iteration, run relevant formatting, lint/type checks and focused tests.
+   Examples include `cargo fmt --all -- --check`, package-specific Cargo tests,
+   Ruff checks on affected Python paths, the configured mypy check, and web
+   typecheck/lint plus affected component tests. Follow dependency and contract
+   boundaries when choosing scope.
+2. Once the change settles, run the required broader gates. The aggregate
+   `bash tools/check.sh` remains available; language-specific scripts and native
+   qualification remain required where the selected task calls for them. After
+   fixes, rerun affected checks and broaden when shared behaviour or unresolved
+   failures invalidate previous results. Do not repeat unchanged passing suites
+   without a reason, and do not omit required acceptance evidence.
+3. Redirect verbose runs to a local temporary log and inspect the exit status,
+   summary and failures. Keep the complete log for diagnosis; do not commit
+   transient logs. Report actual commands, results and coverage of final changes.
+4. Review both repository diffs, update evidence, commit and push. The owner
+   monitors CI; report the pushed revisions and pending CI without polling.
+
+For documentation-only changes, validate documents/links, run applicable checker
+regressions and safety checks, and review `git diff --check` in both repositories.
+Application suites are unnecessary unless executable behaviour also changes.
+With the repository tooling environment already installed, run from `transflow`:
+
+```bash
+target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .
+target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests
+PYTHON="$PWD/target/python/py314/bin/python" bash tools/check-safety.sh
+git diff --check
+git -C ../transflow-spec diff --check
+```
+
+Dependency installation below is explicit setup, repeated only when the
+environment or lockfiles require it. Historical measurements below are evidence
+for their recorded revisions, not a reason to load or repeat the whole history
+for each task. Use the current scripts and selected task's evidence references.
+
 Historical interpreter-specific entries have been filtered to the current Python
 3.14 baseline. Retained results are original measurements; original workflow
 totals may include removed jobs. Current checks are recorded in the latest section.

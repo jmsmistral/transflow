@@ -12,7 +12,7 @@
   "implementation_base": "ecdf6faec65e37a1b888e69513275e7449e9ab0f",
   "specification_base": "edf005c23c41940cf522a7c1b4f7bae8f0068c39",
   "result": "All local gates passed, with separate completion runs after corrected failures",
-  "ci": "Pending owner confirmation after push; workflows are not polled",
+  "ci": "All GitHub CI jobs passed, confirmed by the owner on 2026-09-27; workflows were not polled",
   "counts": {
     "rust_tests": 382,
     "rust_doc_tests": 1,
@@ -87,7 +87,7 @@
   "dependency_change": "No new external package versions; the same 641-version inventory remains. Lock hashes changed to record direct tokio-stream use. Existing license/advisory observations and advisory date are preserved.",
   "browser": "No UI change or manual browser journey is claimed. Real loopback SSE plus automated browser Origin/session/CSRF facade tests passed; connected UI integration remains T082.",
   "limits": [
-    "Local qualification is macOS arm64; pushed CI awaits owner confirmation.",
+    "Local qualification is macOS arm64; CI success is owner-reported for the revisions in ci_confirmation, not independently polled or claimed for later commits.",
     "Events replay the latest 10000 sequences without deleting immutable audit evidence. Clients must refetch authoritative read models on resync.",
     "Preview handles expire after five minutes, cache eviction or coordinator restart. Each page holds a renewable query lease; handles retain no between-page lease. Foreign availability and retention remain provider responsibilities.",
     "Projected preview integrity verifies contained files, canonical manifest, lengths, schema and selected decoding, not full artifact hashes or freshness/quality PASS.",
@@ -159,5 +159,12 @@
     "active HTTP cancellation is replayable and preserves every last-good head",
     "cancellation receipt survives coordinator restart"
   ],
-  "qualification_web": "Typecheck, five tests and build passed. The existing React Flow use-client bundling warning remains."
+  "qualification_web": "Typecheck, five tests and build passed. The existing React Flow use-client bundling warning remains.",
+  "ci_confirmation": {
+    "source": "owner report",
+    "date": "2026-09-27",
+    "implementation_revision": "c0e0bfce864f762acb8ac05bd6538b7f602776b0",
+    "specification_revision": "678d9b59211906fe5365ae9e07028551ac8c5e8b",
+    "workflow_polling": false
+  }
 }

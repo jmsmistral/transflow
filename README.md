@@ -85,7 +85,7 @@ Keep the canonical specification in a sibling checkout directly under `~/dev/`. 
   transflow-spec/  # authoritative design, task ledger and agent guidance
 ```
 
-Read the [specification document map](../transflow-spec/README.md) and [engineering agreement](../transflow-spec/AGENTS.md) before implementation. [AGENTS.md](AGENTS.md) is the short agent entry point. The specification is also hosted at [jmsmistral/transflow-spec](https://github.com/jmsmistral/transflow-spec). Detailed specification files are not duplicated here.
+Start with the [task lookup guide](../transflow-spec/START_HERE.md) and [engineering agreement](../transflow-spec/AGENTS.md), then read the selected task and its relevant contracts. [AGENTS.md](AGENTS.md) is the short agent entry point; the [verification workflow](docs/development/verification.md#verification-workflow) describes staged checks and compact logs. The specification is also hosted at [jmsmistral/transflow-spec](https://github.com/jmsmistral/transflow-spec). Detailed specification files are not duplicated here.
 
 Specification baseline: **1.1.3**. See its task ledger for intended scope; unchecked tasks are not delivered features. End users of a future installed release will not need the specification checkout.
 
