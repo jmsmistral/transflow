@@ -5,6 +5,9 @@ use sqlx::Row;
 use tf_domain::{BuildId, WorkspaceId};
 type Result<T> = std::result::Result<T, StoreError>;
 fn parse(text: String) -> Result<Value> {
+    if text.len() > 16 * 1024 * 1024 {
+        return Err(StoreError::InvalidRequest);
+    }
     serde_json::from_str(&text).map_err(|_| StoreError::InvalidRequest)
 }
 impl Store {
@@ -67,13 +70,27 @@ impl Reader {
         // One read transaction gives a consistent projection while a coordinator publishes.
         use sqlx::Connection;
         let mut tx = self.db.begin().await?;
-        let r=sqlx::query("SELECT b.*,p.candidate_json,p.source_snapshot_id FROM builds b JOIN build_plans p ON p.id=b.plan_id JOIN source_snapshots s ON s.id=p.source_snapshot_id WHERE b.id=? AND s.workspace_id=?").bind(build.to_string()).bind(workspace.to_string()).fetch_one(&mut *tx).await?;
+        // Refuse oversized evidence before allocating it. A snapshot cannot grow between
+        // this budget check and the reads below, even while workers publish new facts.
+        let budget=sqlx::query("SELECT (SELECT count(*) FROM jobs WHERE build_id=?),(SELECT count(*) FROM attempts a JOIN jobs j ON j.id=a.job_id WHERE j.build_id=?),(SELECT count(*) FROM phase_intervals p JOIN attempts a ON a.id=p.attempt_id JOIN jobs j ON j.id=a.job_id WHERE j.build_id=?),(SELECT coalesce(sum(length(a.process_json)),0) FROM attempts a JOIN jobs j ON j.id=a.job_id WHERE j.build_id=?)").bind(build.to_string()).bind(build.to_string()).bind(build.to_string()).bind(build.to_string()).fetch_one(&mut *tx).await?;
+        if budget.try_get::<i64, _>(0)? > 2000
+            || budget.try_get::<i64, _>(1)? > 10000
+            || budget.try_get::<i64, _>(2)? > 50000
+            || budget.try_get::<i64, _>(3)? > 16 * 1024 * 1024
+        {
+            return Err(StoreError::InvalidRequest);
+        }
+        let bytes: i64 = sqlx::query_scalar("WITH owned AS (SELECT a.id FROM attempts a JOIN jobs j ON j.id=a.job_id WHERE j.build_id=? UNION SELECT c.original_attempt_id FROM cached_jobs c JOIN jobs j ON j.id=c.job_id WHERE j.build_id=?) SELECT coalesce((SELECT sum(length(r.metrics_json)+length(d.policy_json)) FROM check_results r JOIN check_definitions d ON d.fingerprint=r.definition_fingerprint WHERE r.attempt_id IN (SELECT id FROM owned)),0)+coalesce((SELECT sum(length(binding_json)) FROM job_inputs WHERE job_id IN (SELECT id FROM jobs WHERE build_id=?)),0)").bind(build.to_string()).bind(build.to_string()).bind(build.to_string()).fetch_one(&mut *tx).await?;
+        if bytes > 16 * 1024 * 1024 {
+            return Err(StoreError::InvalidRequest);
+        }
+        let r=sqlx::query("SELECT b.id,b.state,b.cancel_requested,b.created_at_us,b.finished_at_us,b.requested_by,CASE WHEN length(b.trigger_json)<=1048576 THEN b.trigger_json END AS trigger_json,CASE WHEN length(p.candidate_json)<=16777216 THEN p.candidate_json END AS candidate_json,p.source_snapshot_id FROM builds b JOIN build_plans p ON p.id=b.plan_id JOIN source_snapshots s ON s.id=p.source_snapshot_id WHERE b.id=? AND s.workspace_id=?").bind(build.to_string()).bind(workspace.to_string()).fetch_one(&mut *tx).await?;
         let plan = parse(r.try_get("candidate_json")?)?;
-        let rows=sqlx::query("SELECT j.*,d.name AS branch FROM jobs j JOIN data_branches d ON d.id=j.branch_id WHERE j.build_id=? ORDER BY j.id").bind(build.to_string()).fetch_all(&mut *tx).await?;
+        let rows=sqlx::query("SELECT j.id,j.dataset_id,j.state,d.name AS branch FROM jobs j JOIN data_branches d ON d.id=j.branch_id WHERE j.build_id=? ORDER BY j.id").bind(build.to_string()).fetch_all(&mut *tx).await?;
         let mut jobs = vec![];
         for j in rows {
             let id: String = j.try_get("id")?;
-            let rows = sqlx::query("SELECT * FROM attempts WHERE job_id=? ORDER BY attempt_no")
+            let rows = sqlx::query("SELECT id,attempt_no,state,failure_class,started_at_us,finished_at_us,process_json FROM attempts WHERE job_id=? ORDER BY attempt_no")
                 .bind(&id)
                 .fetch_all(&mut *tx)
                 .await?;
@@ -84,7 +101,10 @@ impl Reader {
                 let checks = checks(&mut tx, &aid).await?;
                 attempts.push(json!({"id":aid,"number":a.try_get::<i64,_>("attempt_no")?,"state":a.try_get::<String,_>("state")?,"failure_class":a.try_get::<Option<String>,_>("failure_class")?,"started_us":a.try_get::<i64,_>("started_at_us")?.to_string(),"finished_us":a.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"phases":phases,"checks":checks,"report":a.try_get::<Option<String>,_>("process_json")?.map(parse).transpose()?}));
             }
-            let inputs=sqlx::query("SELECT alias,coalesce(version_id,foreign_version_id),binding_json FROM job_inputs WHERE job_id=? ORDER BY alias").bind(&id).fetch_all(&mut *tx).await?.iter().map(|i|Ok(json!({"alias":i.try_get::<String,_>(0)?,"version":i.try_get::<String,_>(1)?,"binding":parse(i.try_get(2)?)?}))).collect::<Result<Vec<_>>>()?;
+            let inputs=sqlx::query("SELECT alias,coalesce(version_id,foreign_version_id),binding_json FROM job_inputs WHERE job_id=? ORDER BY alias LIMIT 1001").bind(&id).fetch_all(&mut *tx).await?.iter().map(|i|Ok(json!({"alias":i.try_get::<String,_>(0)?,"version":i.try_get::<String,_>(1)?,"binding":parse(i.try_get(2)?)?}))).collect::<Result<Vec<_>>>()?;
+            if inputs.len() > 1000 {
+                return Err(StoreError::InvalidRequest);
+            }
             let produced:Option<String>=sqlx::query_scalar("SELECT v.id FROM dataset_versions v JOIN attempts a ON a.id=v.attempt_id WHERE a.job_id=? AND a.state='SUCCEEDED'").bind(&id).fetch_optional(&mut *tx).await?;
             let reused = sqlx::query(
                 "SELECT version_id,original_attempt_id FROM cached_jobs WHERE job_id=?",
@@ -104,14 +124,24 @@ impl Reader {
             };
             jobs.push(json!({"id":id,"dataset":j.try_get::<String,_>("dataset_id")?,"branch":j.try_get::<String,_>("branch")?,"state":j.try_get::<String,_>("state")?,"inputs":inputs,"attempts":attempts,"version":version,"cached_from":cached_from}));
         }
-        let result = json!({"id":build.to_string(),"state":r.try_get::<String,_>("state")?,"source":r.try_get::<String,_>("source_snapshot_id")?,"cancel_requested":r.try_get::<i64,_>("cancel_requested")?!=0,"created_us":r.try_get::<i64,_>("created_at_us")?.to_string(),"finished_us":r.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"plan":plan,"jobs":jobs});
+        let result = json!({"id":build.to_string(),"state":r.try_get::<String,_>("state")?,"source":r.try_get::<String,_>("source_snapshot_id")?,"cancel_requested":r.try_get::<i64,_>("cancel_requested")?!=0,"created_us":r.try_get::<i64,_>("created_at_us")?.to_string(),"finished_us":r.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"requested_by":r.try_get::<String,_>("requested_by")?,"trigger":parse(r.try_get("trigger_json")?)?,"plan":plan,"jobs":jobs});
+        if serde_json::to_vec(&result)
+            .map_err(|_| StoreError::InvalidRequest)?
+            .len()
+            > 32 * 1024 * 1024
+        {
+            return Err(StoreError::InvalidRequest);
+        }
         tx.commit().await?;
         Ok(result)
     }
 }
 
 async fn checks(db: &mut sqlx::SqliteConnection, attempt: &str) -> Result<Vec<Value>> {
-    let rows=sqlx::query("SELECT r.id,r.outcome,r.metrics_json,r.started_at_us,r.finished_at_us,d.stable_id,d.phase,d.target_alias,d.policy_json FROM check_results r JOIN check_definitions d ON d.fingerprint=r.definition_fingerprint WHERE r.attempt_id=? ORDER BY r.id").bind(attempt).fetch_all(db).await?;
+    let rows=sqlx::query("SELECT r.id,r.outcome,r.metrics_json,r.started_at_us,r.finished_at_us,d.stable_id,d.phase,d.target_alias,d.policy_json FROM check_results r JOIN check_definitions d ON d.fingerprint=r.definition_fingerprint WHERE r.attempt_id=? ORDER BY r.id LIMIT 1001").bind(attempt).fetch_all(db).await?;
+    if rows.len() > 1000 {
+        return Err(StoreError::InvalidRequest);
+    }
     rows.iter().map(|c|Ok(json!({
         "id":c.try_get::<String,_>("id")?, "name":c.try_get::<String,_>("stable_id")?,
         "phase":c.try_get::<String,_>("phase")?, "alias":c.try_get::<Option<String>,_>("target_alias")?,

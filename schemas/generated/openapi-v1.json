@@ -4932,6 +4932,623 @@
           }
         }
       }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "operationId": "get_api_v1_metrics",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiExecutionMetricsV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "branch": "example",
+                    "source": null,
+                    "registry": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "runtime_revision": "example",
+                    "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "selection": {
+                      "kind": "retained_current",
+                      "id": null,
+                      "digest": null
+                    },
+                    "graph": null,
+                    "freshness": "unknown",
+                    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "fallback_policy": []
+                  },
+                  "data": {
+                    "from_us": "0",
+                    "to_us": "0",
+                    "time_zone": "UTC",
+                    "duration_unit": "ns",
+                    "cohort": "build_accepted",
+                    "branch": "example",
+                    "dataset": null,
+                    "materialized_any": false,
+                    "builds": "0",
+                    "build_states": [],
+                    "manual_requests": "0",
+                    "scheduled_builds": "0",
+                    "schedule_occurrences": null,
+                    "jobs": "0",
+                    "job_states": [],
+                    "jobs_executed": "0",
+                    "attempts": "0",
+                    "failure_rate": null,
+                    "materializations": "0",
+                    "duration_samples": "0",
+                    "missing_duration_samples": "0",
+                    "median_ns": null,
+                    "trailing_mean_ns": null,
+                    "trailing_window": "0",
+                    "trailing_samples": "0"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_us",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_us",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "materialized_any",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/datasets/{dataset}/history": {
+      "get": {
+        "operationId": "get_api_v1_datasets_dataset_history",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiMetadataPageV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "branch": "example",
+                    "source": null,
+                    "registry": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "runtime_revision": "example",
+                    "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "selection": {
+                      "kind": "retained_current",
+                      "id": null,
+                      "digest": null
+                    },
+                    "graph": null,
+                    "freshness": "unknown",
+                    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "fallback_policy": []
+                  },
+                  "data": {
+                    "entries": [],
+                    "next_cursor": null
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/builds/{build}/timeline": {
+      "get": {
+        "operationId": "get_api_v1_builds_build_timeline",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiExecutionTimelineV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "branch": "example",
+                    "source": null,
+                    "registry": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "runtime_revision": "example",
+                    "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "selection": {
+                      "kind": "retained_current",
+                      "id": null,
+                      "digest": null
+                    },
+                    "graph": null,
+                    "freshness": "unknown",
+                    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "fallback_policy": []
+                  },
+                  "data": {
+                    "build": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "state": "example",
+                    "plan": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "queued_us": "0",
+                    "started_us": null,
+                    "finished_us": null,
+                    "wall_duration_us": null,
+                    "initial_queue_wait_us": null,
+                    "resource_wait_us": null,
+                    "eta_us": null,
+                    "critical_path": null,
+                    "job_counts": [],
+                    "jobs": []
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "build",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/attempts/{attempt}": {
+      "get": {
+        "operationId": "get_api_v1_attempts_attempt",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiAttemptV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "branch": "example",
+                    "source": null,
+                    "registry": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "runtime_revision": "example",
+                    "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "selection": {
+                      "kind": "retained_current",
+                      "id": null,
+                      "digest": null
+                    },
+                    "graph": null,
+                    "freshness": "unknown",
+                    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "fallback_policy": []
+                  },
+                  "data": {
+                    "attempt": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "build": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "job": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "plan": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "source_availability": "retained",
+                    "parameters": null,
+                    "inputs": [],
+                    "evidence": null,
+                    "duration_ns": null,
+                    "log_command": "example"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attempt",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -11264,6 +11881,9 @@
                     },
                     "integrity_state": {
                       "type": "string"
+                    },
+                    "file_count": {
+                      "$ref": "#/components/schemas/Count"
                     }
                   },
                   "required": [
@@ -12636,6 +13256,515 @@
           "rows",
           "next_offset",
           "truncated"
+        ],
+        "additionalProperties": false
+      },
+      "ApiExactRatioV1": {
+        "type": "object",
+        "properties": {
+          "numerator": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "denominator": {
+            "$ref": "#/components/schemas/Count"
+          }
+        },
+        "required": [
+          "numerator",
+          "denominator"
+        ],
+        "additionalProperties": false
+      },
+      "ApiStateCountV1": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string"
+          },
+          "count": {
+            "$ref": "#/components/schemas/Count"
+          }
+        },
+        "required": [
+          "state",
+          "count"
+        ],
+        "additionalProperties": false
+      },
+      "ApiPhaseIntervalV1": {
+        "type": "object",
+        "properties": {
+          "phase": {
+            "type": "string"
+          },
+          "started_us": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "finished_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "duration_ns": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          }
+        },
+        "required": [
+          "phase",
+          "started_us",
+          "finished_us",
+          "duration_ns"
+        ],
+        "additionalProperties": false
+      },
+      "ApiAttemptTimingV1": {
+        "type": "object",
+        "properties": {
+          "attempt": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "number": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "state": {
+            "type": "string"
+          },
+          "started_us": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "finished_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "duration_ns": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiPhaseIntervalV1"
+            },
+            "minItems": 0,
+            "maxItems": 50000
+          }
+        },
+        "required": [
+          "attempt",
+          "number",
+          "state",
+          "started_us",
+          "finished_us",
+          "duration_ns",
+          "phases"
+        ],
+        "additionalProperties": false
+      },
+      "ApiJobTimingV1": {
+        "type": "object",
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "state": {
+            "type": "string"
+          },
+          "duration_ns": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "attempts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiAttemptTimingV1"
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          }
+        },
+        "required": [
+          "job",
+          "dataset",
+          "state",
+          "duration_ns",
+          "attempts"
+        ],
+        "additionalProperties": false
+      },
+      "ApiExecutionTimelineV1": {
+        "type": "object",
+        "properties": {
+          "build": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "state": {
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "queued_us": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "started_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "finished_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "wall_duration_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "initial_queue_wait_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "resource_wait_us": {
+            "type": "null"
+          },
+          "eta_us": {
+            "type": "null"
+          },
+          "critical_path": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "duration_ns": {
+                    "$ref": "#/components/schemas/Count"
+                  },
+                  "jobs": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "minItems": 0,
+                    "maxItems": 2000
+                  }
+                },
+                "required": [
+                  "duration_ns",
+                  "jobs"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "job_counts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiStateCountV1"
+            },
+            "minItems": 0,
+            "maxItems": 20
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiJobTimingV1"
+            },
+            "minItems": 0,
+            "maxItems": 2000
+          }
+        },
+        "required": [
+          "build",
+          "state",
+          "plan",
+          "source",
+          "queued_us",
+          "started_us",
+          "finished_us",
+          "wall_duration_us",
+          "initial_queue_wait_us",
+          "resource_wait_us",
+          "eta_us",
+          "critical_path",
+          "job_counts",
+          "jobs"
+        ],
+        "additionalProperties": false
+      },
+      "ApiAttemptV1": {
+        "type": "object",
+        "properties": {
+          "attempt": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "build": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "job": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "source_availability": {
+            "enum": [
+              "retained",
+              "unavailable"
+            ]
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/ExecutionJsonV1"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExecutionJsonV1"
+            },
+            "minItems": 0,
+            "maxItems": 1000
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/ExecutionJsonV1"
+          },
+          "duration_ns": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "log_command": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "build",
+          "job",
+          "dataset",
+          "plan",
+          "source",
+          "source_availability",
+          "parameters",
+          "inputs",
+          "evidence",
+          "duration_ns",
+          "log_command"
+        ],
+        "additionalProperties": false
+      },
+      "ApiExecutionMetricsV1": {
+        "type": "object",
+        "properties": {
+          "from_us": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "to_us": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "time_zone": {
+            "const": "UTC"
+          },
+          "duration_unit": {
+            "const": "ns"
+          },
+          "cohort": {
+            "const": "build_accepted"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "dataset": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          },
+          "materialized_any": {
+            "type": "boolean"
+          },
+          "builds": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "build_states": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiStateCountV1"
+            },
+            "minItems": 0,
+            "maxItems": 6
+          },
+          "manual_requests": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "scheduled_builds": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "schedule_occurrences": {
+            "type": "null"
+          },
+          "jobs": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "job_states": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiStateCountV1"
+            },
+            "minItems": 0,
+            "maxItems": 20
+          },
+          "jobs_executed": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "attempts": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "failure_rate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiExactRatioV1"
+              }
+            ]
+          },
+          "materializations": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "duration_samples": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "missing_duration_samples": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "median_ns": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiExactRatioV1"
+              }
+            ]
+          },
+          "trailing_mean_ns": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiExactRatioV1"
+              }
+            ]
+          },
+          "trailing_window": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "trailing_samples": {
+            "$ref": "#/components/schemas/Count"
+          }
+        },
+        "required": [
+          "from_us",
+          "to_us",
+          "time_zone",
+          "duration_unit",
+          "cohort",
+          "branch",
+          "dataset",
+          "materialized_any",
+          "builds",
+          "build_states",
+          "manual_requests",
+          "scheduled_builds",
+          "schedule_occurrences",
+          "jobs",
+          "job_states",
+          "jobs_executed",
+          "attempts",
+          "failure_rate",
+          "materializations",
+          "duration_samples",
+          "missing_duration_samples",
+          "median_ns",
+          "trailing_mean_ns",
+          "trailing_window",
+          "trailing_samples"
         ],
         "additionalProperties": false
       }

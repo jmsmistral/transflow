@@ -236,7 +236,7 @@ pub(crate) fn keys(r: &Request, extra: &[&str]) -> Result<()> {
     }
     Ok(())
 }
-fn limit(r: &Request, default: usize, max: usize) -> Result<usize> {
+pub(crate) fn limit(r: &Request, default: usize, max: usize) -> Result<usize> {
     let n = r
         .query
         .get("limit")
@@ -248,7 +248,7 @@ fn limit(r: &Request, default: usize, max: usize) -> Result<usize> {
     }
     Ok(n)
 }
-fn cursor(r: &Request, c: &Context) -> Result<(String, String)> {
+pub(crate) fn cursor(r: &Request, c: &Context) -> Result<(String, String)> {
     let mut q = r.query.clone();
     q.remove("cursor");
     q.remove("limit");
@@ -268,7 +268,9 @@ fn cursor(r: &Request, c: &Context) -> Result<(String, String)> {
 pub(crate) fn read(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Reply> {
     let c = context(root, wid, r)?;
     let path = r.path.strip_prefix("/api/v1/").ok_or_else(E::missing)?;
-    let data = if path == "context" {
+    let data = if crate::api_history::handles(path) {
+        crate::api_history::read(root, wid, r, &c, path)?
+    } else if path == "context" {
         keys(r, &[])?;
         c.value.clone()
     } else if path == "datasets" || path == "externals" {

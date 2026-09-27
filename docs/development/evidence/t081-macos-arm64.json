@@ -1,0 +1,83 @@
+{
+  "task": "T081",
+  "date": "2026-09-28",
+  "specification": "1.1.3",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "2ad29d30fdf6261150ec4c79682d2e57e8a60b42",
+  "specification_base": "01eb7d3b277ea21e4e45902e707aa50f3a06122e",
+  "ci": "Pending owner confirmation after push; no workflow polling",
+  "previous_delivery_ci": {
+    "task": "T080",
+    "confirmed_by": "owner",
+    "date": "2026-09-28",
+    "implementation": "2ad29d30fdf6261150ec4c79682d2e57e8a60b42",
+    "specification": "01eb7d3b277ea21e4e45902e707aa50f3a06122e"
+  },
+  "results": {
+    "rust": "390 tests plus one doc test passed in the full suite; final focused history coverage adds one distinct test (391 total), and final API/transport checks passed.",
+    "python": "936 tests passed in the full suite; final contract/wire runs passed 329/331 tests including two new parametrized cases (938 distinct total). Ruff/format/mypy passed.",
+    "web": "366 tests, typecheck/lint/format and reproducible production build passed.",
+    "cli": "58 installed CLI/API integration tests passed.",
+    "contracts": "310 shared cases validated by Rust, Python and TypeScript.",
+    "native_api": "11 actual coordinator/native-engine journey groups passed.",
+    "contributor": "44 specification, 27 safety and 12 Rust-boundary regressions passed; generated-contract drift and repository checks passed."
+  },
+  "native_api": [
+    "new HTTP build survives client disconnect and retry creates one build/publication",
+    "history/timeline/metrics retain measured phases, exact statistics and captured source after edits",
+    "local version context binds exact source/lineage/schema/row-count metadata",
+    "projected preview physical cursors, lossless nulls, labelled truncation and explicit bounded cell inspection",
+    "authenticated SSE matches committed replay and resumes without duplicate facts",
+    "cache reuse adds history without duration samples; history cursors reject branch changes",
+    "saved-plan acceptance is explicit and cannot be accepted twice",
+    "foreign preview uses a renewable provider query lease without producer imports or replication",
+    "foreign API registration/build uses provider-owned bytes; retained reads import no provider code",
+    "active HTTP cancellation is replayable and preserves every last-good head",
+    "cancellation receipt survives coordinator restart"
+  ],
+  "commands": [
+    "PATH=\"$HOME/.cargo/bin:$PATH\" PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-rust.sh",
+    "PATH=\"$HOME/.cargo/bin:$PATH\" cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+    "PATH=\"$HOME/.cargo/bin:$PATH\" cargo test --workspace --locked --offline",
+    "PATH=\"$HOME/.cargo/bin:$PATH\" cargo test -p tf-store --test history --test api -p tf-protocol --test transport --offline --locked",
+    "PATH=\"$HOME/.cargo/bin:$PATH\" cargo test -p tf-store --test history --offline --locked",
+    "PATH=\"$HOME/.cargo/bin:$PATH\" cargo test -p tf-protocol --test transport --offline --locked",
+    "bash tools/check-python.sh",
+    "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/tests --junitxml=target/python/py314/tests.xml",
+    "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/tests/test_contracts.py",
+    "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/tests/test_wire.py",
+    "target/python/py314/bin/python -m ruff check --config python/pyproject.toml python tools/safety tools/qualification/duckdb tools/qualification/resources",
+    "target/python/py314/bin/python -m ruff format --config python/pyproject.toml --check python tools/safety tools/qualification/duckdb tools/qualification/resources",
+    "target/python/py314/bin/python -m mypy --config-file python/pyproject.toml",
+    "bash tools/check-web.sh",
+    "PATH=\"$HOME/.cargo/bin:$PATH\" bash tools/check-cli.sh",
+    "PIP_NO_INDEX=1 target/python/py314/bin/python -m pip wheel --no-deps --no-build-isolation ./python --wheel-dir /tmp/t081-wheels",
+    "target/qualification/py314/bin/python -I -B python/tools/check_api.py target/debug/transflow /tmp/t081-wheels/transflow-0.0.0.dev0-py3-none-any.whl target/qualification/wheelhouse --output /tmp/t081-native-api.json",
+    "PATH=\"$HOME/.cargo/bin:$PATH\" PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+    "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+    "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests -v"
+  ],
+  "corrected_during_verification": [
+    "Fixed test validator references and test unwrap lint failures; split long native-probe labels for Ruff.",
+    "Python discovery and the focused protocol peer initially failed sandbox-denied sockets; reruns with local socket permission passed.",
+    "Native API caught the new version file_count missing from the closed response schema; added the optional field and a shared regression fixture, regenerated outputs and reran native/API/contracts.",
+    "Added timing-only context invalidation and missing-recent-sample coverage so a closed final phase cannot leave stale metrics and trailing means cannot substitute older samples.",
+    "Completed T080 evidence fields required by the specification checker after owner CI confirmation."
+  ],
+  "limits": [
+    "History/metrics are read models; chart UI and scheduler accepted/ignored/coalesced occurrence projections remain later tasks.",
+    "Metrics use bounded UTC build-acceptance cohorts; plan/version series selections are rejected rather than silently ignored.",
+    "Retained logs use the existing bounded CLI reader; no browser log-stream endpoint is claimed.",
+    "Missing phase evidence, resource wait and ETA are explicitly unavailable. No provider bytes are copied/scanned by these reads.",
+    "Local native qualification is macOS arm64; GitHub matrix confirmation belongs to the owner."
+  ],
+  "sha256": {
+    "target/debug/transflow": "a5c52b08ba42a2aff7fa8876090179db91fde70e7676dd56037d94654fb0b648",
+    "/tmp/t081-wheels/transflow-0.0.0.dev0-py3-none-any.whl": "f069927532792f8316fc2b5f329b6fbf8f2c34487999be4d6a4066ae5b381d0c",
+    "/tmp/t081-native-api.json": "c562229fe862758337c1e59dfa7bb7bbacf49b7674de9f0947f0ae9b091c6874",
+    "schemas/contracts-v1.schema.json": "088ce60ccc41edb98e670dba63aa8d161e8deeb2c5ad957231385c6f122ed961",
+    "schemas/fixtures/conformance.json": "60edd1df6766921e555fb03ee0840d6da1659843d4ab2b153437379fd86cd3ff",
+    "schemas/api-routes-v1.json": "e41441164418d3d317d85f7325b1e80ce3ce8692b6cdf18c52aff09c31a446bb"
+  }
+}

@@ -249,3 +249,48 @@ published into the dataset catalog. No query UI is delivered in T080.
 Query capabilities require the matched installed worker and pinned DuckDB/PyArrow
 packages. Prepare them explicitly with `env lock`/`env sync`, then restart `serve`.
 Missing query dependencies leave ordinary metadata/build endpoints available.
+
+
+## Execution history and metrics
+
+All these GET routes require bearer authentication and `branch`; browser clients
+use the existing authenticated read facade. Responses carry the frozen context.
+
+- `datasets/{dataset}/history`: keyset pages (`limit` 1–200, `cursor`) of jobs,
+  with produced/reused version, original attempt, attempt count and accepted plan.
+  Failed jobs remain visible without a version. `/versions` remains a separate
+  retained-version projection and includes committed row, byte and file counts.
+- `builds/{build}/timeline?plan={plan}`: actual phase intervals per attempt,
+  state counts, wall duration, initial queue wait and recorded critical path.
+- `attempts/{attempt}?plan={plan}`: inputs, frozen parameters, checks, retained
+  process evidence, exact source ID/availability and the retained CLI log command.
+  Use `/source/{source}?plan={plan}&path=...` for captured code. Missing source
+  never falls back to current files. Build detail retains requester/trigger/targets.
+- `metrics?from_us=...&to_us=...`: half-open UTC **build acceptance** window;
+  optional local `dataset`, `materialized_any=true`, `window=10` (1–1000).
+  Returns build/job state counts, executed jobs, attempts, committed materializations,
+  measured/missing duration counts, median, trailing mean and failure rate.
+
+Ratios are exact `{numerator, denominator}` decimal-string objects; durations are
+nanoseconds. Empty samples give null statistics. Failure rate is failed divided
+by succeeded+failed, including cached successes and excluding canceled/interrupted
+builds. Successful phase sums measure start through commit; queue and retry waits
+are excluded. Median uses measured successes. The trailing mean uses the last N
+successful materializations by finish time/attempt UUID, and is null if any selected
+timing is missing. `trailing_samples` reports the actual measured count.
+
+Critical paths sum recorded attempt durations along accepted dependencies, including
+failed retries. Cached jobs have no execution duration/attempt, while contributing
+zero path weight. Active builds or incomplete evidence have no critical path. ETA
+and resource wait are null; initial queue wait is labelled wall time, not compute.
+No percentage progress or fabricated Gantt intervals are returned.
+
+Cross-version history/metrics reject `plan`, `version` and foreign-origin selection;
+exact-version metadata/source and plan-bound attempt/timeline routes are separate.
+Cursors bind the context and filters, so branch/authoring/publication changes require
+a fresh page. Metrics reject over 1,000 builds or 10,000 jobs/attempts: narrow the
+range or dataset. Full build evidence is limited to 2,000 jobs, 10,000 attempts,
+50,000 intervals and 32 MiB. No oversized read silently truncates statistics.
+Manual request and scheduled-build counts are available; `schedule_occurrences`
+is null until scheduling supplies accepted/ignored/coalesced occurrence evidence.
+Charts remain later frontend tasks. No provider data is copied or scanned.

@@ -78,6 +78,12 @@ exact local/foreign versions, independent interactive limits, cancellation and t
 results. Foreign inputs are read directly under leases. The scratchpad UI remains
 later work; queries do not publish datasets or enable a SQL transform adapter.
 
+T081 adds [execution history and metrics APIs](crates/tf-api/README.md#execution-history-and-metrics):
+separate versions, attempts and cache reuse; recorded phase timelines and critical
+paths; exact medians, trailing averages and failure rates with sample counts.
+Historical inspection uses captured source. Unknown timings and ETA remain explicit;
+charts and schedule occurrence metrics follow in later tasks.
+
 The Python distribution is named **transflow**, containing both `transflow` (SDK) and `transflow_worker` (worker). See [local wheel installation and checks](python/README.md). The intended public install is `pip install transflow` after publication; no package has been published yet. The Rust binary remains a separate native artifact.
 
 ## Specification and contributor setup

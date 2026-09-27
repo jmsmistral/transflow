@@ -77,8 +77,10 @@ impl Reader {
     }
     /// Conservative metadata revision; unrelated publications may invalidate a page safely.
     pub async fn api_revision(&mut self) -> Result<String> {
-        let r=sqlx::query("SELECT (SELECT coalesce(max(sequence),0) FROM events),(SELECT count(*) FROM data_branches),(SELECT coalesce(sum(revision),0) FROM data_branches),(SELECT count(*) FROM dataset_versions),(SELECT count(*) FROM foreign_versions),(SELECT count(*) FROM audit_log)").fetch_one(&mut self.db).await?;
-        Ok((0..6)
+        // Publication may make an attempt terminal just before its final phase is closed.
+        // Fence that timing-only update as well as lifecycle events.
+        let r=sqlx::query("SELECT (SELECT coalesce(max(sequence),0) FROM events),(SELECT count(*) FROM data_branches),(SELECT coalesce(sum(revision),0) FROM data_branches),(SELECT count(*) FROM dataset_versions),(SELECT count(*) FROM foreign_versions),(SELECT count(*) FROM audit_log),(SELECT count(*) FROM phase_intervals),(SELECT count(*) FROM phase_intervals WHERE finished_at_us IS NOT NULL)").fetch_one(&mut self.db).await?;
+        Ok((0..8)
             .map(|i| r.try_get::<i64, _>(i).map(|n| n.to_string()))
             .collect::<std::result::Result<Vec<_>, _>>()?
             .join(":"))
@@ -112,8 +114,8 @@ impl Reader {
             let rows=sqlx::query("SELECT version_id,CASE WHEN length(provenance_json)<=1048576 THEN provenance_json END FROM foreign_versions WHERE workspace_id=? AND dataset_id=? AND version_id>? ORDER BY version_id LIMIT ?").bind(workspace.to_string()).bind(dataset.to_string()).bind(after).bind(limit).fetch_all(&mut self.db).await?;
             return rows.into_iter().map(|r|Ok(json!({"version":r.try_get::<String,_>(0)?,"origin_workspace":workspace.to_string(),"dataset":dataset.to_string(),"metadata":serde_json::from_str::<Value>(&r.try_get::<String,_>(1)?).map_err(|_|StoreError::InvalidRequest)?,"availability":"not_verified","origin":"external"}))).collect();
         }
-        let rows=sqlx::query("SELECT v.id,v.source_snapshot_id,v.published_at_us,v.artifact_digest,CASE WHEN length(a.schema_json)<=1048576 THEN a.schema_json END,v.attempt_id,v.import_id,a.row_count,a.byte_count,a.integrity_state FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id LEFT JOIN artifacts a ON a.digest=v.artifact_digest WHERE d.workspace_id=? AND d.id=? AND v.id>? ORDER BY v.id LIMIT ?").bind(workspace.to_string()).bind(dataset.to_string()).bind(after).bind(limit).fetch_all(&mut self.db).await?;
-        rows.into_iter().map(|r|Ok(json!({"version":r.try_get::<String,_>(0)?,"source":r.try_get::<String,_>(1)?,"published_at_us":r.try_get::<i64,_>(2)?.to_string(),"artifact":r.try_get::<String,_>(3)?,"schema":serde_json::from_str::<Value>(&r.try_get::<String,_>(4)?).map_err(|_|StoreError::InvalidRequest)?,"attempt":r.try_get::<Option<String>,_>(5)?,"import":r.try_get::<Option<String>,_>(6)?,"row_count":r.try_get::<i64,_>(7)?.to_string(),"byte_count":r.try_get::<i64,_>(8)?.to_string(),"integrity_state":r.try_get::<String,_>(9)?,"origin_workspace":workspace.to_string(),"dataset":dataset.to_string(),"availability":"not_verified","origin":"local"}))).collect()
+        let rows=sqlx::query("SELECT v.id,v.source_snapshot_id,v.published_at_us,v.artifact_digest,CASE WHEN length(a.schema_json)<=1048576 THEN a.schema_json END,v.attempt_id,v.import_id,a.row_count,a.byte_count,a.integrity_state,a.file_count FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id LEFT JOIN artifacts a ON a.digest=v.artifact_digest WHERE d.workspace_id=? AND d.id=? AND v.id>? ORDER BY v.id LIMIT ?").bind(workspace.to_string()).bind(dataset.to_string()).bind(after).bind(limit).fetch_all(&mut self.db).await?;
+        rows.into_iter().map(|r|Ok(json!({"version":r.try_get::<String,_>(0)?,"source":r.try_get::<String,_>(1)?,"published_at_us":r.try_get::<i64,_>(2)?.to_string(),"artifact":r.try_get::<String,_>(3)?,"schema":serde_json::from_str::<Value>(&r.try_get::<String,_>(4)?).map_err(|_|StoreError::InvalidRequest)?,"attempt":r.try_get::<Option<String>,_>(5)?,"import":r.try_get::<Option<String>,_>(6)?,"row_count":r.try_get::<i64,_>(7)?.to_string(),"byte_count":r.try_get::<i64,_>(8)?.to_string(),"integrity_state":r.try_get::<String,_>(9)?,"file_count":r.try_get::<i64,_>(10)?.to_string(),"origin_workspace":workspace.to_string(),"dataset":dataset.to_string(),"availability":"not_verified","origin":"local"}))).collect()
     }
 }
 impl Reader {

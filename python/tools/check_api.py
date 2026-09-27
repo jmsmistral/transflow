@@ -145,6 +145,49 @@ def main() -> None:
                 "GET", f"/api/v1/datasets/{dataset}/versions", query={"branch": "main"}
             )["data"]["entries"][0]
             assert metadata["row_count"] == "2" and metadata["version"] == version
+            assert metadata["file_count"] == "1"
+            frozen = {"branch": "main", "plan": report["plan"]["id"]}
+            timeline = client.call(
+                "GET", f"/api/v1/builds/{first['build']}/timeline", query=frozen
+            )["data"]
+            attempt = report["jobs"][0]["attempts"][0]["id"]
+            detail = client.call("GET", f"/api/v1/attempts/{attempt}", query=frozen)["data"]
+            duration = detail["duration_ns"]
+            assert duration is not None and int(duration) > 0
+            assert timeline["critical_path"]["duration_ns"] == duration
+            assert timeline["jobs"][0]["attempts"][0]["phases"]
+            assert timeline["eta_us"] is None and timeline["resource_wait_us"] is None
+            metric_query = {"branch": "main", "from_us": "0", "to_us": "9223372036854775807"}
+            metrics = client.call("GET", "/api/v1/metrics", query=metric_query)["data"]
+            assert metrics["duration_samples"] == "1" and metrics["jobs_executed"] == "1"
+            assert metrics["median_ns"] == {"numerator": duration, "denominator": "1"}
+            history = client.call(
+                "GET", f"/api/v1/datasets/{dataset}/history", query={"branch": "main"}
+            )["data"]
+            assert history["entries"][0]["produced_version"] == version
+            client.call("GET", "/api/v1/metrics", query={**metric_query, "window": "0"}, status=400)
+            client.call(
+                "GET", "/api/v1/metrics", query={**metric_query, "plan": frozen["plan"]}, status=400
+            )
+            client.call(
+                "GET",
+                f"/api/v1/attempts/{attempt}",
+                query={"branch": "other", "plan": frozen["plan"]},
+                status=409,
+            )
+            (root / "src/items.py").write_text(code + "\n# changed current definition\n")
+            captured = client.call(
+                "GET",
+                f"/api/v1/source/{detail['source']}",
+                query={**frozen, "path": "src/items.py"},
+            )["data"]
+            assert "changed current definition" not in captured["text"]
+            assert "def items()" in captured["text"]
+            (root / "src/items.py").write_text(code)
+            cases.append(
+                "history/timeline/metrics retain measured phases, exact statistics "
+                "and captured source after edits"
+            )
             historical = client.context(dataset=dataset, version=version)
             assert historical["context"]["source"] == report["source"]
             client.call(
@@ -264,6 +307,37 @@ def main() -> None:
                 plan=draft["plan_id"],
             )["data"]
             assert wait(client, accepted["build"])["state"] == "SUCCEEDED"
+            cached = client.call(
+                "GET",
+                f"/api/v1/builds/{accepted['build']}/timeline",
+                query={"branch": "main", "plan": draft["plan_id"]},
+            )["data"]
+            assert cached["jobs"][0]["state"] == "CACHED"
+            assert cached["jobs"][0]["duration_ns"] is None
+            assert cached["jobs"][0]["attempts"] == []
+            metrics = client.call("GET", "/api/v1/metrics", query=metric_query)["data"]
+            assert metrics["builds"] == "2" and metrics["duration_samples"] == "1"
+            assert metrics["failure_rate"] == {"numerator": "0", "denominator": "2"}
+            page_one = client.call(
+                "GET", f"/api/v1/datasets/{dataset}/history", query={"branch": "main", "limit": "1"}
+            )["data"]
+            assert page_one["next_cursor"] is not None
+            page_two = client.call(
+                "GET",
+                f"/api/v1/datasets/{dataset}/history",
+                query={"branch": "main", "limit": "1", "cursor": page_one["next_cursor"]},
+            )["data"]
+            assert page_two["entries"][0]["id"] != page_one["entries"][0]["id"]
+            client.call(
+                "GET",
+                f"/api/v1/datasets/{dataset}/history",
+                query={"branch": "other", "cursor": page_one["next_cursor"]},
+                status=409,
+            )
+            cases.append(
+                "cache reuse adds history without duration samples; "
+                "history cursors reject branch changes"
+            )
             client.mutate(
                 "/api/v1/builds",
                 {"kind": "plan", "plan_id": draft["plan_id"]},
@@ -405,7 +479,9 @@ def main() -> None:
             cases.append("cancellation receipt survives coordinator restart")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
-        json.dumps({"tasks": ["T074", "T075", "T076", "T077", "T078"], "cases": cases}, indent=2)
+        json.dumps(
+            {"tasks": ["T074", "T075", "T076", "T077", "T078", "T081"], "cases": cases}, indent=2
+        )
         + "\n"
     )
 

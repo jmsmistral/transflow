@@ -216,7 +216,7 @@ export type ApiDatasetV1 = { readonly "workspace_id": Uuid; readonly "dataset_id
 export type ApiDatasetsV1 = { readonly "entries": ReadonlyArray<ApiDatasetV1>; readonly "total": Count; readonly "next_cursor": (null | string); readonly "schema": null; readonly "freshness": "unknown" };
 
 // prettier-ignore
-export type ApiVersionsV1 = { readonly "entries": ReadonlyArray<({ readonly "version": Uuid; readonly "source": Uuid; readonly "published_at_us": string; readonly "artifact": Sha256; readonly "schema": ExecutionJsonV1; readonly "attempt": (null | Uuid); readonly "import": (null | Uuid); readonly "origin_workspace": Uuid; readonly "dataset": Uuid; readonly "availability": "not_verified"; readonly "origin": "local"; readonly "row_count": string; readonly "byte_count": string; readonly "integrity_state": string } | { readonly "version": Uuid; readonly "origin_workspace": Uuid; readonly "dataset": Uuid; readonly "metadata": ExecutionJsonV1; readonly "availability": "not_verified"; readonly "origin": "external" })>; readonly "next_cursor": (null | string) };
+export type ApiVersionsV1 = { readonly "entries": ReadonlyArray<({ readonly "version": Uuid; readonly "source": Uuid; readonly "published_at_us": string; readonly "artifact": Sha256; readonly "schema": ExecutionJsonV1; readonly "attempt": (null | Uuid); readonly "import": (null | Uuid); readonly "origin_workspace": Uuid; readonly "dataset": Uuid; readonly "availability": "not_verified"; readonly "origin": "local"; readonly "row_count": string; readonly "byte_count": string; readonly "integrity_state": string; readonly "file_count"?: Count } | { readonly "version": Uuid; readonly "origin_workspace": Uuid; readonly "dataset": Uuid; readonly "metadata": ExecutionJsonV1; readonly "availability": "not_verified"; readonly "origin": "external" })>; readonly "next_cursor": (null | string) };
 
 // prettier-ignore
 export type ApiSourceV1 = { readonly "source": Uuid; readonly "path": RelativePath; readonly "offset": number; readonly "text": string; readonly "next_offset": (null | number) };
@@ -301,3 +301,27 @@ export type ApiQueryV1 = { readonly "id": Uuid; readonly "state": ("QUEUED" | "R
 
 // prettier-ignore
 export type ApiQueryResultsV1 = { readonly "id": Uuid; readonly "schema": LogicalSchemaV1; readonly "rows": ReadonlyArray<ReadonlyArray<WireValue>>; readonly "next_offset": (null | number); readonly "truncated": boolean };
+
+// prettier-ignore
+export type ApiExactRatioV1 = { readonly "numerator": Count; readonly "denominator": Count };
+
+// prettier-ignore
+export type ApiStateCountV1 = { readonly "state": string; readonly "count": Count };
+
+// prettier-ignore
+export type ApiPhaseIntervalV1 = { readonly "phase": string; readonly "started_us": Count; readonly "finished_us": (null | Count); readonly "duration_ns": (null | Count) };
+
+// prettier-ignore
+export type ApiAttemptTimingV1 = { readonly "attempt": Uuid; readonly "number": Count; readonly "state": string; readonly "started_us": Count; readonly "finished_us": (null | Count); readonly "duration_ns": (null | Count); readonly "phases": ReadonlyArray<ApiPhaseIntervalV1> };
+
+// prettier-ignore
+export type ApiJobTimingV1 = { readonly "job": Uuid; readonly "dataset": Uuid; readonly "state": string; readonly "duration_ns": (null | Count); readonly "attempts": ReadonlyArray<ApiAttemptTimingV1> };
+
+// prettier-ignore
+export type ApiExecutionTimelineV1 = { readonly "build": Uuid; readonly "state": string; readonly "plan": Uuid; readonly "source": Uuid; readonly "queued_us": Count; readonly "started_us": (null | Count); readonly "finished_us": (null | Count); readonly "wall_duration_us": (null | Count); readonly "initial_queue_wait_us": (null | Count); readonly "resource_wait_us": null; readonly "eta_us": null; readonly "critical_path": (null | { readonly "duration_ns": Count; readonly "jobs": ReadonlyArray<Uuid> }); readonly "job_counts": ReadonlyArray<ApiStateCountV1>; readonly "jobs": ReadonlyArray<ApiJobTimingV1> };
+
+// prettier-ignore
+export type ApiAttemptV1 = { readonly "attempt": Uuid; readonly "build": Uuid; readonly "job": Uuid; readonly "dataset": Uuid; readonly "plan": Uuid; readonly "source": Uuid; readonly "source_availability": ("retained" | "unavailable"); readonly "parameters": ExecutionJsonV1; readonly "inputs": ReadonlyArray<ExecutionJsonV1>; readonly "evidence": ExecutionJsonV1; readonly "duration_ns": (null | Count); readonly "log_command": string };
+
+// prettier-ignore
+export type ApiExecutionMetricsV1 = { readonly "from_us": Count; readonly "to_us": Count; readonly "time_zone": "UTC"; readonly "duration_unit": "ns"; readonly "cohort": "build_accepted"; readonly "branch": string; readonly "dataset": (null | Uuid); readonly "materialized_any": boolean; readonly "builds": Count; readonly "build_states": ReadonlyArray<ApiStateCountV1>; readonly "manual_requests": Count; readonly "scheduled_builds": Count; readonly "schedule_occurrences": null; readonly "jobs": Count; readonly "job_states": ReadonlyArray<ApiStateCountV1>; readonly "jobs_executed": Count; readonly "attempts": Count; readonly "failure_rate": (null | ApiExactRatioV1); readonly "materializations": Count; readonly "duration_samples": Count; readonly "missing_duration_samples": Count; readonly "median_ns": (null | ApiExactRatioV1); readonly "trailing_mean_ns": (null | ApiExactRatioV1); readonly "trailing_window": Count; readonly "trailing_samples": Count };

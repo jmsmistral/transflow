@@ -7330,5 +7330,139 @@
       "truncated": false
     },
     "valid": true
+  },
+  {
+    "name": "history-exact-large",
+    "schema": "ApiExactRatioV1",
+    "value": {
+      "numerator": "9007199254740993",
+      "denominator": "2"
+    },
+    "valid": true
+  },
+  {
+    "name": "history-float-rejected",
+    "schema": "ApiExactRatioV1",
+    "value": {
+      "numerator": 9007199254740993,
+      "denominator": "2"
+    },
+    "valid": false
+  },
+  {
+    "name": "history-unknown-field",
+    "schema": "ApiExactRatioV1",
+    "value": {
+      "numerator": "1",
+      "denominator": "2",
+      "rounded": 0.5
+    },
+    "valid": false
+  },
+  {
+    "name": "history-cache-no-attempt",
+    "schema": "ApiExecutionTimelineV1",
+    "value": {
+      "build": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "state": "SUCCEEDED",
+      "plan": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "queued_us": "0",
+      "started_us": null,
+      "finished_us": "10",
+      "wall_duration_us": "10",
+      "initial_queue_wait_us": null,
+      "resource_wait_us": null,
+      "eta_us": null,
+      "critical_path": {
+        "duration_ns": "0",
+        "jobs": [
+          "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        ]
+      },
+      "job_counts": [
+        {
+          "state": "CACHED",
+          "count": "1"
+        }
+      ],
+      "jobs": [
+        {
+          "job": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "state": "CACHED",
+          "duration_ns": null,
+          "attempts": []
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "history-no-invented-progress",
+    "schema": "ApiExecutionTimelineV1",
+    "value": {
+      "build": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "state": "SUCCEEDED",
+      "plan": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "queued_us": "0",
+      "started_us": null,
+      "finished_us": "10",
+      "wall_duration_us": "10",
+      "initial_queue_wait_us": null,
+      "resource_wait_us": null,
+      "eta_us": null,
+      "critical_path": {
+        "duration_ns": "0",
+        "jobs": [
+          "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        ]
+      },
+      "job_counts": [
+        {
+          "state": "CACHED",
+          "count": "1"
+        }
+      ],
+      "jobs": [
+        {
+          "job": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "state": "CACHED",
+          "duration_ns": null,
+          "attempts": []
+        }
+      ],
+      "progress": 100
+    },
+    "valid": false
+  },
+  {
+    "name": "history-selected-version-physical-files",
+    "schema": "ApiVersionsV1",
+    "value": {
+      "entries": [
+        {
+          "version": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "published_at_us": "example",
+          "artifact": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "schema": null,
+          "attempt": null,
+          "import": null,
+          "origin_workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "availability": "not_verified",
+          "origin": "local",
+          "row_count": "example",
+          "byte_count": "example",
+          "integrity_state": "example",
+          "file_count": "1"
+        }
+      ],
+      "next_cursor": null
+    },
+    "valid": true
   }
 ]

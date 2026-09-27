@@ -506,3 +506,43 @@ def validate_ApiQueryV1(value: object) -> None:
 def validate_ApiQueryResultsV1(value: object) -> None:
     """Assert the ApiQueryResultsV1 contract, including custom formats."""
     validate_document("ApiQueryResultsV1", value)
+
+
+def validate_ApiExactRatioV1(value: object) -> None:
+    """Assert the ApiExactRatioV1 contract, including custom formats."""
+    validate_document("ApiExactRatioV1", value)
+
+
+def validate_ApiStateCountV1(value: object) -> None:
+    """Assert the ApiStateCountV1 contract, including custom formats."""
+    validate_document("ApiStateCountV1", value)
+
+
+def validate_ApiPhaseIntervalV1(value: object) -> None:
+    """Assert the ApiPhaseIntervalV1 contract, including custom formats."""
+    validate_document("ApiPhaseIntervalV1", value)
+
+
+def validate_ApiAttemptTimingV1(value: object) -> None:
+    """Assert the ApiAttemptTimingV1 contract, including custom formats."""
+    validate_document("ApiAttemptTimingV1", value)
+
+
+def validate_ApiJobTimingV1(value: object) -> None:
+    """Assert the ApiJobTimingV1 contract, including custom formats."""
+    validate_document("ApiJobTimingV1", value)
+
+
+def validate_ApiExecutionTimelineV1(value: object) -> None:
+    """Assert the ApiExecutionTimelineV1 contract, including custom formats."""
+    validate_document("ApiExecutionTimelineV1", value)
+
+
+def validate_ApiAttemptV1(value: object) -> None:
+    """Assert the ApiAttemptV1 contract, including custom formats."""
+    validate_document("ApiAttemptV1", value)
+
+
+def validate_ApiExecutionMetricsV1(value: object) -> None:
+    """Assert the ApiExecutionMetricsV1 contract, including custom formats."""
+    validate_document("ApiExecutionMetricsV1", value)

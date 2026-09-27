@@ -358,5 +358,49 @@
     "query": [],
     "mutation": true,
     "context": true
+  },
+  {
+    "path": "/api/v1/metrics",
+    "method": "GET",
+    "response": "ApiExecutionMetricsV1",
+    "request": null,
+    "query": [
+      "from_us",
+      "to_us",
+      "window",
+      "materialized_any"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/datasets/{dataset}/history",
+    "method": "GET",
+    "response": "ApiMetadataPageV1",
+    "request": null,
+    "query": [
+      "limit",
+      "cursor"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/builds/{build}/timeline",
+    "method": "GET",
+    "response": "ApiExecutionTimelineV1",
+    "request": null,
+    "query": [],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/attempts/{attempt}",
+    "method": "GET",
+    "response": "ApiAttemptV1",
+    "request": null,
+    "query": [],
+    "mutation": false,
+    "context": true
   }
 ]

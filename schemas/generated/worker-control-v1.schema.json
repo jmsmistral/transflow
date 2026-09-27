@@ -6332,6 +6332,9 @@
                   },
                   "integrity_state": {
                     "type": "string"
+                  },
+                  "file_count": {
+                    "$ref": "#/$defs/Count"
                   }
                 },
                 "required": [
@@ -7704,6 +7707,515 @@
         "rows",
         "next_offset",
         "truncated"
+      ],
+      "additionalProperties": false
+    },
+    "ApiExactRatioV1": {
+      "type": "object",
+      "properties": {
+        "numerator": {
+          "$ref": "#/$defs/Count"
+        },
+        "denominator": {
+          "$ref": "#/$defs/Count"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "additionalProperties": false
+    },
+    "ApiStateCountV1": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string"
+        },
+        "count": {
+          "$ref": "#/$defs/Count"
+        }
+      },
+      "required": [
+        "state",
+        "count"
+      ],
+      "additionalProperties": false
+    },
+    "ApiPhaseIntervalV1": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "string"
+        },
+        "started_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "finished_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "duration_ns": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        }
+      },
+      "required": [
+        "phase",
+        "started_us",
+        "finished_us",
+        "duration_ns"
+      ],
+      "additionalProperties": false
+    },
+    "ApiAttemptTimingV1": {
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "number": {
+          "$ref": "#/$defs/Count"
+        },
+        "state": {
+          "type": "string"
+        },
+        "started_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "finished_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "duration_ns": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiPhaseIntervalV1"
+          },
+          "minItems": 0,
+          "maxItems": 50000
+        }
+      },
+      "required": [
+        "attempt",
+        "number",
+        "state",
+        "started_us",
+        "finished_us",
+        "duration_ns",
+        "phases"
+      ],
+      "additionalProperties": false
+    },
+    "ApiJobTimingV1": {
+      "type": "object",
+      "properties": {
+        "job": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "dataset": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "state": {
+          "type": "string"
+        },
+        "duration_ns": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "attempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiAttemptTimingV1"
+          },
+          "minItems": 0,
+          "maxItems": 10000
+        }
+      },
+      "required": [
+        "job",
+        "dataset",
+        "state",
+        "duration_ns",
+        "attempts"
+      ],
+      "additionalProperties": false
+    },
+    "ApiExecutionTimelineV1": {
+      "type": "object",
+      "properties": {
+        "build": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "state": {
+          "type": "string"
+        },
+        "plan": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "source": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "queued_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "started_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "finished_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "wall_duration_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "initial_queue_wait_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "resource_wait_us": {
+          "type": "null"
+        },
+        "eta_us": {
+          "type": "null"
+        },
+        "critical_path": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "duration_ns": {
+                  "$ref": "#/$defs/Count"
+                },
+                "jobs": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Uuid"
+                  },
+                  "minItems": 0,
+                  "maxItems": 2000
+                }
+              },
+              "required": [
+                "duration_ns",
+                "jobs"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "job_counts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiStateCountV1"
+          },
+          "minItems": 0,
+          "maxItems": 20
+        },
+        "jobs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiJobTimingV1"
+          },
+          "minItems": 0,
+          "maxItems": 2000
+        }
+      },
+      "required": [
+        "build",
+        "state",
+        "plan",
+        "source",
+        "queued_us",
+        "started_us",
+        "finished_us",
+        "wall_duration_us",
+        "initial_queue_wait_us",
+        "resource_wait_us",
+        "eta_us",
+        "critical_path",
+        "job_counts",
+        "jobs"
+      ],
+      "additionalProperties": false
+    },
+    "ApiAttemptV1": {
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "build": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "job": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "dataset": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "plan": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "source": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "source_availability": {
+          "enum": [
+            "retained",
+            "unavailable"
+          ]
+        },
+        "parameters": {
+          "$ref": "#/$defs/ExecutionJsonV1"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExecutionJsonV1"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "evidence": {
+          "$ref": "#/$defs/ExecutionJsonV1"
+        },
+        "duration_ns": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "log_command": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "attempt",
+        "build",
+        "job",
+        "dataset",
+        "plan",
+        "source",
+        "source_availability",
+        "parameters",
+        "inputs",
+        "evidence",
+        "duration_ns",
+        "log_command"
+      ],
+      "additionalProperties": false
+    },
+    "ApiExecutionMetricsV1": {
+      "type": "object",
+      "properties": {
+        "from_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "to_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "time_zone": {
+          "const": "UTC"
+        },
+        "duration_unit": {
+          "const": "ns"
+        },
+        "cohort": {
+          "const": "build_accepted"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "dataset": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "materialized_any": {
+          "type": "boolean"
+        },
+        "builds": {
+          "$ref": "#/$defs/Count"
+        },
+        "build_states": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiStateCountV1"
+          },
+          "minItems": 0,
+          "maxItems": 6
+        },
+        "manual_requests": {
+          "$ref": "#/$defs/Count"
+        },
+        "scheduled_builds": {
+          "$ref": "#/$defs/Count"
+        },
+        "schedule_occurrences": {
+          "type": "null"
+        },
+        "jobs": {
+          "$ref": "#/$defs/Count"
+        },
+        "job_states": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiStateCountV1"
+          },
+          "minItems": 0,
+          "maxItems": 20
+        },
+        "jobs_executed": {
+          "$ref": "#/$defs/Count"
+        },
+        "attempts": {
+          "$ref": "#/$defs/Count"
+        },
+        "failure_rate": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ApiExactRatioV1"
+            }
+          ]
+        },
+        "materializations": {
+          "$ref": "#/$defs/Count"
+        },
+        "duration_samples": {
+          "$ref": "#/$defs/Count"
+        },
+        "missing_duration_samples": {
+          "$ref": "#/$defs/Count"
+        },
+        "median_ns": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ApiExactRatioV1"
+            }
+          ]
+        },
+        "trailing_mean_ns": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ApiExactRatioV1"
+            }
+          ]
+        },
+        "trailing_window": {
+          "$ref": "#/$defs/Count"
+        },
+        "trailing_samples": {
+          "$ref": "#/$defs/Count"
+        }
+      },
+      "required": [
+        "from_us",
+        "to_us",
+        "time_zone",
+        "duration_unit",
+        "cohort",
+        "branch",
+        "dataset",
+        "materialized_any",
+        "builds",
+        "build_states",
+        "manual_requests",
+        "scheduled_builds",
+        "schedule_occurrences",
+        "jobs",
+        "job_states",
+        "jobs_executed",
+        "attempts",
+        "failure_rate",
+        "materializations",
+        "duration_samples",
+        "missing_duration_samples",
+        "median_ns",
+        "trailing_mean_ns",
+        "trailing_window",
+        "trailing_samples"
       ],
       "additionalProperties": false
     }

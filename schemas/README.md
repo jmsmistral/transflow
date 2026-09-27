@@ -235,3 +235,10 @@ The shared corpus now contains 286 cases. OpenAPI describes the SSE media type a
 resume header; Python/Rust/TypeScript exports share lossless cells and string event
 sequences. Checkpoints/resync frames are described in the HTTP guide. Runtime schema
 12 adds transactional lifecycle events; API v1 and worker protocol 1.0 are unchanged.
+
+
+T081 adds closed execution timeline, attempt detail and metrics response envelopes
+and four contextual history routes. Exact ratios use decimal-string counts;
+cache-only timelines contain no synthetic attempt/duration. Six shared fixtures
+cover exact large values, numeric/unknown-field rejection and cached timelines.
+Existing immutable plan/check/process evidence retains its JSON carrier.

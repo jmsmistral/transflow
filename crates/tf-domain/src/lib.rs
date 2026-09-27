@@ -40,3 +40,6 @@ pub mod resources;
 
 /// Typed expectation syntax, distinct row/value/metric/dataset kinds.
 pub mod expectation;
+
+/// Exact execution statistics and dependency-path timing, independent of storage.
+pub mod history;

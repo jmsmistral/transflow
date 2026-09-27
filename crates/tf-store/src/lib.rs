@@ -17,6 +17,8 @@ pub const SCHEMA_VERSION: i64 = 12;
 
 /// Safe read-only build history and execution evidence.
 pub mod build_read;
+/// Bounded execution history, exact metrics and Gantt projections.
+pub mod history;
 
 /// Branch-scoped retained version reuse and guarded adoption.
 pub mod cache;
