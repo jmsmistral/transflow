@@ -1,6 +1,6 @@
 {
   "locks": {
-    "Cargo.lock": "d23736e18c0dcefcb2b7b540940cfae6054926d20608faee9872e6abd73483ec",
+    "Cargo.lock": "85146e59ef43bf2b9e4c46a6b8488e95fdc73abc8fa6748c287139969cfff72e",
     "python/dev-py314.lock": "70e9c67f810e843334c39b4d47c1a23c30e7a982a1da144b87fc86c844227ddc",
     "tools/qualification/python/py314.lock": "cd008e118c8e66bda4e999a67be7d869a1fa62ada37ca19246e42a00f7014be3",
     "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
@@ -596,6 +596,7 @@
         "Apache-2.0 OR MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "atomic-waker",
@@ -623,6 +624,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "axum-core",
@@ -636,6 +638,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "axum",
@@ -1442,6 +1445,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "http-body-util",
@@ -1455,6 +1459,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "http-body",
@@ -1468,6 +1473,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "http",
@@ -1481,6 +1487,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "httparse",
@@ -1494,6 +1501,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "httpdate",
@@ -1507,6 +1515,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "hyper-util",
@@ -1520,6 +1529,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "hyper",
@@ -1854,6 +1864,7 @@
         "MIT AND BSD-3-Clause"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "matchit",
@@ -1881,6 +1892,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "mime",
@@ -2404,6 +2416,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "serde_path_to_error",
@@ -2681,6 +2694,7 @@
         "Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "sync_wrapper",
@@ -2764,6 +2778,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "tokio-macros",
@@ -2861,6 +2876,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "tower-layer",
@@ -2874,6 +2890,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "tower-service",
@@ -2887,6 +2904,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "tower",

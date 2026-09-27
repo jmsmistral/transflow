@@ -1350,7 +1350,8 @@
                 "build.logs",
                 "build.cancel",
                 "build.replay",
-                "coordinator.cli"
+                "coordinator.cli",
+                "coordinator.http.v1"
               ]
             },
             "context": {
@@ -1485,7 +1486,8 @@
                 "build.logs",
                 "build.cancel",
                 "build.replay",
-                "coordinator.cli"
+                "coordinator.cli",
+                "coordinator.http.v1"
               ]
             },
             "context": {
@@ -1588,7 +1590,8 @@
                 "build.logs",
                 "build.cancel",
                 "build.replay",
-                "coordinator.cli"
+                "coordinator.cli",
+                "coordinator.http.v1"
               ]
             },
             "context": {
@@ -5776,6 +5779,1181 @@
         "version_id",
         "artifact_digest",
         "generation"
+      ],
+      "additionalProperties": false
+    },
+    "ApiContextV1": {
+      "type": "object",
+      "properties": {
+        "workspace": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "branch": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "source": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "registry": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "runtime_revision": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "configuration": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "selection": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "retained_current",
+                "plan",
+                "local_version",
+                "foreign_version"
+              ]
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/Uuid"
+                }
+              ]
+            },
+            "digest": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/Sha256"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "id",
+            "digest"
+          ],
+          "additionalProperties": false
+        },
+        "graph": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Sha256"
+            }
+          ]
+        },
+        "freshness": {
+          "const": "unknown"
+        },
+        "fingerprint": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "fallback_policy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 1025,
+          "minItems": 0
+        }
+      },
+      "required": [
+        "workspace",
+        "branch",
+        "source",
+        "registry",
+        "runtime_revision",
+        "configuration",
+        "selection",
+        "graph",
+        "freshness",
+        "fingerprint",
+        "fallback_policy"
+      ],
+      "additionalProperties": false
+    },
+    "ApiErrorV1": {
+      "type": "object",
+      "properties": {
+        "request_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "message": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/ExecutionJsonV1"
+              }
+            },
+            "retryable": {
+              "type": "boolean"
+            },
+            "request_id": {
+              "$ref": "#/$defs/Uuid"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details",
+            "retryable",
+            "request_id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "request_id",
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "ApiPreparationV1": {
+      "type": "object",
+      "properties": {
+        "python": {
+          "type": "string",
+          "maxLength": 4096
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "ApiSelectionV1": {
+      "type": "object",
+      "properties": {
+        "branch": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "maxItems": 1000,
+          "minItems": 1
+        },
+        "python": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "mode": {
+          "enum": [
+            "full",
+            "selected",
+            "between"
+          ]
+        },
+        "boundaries": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "maxItems": 1000,
+          "minItems": 0
+        },
+        "exclusions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "maxItems": 1000,
+          "minItems": 0
+        },
+        "refresh_sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "maxItems": 1000,
+          "minItems": 0
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "maxItems": 1000,
+          "minItems": 0
+        },
+        "fallbacks": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "maxItems": 100,
+              "minItems": 0
+            }
+          ]
+        },
+        "force": {
+          "type": "boolean"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/ExecutionJsonV1"
+          }
+        },
+        "git_ref": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "require_current": {
+          "type": "boolean"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "validation_timeout_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        }
+      },
+      "required": [
+        "branch",
+        "targets"
+      ],
+      "additionalProperties": false
+    },
+    "ApiBuildRequestV1": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "plan"
+            },
+            "plan_id": {
+              "$ref": "#/$defs/Uuid"
+            }
+          },
+          "required": [
+            "kind",
+            "plan_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "request"
+            },
+            "request": {
+              "$ref": "#/$defs/ApiSelectionV1"
+            }
+          },
+          "required": [
+            "kind",
+            "request"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ApiAcceptedV1": {
+      "type": "object",
+      "properties": {
+        "build": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "plan": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "state": {
+          "const": "QUEUED"
+        }
+      },
+      "required": [
+        "build",
+        "plan",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "ApiCanceledV1": {
+      "type": "object",
+      "properties": {
+        "build": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "disposition": {
+          "enum": [
+            "Requested",
+            "AlreadyRequested",
+            "TooLate"
+          ]
+        }
+      },
+      "required": [
+        "build",
+        "disposition"
+      ],
+      "additionalProperties": false
+    },
+    "ApiDatasetV1": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "kind": {
+          "enum": [
+            "transform",
+            "source",
+            "imported",
+            "external"
+          ]
+        },
+        "origin": {
+          "enum": [
+            "local",
+            "external"
+          ]
+        },
+        "tombstone": {
+          "type": "boolean"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RelativePath"
+          },
+          "minItems": 0,
+          "maxItems": 8
+        },
+        "alias_count": {
+          "$ref": "#/$defs/Count"
+        },
+        "producer": {
+          "$ref": "#/$defs/ExecutionJsonV1"
+        },
+        "tags": {
+          "$ref": "#/$defs/ExecutionJsonV1"
+        },
+        "head": {
+          "$ref": "#/$defs/ExecutionJsonV1"
+        },
+        "freshness": {
+          "const": "unknown"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "dataset_id",
+        "path",
+        "kind",
+        "origin",
+        "tombstone",
+        "alias_count",
+        "aliases",
+        "producer",
+        "tags",
+        "head",
+        "freshness"
+      ],
+      "additionalProperties": false
+    },
+    "ApiDatasetsV1": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiDatasetV1"
+          },
+          "maxItems": 200,
+          "minItems": 0
+        },
+        "total": {
+          "$ref": "#/$defs/Count"
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "maxLength": 4096
+            }
+          ]
+        },
+        "schema": {
+          "type": "null"
+        },
+        "freshness": {
+          "const": "unknown"
+        }
+      },
+      "required": [
+        "entries",
+        "total",
+        "next_cursor",
+        "schema",
+        "freshness"
+      ],
+      "additionalProperties": false
+    },
+    "ApiVersionsV1": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "$ref": "#/$defs/Uuid"
+                  },
+                  "source": {
+                    "$ref": "#/$defs/Uuid"
+                  },
+                  "published_at_us": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "artifact": {
+                    "$ref": "#/$defs/Sha256"
+                  },
+                  "schema": {
+                    "$ref": "#/$defs/ExecutionJsonV1"
+                  },
+                  "attempt": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/Uuid"
+                      }
+                    ]
+                  },
+                  "import": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/Uuid"
+                      }
+                    ]
+                  },
+                  "origin_workspace": {
+                    "$ref": "#/$defs/Uuid"
+                  },
+                  "dataset": {
+                    "$ref": "#/$defs/Uuid"
+                  },
+                  "availability": {
+                    "const": "not_verified"
+                  },
+                  "origin": {
+                    "const": "local"
+                  },
+                  "row_count": {
+                    "type": "string"
+                  },
+                  "byte_count": {
+                    "type": "string"
+                  },
+                  "integrity_state": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "version",
+                  "source",
+                  "published_at_us",
+                  "artifact",
+                  "schema",
+                  "attempt",
+                  "import",
+                  "origin_workspace",
+                  "dataset",
+                  "availability",
+                  "origin",
+                  "row_count",
+                  "byte_count",
+                  "integrity_state"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "$ref": "#/$defs/Uuid"
+                  },
+                  "origin_workspace": {
+                    "$ref": "#/$defs/Uuid"
+                  },
+                  "dataset": {
+                    "$ref": "#/$defs/Uuid"
+                  },
+                  "metadata": {
+                    "$ref": "#/$defs/ExecutionJsonV1"
+                  },
+                  "availability": {
+                    "const": "not_verified"
+                  },
+                  "origin": {
+                    "const": "external"
+                  }
+                },
+                "required": [
+                  "version",
+                  "origin_workspace",
+                  "dataset",
+                  "metadata",
+                  "availability",
+                  "origin"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "maxItems": 200,
+          "minItems": 0
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "maxLength": 4096
+            }
+          ]
+        }
+      },
+      "required": [
+        "entries",
+        "next_cursor"
+      ],
+      "additionalProperties": false
+    },
+    "ApiSourceV1": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "next_offset": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            }
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "path",
+        "offset",
+        "text",
+        "next_offset"
+      ],
+      "additionalProperties": false
+    },
+    "ApiLineageV1": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphNodeV1"
+          },
+          "maxItems": 500,
+          "minItems": 0
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphEdgeV1"
+          },
+          "maxItems": 500,
+          "minItems": 0
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "maxLength": 4096
+            }
+          ]
+        },
+        "total_nodes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "total_edges": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "omitted_nodes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "omitted_edges": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "remaining_nodes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "remaining_edges": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "scope_complete": {
+          "type": "boolean"
+        },
+        "external_expanded": {
+          "const": false
+        }
+      },
+      "required": [
+        "nodes",
+        "edges",
+        "next_cursor",
+        "total_nodes",
+        "total_edges",
+        "omitted_nodes",
+        "omitted_edges",
+        "remaining_nodes",
+        "remaining_edges",
+        "scope_complete",
+        "external_expanded"
+      ],
+      "additionalProperties": false
+    },
+    "ApiEmptyV1": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "ApiExchangeV1": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "additionalProperties": false
+    },
+    "ApiLaunchedV1": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "expires_in_seconds": {
+          "const": 60
+        }
+      },
+      "required": [
+        "code",
+        "expires_in_seconds"
+      ],
+      "additionalProperties": false
+    },
+    "ApiSessionV1": {
+      "type": "object",
+      "properties": {
+        "csrf": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "expires_in_seconds": {
+          "const": 43200
+        }
+      },
+      "required": [
+        "csrf",
+        "expires_in_seconds"
+      ],
+      "additionalProperties": false
+    },
+    "ApiVerifiedV1": {
+      "type": "object",
+      "properties": {
+        "authenticated": {
+          "const": true
+        }
+      },
+      "required": [
+        "authenticated"
+      ],
+      "additionalProperties": false
+    },
+    "ApiHealthV1": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ready"
+        },
+        "api_version": {
+          "const": 1
+        }
+      },
+      "required": [
+        "status",
+        "api_version"
+      ],
+      "additionalProperties": false
+    },
+    "ApiCapabilitiesV1": {
+      "type": "object",
+      "properties": {
+        "api_version": {
+          "const": 1
+        },
+        "protocol_major": {
+          "const": 1
+        },
+        "workspace": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "maxItems": 200,
+          "minItems": 0
+        },
+        "engines": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "maxItems": 200,
+          "minItems": 0
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "body_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "in_flight": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "page_default": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "page_max": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "graph_default": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "graph_max": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "graph_expansion_threshold": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "source_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            }
+          },
+          "required": [
+            "body_bytes",
+            "in_flight",
+            "page_default",
+            "page_max",
+            "graph_default",
+            "graph_max",
+            "graph_expansion_threshold",
+            "source_bytes"
+          ],
+          "additionalProperties": false
+        },
+        "metadata_reads_import_code": {
+          "const": false
+        },
+        "external_reads": {
+          "const": "provider_owned_leased"
+        },
+        "schedules": {
+          "const": false
+        },
+        "ui": {
+          "const": false
+        }
+      },
+      "required": [
+        "api_version",
+        "protocol_major",
+        "workspace",
+        "operations",
+        "engines",
+        "limits",
+        "metadata_reads_import_code",
+        "external_reads",
+        "schedules",
+        "ui"
+      ],
+      "additionalProperties": false
+    },
+    "ApiCatalogCommandV1": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "const": "rename"
+            },
+            "reference": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "new_path": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "python": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "yes": {
+              "type": "boolean"
+            },
+            "keep_alias": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "operation",
+            "reference",
+            "new_path"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "const": "remove"
+            },
+            "reference": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "python": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "yes": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "operation",
+            "reference"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ApiBranchCommandV1": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "const": "create"
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "dry_run": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "operation",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "const": "rename"
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "new_name": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "dry_run": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "operation",
+            "name",
+            "new_name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "const": "delete"
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "yes": {
+              "type": "boolean"
+            },
+            "dry_run": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "operation",
+            "name"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ApiExternalCommandV1": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "const": "add"
+            },
+            "workspace": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "dataset": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "as": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "branch": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "no_fallback": {
+              "type": "boolean"
+            },
+            "fallback": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 0,
+              "maxItems": 1024
+            }
+          },
+          "required": [
+            "operation",
+            "workspace",
+            "dataset",
+            "as"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "const": "remove"
+            },
+            "alias": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "python": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "yes": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "operation",
+            "alias"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ApiReadV1": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "query": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 4096
+          }
+        }
+      },
+      "required": [
+        "path",
+        "query"
+      ],
+      "additionalProperties": false
+    },
+    "ApiMetadataPageV1": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExecutionJsonV1"
+          },
+          "maxItems": 200,
+          "minItems": 0
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "entries",
+        "next_cursor"
       ],
       "additionalProperties": false
     }

@@ -4,16 +4,18 @@
     {
       "name": "worker-contract-v1",
       "inputs": {
-        "tools/contracts/generate.py": "1cd757cc38cd6c3273f9e9bf3280cee0ae9494aacde613cc1a0a37cb3eb2a7f1",
-        "schemas/contracts-v1.schema.json": "6e7ff1d5c58bc3843517cc1a127e125edacf3fc65e04cfc1774ee98403d3d6f3",
-        "schemas/versions.json": "beb4e63198f8a245c2735b23f3fa9890697b166d20cc6812f0b47aa19ec4080f"
+        "tools/contracts/generate.py": "e31e4b1e443b41ba80be51ae86147e8283d8936012d6bae47cdcaf7d29bd7669",
+        "schemas/contracts-v1.schema.json": "f93986651a99dd96e1c265442e29746b511151c461839f08a96490731c47a03b",
+        "schemas/versions.json": "beb4e63198f8a245c2735b23f3fa9890697b166d20cc6812f0b47aa19ec4080f",
+        "schemas/api-routes-v1.json": "a6ae273f6f24f97c39d1a2e961fbe435a2ef201716914ac7c676e803f5b0bd35"
       },
       "outputs": [
         "schemas/generated/worker-control-v1.schema.json",
         "web/src/generated/contracts.ts",
         "python/worker/src/transflow_worker/_wire_schema.py",
         "python/worker/src/transflow_worker/_wire_validators.py",
-        "schemas/generated/cli-result-v1.schema.json"
+        "schemas/generated/cli-result-v1.schema.json",
+        "schemas/generated/openapi-v1.json"
       ],
       "command": [
         "{python}",

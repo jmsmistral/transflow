@@ -1,0 +1,292 @@
+[
+  {
+    "path": "/health",
+    "method": "GET",
+    "response": "ApiHealthV1",
+    "request": null,
+    "query": [],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/context",
+    "method": "GET",
+    "response": "ApiContextV1",
+    "request": null,
+    "query": [],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/capabilities",
+    "method": "GET",
+    "response": "ApiCapabilitiesV1",
+    "request": null,
+    "query": [],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/sessions/launch",
+    "method": "POST",
+    "response": "ApiLaunchedV1",
+    "request": "ApiEmptyV1",
+    "query": [],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/sessions/exchange",
+    "method": "POST",
+    "response": "ApiSessionV1",
+    "request": "ApiExchangeV1",
+    "query": [],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/sessions/verify",
+    "method": "POST",
+    "response": "ApiVerifiedV1",
+    "request": "ApiEmptyV1",
+    "query": [],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/datasets",
+    "method": "GET",
+    "response": "ApiDatasetsV1",
+    "request": null,
+    "query": [
+      "limit",
+      "cursor",
+      "filter",
+      "origin",
+      "id",
+      "source_path",
+      "tag",
+      "column"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/datasets/{dataset}",
+    "method": "GET",
+    "response": "ApiDatasetV1",
+    "request": null,
+    "query": [
+      "origin_workspace"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/datasets/{dataset}/versions",
+    "method": "GET",
+    "response": "ApiVersionsV1",
+    "request": null,
+    "query": [
+      "origin_workspace",
+      "limit",
+      "cursor"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/lineage",
+    "method": "GET",
+    "response": "ApiLineageV1",
+    "request": null,
+    "query": [
+      "start",
+      "direction",
+      "depth",
+      "limit",
+      "cursor",
+      "expand"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/source/{source}",
+    "method": "GET",
+    "response": "ApiSourceV1",
+    "request": null,
+    "query": [
+      "path",
+      "offset",
+      "limit"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/plans/{plan}",
+    "method": "GET",
+    "response": "PlanResultV1",
+    "request": null,
+    "query": [],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/builds/{build}",
+    "method": "GET",
+    "response": "ExecutionJsonV1",
+    "request": null,
+    "query": [],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/validations",
+    "method": "POST",
+    "response": "PreparationResultV1",
+    "request": "ApiPreparationV1",
+    "query": [],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/catalog/diff",
+    "method": "POST",
+    "response": "PreparationResultV1",
+    "request": "ApiPreparationV1",
+    "query": [],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/plans",
+    "method": "POST",
+    "response": "PlanResultV1",
+    "request": "ApiSelectionV1",
+    "query": [],
+    "mutation": true,
+    "context": true
+  },
+  {
+    "path": "/api/v1/builds",
+    "method": "POST",
+    "response": "ApiAcceptedV1",
+    "request": "ApiBuildRequestV1",
+    "query": [],
+    "mutation": true,
+    "context": true
+  },
+  {
+    "path": "/api/v1/builds/{build}/cancel",
+    "method": "POST",
+    "response": "ApiCanceledV1",
+    "request": "ApiEmptyV1",
+    "query": [],
+    "mutation": true,
+    "context": true
+  },
+  {
+    "path": "/api/v1/catalog/sync",
+    "method": "POST",
+    "response": "PreparationResultV1",
+    "request": "ApiPreparationV1",
+    "query": [],
+    "mutation": true,
+    "context": true
+  },
+  {
+    "path": "/api/v1/catalog",
+    "method": "POST",
+    "response": "CatalogResultV1",
+    "request": "ApiCatalogCommandV1",
+    "query": [],
+    "mutation": true,
+    "context": true
+  },
+  {
+    "path": "/api/v1/branches",
+    "method": "POST",
+    "response": "BranchResultV1",
+    "request": "ApiBranchCommandV1",
+    "query": [],
+    "mutation": true,
+    "context": true
+  },
+  {
+    "path": "/api/v1/externals",
+    "method": "POST",
+    "response": "ExternalResultV1",
+    "request": "ApiExternalCommandV1",
+    "query": [],
+    "mutation": true,
+    "context": true
+  },
+  {
+    "path": "/api/v1/read",
+    "method": "POST",
+    "response": "ExecutionJsonV1",
+    "request": "ApiReadV1",
+    "query": [],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/externals",
+    "method": "GET",
+    "response": "ApiDatasetsV1",
+    "request": null,
+    "query": [
+      "limit",
+      "cursor",
+      "filter",
+      "origin",
+      "id",
+      "source_path",
+      "tag",
+      "column"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/datasets/{dataset}/lineage",
+    "method": "GET",
+    "response": "ApiLineageV1",
+    "request": null,
+    "query": [
+      "direction",
+      "depth",
+      "limit",
+      "cursor",
+      "expand"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/branches",
+    "method": "GET",
+    "response": "ApiMetadataPageV1",
+    "request": null,
+    "query": [
+      "limit",
+      "cursor"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/builds",
+    "method": "GET",
+    "response": "ApiMetadataPageV1",
+    "request": null,
+    "query": [
+      "limit",
+      "cursor"
+    ],
+    "mutation": false,
+    "context": true
+  }
+]

@@ -42,6 +42,7 @@ pub const CLI_CAPABILITIES: &[&str] = &[
     "build.cancel",
     "build.replay",
     "coordinator.cli",
+    "coordinator.http.v1",
 ];
 /// Successful informational operation.
 #[derive(Clone, Copy, Debug)]

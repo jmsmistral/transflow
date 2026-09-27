@@ -66,7 +66,7 @@ export type RequestContextV1 = { readonly "workspace": (null | DiagnosticText); 
 export type DiagnosticV1 = { readonly "code": ("TF_GRAPH_CYCLE" | "TF_CLI_USAGE" | "TF_COMMAND_UNAVAILABLE" | "TF_OPERATION_FAILED" | "TF_INTERRUPTED" | "TF_STATE_TRANSITION"); readonly "heading": DiagnosticText; readonly "reason": DiagnosticText; readonly "remediation": DiagnosticText; readonly "sources": ReadonlyArray<SourceRangeV1>; readonly "affected": ReadonlyArray<DiagnosticText>; readonly "causes": ReadonlyArray<DiagnosticV1> };
 
 // prettier-ignore
-export type CliEnvelopeV1 = ({ readonly "format_version": 1; readonly "product_version": DiagnosticText; readonly "capabilities": ["cli.help", "cli.version", "cli.diagnostics.v1", "workspace.init", "env.lock", "env.sync", "env.check", "workspace.validate", "catalog.sync", "catalog.sync.check", "external.add", "external.list", "external.show", "external.remove", "catalog.list", "catalog.show", "catalog.rename", "catalog.remove", "dataset.import.prepare", "dataset.import", "branch.list", "branch.create", "branch.rename", "branch.delete", "plan", "why", "graph.upstream", "graph.downstream", "build", "build.list", "build.show", "build.logs", "build.cancel", "build.replay", "coordinator.cli"]; readonly "context": RequestContextV1; readonly "outcome": "success"; readonly "exit_status": (0); readonly "result": ({ readonly "kind": ("help" | "version" | "workspace_init" | "environment"); readonly "text": DiagnosticText } | PreparationResultV1 | CatalogResultV1 | ImportPreparationResultV1 | BranchResultV1 | GraphResultV1 | PlanResultV1 | WhyResultV1 | ExecutionResultV1 | ExternalResultV1 | ImportPublicationResultV1); readonly "diagnostics": ReadonlyArray<DiagnosticV1> } | { readonly "format_version": 1; readonly "product_version": DiagnosticText; readonly "capabilities": ["cli.help", "cli.version", "cli.diagnostics.v1", "workspace.init", "env.lock", "env.sync", "env.check", "workspace.validate", "catalog.sync", "catalog.sync.check", "external.add", "external.list", "external.show", "external.remove", "catalog.list", "catalog.show", "catalog.rename", "catalog.remove", "dataset.import.prepare", "dataset.import", "branch.list", "branch.create", "branch.rename", "branch.delete", "plan", "why", "graph.upstream", "graph.downstream", "build", "build.list", "build.show", "build.logs", "build.cancel", "build.replay", "coordinator.cli"]; readonly "context": RequestContextV1; readonly "outcome": "failure"; readonly "exit_status": (1 | 2); readonly "result": (null | PreparationResultV1 | CatalogResultV1 | BranchResultV1 | ExecutionResultV1 | ExternalResultV1); readonly "diagnostics": ReadonlyArray<DiagnosticV1> } | { readonly "format_version": 1; readonly "product_version": DiagnosticText; readonly "capabilities": ["cli.help", "cli.version", "cli.diagnostics.v1", "workspace.init", "env.lock", "env.sync", "env.check", "workspace.validate", "catalog.sync", "catalog.sync.check", "external.add", "external.list", "external.show", "external.remove", "catalog.list", "catalog.show", "catalog.rename", "catalog.remove", "dataset.import.prepare", "dataset.import", "branch.list", "branch.create", "branch.rename", "branch.delete", "plan", "why", "graph.upstream", "graph.downstream", "build", "build.list", "build.show", "build.logs", "build.cancel", "build.replay", "coordinator.cli"]; readonly "context": RequestContextV1; readonly "outcome": "canceled"; readonly "exit_status": (130); readonly "result": (null | ExecutionResultV1); readonly "diagnostics": ReadonlyArray<DiagnosticV1> });
+export type CliEnvelopeV1 = ({ readonly "format_version": 1; readonly "product_version": DiagnosticText; readonly "capabilities": ["cli.help", "cli.version", "cli.diagnostics.v1", "workspace.init", "env.lock", "env.sync", "env.check", "workspace.validate", "catalog.sync", "catalog.sync.check", "external.add", "external.list", "external.show", "external.remove", "catalog.list", "catalog.show", "catalog.rename", "catalog.remove", "dataset.import.prepare", "dataset.import", "branch.list", "branch.create", "branch.rename", "branch.delete", "plan", "why", "graph.upstream", "graph.downstream", "build", "build.list", "build.show", "build.logs", "build.cancel", "build.replay", "coordinator.cli", "coordinator.http.v1"]; readonly "context": RequestContextV1; readonly "outcome": "success"; readonly "exit_status": (0); readonly "result": ({ readonly "kind": ("help" | "version" | "workspace_init" | "environment"); readonly "text": DiagnosticText } | PreparationResultV1 | CatalogResultV1 | ImportPreparationResultV1 | BranchResultV1 | GraphResultV1 | PlanResultV1 | WhyResultV1 | ExecutionResultV1 | ExternalResultV1 | ImportPublicationResultV1); readonly "diagnostics": ReadonlyArray<DiagnosticV1> } | { readonly "format_version": 1; readonly "product_version": DiagnosticText; readonly "capabilities": ["cli.help", "cli.version", "cli.diagnostics.v1", "workspace.init", "env.lock", "env.sync", "env.check", "workspace.validate", "catalog.sync", "catalog.sync.check", "external.add", "external.list", "external.show", "external.remove", "catalog.list", "catalog.show", "catalog.rename", "catalog.remove", "dataset.import.prepare", "dataset.import", "branch.list", "branch.create", "branch.rename", "branch.delete", "plan", "why", "graph.upstream", "graph.downstream", "build", "build.list", "build.show", "build.logs", "build.cancel", "build.replay", "coordinator.cli", "coordinator.http.v1"]; readonly "context": RequestContextV1; readonly "outcome": "failure"; readonly "exit_status": (1 | 2); readonly "result": (null | PreparationResultV1 | CatalogResultV1 | BranchResultV1 | ExecutionResultV1 | ExternalResultV1); readonly "diagnostics": ReadonlyArray<DiagnosticV1> } | { readonly "format_version": 1; readonly "product_version": DiagnosticText; readonly "capabilities": ["cli.help", "cli.version", "cli.diagnostics.v1", "workspace.init", "env.lock", "env.sync", "env.check", "workspace.validate", "catalog.sync", "catalog.sync.check", "external.add", "external.list", "external.show", "external.remove", "catalog.list", "catalog.show", "catalog.rename", "catalog.remove", "dataset.import.prepare", "dataset.import", "branch.list", "branch.create", "branch.rename", "branch.delete", "plan", "why", "graph.upstream", "graph.downstream", "build", "build.list", "build.show", "build.logs", "build.cancel", "build.replay", "coordinator.cli", "coordinator.http.v1"]; readonly "context": RequestContextV1; readonly "outcome": "canceled"; readonly "exit_status": (130); readonly "result": (null | ExecutionResultV1); readonly "diagnostics": ReadonlyArray<DiagnosticV1> });
 
 // prettier-ignore
 export type DiscoveryRefV1 = ({ readonly "form": "string"; readonly "value": string } | { readonly "form": "bound"; readonly "workspace_id": Uuid; readonly "dataset_id": Uuid; readonly "path": string; readonly "catalog_fingerprint": Sha256 });
@@ -187,3 +187,75 @@ export type ExternalResultV1 = { readonly "kind": "external"; readonly "operatio
 
 // prettier-ignore
 export type ImportPublicationResultV1 = { readonly "kind": "import_publication"; readonly "status": "published"; readonly "published": true; readonly "import_id": Uuid; readonly "workspace_id": Uuid; readonly "dataset_id": Uuid; readonly "path": RelativePath; readonly "branch": string; readonly "source_snapshot_id": Uuid; readonly "schema_normalization": "complete"; readonly "source_snapshot_limitation": true; readonly "registered": boolean; readonly "file_count": Count; readonly "row_count": Count; readonly "byte_count": Count; readonly "version_id": Uuid; readonly "artifact_digest": Sha256; readonly "generation": Count };
+
+// prettier-ignore
+export type ApiContextV1 = { readonly "workspace": Uuid; readonly "branch": string; readonly "source": (null | Uuid); readonly "registry": Sha256; readonly "runtime_revision": string; readonly "configuration": Sha256; readonly "selection": { readonly "kind": ("retained_current" | "plan" | "local_version" | "foreign_version"); readonly "id": (null | Uuid); readonly "digest": (null | Sha256) }; readonly "graph": (null | Sha256); readonly "freshness": "unknown"; readonly "fingerprint": Sha256; readonly "fallback_policy": ReadonlyArray<string> };
+
+// prettier-ignore
+export type ApiErrorV1 = { readonly "request_id": Uuid; readonly "error": { readonly "code": string; readonly "message": string; readonly "details": { readonly [key: string]: ExecutionJsonV1 }; readonly "retryable": boolean; readonly "request_id": Uuid } };
+
+// prettier-ignore
+export type ApiPreparationV1 = { readonly "python"?: string };
+
+// prettier-ignore
+export type ApiSelectionV1 = { readonly "branch": string; readonly "targets": ReadonlyArray<string>; readonly "python"?: string; readonly "mode"?: ("full" | "selected" | "between"); readonly "boundaries"?: ReadonlyArray<string>; readonly "exclusions"?: ReadonlyArray<string>; readonly "refresh_sources"?: ReadonlyArray<string>; readonly "pins"?: ReadonlyArray<string>; readonly "fallbacks"?: (null | ReadonlyArray<string>); readonly "force"?: boolean; readonly "parameters"?: { readonly [key: string]: ExecutionJsonV1 }; readonly "git_ref"?: string; readonly "require_current"?: boolean; readonly "timeout_seconds"?: number; readonly "validation_timeout_seconds"?: number };
+
+// prettier-ignore
+export type ApiBuildRequestV1 = ({ readonly "kind": "plan"; readonly "plan_id": Uuid } | { readonly "kind": "request"; readonly "request": ApiSelectionV1 });
+
+// prettier-ignore
+export type ApiAcceptedV1 = { readonly "build": Uuid; readonly "plan": Uuid; readonly "state": "QUEUED" };
+
+// prettier-ignore
+export type ApiCanceledV1 = { readonly "build": Uuid; readonly "disposition": ("Requested" | "AlreadyRequested" | "TooLate") };
+
+// prettier-ignore
+export type ApiDatasetV1 = { readonly "workspace_id": Uuid; readonly "dataset_id": Uuid; readonly "path": RelativePath; readonly "kind": ("transform" | "source" | "imported" | "external"); readonly "origin": ("local" | "external"); readonly "tombstone": boolean; readonly "aliases": ReadonlyArray<RelativePath>; readonly "alias_count": Count; readonly "producer": ExecutionJsonV1; readonly "tags": ExecutionJsonV1; readonly "head": ExecutionJsonV1; readonly "freshness": "unknown" };
+
+// prettier-ignore
+export type ApiDatasetsV1 = { readonly "entries": ReadonlyArray<ApiDatasetV1>; readonly "total": Count; readonly "next_cursor": (null | string); readonly "schema": null; readonly "freshness": "unknown" };
+
+// prettier-ignore
+export type ApiVersionsV1 = { readonly "entries": ReadonlyArray<({ readonly "version": Uuid; readonly "source": Uuid; readonly "published_at_us": string; readonly "artifact": Sha256; readonly "schema": ExecutionJsonV1; readonly "attempt": (null | Uuid); readonly "import": (null | Uuid); readonly "origin_workspace": Uuid; readonly "dataset": Uuid; readonly "availability": "not_verified"; readonly "origin": "local"; readonly "row_count": string; readonly "byte_count": string; readonly "integrity_state": string } | { readonly "version": Uuid; readonly "origin_workspace": Uuid; readonly "dataset": Uuid; readonly "metadata": ExecutionJsonV1; readonly "availability": "not_verified"; readonly "origin": "external" })>; readonly "next_cursor": (null | string) };
+
+// prettier-ignore
+export type ApiSourceV1 = { readonly "source": Uuid; readonly "path": RelativePath; readonly "offset": number; readonly "text": string; readonly "next_offset": (null | number) };
+
+// prettier-ignore
+export type ApiLineageV1 = { readonly "nodes": ReadonlyArray<GraphNodeV1>; readonly "edges": ReadonlyArray<GraphEdgeV1>; readonly "next_cursor": (null | string); readonly "total_nodes": number; readonly "total_edges": number; readonly "omitted_nodes": number; readonly "omitted_edges": number; readonly "remaining_nodes": number; readonly "remaining_edges": number; readonly "scope_complete": boolean; readonly "external_expanded": false };
+
+// prettier-ignore
+export type ApiEmptyV1 = Readonly<Record<string, never>>;
+
+// prettier-ignore
+export type ApiExchangeV1 = { readonly "code": string };
+
+// prettier-ignore
+export type ApiLaunchedV1 = { readonly "code": string; readonly "expires_in_seconds": 60 };
+
+// prettier-ignore
+export type ApiSessionV1 = { readonly "csrf": string; readonly "expires_in_seconds": 43200 };
+
+// prettier-ignore
+export type ApiVerifiedV1 = { readonly "authenticated": true };
+
+// prettier-ignore
+export type ApiHealthV1 = { readonly "status": "ready"; readonly "api_version": 1 };
+
+// prettier-ignore
+export type ApiCapabilitiesV1 = { readonly "api_version": 1; readonly "protocol_major": 1; readonly "workspace": Uuid; readonly "operations": ReadonlyArray<string>; readonly "engines": ReadonlyArray<string>; readonly "limits": { readonly "body_bytes": number; readonly "in_flight": number; readonly "page_default": number; readonly "page_max": number; readonly "graph_default": number; readonly "graph_max": number; readonly "graph_expansion_threshold": number; readonly "source_bytes": number }; readonly "metadata_reads_import_code": false; readonly "external_reads": "provider_owned_leased"; readonly "schedules": false; readonly "ui": false };
+
+// prettier-ignore
+export type ApiCatalogCommandV1 = ({ readonly "operation": "rename"; readonly "reference": string; readonly "new_path": string; readonly "python"?: string; readonly "yes"?: boolean; readonly "keep_alias"?: boolean } | { readonly "operation": "remove"; readonly "reference": string; readonly "python"?: string; readonly "yes"?: boolean });
+
+// prettier-ignore
+export type ApiBranchCommandV1 = ({ readonly "operation": "create"; readonly "name": string; readonly "dry_run"?: boolean } | { readonly "operation": "rename"; readonly "name": string; readonly "new_name": string; readonly "dry_run"?: boolean } | { readonly "operation": "delete"; readonly "name": string; readonly "yes"?: boolean; readonly "dry_run"?: boolean });
+
+// prettier-ignore
+export type ApiExternalCommandV1 = ({ readonly "operation": "add"; readonly "workspace": string; readonly "dataset": string; readonly "as": string; readonly "branch"?: string; readonly "no_fallback"?: boolean; readonly "fallback"?: ReadonlyArray<string> } | { readonly "operation": "remove"; readonly "alias": string; readonly "python"?: string; readonly "yes"?: boolean });
+
+// prettier-ignore
+export type ApiReadV1 = { readonly "path": string; readonly "query": { readonly [key: string]: string } };
+
+// prettier-ignore
+export type ApiMetadataPageV1 = { readonly "entries": ReadonlyArray<ExecutionJsonV1>; readonly "next_cursor": (null | string) };

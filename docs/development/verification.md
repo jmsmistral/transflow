@@ -847,7 +847,42 @@ consumer expectations and preservation of old heads on invalid reimport, stale
 owner/head, reservation and late SQL failure. Browse guards/path tampering preserve
 prior display metadata; invalid current graphs never authorize execution.
 
-T073 awaits owner-confirmed CI for this new revision. Linux qualification is not
-inferred from these local runs. Native editor setup/automatic overlays remain
+The owner confirmed all T073 CI jobs passed on 2026-09-27 for implementation
+`bbc90be` / specification `6299a86`; G1 is qualified. Linux results are owner-reported. Native editor setup/automatic overlays remain
 T031/T108/G3; HTTP/UI, scheduling, other adapters, public GC/backup and release
 packaging remain later gates. No new performance or universal memory claim is made.
+
+
+## T074–T076 — Authenticated contextual coordinator API (2026-09-27)
+
+The [HTTP guide](../../crates/tf-api/README.md) describes the delivered loopback
+transport, one-use browser launch, context-bound reads and guarded commands.
+The API reuses CLI preparation/lifecycle/build services under the existing owner.
+Schema 11 adds durable operation receipts. External inputs remain provider-owned;
+GET metadata routes neither import Python nor contact/copy provider data.
+
+Local checks passed on macOS arm64/Python 3.14.7: 376 Rust tests plus one doc test,
+857 Python tests, 334 web tests and 58 installed CLI/API tests. Shared conformance
+now has 280 cases. Formatting, Clippy, Ruff/mypy, dependency/generated-contract
+checks, 44 specification, 27 safety and 12 boundary regressions passed. Web builds
+are reproducible. All OpenAPI examples validate; route parameters are unique.
+
+Native qualification passed 36 dispatch, 48 developer-core, 15 direct foreign-read
+and six new API journeys, alongside engine, normalization, expectation and resource
+probes. The new API journey proves one publication across identical retries, saved
+plan single acceptance, exact historical metadata, foreign reads with zero replicas,
+branch-bound active cancellation, preserved last-good heads and receipts surviving
+restart. The internal Browser verified launch-code removal, authenticated capability
+negotiation and refusal to reload without a fresh grant.
+
+The aggregate runs initially exposed outdated schema counts/help assertions, a
+readiness output-order regression and an overly broad generated TypeScript empty
+object. These were corrected; remaining/focused gates ran separately. Commands,
+results and hashes are in [the measured receipt](evidence/t074-t076-macos-arm64.json).
+No new external package version was added; existing advisory check dates were
+preserved. CI remains owner-monitored and pending for these new revisions.
+
+The connection page is not the workspace UI. Event streaming, previews/log routes,
+scheduling and editor integration remain later tasks. Interrupted pending HTTP
+receipts require explicit inspection before a new key; no cross-filesystem atomic
+receipt guarantee, currentness claim or new memory/performance benchmark is made.

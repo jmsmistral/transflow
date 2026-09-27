@@ -195,12 +195,21 @@ pub fn decode_payload(payload: &[u8]) -> Result<ControlFrame, ProtocolError> {
     if payload.is_empty() || payload.len() > MAX_FRAME_BYTES {
         return Err(ProtocolError::Size);
     }
+    ControlFrame::from_json(decode_json(payload, MAX_FRAME_BYTES)?)
+}
+/// Decode bounded JSON with duplicate-key, nonfinite-number and nesting rejection.
+/// The caller chooses a transport-specific byte limit before allocating its body.
+pub fn decode_json(payload: &[u8], limit: usize) -> Result<Value, ProtocolError> {
+    if payload.is_empty() || payload.len() > limit {
+        return Err(ProtocolError::Size);
+    }
     let Strict(value) = serde_json::from_slice(payload).map_err(|_| ProtocolError::Json)?;
     if !bounded_json(&value, 0) {
         return Err(ProtocolError::Json);
     }
-    ControlFrame::from_json(value)
+    Ok(value)
 }
+
 fn exact<R: Read>(reader: &mut R, buffer: &mut [u8]) -> Result<(), ProtocolError> {
     reader.read_exact(buffer).map_err(|e| {
         if e.kind() == io::ErrorKind::UnexpectedEof {

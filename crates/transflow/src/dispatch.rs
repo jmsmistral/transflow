@@ -98,6 +98,8 @@ pub struct Options {
 }
 /// A transport-validated cancellation request. Only the coordinator mutates SQLite.
 pub struct CancelCommand {
+    /// Optional HTTP retry receipt, verified before cancellation.
+    pub api: Option<(tf_domain::RequestId, String)>,
     /// Explicit requested build, never an implicit workspace-wide cancellation.
     pub build: BuildId,
     /// Bounded acknowledgement, sent after the publication/cancellation transaction.
@@ -278,21 +280,13 @@ fn execute(
             }
             if let Some(commands) = &options.commands {
                 while let Ok(command) = commands.lock().map_err(fail)?.try_recv() {
-                    if command.build == build_id {
-                        let result = rt.block_on(control.request(coordinator.owner));
-                        let _ = command
-                            .reply
-                            .try_send(result.as_ref().copied().map_err(ToString::to_string));
-                        result.map_err(fail)?;
+                    let result = crate::api::cancel_owned(coordinator.owner, rt, &command);
+                    if command.build == build_id && result.is_ok() {
+                        rt.block_on(control.request(coordinator.owner))
+                            .map_err(fail)?;
                         abort = true;
-                    } else {
-                        let result = crate::build_transport::cancel_owned(
-                            coordinator.owner,
-                            rt,
-                            command.build,
-                        );
-                        let _ = command.reply.try_send(result.map_err(|e| e.to_string()));
                     }
+                    let _ = command.reply.try_send(result.map_err(|e| e.to_string()));
                 }
             }
             if !abort && cancellation_checked.elapsed() >= Duration::from_millis(100) {

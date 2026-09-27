@@ -8,3 +8,15 @@ description = "HTTP authentication, API schemas, events and browser assets over 
 
 [lints]
 workspace = true
+
+[dependencies]
+tf-domain = { path = "../tf-domain" }
+tf-protocol = { path = "../tf-protocol" }
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tokio = { workspace = true, features = ["net", "sync"] }
+thiserror.workspace = true
+
+[dev-dependencies]
+tower = { version = "=0.5.3", features = ["util"] }

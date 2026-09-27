@@ -320,16 +320,30 @@ pub(crate) fn execute(
     python: Option<&String>,
     explicit: Option<&String>,
 ) -> Result<Report, Error> {
+    execute_owned(operation, python, explicit, None)
+}
+pub(crate) fn execute_owned(
+    operation: Operation,
+    python: Option<&String>,
+    explicit: Option<&String>,
+    supplied: Option<&mut RuntimeOwner>,
+) -> Result<Report, Error> {
     let current = std::env::current_dir()?;
     let workspace = Workspace::load(&current, explicit.map(Path::new))?;
     let config = workspace.config();
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?;
+    let mut temporary;
     let mut owner = if operation == Operation::Sync {
-        let mut owner =
-            RuntimeOwner::acquire(workspace.root(), config.id(), CoordinatorMode::Temporary)?;
-        let recovered = runtime.block_on(crate::reconcile::recover(&mut owner, now()?))?;
+        let owner = if let Some(owner) = supplied {
+            owner
+        } else {
+            temporary =
+                RuntimeOwner::acquire(workspace.root(), config.id(), CoordinatorMode::Temporary)?;
+            &mut temporary
+        };
+        let recovered = runtime.block_on(crate::reconcile::recover(owner, now()?))?;
         if recovered
             .iter()
             .any(|o| matches!(o, crate::reconcile::RecoveryOutcome::Conflict(_)))
@@ -388,7 +402,7 @@ pub(crate) fn execute(
         })?;
         let expected_registry = proposal.replacement().to_owned();
         let id = capture.id()?;
-        let completion = runtime.block_on(crate::reconcile::reconcile(
+        runtime.block_on(crate::reconcile::execute_owned(
             taken,
             crate::reconcile::ReconcileRequest {
                 capture,
@@ -398,8 +412,7 @@ pub(crate) fn execute(
                 at_us: now()?,
             },
         ))?;
-        owner = Some(completion.owner);
-        completion.outcome?;
+        owner = Some(taken);
         let previous = SourceSnapshot::open(
             &workspace.root().join(".transflow/runtime/source-snapshots"),
             id,

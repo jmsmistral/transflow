@@ -193,6 +193,13 @@ async fn enrich(workspace: &Workspace, entries: &mut [Value]) -> Result<(), Erro
     Ok(())
 }
 pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Result<Report, Error> {
+    execute_owned(args, explicit, None)
+}
+pub(crate) fn execute_owned(
+    args: &clap::ArgMatches,
+    explicit: Option<&String>,
+    supplied: Option<&mut RuntimeOwner>,
+) -> Result<Report, Error> {
     let (operation, args) = args.subcommand().ok_or(Error::Context)?;
     let workspace = Workspace::load(&std::env::current_dir()?, explicit.map(Path::new))?;
     let runtime = tokio::runtime::Builder::new_current_thread()
@@ -227,12 +234,18 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
         });
     }
     let apply = args.get_flag("yes");
+    let mut temporary;
     let mut owner = if apply {
-        Some(RuntimeOwner::acquire(
-            workspace.root(),
-            workspace.config().id(),
-            CoordinatorMode::Temporary,
-        )?)
+        if let Some(owner) = supplied {
+            Some(owner)
+        } else {
+            temporary = Some(RuntimeOwner::acquire(
+                workspace.root(),
+                workspace.config().id(),
+                CoordinatorMode::Temporary,
+            )?);
+            temporary.as_mut()
+        }
     } else {
         None
     };
@@ -325,8 +338,8 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
         )?]);
         bounded(&future)?;
         let proposal = RegistryProposal::lifecycle(registry, inspected.capture.id()?, replacement)?;
-        let completion = runtime.block_on(crate::reconcile::reconcile(
-            owner.take().ok_or(Error::Context)?,
+        runtime.block_on(crate::reconcile::execute_owned(
+            owner.as_deref_mut().ok_or(Error::Context)?,
             crate::reconcile::ReconcileRequest {
                 capture: inspected.capture,
                 proposal,
@@ -335,7 +348,6 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
                 at_us: preparation::now()?,
             },
         ))?;
-        completion.outcome?;
         let final_capture = SourceSnapshot::capture(&workspace, CaptureLimits::default())?;
         if RegistrySnapshot::parse(
             workspace.config().id(),
@@ -353,8 +365,9 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
             &Overlay::render(&updated.sdk_projection(final_capture.id()?)?)?,
             inspected.request,
             |_| {
-                completion
-                    .owner
+                owner
+                    .as_deref()
+                    .ok_or(EditorError::Conflict)?
                     .validate_paths()
                     .map_err(|_| EditorError::Conflict)?;
                 final_capture

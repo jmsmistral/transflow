@@ -316,3 +316,123 @@ def validate_ExternalResultV1(value: object) -> None:
 def validate_ImportPublicationResultV1(value: object) -> None:
     """Assert the ImportPublicationResultV1 contract, including custom formats."""
     validate_document("ImportPublicationResultV1", value)
+
+
+def validate_ApiContextV1(value: object) -> None:
+    """Assert the ApiContextV1 contract, including custom formats."""
+    validate_document("ApiContextV1", value)
+
+
+def validate_ApiErrorV1(value: object) -> None:
+    """Assert the ApiErrorV1 contract, including custom formats."""
+    validate_document("ApiErrorV1", value)
+
+
+def validate_ApiPreparationV1(value: object) -> None:
+    """Assert the ApiPreparationV1 contract, including custom formats."""
+    validate_document("ApiPreparationV1", value)
+
+
+def validate_ApiSelectionV1(value: object) -> None:
+    """Assert the ApiSelectionV1 contract, including custom formats."""
+    validate_document("ApiSelectionV1", value)
+
+
+def validate_ApiBuildRequestV1(value: object) -> None:
+    """Assert the ApiBuildRequestV1 contract, including custom formats."""
+    validate_document("ApiBuildRequestV1", value)
+
+
+def validate_ApiAcceptedV1(value: object) -> None:
+    """Assert the ApiAcceptedV1 contract, including custom formats."""
+    validate_document("ApiAcceptedV1", value)
+
+
+def validate_ApiCanceledV1(value: object) -> None:
+    """Assert the ApiCanceledV1 contract, including custom formats."""
+    validate_document("ApiCanceledV1", value)
+
+
+def validate_ApiDatasetV1(value: object) -> None:
+    """Assert the ApiDatasetV1 contract, including custom formats."""
+    validate_document("ApiDatasetV1", value)
+
+
+def validate_ApiDatasetsV1(value: object) -> None:
+    """Assert the ApiDatasetsV1 contract, including custom formats."""
+    validate_document("ApiDatasetsV1", value)
+
+
+def validate_ApiVersionsV1(value: object) -> None:
+    """Assert the ApiVersionsV1 contract, including custom formats."""
+    validate_document("ApiVersionsV1", value)
+
+
+def validate_ApiSourceV1(value: object) -> None:
+    """Assert the ApiSourceV1 contract, including custom formats."""
+    validate_document("ApiSourceV1", value)
+
+
+def validate_ApiLineageV1(value: object) -> None:
+    """Assert the ApiLineageV1 contract, including custom formats."""
+    validate_document("ApiLineageV1", value)
+
+
+def validate_ApiEmptyV1(value: object) -> None:
+    """Assert the ApiEmptyV1 contract, including custom formats."""
+    validate_document("ApiEmptyV1", value)
+
+
+def validate_ApiExchangeV1(value: object) -> None:
+    """Assert the ApiExchangeV1 contract, including custom formats."""
+    validate_document("ApiExchangeV1", value)
+
+
+def validate_ApiLaunchedV1(value: object) -> None:
+    """Assert the ApiLaunchedV1 contract, including custom formats."""
+    validate_document("ApiLaunchedV1", value)
+
+
+def validate_ApiSessionV1(value: object) -> None:
+    """Assert the ApiSessionV1 contract, including custom formats."""
+    validate_document("ApiSessionV1", value)
+
+
+def validate_ApiVerifiedV1(value: object) -> None:
+    """Assert the ApiVerifiedV1 contract, including custom formats."""
+    validate_document("ApiVerifiedV1", value)
+
+
+def validate_ApiHealthV1(value: object) -> None:
+    """Assert the ApiHealthV1 contract, including custom formats."""
+    validate_document("ApiHealthV1", value)
+
+
+def validate_ApiCapabilitiesV1(value: object) -> None:
+    """Assert the ApiCapabilitiesV1 contract, including custom formats."""
+    validate_document("ApiCapabilitiesV1", value)
+
+
+def validate_ApiCatalogCommandV1(value: object) -> None:
+    """Assert the ApiCatalogCommandV1 contract, including custom formats."""
+    validate_document("ApiCatalogCommandV1", value)
+
+
+def validate_ApiBranchCommandV1(value: object) -> None:
+    """Assert the ApiBranchCommandV1 contract, including custom formats."""
+    validate_document("ApiBranchCommandV1", value)
+
+
+def validate_ApiExternalCommandV1(value: object) -> None:
+    """Assert the ApiExternalCommandV1 contract, including custom formats."""
+    validate_document("ApiExternalCommandV1", value)
+
+
+def validate_ApiReadV1(value: object) -> None:
+    """Assert the ApiReadV1 contract, including custom formats."""
+    validate_document("ApiReadV1", value)
+
+
+def validate_ApiMetadataPageV1(value: object) -> None:
+    """Assert the ApiMetadataPageV1 contract, including custom formats."""
+    validate_document("ApiMetadataPageV1", value)

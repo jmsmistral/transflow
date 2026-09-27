@@ -11,6 +11,12 @@ report 1.0; T058 enables private Polars execution alongside captured discovery.
 [Transport/code generation](../crates/tf-protocol/README.md) is implemented by T014;
 [Canonical encoding/hashing](canonical-v1.md) is implemented by T015.
 
+T074–T076 add the authored [API route table](api-routes-v1.json) and closed `Api*`
+definitions. The shared generator emits OpenAPI 3.1, Python validators and TypeScript
+types. OpenAPI examples are validated against those definitions in the contract
+suite; all language receivers count string lengths in Unicode code points.
+The [HTTP guide](../crates/tf-api/README.md) describes authentication and contexts.
+
 ## Independent versions and compatibility
 
 [`versions.json`](versions.json) records independent baselines:
@@ -21,7 +27,7 @@ report 1.0; T058 enables private Polars execution alongside captured discovery.
 | Logical schema, artifact manifest, catalogue snapshot | 1 each | Shapes defined here |
 | Expectation AST | 1 | T059–T060 typed G1 syntax and exact semantics; artifact evaluation remains T061 |
 | Workspace config, authoring registry, HTTP API | 1 each | Independent configuration/API baselines |
-| SQLite schema | 0 | No product migration exists; not permission to adopt an arbitrary database |
+| SQLite schema contract placeholder | 0 | Historical wire placeholder; actual product database version is 11, owned by tf-store migrations |
 
 Product version, specification version and these format versions are independent.
 Persisted documents accept only their exact known format version; unsupported

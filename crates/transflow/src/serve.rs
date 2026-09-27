@@ -15,6 +15,7 @@ use std::{
 pub(crate) fn execute(
     explicit: Option<&String>,
     json_mode: bool,
+    args: &clap::ArgMatches,
 ) -> Result<build_cli::Report, Error> {
     let current = std::env::current_dir().map_err(failure)?;
     let workspace = tf_catalog::workspace::Workspace::load(&current, explicit.map(Path::new))
@@ -68,13 +69,75 @@ pub(crate) fn execute(
         c.result.map_err(failure)?;
     }
     endpoint.busy.store(false, Ordering::Release);
+    let (service, commands) = crate::api::service(
+        workspace.root().to_owned(),
+        workspace.config().id(),
+        endpoint.busy.clone(),
+        endpoint.cancel_sender.clone(),
+    );
+    let http = tf_api::Server::bind(
+        std::net::SocketAddr::from((
+            [127, 0, 0, 1],
+            *args
+                .get_one::<u16>("port")
+                .ok_or_else(|| failure("missing HTTP port"))?,
+        )),
+        owner.registration().nonce().to_owned(),
+        service,
+    )
+    .map_err(failure)?;
+    owner
+        .register_http_endpoint(http.address())
+        .map_err(failure)?;
+    if args.get_flag("open") {
+        let url = http.launch_url().map_err(failure)?;
+        let launcher = if cfg!(target_os = "macos") {
+            "open"
+        } else {
+            "xdg-open"
+        };
+        if !std::process::Command::new(launcher)
+            .arg(url)
+            .status()
+            .map_err(failure)?
+            .success()
+        {
+            return Err(failure("Could not open the coordinator browser"));
+        }
+    }
     if !json_mode && !stopped.load(Ordering::Acquire) {
         eprintln!(
             "Coordinator ready. Builds continue after clients disconnect. Press Ctrl-C to stop."
         );
+        eprintln!("HTTP API: http://{}", http.address());
     }
     while !stopped.load(Ordering::Acquire) {
         crate::provider::drain(&mut owner, &rt, &endpoint.providers)?;
+        crate::api::drain(&mut owner, &commands, &endpoint.busy).map_err(failure)?;
+        let queued = rt.block_on(async {
+            let mut s = owner.open_store().await.map_err(failure)?;
+            let q = s
+                .repository()
+                .map_err(failure)?
+                .next_queued_build()
+                .await
+                .map_err(failure)?;
+            s.close().await.map_err(failure)?;
+            Ok::<_, Error>(q)
+        })?;
+        if let Some(build) = queued {
+            endpoint.busy.store(true, Ordering::Release);
+            let c = rt.block_on(build_cli::execute_commands(
+                owner,
+                build,
+                json_mode,
+                endpoint.commands.clone(),
+                endpoint.providers.clone(),
+            ))?;
+            owner = c.owner;
+            c.result.map_err(failure)?;
+            endpoint.busy.store(false, Ordering::Release);
+        }
         if let Ok(request) = endpoint.requests.try_recv() {
             let parsed = crate::command().try_get_matches_from(
                 std::iter::once("transflow".to_owned())
@@ -120,13 +183,14 @@ pub(crate) fn execute(
             endpoint.busy.store(false, Ordering::Release);
         }
         while let Ok(command) = endpoint.commands.lock().map_err(failure)?.try_recv() {
-            let result = crate::build_transport::cancel_owned(&mut owner, &rt, command.build);
+            let result = crate::api::cancel_owned(&mut owner, &rt, &command);
             let _ = command.reply.try_send(result.map_err(|e| e.to_string()));
         }
         rt.block_on(async {
             tokio::time::sleep(Duration::from_millis(20)).await;
         });
     }
+    drop(http);
     drop(endpoint);
     Ok(build_cli::report(
         "serve",

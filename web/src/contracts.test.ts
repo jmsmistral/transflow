@@ -300,6 +300,8 @@ const keywords = new Set([
   "items",
   "minItems",
   "maxItems",
+  "minLength",
+  "maxLength",
   "minimum",
   "maximum",
   "format",
@@ -350,6 +352,10 @@ function validate(
   switch (schema.type) {
     case "string": {
       const s = str(value);
+      if ("minLength" in schema)
+        need([...s].length >= num(schema.minLength), "string minimum");
+      if ("maxLength" in schema)
+        need([...s].length <= num(schema.maxLength), "string maximum");
       if ("format" in schema) format(str(schema.format), s);
       break;
     }

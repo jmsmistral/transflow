@@ -26,6 +26,7 @@ pub(crate) struct Submission {
 }
 pub(crate) struct Endpoint {
     pub commands: Mailbox,
+    pub cancel_sender: SyncSender<CancelCommand>,
     pub providers: crate::provider::Mailbox,
     pub requests: Receiver<Submission>,
     pub busy: Arc<AtomicBool>,
@@ -74,6 +75,7 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
     let (commands, rx) = mpsc::sync_channel(16);
     let (providers, provider_rx) = mpsc::sync_channel(16);
     let (requests, submissions) = mpsc::sync_channel(1);
+    let cancel_sender = commands.clone();
     let thread = std::thread::spawn(move || {
         while !stopped.load(Ordering::Acquire) {
             match listener.accept() {
@@ -123,7 +125,11 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
                                     .map_err(failure)?;
                                 let (tx, rx) = mpsc::sync_channel(1);
                                 commands
-                                    .try_send(CancelCommand { build, reply: tx })
+                                    .try_send(CancelCommand {
+                                        build,
+                                        reply: tx,
+                                        api: None,
+                                    })
                                     .map_err(|_| failure("coordinator control queue is full"))?;
                                 let result=rx.recv_timeout(Duration::from_secs(10)).map_err(|_|failure("cancellation acknowledgement timed out; inspect build state"))?.map_err(failure)?;
                                 Ok(json!({"ok":true,"disposition":format!("{result:?}")}))
@@ -176,6 +182,7 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
         }
     });
     Ok(Endpoint {
+        cancel_sender,
         commands: Arc::new(Mutex::new(rx)),
         providers: Arc::new(Mutex::new(provider_rx)),
         requests: submissions,

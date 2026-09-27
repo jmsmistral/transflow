@@ -208,9 +208,9 @@ fn schema_eight_job_bindings_upgrade_without_losing_local_foreign_keys() {
         sqlx::query("INSERT INTO job_inputs(job_id,alias,version_id,binding_json) SELECT id,'legacy',?,'{}' FROM jobs")
             .bind(VersionId::from_bytes([10;16]).to_string()).execute(&mut h.db).await.unwrap();
         // Reconstruct the previously shipped schema-8 table with its real local FKs.
-        sqlx::raw_sql("CREATE TABLE legacy_job_inputs (job_id TEXT NOT NULL REFERENCES jobs(id),alias TEXT NOT NULL,version_id TEXT REFERENCES dataset_versions(id),parent_job_id TEXT REFERENCES jobs(id),binding_json TEXT NOT NULL CHECK(json_valid(binding_json)),CHECK((version_id IS NULL)!=(parent_job_id IS NULL)),PRIMARY KEY(job_id,alias)) STRICT; INSERT INTO legacy_job_inputs SELECT job_id,alias,version_id,parent_job_id,binding_json FROM job_inputs; DROP TABLE job_inputs; ALTER TABLE legacy_job_inputs RENAME TO job_inputs; DELETE FROM schema_migrations WHERE version>=9; PRAGMA user_version=8;").execute(&mut h.db).await.unwrap();
+        sqlx::raw_sql("CREATE TABLE legacy_job_inputs (job_id TEXT NOT NULL REFERENCES jobs(id),alias TEXT NOT NULL,version_id TEXT REFERENCES dataset_versions(id),parent_job_id TEXT REFERENCES jobs(id),binding_json TEXT NOT NULL CHECK(json_valid(binding_json)),CHECK((version_id IS NULL)!=(parent_job_id IS NULL)),PRIMARY KEY(job_id,alias)) STRICT; INSERT INTO legacy_job_inputs SELECT job_id,alias,version_id,parent_job_id,binding_json FROM job_inputs; DROP TABLE job_inputs; ALTER TABLE legacy_job_inputs RENAME TO job_inputs; DROP TABLE api_operations; DELETE FROM schema_migrations WHERE version>=9; PRAGMA user_version=8;").execute(&mut h.db).await.unwrap();
         let owned=h.owner.as_mut().unwrap().open_store().await.unwrap();owned.close().await.unwrap();
-        assert_eq!(h.scalar("PRAGMA user_version").await,10);
+        assert_eq!(h.scalar("PRAGMA user_version").await,11);
         assert_eq!(h.scalar("SELECT count(*) FROM job_inputs WHERE alias='legacy' AND version_id IS NOT NULL AND foreign_version_id IS NULL").await,1);
         assert!(sqlx::query("UPDATE job_inputs SET version_id=?").bind(VersionId::from_bytes([99;16]).to_string()).execute(&mut h.db).await.is_err());
     });
@@ -323,11 +323,11 @@ ALTER TABLE job_inputs_v9 RENAME TO job_inputs;
 CREATE INDEX job_inputs_foreign ON job_inputs(foreign_workspace_id,foreign_dataset_id,foreign_version_id);
 
 "#).execute(&mut h.db).await.unwrap();
-        sqlx::raw_sql("DELETE FROM schema_migrations WHERE version=10; PRAGMA user_version=9;").execute(&mut h.db).await.unwrap();
+        sqlx::raw_sql("DROP TABLE api_operations; DELETE FROM schema_migrations WHERE version>=10; PRAGMA user_version=9;").execute(&mut h.db).await.unwrap();
         let before = ArtifactStore::open(&h.root).unwrap().verify(h.digest).unwrap();
         let owned = h.owner.as_mut().unwrap().open_store().await.unwrap();
         owned.close().await.unwrap();
-        assert_eq!(h.scalar("PRAGMA user_version").await, 10);
+        assert_eq!(h.scalar("PRAGMA user_version").await, 11);
         assert_eq!(h.scalar("SELECT count(*) FROM job_inputs WHERE alias='external'").await, 1);
         assert_eq!(h.scalar("SELECT count(*) FROM replicas").await, 1);
         assert_eq!(h.scalar("SELECT count(*) FROM foreign_versions WHERE availability='METADATA_ONLY'").await, 1);

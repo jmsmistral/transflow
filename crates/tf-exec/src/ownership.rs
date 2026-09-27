@@ -96,6 +96,8 @@ pub struct Registration {
     session: String,
     nonce: String,
     endpoint: SocketAddr,
+    #[serde(default)]
+    http_endpoint: Option<SocketAddr>,
     mode: CoordinatorMode,
 }
 impl std::fmt::Debug for Registration {
@@ -292,6 +294,7 @@ impl RuntimeOwner {
             nonce,
             endpoint: SocketAddr::from(([127, 0, 0, 1], 0)),
             mode,
+            http_endpoint: None,
         };
         Ok(Self {
             lock: lock_file,
@@ -325,6 +328,19 @@ impl RuntimeOwner {
         }
         let mut registration = self.registration.clone();
         registration.endpoint = endpoint;
+        self.persist_registration(registration)
+    }
+    /// Publish the separately authenticated loopback HTTP endpoint.
+    pub fn register_http_endpoint(&mut self, endpoint: SocketAddr) -> Result<()> {
+        self.validate_paths()?;
+        if !endpoint.ip().is_loopback() || endpoint.port() == 0 {
+            return Err(OwnershipError::Invalid);
+        }
+        let mut registration = self.registration.clone();
+        registration.http_endpoint = Some(endpoint);
+        self.persist_registration(registration)
+    }
+    fn persist_registration(&mut self, registration: Registration) -> Result<()> {
         let bytes = serde_json::to_vec(&registration).map_err(|_| OwnershipError::Invalid)?;
         let name = format!("runtime-{}.tmp", registration.session);
         let mut temp = open_at(
@@ -419,6 +435,9 @@ pub fn discover(root: &Path, workspace: WorkspaceId) -> Result<Option<Registrati
             .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
         || !registration.endpoint.ip().is_loopback()
         || registration.endpoint.port() == 0
+        || registration
+            .http_endpoint
+            .is_some_and(|a| !a.ip().is_loopback() || a.port() == 0)
         || registration.process_start != process_start(registration.pid)?
     {
         return Err(OwnershipError::Invalid);

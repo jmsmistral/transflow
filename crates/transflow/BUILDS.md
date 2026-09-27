@@ -63,13 +63,15 @@ transflow build curated/orders --no-wait
 
 `--no-wait` checks for a live persistent owner before discovery or plan mutation and
 returns an accepted build identity. Waiting clients also route to that owner.
-Control uses a bounded private authenticated loopback protocol, not a browser API.
+CLI control uses a bounded private authenticated loopback protocol. The same owner
+also serves the [authenticated HTTP API](../tf-api/README.md); `serve --open`
+opens its secure connection page and `--port N` selects the HTTP port.
 Only one build executes at a time per coordinator; a concurrent submission is
 explicitly refused. Independent jobs within a build still run concurrently under
 the configured resource pool. Ctrl-C on `serve` cancels active work and stops it.
-There is no automatic daemon installation. HTTP/UI, `serve --open` and scheduling
-are later tasks. Standalone `plan`/catalogue mutations currently require the owner
-to be stopped; build submissions perform their own planning under the owner.
+There is no automatic daemon installation. Workspace UI and scheduling
+are later tasks. Standalone CLI `plan`/catalogue mutations currently require the owner
+to be stopped; build submissions and HTTP mutations use that owner directly.
 
 ## Retry and restart policy
 

@@ -33,3 +33,22 @@ def test_independent_versions(case: dict[str, Any]) -> None:
 def test_unknown_schema_rule_fails_closed() -> None:
     with pytest.raises(ValueError, match="unsupported schema keyword"):
         validate({"newRequiredRule": True}, {}, {})
+
+
+def test_generated_openapi_examples_and_parameter_names() -> None:
+    document = json.loads((ROOT / "generated/openapi-v1.json").read_text())
+    assert document["paths"]["/api/v1/sessions/launch"]["post"]["security"] == [{"bearer": []}]
+    for route in json.loads((ROOT / "api-routes-v1.json").read_text()):
+        operation = document["paths"][route["path"]][route["method"].lower()]
+        parameters = [(p["in"], p["name"]) for p in operation["parameters"]]
+        assert len(parameters) == len(set(parameters))
+        response = operation["responses"]["200"]["content"]["application/json"]["example"]
+        validate(SCHEMA["$defs"][route["response"]], response["data"], SCHEMA["$defs"])
+        if response["context"] is not None:
+            validate(SCHEMA["$defs"]["ApiContextV1"], response["context"], SCHEMA["$defs"])
+        if route["request"]:
+            body = operation["requestBody"]["content"]["application/json"]["example"]
+            validate(SCHEMA["$defs"][route["request"]], body, SCHEMA["$defs"])
+        if route["mutation"]:
+            assert ("header", "Idempotency-Key") in parameters
+            assert ("header", "If-Match") in parameters

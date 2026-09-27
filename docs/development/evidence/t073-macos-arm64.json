@@ -11,8 +11,8 @@
   "worker_protocol": "1.0",
   "expectation_ast": 1,
   "result": "All local contributor gates and native qualification passed",
-  "gate_complete": false,
-  "ci": "Pending owner confirmation for this revision; no workflow polling",
+  "gate_complete": true,
+  "ci": "All jobs passed, owner-confirmed on 2026-09-27; no workflow polling",
   "matrix": "docs/development/g1-qualification.md",
   "commands": [
     {
@@ -197,10 +197,17 @@
   ],
   "verification_sequence": "The aggregate command passed specification/safety regressions but stopped at the old corpus-count assertion. After updating that inventory, all Rust/Python/web/installed-CLI gates were rerun individually to completion; final documentation and safety checks also passed.",
   "limits": [
-    "This final revision is locally qualified on macOS arm64 only; Linux/macOS CI remains owner-monitored. Prior direct-read workflows were separately owner-confirmed.",
+    "Local macOS arm64 qualification and owner-confirmed all-job CI success; see paired revisions in owner_ci_confirmation.",
     "Native editor setup and automatic overlays remain deferred under T031/T108/G3.",
     "HTTP/UI, scheduling, additional transform adapters, preview/history UI, public GC/backup and release packaging remain later gates as itemized in the matrix.",
     "Local imports intentionally copy mutable files; atomic multi-file consistency requires a producer snapshot. Registered foreign inputs remain direct reads and require provider availability/retention for replay.",
     "Existing dependency probes are not a new performance benchmark or universal memory guarantee."
-  ]
+  ],
+  "owner_ci_confirmation": {
+    "date": "2026-09-27",
+    "result": "all jobs passed, owner-reported",
+    "implementation": "bbc90be3ff9b9f8d087fe91df964555ea6002fb9",
+    "specification": "6299a86771825c045973c3d5882b7e5c0bafb563",
+    "workflow_polling": false
+  }
 }

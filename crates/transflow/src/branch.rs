@@ -155,6 +155,13 @@ fn id() -> Result<BranchId, Error> {
     Ok(BranchId::from_bytes(b))
 }
 pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Result<Report, Error> {
+    execute_owned(args, explicit, None)
+}
+pub(crate) fn execute_owned(
+    args: &clap::ArgMatches,
+    explicit: Option<&String>,
+    supplied: Option<&mut RuntimeOwner>,
+) -> Result<Report, Error> {
     let (operation, args) = args.subcommand().ok_or(Error::Context)?;
     let workspace = Workspace::load(&std::env::current_dir()?, explicit.map(Path::new))?;
     let path = workspace.root().join("workspace.toml");
@@ -282,8 +289,14 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
                 blocked: !impacts.is_empty(),
             });
         }
-        let mut owner =
-            RuntimeOwner::acquire(workspace.root(), config.id(), CoordinatorMode::Temporary)?;
+        let mut temporary;
+        let owner = if let Some(owner) = supplied {
+            owner
+        } else {
+            temporary =
+                RuntimeOwner::acquire(workspace.root(), config.id(), CoordinatorMode::Temporary)?;
+            &mut temporary
+        };
         // Never mutate policy files; refuse if the author changed the context during preview.
         if read_authoring(&path)? != authored {
             return Err(Error::Context);

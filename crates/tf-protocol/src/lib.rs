@@ -13,8 +13,8 @@ mod session;
 mod validation;
 pub use error::ProtocolError;
 pub use frame::{
-    ControlFrame, MAX_FRAME_BYTES, MessageType, PROTOCOL_MAJOR, PROTOCOL_MINOR, decode_payload,
-    read_frame, write_frame,
+    ControlFrame, MAX_FRAME_BYTES, MessageType, PROTOCOL_MAJOR, PROTOCOL_MINOR, decode_json,
+    decode_payload, read_frame, write_frame,
 };
 pub use session::{Negotiated, Operation, Session};
 pub use validation::validate_document;

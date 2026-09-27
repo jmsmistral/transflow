@@ -17,6 +17,8 @@ const KEYWORDS: &[&str] = &[
     "items",
     "minItems",
     "maxItems",
+    "minLength",
+    "maxLength",
     "minimum",
     "maximum",
     "format",
@@ -282,9 +284,15 @@ fn validate(schema: &Value, value: &Value, defs: &Value, depth: usize) -> bool {
         return false;
     }
     let shape = match schema["type"].as_str() {
-        Some("string") => value
-            .as_str()
-            .is_some_and(|s| schema["format"].as_str().is_none_or(|f| format(f, s))),
+        Some("string") => value.as_str().is_some_and(|s| {
+            schema["format"].as_str().is_none_or(|f| format(f, s))
+                && schema["minLength"]
+                    .as_u64()
+                    .is_none_or(|n| s.chars().count() >= n as usize)
+                && schema["maxLength"]
+                    .as_u64()
+                    .is_none_or(|n| s.chars().count() <= n as usize)
+        }),
         Some("integer") => value.as_f64().is_some_and(|n| {
             n.is_finite()
                 && n.fract() == 0.0

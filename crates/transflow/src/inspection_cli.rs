@@ -243,7 +243,7 @@ fn graph_value(name: &str, traversal: &traversal::Traversal) -> Result<Value, Er
         json!({"kind":"graph","direction":name,"workspace":first.context.workspace.to_string(),"source":first.context.source.to_string(),"source_digest":first.context.source_digest,"registry_fingerprint":first.context.registry_fingerprint,"certificate_fingerprint":first.context.certificate_fingerprint,"branch":first.context.branch.as_str(),"start":identity(&first.request.start),"depth":first.request.depth.map(|d|d.to_string()),"nodes":nodes,"edges":edges,"total_nodes":first.total_nodes.to_string(),"total_edges":first.total_edges.to_string(),"omitted_nodes":first.omitted_nodes.to_string(),"omitted_edges":first.omitted_edges.to_string(),"scope_complete":first.scope_complete,"delivery_complete":true,"external_expanded":false}),
     )
 }
-fn plan_value(name: &str, plan: &tf_store::planning::DraftPlan) -> Result<Value, Error> {
+pub(crate) fn plan_value(name: &str, plan: &tf_store::planning::DraftPlan) -> Result<Value, Error> {
     let workspace = plan.workspace.parse().map_err(failure)?;
     let before = RegistrySnapshot::parse(workspace, &plan.registry).map_err(failure)?;
     let registry = RegistrySnapshot::parse(workspace, &plan.replacement).map_err(failure)?;

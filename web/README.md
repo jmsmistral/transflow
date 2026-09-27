@@ -49,9 +49,10 @@ browser or full accessibility audit.
 `src/components.tsx` contains native buttons, a labelled modal dialog, textual
 status and a safe render-error fallback. Keyboard focus is visible, the skip link
 moves focus to the workspace and status is never conveyed by colour alone.
-`src/api/` reserves the generated-contract boundary. No hand-written domain types,
-coordinator client or provisional API fixtures are introduced; generation follows
-the Rust schemas in T012/T074. React Flow and ELK remain in the T003 probe until
+`src/api/` reserves the coordinator-client boundary for T082. Shared generated
+types in `src/generated/contracts.ts` and OpenAPI in `schemas/generated/` now
+include the T074–T076 API. The UI does not yet connect to these endpoints.
+React Flow and ELK remain in the T003 probe until
 needed by T083.
 
 The app uses the qualified React 19.3.0, TypeScript 6.0.3 and Vite 8.3.0 baseline.

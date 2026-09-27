@@ -24,6 +24,8 @@ KEYWORDS = {
     "items",
     "minItems",
     "maxItems",
+    "minLength",
+    "maxLength",
     "minimum",
     "maximum",
     "format",
@@ -257,6 +259,10 @@ def validate(
         need(
             isinstance(value, str) and all(not 0xD800 <= ord(c) <= 0xDFFF for c in value), "string"
         )
+        if "minLength" in schema:
+            need(len(value) >= schema["minLength"], "string minimum")
+        if "maxLength" in schema:
+            need(len(value) <= schema["maxLength"], "string maximum")
         if "format" in schema:
             check_format(schema["format"], value)
     elif kind == "integer":

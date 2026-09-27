@@ -1,5 +1,7 @@
 //! CLI argument handling, human diagnostics and versioned JSON results.
 //! Help/version require no workspace I/O. Application services remain later work.
+mod api;
+mod api_read;
 mod branch;
 mod browse;
 mod build_cli;
@@ -58,11 +60,11 @@ fn command() -> clap::Command {
     use clap::{Arg, ArgAction};
     clap::Command::new("transflow")
         .about("A local build system for dataframe datasets (development scaffold)")
-        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Plan, why, graph traversal, dataset builds, execution history and retained replay are available. Serve runs a foreground CLI coordinator. HTTP UI and schedules are not implemented yet.")
+        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Plan, why, graph traversal, dataset builds, execution history and retained replay are available. Serve runs an authenticated loopback API and CLI coordinator. The workspace UI and schedules remain later work.")
         .subcommands(inspection_cli::commands())
         .subcommand(external::command())
         .subcommand(build_cli::command())
-        .subcommand(clap::Command::new("serve").disable_help_flag(true).about("Run the foreground CLI coordinator (HTTP UI and schedules are not yet connected)"))
+        .subcommand(clap::Command::new("serve").disable_help_flag(true).about("Run the authenticated loopback coordinator").arg(Arg::new("port").long("port").default_value("0").value_parser(clap::value_parser!(u16))).arg(Arg::new("open").long("open").action(ArgAction::SetTrue)))
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
         .subcommand(clap::Command::new("branch").disable_help_flag(true).subcommand_required(true).about("List and manage data branches independently of Git")
             .subcommand(clap::Command::new("list").disable_help_flag(true)
@@ -251,7 +253,7 @@ pub fn run(
                             Some(redactor.text(&workspace.root().to_string_lossy())?);
                     }
                     let result = if name == "serve" {
-                        serve::execute(matches.get_one::<String>("workspace"), intent.json)
+                        serve::execute(matches.get_one::<String>("workspace"), intent.json, args)
                     } else {
                         build_cli::execute(
                             args,

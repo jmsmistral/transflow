@@ -200,18 +200,31 @@ fn bounded(value: &Value) -> Result<(), Error> {
     }
 }
 pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Result<Report, Error> {
+    execute_owned(args, explicit, None)
+}
+pub(crate) fn execute_owned(
+    args: &clap::ArgMatches,
+    explicit: Option<&String>,
+    supplied: Option<&mut RuntimeOwner>,
+) -> Result<Report, Error> {
     let (op, args) = args.subcommand().ok_or(Error::Context)?;
     let workspace = Workspace::load(&std::env::current_dir()?, explicit.map(Path::new))?;
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?;
     let apply = op == "add" || (op == "remove" && args.get_flag("yes"));
+    let mut temporary;
     let mut owner = if apply {
-        Some(RuntimeOwner::acquire(
-            workspace.root(),
-            workspace.config().id(),
-            CoordinatorMode::Temporary,
-        )?)
+        if let Some(owner) = supplied {
+            Some(owner)
+        } else {
+            temporary = Some(RuntimeOwner::acquire(
+                workspace.root(),
+                workspace.config().id(),
+                CoordinatorMode::Temporary,
+            )?);
+            temporary.as_mut()
+        }
     } else {
         None
     };
@@ -440,8 +453,8 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
                 })
                 .map_err(|_| Error::Context)?;
         }
-        let done = runtime.block_on(crate::reconcile::reconcile(
-            owner.take().ok_or(Error::Context)?,
+        runtime.block_on(crate::reconcile::execute_owned(
+            owner.ok_or(Error::Context)?,
             crate::reconcile::ReconcileRequest {
                 capture,
                 proposal,
@@ -450,7 +463,6 @@ pub(crate) fn execute(args: &clap::ArgMatches, explicit: Option<&String>) -> Res
                 at_us: preparation::now()?,
             },
         ))?;
-        done.outcome?;
         value["applied"] = true.into();
         value["registry_fingerprint"] = updated.fingerprint().hex().into();
         value["entries"] = json!([entry(

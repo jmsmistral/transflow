@@ -142,7 +142,7 @@ pub async fn prepare_with_options(
     .await
     .map_err(failure)
 }
-async fn prepare_inner(
+pub(crate) async fn prepare_inner(
     owner: &mut RuntimeOwner,
     request: Request,
     options: Options,
@@ -667,7 +667,10 @@ pub async fn accept(
     .await
     .map_err(failure)
 }
-async fn accept_inner(owner: &mut RuntimeOwner, plan_id: RequestId) -> Result<Accepted, Error> {
+pub(crate) async fn accept_inner(
+    owner: &mut RuntimeOwner,
+    plan_id: RequestId,
+) -> Result<Accepted, Error> {
     owner.validate_paths().map_err(failure)?;
     if owner.registration().mode() == tf_exec::ownership::CoordinatorMode::MetadataOnly {
         return Err(failure(
