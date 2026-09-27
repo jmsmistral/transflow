@@ -125,6 +125,19 @@ fn notify(wakers: Vec<Waker>) {
     }
 }
 impl Admission {
+    /// Frozen coordinator capacity; incompatible plan overrides require a new owner session.
+    pub fn capacity(&self) -> Capacity {
+        self.0.capacity
+    }
+    /// Nonblocking acquisition for an owner that must continue servicing lease mailboxes.
+    /// Honors queued FIFO requests; never waits while the runtime writer is held.
+    pub fn try_reserve(&self, demand: Demand) -> Result<Option<Reservation>, Error> {
+        let mut request = self.request(demand)?;
+        match std::pin::Pin::new(&mut request).poll(&mut Context::from_waker(Waker::noop())) {
+            Poll::Ready(result) => result.map(Some),
+            Poll::Pending => Ok(None),
+        }
+    }
     /// Resolve a finite pool. There is deliberately no implicit memory budget.
     pub fn new(capacity: Capacity) -> Result<Self, Error> {
         if capacity.jobs == 0

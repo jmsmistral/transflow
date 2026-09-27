@@ -1,0 +1,100 @@
+{
+  "task": "T080",
+  "date": "2026-09-27",
+  "specification": "1.1.3",
+  "platform": "macOS arm64",
+  "python": "3.14.7",
+  "implementation_base": "ef7030dca837b63f2f901e3c12faa7327834c414",
+  "specification_base": "f6ed779aebc7b0baf0d4cfbda6e302b4c10775e9",
+  "ci": "Pending owner confirmation after push; workflows are not polled",
+  "native": {
+    "query_lifecycle": [
+      "exact typed pagination, row ceiling, context and idempotent creation",
+      "foreign exact version read directly with zero spill allowance",
+      "forbidden SQL fails closed and releases protected reads",
+      "byte limit returns bounded truncated results",
+      "LIMIT 1 does not evade interactive execution deadline",
+      "zero timer, running and queued cancellation, capacity reusable after cleanup",
+      "coordinator shutdown cancels live helpers; query IDs expire across restart",
+      "all paths release leases and temporary files without publishing or copying inputs"
+    ],
+    "existing_api": [
+      "new HTTP build survives client disconnect and retry creates one build/publication",
+      "local version context binds exact source/lineage/schema/row-count metadata",
+      "projected preview physical cursors, lossless nulls, labelled truncation and explicit bounded cell inspection",
+      "authenticated SSE matches committed replay and resumes without duplicate facts",
+      "saved-plan acceptance is explicit and cannot be accepted twice",
+      "foreign preview uses a renewable provider query lease without producer imports or replication",
+      "foreign API registration/build uses provider-owned bytes; retained reads import no provider code",
+      "active HTTP cancellation is replayable and preserves every last-good head",
+      "cancellation receipt survives coordinator restart"
+    ],
+    "sql_helper": [
+      "10 analytical SELECT/WITH/group/join/window/subquery fixtures",
+      "bound parameters remain data",
+      "additional explicit version views retain separate binding identities",
+      "explicit threads/memory and zero spill stop computation independent of output",
+      "42 AST denials and five engine defence-in-depth denials",
+      "write denial preserves provider and outside bytes; no producer/cwd imports",
+      "private failures, corrupt bindings and duplicate aliases fail closed",
+      "lossy timestamp, nested input and case-colliding fields refused",
+      "Arrow result retains exact u64, precision-38 decimal, ns timestamp and null",
+      "row and encoded-byte output caps report truncation without publishing",
+      "exact multi-file manifests work and changed provider bytes fail"
+    ]
+  },
+  "verification": {
+    "rust": "Full Rust gate passed 384 tests plus one doc test. Final protocol capability and orphan-recovery tests passed in focused 12-test transport and 7-test application-library runs: 386 unique Rust tests plus one doc test overall. Final Clippy, formatting, 12 boundary regressions and standalone storage compilation passed.",
+    "python": "907 tests passed in the full run; 18 socket tests were blocked by sandbox permissions and all 18 passed in an authorized rerun. The final 325-test wire suite includes one new capability test: 926 unique tests passed overall. Ruff/formatting and strict mypy (68 source files) passed on final Python changes.",
+    "web": "360 tests, typecheck/lint/format and matching production builds passed.",
+    "cli": "58 installed CLI/API integration tests passed.",
+    "contracts": "304 conformance cases passed in Rust, Python and TypeScript; generated contract drift check passed.",
+    "native": "8 query lifecycle, 9 existing API and 11 SQL helper scenario groups passed against the installed matched wheel and real pinned engines.",
+    "documents_safety": "44 specification, 27 safety and 12 boundary regressions passed; document/link validation and diff checks passed. Final receipt/task-link checks follow before commit.",
+    "dependencies": "Arrow IPC 60.0.0 is now a direct tf-store and qualification dependency; rustix is direct in composition for no-follow private result reads. Both were already locked and qualified. The 641 package identities/licenses/advisory query set are unchanged; only lock digests and the advisory inventory binding were refreshed, retaining the original advisory check date."
+  },
+  "commands": [
+    "PATH=\"$HOME/.cargo/bin:$PATH\" PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-rust.sh",
+    "cargo test -p tf-protocol --test transport --locked --offline",
+    "cargo test -p transflow --lib --locked --offline",
+    "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+    "cargo clippy -p transflow --all-targets --locked --offline -- -D warnings",
+    "bash tools/check-python.sh",
+    "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/tests/test_discovery.py",
+    "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/tests/test_wire.py",
+    "target/python/py314/bin/python -m mypy --config-file python/pyproject.toml",
+    "bash tools/check-web.sh",
+    "bash tools/check-cli.sh",
+    "target/qualification/py314/bin/python -I -B python/tools/check_queries.py target/debug/transflow /tmp/t080-wheels/transflow-0.0.0.dev0-py3-none-any.whl target/qualification/wheelhouse --output /tmp/t080-queries.json",
+    "target/qualification/py314/bin/python -I -B python/tools/check_api.py target/debug/transflow /tmp/t080-wheels/transflow-0.0.0.dev0-py3-none-any.whl target/qualification/wheelhouse --output /tmp/t080-api.json",
+    "target/qualification/py314/bin/python -I -B python/tools/check_scratchpad.py /tmp/t080-wheels/transflow-0.0.0.dev0-py3-none-any.whl --output /tmp/t080-scratchpad.json",
+    "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+    "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests",
+    "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+    "git diff --check; git -C ../transflow-spec diff --check"
+  ],
+  "hashes": {
+    "target/debug/transflow": "60af48f88a0973fb516a9c24a7e6cbf4c54835200f60f659403834e6666281c7",
+    "/tmp/t080-wheels/transflow-0.0.0.dev0-py3-none-any.whl": "35f1c8eb77114b48f10105f5b971cf01ae4d8b2e6eb20e32452bb0982df3b0fd",
+    "schemas/contracts-v1.schema.json": "25bc2f08fd5eb4de0da3e3bc182854a625bc541a5d1a219f008c6e9d92417acc",
+    "schemas/api-routes-v1.json": "410245f721fa4cbb352a20a35222af7837b3452ae1c8c8a442b4b62a2176b013"
+  },
+  "corrections": [
+    "Used the recorded env-sync base interpreter, with private-file checks, and made read-only environment verification cancellable under the same interactive phase.",
+    "Added the query module to wheel inventory and synchronized closed capability handling in both protocol implementations.",
+    "Native fixture setup was corrected for keyword-only environment arguments, dataset_heads naming, supported SQL/parameter lengths and recovery-file naming.",
+    "Success fixtures use the normal 30-second deadline; only the expensive computation case lowers it to eight seconds. A short-deadline success run timed out under concurrent regression load; the final separated run passed.",
+    "Orphan recovery fixture permissions were corrected to match the real mode-0700 supervisor directory.",
+    "Formatted generated-contract consumers and refreshed reviewed generator input hashes."
+  ],
+  "limits": [
+    "No query UI or SQL transform adapter is delivered; this is authenticated trusted-local SQL, not a hostile-code sandbox.",
+    "Results/query IDs are ephemeral: at most four active/queued and 64 retained, five-minute terminal retention, unavailable after restart. Idempotency lasts only while retained.",
+    "Provider bytes stay external. Normal cleanup releases leases; unreachable providers/coordinator crashes use the existing finite provider expiry backstop.",
+    "Only macOS arm64 was run locally; Linux x64/arm64 push CI is pending owner confirmation.",
+    "The full native aggregate was not repeated; directly run query, existing API and SQL probes are wired into that aggregate.",
+    "No hard process RSS guarantee; optional memory uses reservations and DuckDB engine configuration. Spill and IPC/JSON output ceilings are separate.",
+    "No new browser journey was required because no UI changed."
+  ],
+  "result": "Required local gates passed, including focused completion runs after corrections"
+}

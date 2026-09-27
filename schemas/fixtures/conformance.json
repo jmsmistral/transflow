@@ -7023,5 +7023,312 @@
       "result_directory": "/private/synthetic/query"
     },
     "valid": false
+  },
+  {
+    "name": "query-supervised-request",
+    "schema": "QueryExecutionRequestV1",
+    "value": {
+      "format_version": 1,
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "attempt_id": "11111111-1111-4111-8111-111111111111",
+      "auth_token": "0000000000000000000000000000000000000000000000000000000000000000",
+      "query": {
+        "format_version": 1,
+        "request_id": "11111111-1111-4111-8111-111111111111",
+        "sql": "SELECT count(*) FROM dataset",
+        "parameters": [],
+        "bindings": [
+          {
+            "alias": "dataset",
+            "workspace_id": "00000000-0000-4000-8000-000000000001",
+            "dataset_id": "00000000-0000-4000-8000-000000000001",
+            "version_id": "00000000-0000-4000-8000-000000000001",
+            "artifact_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "artifact_root": "/private/synthetic/artifact",
+            "manifest": {
+              "format_version": 1,
+              "logical_schema": {
+                "format_version": 1,
+                "fields": [
+                  {
+                    "name": "id",
+                    "logical_type": {
+                      "type": "u64"
+                    },
+                    "nullable": false
+                  },
+                  {
+                    "name": "details",
+                    "logical_type": {
+                      "type": "struct",
+                      "fields": [
+                        {
+                          "name": "items",
+                          "logical_type": {
+                            "type": "list",
+                            "element": {
+                              "name": "item",
+                              "logical_type": {
+                                "type": "decimal",
+                                "precision": 38,
+                                "scale": 4
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "nullable": true
+                        }
+                      ]
+                    },
+                    "nullable": true,
+                    "metadata": {
+                      "description": "Synthetic"
+                    }
+                  }
+                ]
+              },
+              "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "files": [
+                {
+                  "path": "part-000.parquet",
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "byte_length": "9007199254740993",
+                  "row_count": "0"
+                },
+                {
+                  "path": "parts/part-001.parquet",
+                  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "byte_length": "9007199254740993",
+                  "row_count": "0"
+                }
+              ],
+              "writer": {
+                "engine": "polars",
+                "version": "1.44.2",
+                "compression": "zstd",
+                "row_group_size": "100000"
+              }
+            }
+          }
+        ],
+        "result_directory": "/private/synthetic/query"
+      },
+      "limits": {
+        "rows": 1000,
+        "bytes": 2097152,
+        "spill_bytes": "268435456",
+        "threads": 1,
+        "memory_bytes": null
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "query-zero-spill",
+    "schema": "QueryLimitsV1",
+    "value": {
+      "rows": 1000,
+      "bytes": 2097152,
+      "spill_bytes": "0",
+      "threads": 1,
+      "memory_bytes": null
+    },
+    "valid": true
+  },
+  {
+    "name": "query-excessive-rows",
+    "schema": "QueryLimitsV1",
+    "value": {
+      "rows": 1001,
+      "bytes": 2097152,
+      "spill_bytes": "268435456",
+      "threads": 1,
+      "memory_bytes": null
+    },
+    "valid": false
+  },
+  {
+    "name": "query-excessive-bytes",
+    "schema": "QueryLimitsV1",
+    "value": {
+      "rows": 1000,
+      "bytes": 2097153,
+      "spill_bytes": "268435456",
+      "threads": 1,
+      "memory_bytes": null
+    },
+    "valid": false
+  },
+  {
+    "name": "query-api-request",
+    "schema": "ApiQueryRequestV1",
+    "value": {
+      "sql": "SELECT id FROM dataset",
+      "parameters": [],
+      "bindings": [
+        {
+          "alias": "dataset",
+          "dataset": "11111111-1111-4111-8111-111111111111",
+          "origin_workspace": "11111111-1111-4111-8111-111111111111",
+          "version": "11111111-1111-4111-8111-111111111111"
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "query-api-forbids-file-path",
+    "schema": "ApiQueryRequestV1",
+    "value": {
+      "sql": "SELECT id FROM dataset",
+      "parameters": [],
+      "bindings": [
+        {
+          "alias": "dataset",
+          "dataset": "11111111-1111-4111-8111-111111111111",
+          "origin_workspace": "11111111-1111-4111-8111-111111111111",
+          "version": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "python": "/tmp/python"
+    },
+    "valid": false
+  },
+  {
+    "name": "query-api-requires-exact-version",
+    "schema": "ApiQueryRequestV1",
+    "value": {
+      "sql": "SELECT id FROM dataset",
+      "parameters": [],
+      "bindings": [
+        {
+          "alias": "dataset",
+          "dataset": "11111111-1111-4111-8111-111111111111",
+          "origin_workspace": "11111111-1111-4111-8111-111111111111"
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "query-api-queued",
+    "schema": "ApiQueryV1",
+    "value": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "state": "QUEUED",
+      "bindings": [
+        {
+          "alias": "dataset",
+          "dataset": "11111111-1111-4111-8111-111111111111",
+          "origin_workspace": "11111111-1111-4111-8111-111111111111",
+          "version": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "sql": "SELECT id FROM dataset",
+      "parameters": [],
+      "elapsed_ms": "0",
+      "error": null,
+      "truncated": false,
+      "rows": "0",
+      "limits": {
+        "rows": 1000,
+        "bytes": 2097152,
+        "spill_bytes": "268435456",
+        "threads": 1,
+        "memory_bytes": null
+      },
+      "timeout_seconds": "30",
+      "expires_in_seconds": null
+    },
+    "valid": true
+  },
+  {
+    "name": "query-api-timeout",
+    "schema": "ApiQueryV1",
+    "value": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "state": "TIMED_OUT",
+      "bindings": [
+        {
+          "alias": "dataset",
+          "dataset": "11111111-1111-4111-8111-111111111111",
+          "origin_workspace": "11111111-1111-4111-8111-111111111111",
+          "version": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "sql": "SELECT id FROM dataset",
+      "parameters": [],
+      "elapsed_ms": "0",
+      "error": "Interactive query timed out",
+      "truncated": false,
+      "rows": "0",
+      "limits": {
+        "rows": 1000,
+        "bytes": 2097152,
+        "spill_bytes": "268435456",
+        "threads": 1,
+        "memory_bytes": null
+      },
+      "timeout_seconds": "30",
+      "expires_in_seconds": 300
+    },
+    "valid": true
+  },
+  {
+    "name": "query-result-frame",
+    "schema": "ControlFrameV1",
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [
+        "duckdb.query.v1"
+      ],
+      "extensions": [],
+      "message": {
+        "type": "query_results",
+        "results_path": "checks/results.json",
+        "results_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "query-lossless-results",
+    "schema": "ApiQueryResultsV1",
+    "value": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "schema": {
+        "format_version": 1,
+        "fields": [
+          {
+            "name": "id",
+            "logical_type": {
+              "type": "i64"
+            },
+            "nullable": false
+          }
+        ]
+      },
+      "rows": [
+        [
+          {
+            "type": "i64",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "next_offset": null,
+      "truncated": false
+    },
+    "valid": true
   }
 ]

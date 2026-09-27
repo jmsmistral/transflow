@@ -2,6 +2,7 @@
 //! Help/version require no workspace I/O. Application services remain later work.
 mod api;
 mod api_preview;
+mod api_query;
 mod api_read;
 mod branch;
 mod browse;

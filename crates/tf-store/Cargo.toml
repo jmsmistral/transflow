@@ -18,6 +18,7 @@ serde_json.workspace = true
 parquet.workspace = true
 arrow-array.workspace = true
 arrow-schema.workspace = true
+arrow-ipc.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros"] }

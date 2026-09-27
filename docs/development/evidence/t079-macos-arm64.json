@@ -6,7 +6,7 @@
   "python": "3.14.7",
   "implementation_base": "2a27e38",
   "specification_base": "e0e8d1b",
-  "ci": "Pending owner confirmation after push; no workflows polled",
+  "ci": "All GitHub CI jobs passed, confirmed by the owner on 2026-09-27; workflows were not polled",
   "native": {
     "result": "pass",
     "cases": [
@@ -51,7 +51,7 @@
   ],
   "limits": [
     "No query HTTP endpoint, UI or coordinator lease/lifecycle integration; T080 owns those.",
-    "Only macOS arm64 run locally; native CI matrix result remains owner-monitored.",
+    "Only macOS arm64 run locally; CI matrix success is owner-confirmed for ci_revisions.",
     "PyArrow 25.0.1 is required by the helper but existing workspace locks are unchanged.",
     "No general hostile-SQL sandbox, computation-memory ceiling or whole A32 qualification is claimed.",
     "The full native aggregate was not repeated; the new installed-wheel probe is integrated into it and was run directly."
@@ -63,5 +63,9 @@
     "Installed native engines offline into the disposable helper environment; nested venv system-site-packages does not inherit the qualification venv.",
     "Updated the exact wheel inventory for the two added production modules and contract fixture count for seven added cases.",
     "Refreshed the intentional shared schema input hash; created the linked receipt before final document regressions."
-  ]
+  ],
+  "ci_revisions": {
+    "implementation": "ef7030dca837b63f2f901e3c12faa7327834c414",
+    "specification": "f6ed779aebc7b0baf0d4cfbda6e302b4c10775e9"
+  }
 }

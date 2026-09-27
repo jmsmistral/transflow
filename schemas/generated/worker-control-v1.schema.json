@@ -1095,6 +1095,26 @@
             "retryable"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "query_results"
+            },
+            "results_path": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "results_digest": {
+              "$ref": "#/$defs/Sha256"
+            }
+          },
+          "required": [
+            "type",
+            "results_path",
+            "results_digest"
+          ],
+          "additionalProperties": false
         }
       ]
     },
@@ -7356,6 +7376,334 @@
         "row_count",
         "truncated",
         "bindings"
+      ],
+      "additionalProperties": false
+    },
+    "QueryLimitsV1": {
+      "type": "object",
+      "properties": {
+        "rows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 2097152
+        },
+        "spill_bytes": {
+          "$ref": "#/$defs/Count"
+        },
+        "threads": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "memory_bytes": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        }
+      },
+      "required": [
+        "rows",
+        "bytes",
+        "spill_bytes",
+        "threads",
+        "memory_bytes"
+      ],
+      "additionalProperties": false
+    },
+    "QueryExecutionRequestV1": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "protocol": {
+          "$ref": "#/$defs/ProtocolVersion"
+        },
+        "request_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "auth_token": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "query": {
+          "$ref": "#/$defs/ScratchpadRequestV1"
+        },
+        "limits": {
+          "$ref": "#/$defs/QueryLimitsV1"
+        }
+      },
+      "required": [
+        "format_version",
+        "protocol",
+        "request_id",
+        "attempt_id",
+        "auth_token",
+        "query",
+        "limits"
+      ],
+      "additionalProperties": false
+    },
+    "ApiQueryRequestV1": {
+      "type": "object",
+      "properties": {
+        "sql": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16384
+        },
+        "parameters": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "maxLength": 4096
+              }
+            ]
+          },
+          "minItems": 0
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "alias": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 63
+              },
+              "dataset": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "origin_workspace": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "version": {
+                "$ref": "#/$defs/Uuid"
+              }
+            },
+            "required": [
+              "alias",
+              "dataset",
+              "origin_workspace",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 32
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 2097152
+        },
+        "spill_bytes": {
+          "$ref": "#/$defs/Count"
+        }
+      },
+      "required": [
+        "sql",
+        "parameters",
+        "bindings"
+      ],
+      "additionalProperties": false
+    },
+    "ApiQueryV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "state": {
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELED",
+            "TIMED_OUT"
+          ]
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "alias": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 63
+              },
+              "dataset": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "origin_workspace": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "version": {
+                "$ref": "#/$defs/Uuid"
+              }
+            },
+            "required": [
+              "alias",
+              "dataset",
+              "origin_workspace",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 32
+        },
+        "sql": {
+          "type": "string",
+          "maxLength": 16384
+        },
+        "parameters": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "maxLength": 4096
+              }
+            ]
+          },
+          "minItems": 0
+        },
+        "elapsed_ms": {
+          "$ref": "#/$defs/Count"
+        },
+        "error": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "maxLength": 1024
+            }
+          ]
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "rows": {
+          "$ref": "#/$defs/Count"
+        },
+        "limits": {
+          "$ref": "#/$defs/QueryLimitsV1"
+        },
+        "timeout_seconds": {
+          "$ref": "#/$defs/Count"
+        },
+        "expires_in_seconds": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 300
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "state",
+        "bindings",
+        "sql",
+        "parameters",
+        "elapsed_ms",
+        "error",
+        "truncated",
+        "rows",
+        "limits",
+        "timeout_seconds",
+        "expires_in_seconds"
+      ],
+      "additionalProperties": false
+    },
+    "ApiQueryResultsV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "schema": {
+          "$ref": "#/$defs/LogicalSchemaV1"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/WireValue"
+            },
+            "minItems": 0,
+            "maxItems": 128
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "next_offset": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000
+            }
+          ]
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "schema",
+        "rows",
+        "next_offset",
+        "truncated"
       ],
       "additionalProperties": false
     }

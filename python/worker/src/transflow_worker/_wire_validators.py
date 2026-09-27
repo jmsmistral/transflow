@@ -481,3 +481,28 @@ def validate_ScratchpadRequestV1(value: object) -> None:
 def validate_ScratchpadResultV1(value: object) -> None:
     """Assert the ScratchpadResultV1 contract, including custom formats."""
     validate_document("ScratchpadResultV1", value)
+
+
+def validate_QueryLimitsV1(value: object) -> None:
+    """Assert the QueryLimitsV1 contract, including custom formats."""
+    validate_document("QueryLimitsV1", value)
+
+
+def validate_QueryExecutionRequestV1(value: object) -> None:
+    """Assert the QueryExecutionRequestV1 contract, including custom formats."""
+    validate_document("QueryExecutionRequestV1", value)
+
+
+def validate_ApiQueryRequestV1(value: object) -> None:
+    """Assert the ApiQueryRequestV1 contract, including custom formats."""
+    validate_document("ApiQueryRequestV1", value)
+
+
+def validate_ApiQueryV1(value: object) -> None:
+    """Assert the ApiQueryV1 contract, including custom formats."""
+    validate_document("ApiQueryV1", value)
+
+
+def validate_ApiQueryResultsV1(value: object) -> None:
+    """Assert the ApiQueryResultsV1 contract, including custom formats."""
+    validate_document("ApiQueryResultsV1", value)

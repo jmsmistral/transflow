@@ -111,17 +111,20 @@ impl Guard {
             }
             MessageType::DiscoveryReady
             | MessageType::ArtifactReady
-            | MessageType::CheckResults => {
+            | MessageType::CheckResults
+            | MessageType::QueryResults => {
                 let allowed = matches!(
                     (self.operation, frame.message_type()),
                     (Operation::Discover, MessageType::DiscoveryReady)
                         | (Operation::Execute, MessageType::ArtifactReady)
                         | (Operation::EvaluateChecks, MessageType::CheckResults)
+                        | (Operation::QueryPreview, MessageType::QueryResults)
                 );
                 let phase = self.phase.and_then(|index| phases.get(index)).copied();
                 let correct_phase = matches!(
                     (frame.message_type(), phase),
                     (MessageType::DiscoveryReady, Some("discovering"))
+                        | (MessageType::QueryResults, Some("querying"))
                         | (
                             MessageType::ArtifactReady,
                             Some("materializing" | "validating_outputs")
@@ -140,7 +143,10 @@ impl Guard {
                 if self.phase.is_none_or(|phase| phase == 0)
                     || (matches!(
                         self.operation,
-                        Operation::Discover | Operation::Execute | Operation::EvaluateChecks
+                        Operation::Discover
+                            | Operation::Execute
+                            | Operation::EvaluateChecks
+                            | Operation::QueryPreview
                     ) && self.result.is_none())
                 {
                     return Err(Failure::Protocol);

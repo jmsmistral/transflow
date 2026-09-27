@@ -34,7 +34,7 @@ fn runtime_assertions_agree_with_all_shared_schema_cases() {
     let cases: Vec<Value> =
         serde_json::from_str(include_str!("../../../schemas/fixtures/conformance.json")).unwrap();
     // T079 adds seven private scratchpad binding/request/result fixtures.
-    assert_eq!(cases.len(), 293);
+    assert_eq!(cases.len(), 304);
     for case in cases {
         assert_eq!(
             validate_document(case["schema"].as_str().unwrap(), &case["value"]).is_ok(),
@@ -359,6 +359,47 @@ fn discovery_results_require_the_operation_and_capability() {
         .accept(&frame(
             0,
             json!({"type":"hello","operation":"discover","capabilities":[]}),
+        ))
+        .unwrap();
+    assert!(matches!(
+        denied.accept(&ready),
+        Err(ProtocolError::Capability)
+    ));
+    let mut wrong = session();
+    wrong.accept(&frame(0, hello())).unwrap();
+    assert!(matches!(wrong.accept(&ready), Err(ProtocolError::Order)));
+}
+#[test]
+fn query_results_require_the_operation_and_capability() {
+    let ready = frame(
+        1,
+        json!({"type":"query_results","results_path":"result.json","results_digest":"a".repeat(64)}),
+    );
+    let mut accepted = Session::new(
+        REQUEST.parse().unwrap(),
+        ATTEMPT.parse().unwrap(),
+        Operation::QueryPreview,
+        BTreeSet::from(["duckdb.query.v1".to_string()]),
+    )
+    .unwrap();
+    accepted
+        .accept(&frame(
+            0,
+            json!({"type":"hello","operation":"query_preview","capabilities":["duckdb.query.v1"]}),
+        ))
+        .unwrap();
+    accepted.accept(&ready).unwrap();
+    let mut denied = Session::new(
+        REQUEST.parse().unwrap(),
+        ATTEMPT.parse().unwrap(),
+        Operation::QueryPreview,
+        BTreeSet::new(),
+    )
+    .unwrap();
+    denied
+        .accept(&frame(
+            0,
+            json!({"type":"hello","operation":"query_preview","capabilities":[]}),
         ))
         .unwrap();
     assert!(matches!(

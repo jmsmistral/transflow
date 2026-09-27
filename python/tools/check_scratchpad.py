@@ -299,6 +299,32 @@ def main() -> None:
             )
             assert settings["lock_configuration"] == "true"
             assert settings["allowed_directories"] == f"[{spill}/]"
+        bounded_spill = root / "bounded-engine-spill"
+        bounded_spill.mkdir(mode=0o700)
+        with _connect(
+            {"dataset": [str(source)]},
+            bounded_spill,
+            {
+                "rows": 1000,
+                "bytes": 2097152,
+                "threads": 1,
+                "memory_bytes": "8388608",
+                "spill_bytes": "0",
+            },
+        ) as db:
+            # Trusted engine probe, outside the authored-SQL allowlist. A tiny output
+            # still requires a large sort; zero disk forbids spill instead of growing it.
+            assert db.execute("SELECT current_setting('threads')").fetchone() == (1,)
+            try:
+                db.execute("SELECT i FROM range(5000000) t(i) ORDER BY i % 10000, i").fetchone()
+            except importlib.import_module("duckdb").OutOfMemoryException:
+                pass
+            else:
+                raise AssertionError("Sort exceeded its memory/zero-spill allocation")
+        assert not any(bounded_spill.iterdir())
+        cases.append(
+            "explicit threads/memory and zero spill stop computation independent of output"
+        )
         for sql in negatives[1::5]:
             helper(sql, succeeds=False)
         helper(f"COPY dataset TO '{source}' (FORMAT PARQUET, USE_TMP_FILE false)", succeeds=False)

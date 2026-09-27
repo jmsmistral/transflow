@@ -20,6 +20,18 @@ pub(crate) fn execute(
     let current = std::env::current_dir().map_err(failure)?;
     let workspace = tf_catalog::workspace::Workspace::load(&current, explicit.map(Path::new))
         .map_err(failure)?;
+    let resolved = crate::resources::Resolved::new(
+        &workspace
+            .config()
+            .execution_policy(
+                &Default::default(),
+                &Default::default(),
+                &Default::default(),
+            )
+            .map_err(failure)?,
+    )
+    .map_err(failure)?;
+    let admission = tf_exec::admission::Admission::new(resolved.capacity).map_err(failure)?;
     let mut owner = tf_exec::ownership::RuntimeOwner::acquire(
         workspace.root(),
         workspace.config().id(),
@@ -64,6 +76,7 @@ pub(crate) fn execute(
             json_mode,
             endpoint.commands.clone(),
             endpoint.providers.clone(),
+            Some(admission.clone()),
         ))?;
         owner = c.owner;
         c.result.map_err(failure)?;
@@ -74,6 +87,7 @@ pub(crate) fn execute(
         workspace.config().id(),
         endpoint.busy.clone(),
         endpoint.cancel_sender.clone(),
+        admission.clone(),
     );
     let http = tf_api::Server::bind(
         std::net::SocketAddr::from((
@@ -83,7 +97,7 @@ pub(crate) fn execute(
                 .ok_or_else(|| failure("missing HTTP port"))?,
         )),
         owner.registration().nonce().to_owned(),
-        service,
+        service.clone(),
     )
     .map_err(failure)?;
     owner
@@ -112,6 +126,7 @@ pub(crate) fn execute(
         eprintln!("HTTP API: http://{}", http.address());
     }
     while !stopped.load(Ordering::Acquire) {
+        service.queries.tick();
         crate::provider::drain(&mut owner, &rt, &endpoint.providers)?;
         crate::api::drain(&mut owner, &commands, &endpoint.busy).map_err(failure)?;
         let queued = rt.block_on(async {
@@ -133,6 +148,7 @@ pub(crate) fn execute(
                 json_mode,
                 endpoint.commands.clone(),
                 endpoint.providers.clone(),
+                Some(admission.clone()),
             ))?;
             owner = c.owner;
             c.result.map_err(failure)?;
@@ -170,6 +186,7 @@ pub(crate) fn execute(
                         json_mode,
                         endpoint.commands.clone(),
                         endpoint.providers.clone(),
+                        Some(admission.clone()),
                     ))?;
                     owner = c.owner;
                     c.result.map_err(failure)?;
@@ -191,6 +208,13 @@ pub(crate) fn execute(
         });
     }
     drop(http);
+    service.queries.cancel_all();
+    while service.queries.active() {
+        crate::provider::drain(&mut owner, &rt, &endpoint.providers)?;
+        service.queries.tick();
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    drop(service);
     drop(endpoint);
     Ok(build_cli::report(
         "serve",

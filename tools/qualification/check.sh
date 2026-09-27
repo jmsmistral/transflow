@@ -49,6 +49,7 @@ cargo build --locked --offline -p transflow --bin transflow --example dispatch_p
 "$python_bin" -I -B python/tools/check_developer_core.py "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" --output "$run_dir/developer-core.json"
 "$python_bin" -I -B python/tools/check_foreign.py "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" --output "$run_dir/foreign-data.json"
 "$python_bin" -I -B python/tools/check_api.py "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" --output "$run_dir/api.json"
+"$python_bin" -I -B python/tools/check_queries.py "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" --output "$run_dir/queries.json"
 node tools/qualification/web/patch-elk.mjs
 npm --prefix tools/qualification/web run typecheck
 npm --prefix tools/qualification/web test

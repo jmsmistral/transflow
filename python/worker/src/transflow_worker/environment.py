@@ -531,6 +531,10 @@ def check_environment(root: Path, requirements: str, lock: str, minor: str) -> d
         "packages": len(cast(dict[str, str], actual["packages"])),
         "interpreter": str(environment / "bin/python"),
         "runtime_version": cast(dict[str, str], actual["packages"])["transflow"],
+        "query_available": all(
+            cast(dict[str, str], actual["packages"]).get(name) == version
+            for name, version in (("duckdb", "1.5.5"), ("pyarrow", "25.0.1"))
+        ),
     }
 
 

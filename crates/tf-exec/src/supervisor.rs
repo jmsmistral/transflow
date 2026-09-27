@@ -452,6 +452,7 @@ fn run_inner(
                 "expectation.core.v1".to_owned(),
                 "duckdb.checks.v1".to_owned(),
                 "duckdb.samples.v1".to_owned(),
+                "duckdb.query.v1".to_owned(),
             ]
             .into(),
         )
@@ -495,7 +496,11 @@ fn run_inner(
             &token_hex,
         )?;
     }
-    let child = Command::new(&launch.python)
+    let mut command = Command::new(&launch.python);
+    if launch.operation == Operation::QueryPreview {
+        command.env_clear();
+    }
+    let child = command
         .args([
             "-I",
             "-B",

@@ -178,3 +178,74 @@ lengths, schema and selected Parquet decoding were checked. Preview intentionall
 does not hash/decode every file or assert freshness/quality PASS. Full execution
 integrity checks remain unchanged. Preview is a CSRF-protected read operation;
 it does not require a mutation idempotency key.
+
+## Interactive queries
+
+T080 adds four authenticated, context-bound routes. Creation and cancellation
+require the existing If-Match/Idempotency-Key guards (and CSRF for browser sessions):
+
+| Route | Behaviour |
+| --- | --- |
+| `POST /api/v1/queries?branch=main` | Accept SQL, separate parameters and explicit version bindings; return a query ID and QUEUED status. |
+| `GET /api/v1/queries/{id}?branch=main` | Read frozen SQL/bindings/parameters, state, limits, elapsed time and truncation. |
+| `GET /api/v1/queries/{id}/results?branch=main&offset=0&limit=200` | Page typed scalar/nested wire cells under the original schema/context; at most 1,000 rows per page. |
+| `POST /api/v1/queries/{id}/cancel?branch=main` | Request cancellation with `{}`; observe CANCELED after cleanup. |
+
+Creation body (UUID values must identify existing registered datasets/versions):
+
+```json
+{
+  "sql": "SELECT id FROM dataset WHERE id > CAST(? AS BIGINT)",
+  "parameters": ["10"],
+  "bindings": [
+    {
+      "alias": "dataset",
+      "dataset": "11111111-1111-4111-8111-111111111111",
+      "origin_workspace": "22222222-2222-4222-8222-222222222222",
+      "version": "33333333-3333-4333-8333-333333333333"
+    }
+  ],
+  "rows": 1000,
+  "bytes": 2097152,
+  "spill_bytes": "268435456"
+}
+```
+
+Bindings are required (1–32); paths/interpreters are not request fields. Local and
+foreign datasets must be visible in the selected registry. Foreign immutable
+files are read directly under renewable provider leases, without producer execution
+or byte replication. An unavailable version fails explicitly; a newer head never
+rebinds an accepted query. SQL still obeys the [reviewed helper subset](../../python/worker/SQL.md).
+
+Optional rows/bytes may lower the workspace `interactive.max_result_rows` and
+`max_result_bytes`; service ceilings are 1,000 and 2 MiB. Both Arrow IPC and JSON
+are bounded; oversized rows can produce an empty truncated result. The entire
+HTTP result envelope is checked too; a 413 asks for a smaller page. Spill defaults
+to 256 MiB, accepts a smaller decimal-string byte allocation including zero, and
+is confined to a fresh private directory. These output caps do not bound SQL
+computation. The independent `interactive.query_timeout_seconds` defaults to 30;
+zero disables that deadline only. Elapsed status time includes queue/cleanup time;
+the execution budget excludes queue wait and supervised termination grace.
+
+State proceeds QUEUED → RUNNING → SUCCEEDED/FAILED/CANCELED/TIMED_OUT. Four queries
+may be active/queued; completed statuses/results occupy at most 64 cache slots.
+A full cache returns busy rather than evicting unexpired results. Workers share
+the coordinator's job/CPU/memory admission gate with builds; no query bypasses
+build capacity. Persistent capacity is frozen at serve startup; CPU/memory changes
+require a restart. Per-build job ceilings remain bounded by coordinator capacity.
+Absent explicit memory configuration, no Transflow memory limit is installed.
+
+Completed query IDs/results expire after five minutes (410 while the expired
+receipt remains, otherwise 404) and are unavailable after restart. Creation
+retries with the same key and request replay the same live ID; a changed request
+conflicts. Always use a new key for a new query, including after expiry. Retained
+results release input leases as soon as helper/result acceptance finishes; result
+pagination does not keep provider data pinned. Cancellation is idempotent and a
+terminal query remains terminal. Shutdown cancels active queries, drains provider
+releases, and reaps workers. Crash recovery removes orphan helper directories;
+finite provider lease expiry covers unreachable-provider/crash cases. Nothing is
+published into the dataset catalog. No query UI is delivered in T080.
+
+Query capabilities require the matched installed worker and pinned DuckDB/PyArrow
+packages. Prepare them explicitly with `env lock`/`env sync`, then restart `serve`.
+Missing query dependencies leave ordinary metadata/build endpoints available.

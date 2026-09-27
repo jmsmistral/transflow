@@ -86,6 +86,8 @@ impl Drop for CancelOnDrop {
 /// Explicit estimates for optional admission budgets; these are not hard OS limits.
 #[derive(Default)]
 pub struct Options {
+    /// Shared with interactive helpers under a persistent coordinator.
+    pub admission: Option<tf_exec::admission::Admission>,
     /// Authenticated metadata-only requests served by this same runtime owner.
     pub providers: Option<crate::provider::Mailbox>,
     /// Per-job estimated peak bytes, required only with a configured memory budget.
@@ -221,7 +223,22 @@ fn execute(
         EventTime(0),
     )
     .map_err(fail)?;
-    let pool = tf_exec::admission::Admission::new(prepared.capacity).map_err(fail)?;
+    let pool = match options.admission {
+        Some(pool)
+            if pool.capacity().cpu == prepared.capacity.cpu
+                && pool.capacity().memory_bytes == prepared.capacity.memory_bytes
+                && pool.capacity().disk_bytes == prepared.capacity.disk_bytes =>
+        {
+            pool
+        }
+        Some(_) => {
+            cancel_unstarted(owner, rt, build_id)?;
+            return Err(fail(
+                "Resource capacities changed; restart the coordinator with matching workspace limits",
+            ));
+        }
+        None => tf_exec::admission::Admission::new(prepared.capacity).map_err(fail)?,
+    };
     let mut coordinator = Coordinator {
         owner,
         rt,
@@ -334,8 +351,15 @@ fn execute(
                 }
                 let usage = pool.usage().map_err(fail)?;
                 let mut demand = pool.default_demand();
+                demand.cpu = (coordinator.prepared.capacity.cpu
+                    / coordinator
+                        .prepared
+                        .capacity
+                        .jobs
+                        .min(coordinator.prepared.capacity.cpu))
+                .max(1);
                 demand.memory_bytes = options.memory_estimates.get(id).copied();
-                if usage.jobs >= coordinator.prepared.capacity.jobs
+                if coordinator.active.len() >= coordinator.prepared.capacity.jobs as usize
                     || demand.cpu > coordinator.prepared.capacity.cpu - usage.cpu
                     || coordinator
                         .prepared
@@ -347,6 +371,9 @@ fn execute(
                 {
                     continue;
                 }
+                let Some(reservation) = pool.try_reserve(demand).map_err(fail)? else {
+                    continue;
+                };
                 let (request, reuse) = coordinator.contract(*id)?;
                 repository!(coordinator.owner, rt, s, s.bind_execution_inputs(&request));
                 if foreign.check().is_err() {
@@ -390,9 +417,6 @@ fn execute(
                         repository!(coordinator.owner, rt, s, s.release_read(&lease));
                     }
                 }
-                let reservation = rt
-                    .block_on(pool.request(demand).map_err(fail)?)
-                    .map_err(fail)?;
                 if !matches!(
                     coordinator.prepared.jobs[id].state(),
                     JobState::RetryWait(_)

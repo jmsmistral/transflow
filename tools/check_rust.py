@@ -31,12 +31,12 @@ EXTERNAL = {
     "tf-protocol": {"serde", "serde_json", "schemars", "sha2", "thiserror"},
     "tf-catalog": {"unicode-ident", "rustix", "toml", "serde", "serde_json", "thiserror"},
     "tf-plan": {"thiserror"},
-    "tf-store": {"rustix", "sqlx", "libsqlite3-sys", "arrow-array", "arrow-schema", "parquet", "fs4", "serde", "serde_json", "thiserror"},
+    "tf-store": {"arrow-ipc", "rustix", "sqlx", "libsqlite3-sys", "arrow-array", "arrow-schema", "parquet", "fs4", "serde", "serde_json", "thiserror"},
     "tf-exec": {"serde", "serde_json", "rustix", "tokio", "fs4", "tracing", "thiserror"},
     "tf-schedule": {"chrono", "chrono-tz", "serde", "thiserror"},
     "tf-api": {"axum", "tower", "tokio-stream", "serde", "serde_json", "tokio", "tracing", "thiserror"},
     "tf-lsp": {"serde", "serde_json", "tokio", "tracing", "thiserror"},
-    "transflow": {"clap", "thiserror", "tokio", "tracing", "serde", "serde_json"},
+    "transflow": {"rustix", "clap", "thiserror", "tokio", "tracing", "serde", "serde_json"},
 }
 
 # T007's real SQLite integration fixture needs an executor, only in tests.

@@ -133,3 +133,8 @@ requests; no worker-protocol major/minor change is involved.
 
 T073 adds published local-import results and the `dataset.import` CLI capability.
 Import artifacts can report preserved physical encoding; no quality PASS is implied.
+
+T080 adds `duckdb.query.v1`, `QueryExecutionRequestV1` and `query_results` for the
+supervised interactive helper. Closed API query request/status/result schemas and
+four routes generate all language contracts; 304 conformance cases cover both
+valid and refused boundaries. Query timers never apply to check/transform helpers.

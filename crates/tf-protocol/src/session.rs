@@ -78,6 +78,7 @@ impl Session {
                     | "expectation.core.v1"
                     | "duckdb.checks.v1"
                     | "duckdb.samples.v1"
+                    | "duckdb.query.v1"
             )
         }) {
             return Err(ProtocolError::Capability);
@@ -143,6 +144,14 @@ impl Session {
                 return Err(ProtocolError::Order);
             }
             if !facts.capabilities.contains("discovery.v1") {
+                return Err(ProtocolError::Capability);
+            }
+        }
+        if frame.message_type() == MessageType::QueryResults {
+            if self.operation != Operation::QueryPreview {
+                return Err(ProtocolError::Order);
+            }
+            if !facts.capabilities.contains("duckdb.query.v1") {
                 return Err(ProtocolError::Capability);
             }
         }

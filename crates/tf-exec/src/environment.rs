@@ -60,6 +60,9 @@ pub enum EnvironmentError {
         "Environment preparation exceeded its 30-minute limit; no implicit retry was attempted"
     )]
     Timeout,
+    /// Read-only inspection was stopped by its caller's cancellation or phase budget.
+    #[error("Environment inspection interrupted")]
+    Interrupted,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -74,7 +77,7 @@ pub fn run(
     python: &Path,
     request: &EnvironmentRequest,
 ) -> Result<String, EnvironmentError> {
-    let result = invoke(owner.workspace_root(), python, request)?;
+    let result = invoke(owner.workspace_root(), python, request, None)?;
     let action = result["action"]
         .as_str()
         .ok_or(EnvironmentError::Protocol)?;
@@ -93,6 +96,8 @@ pub fn run(
 /// Read-only verified managed interpreter; preparation never installs dependencies.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ManagedEnvironment {
+    /// Qualified optional SQL engines are installed and byte-verified.
+    pub query_available: bool,
     /// Verified interpreter entry point in this workspace's managed environment.
     pub interpreter: PathBuf,
     /// Actual installed bytes/configuration identity.
@@ -100,16 +105,55 @@ pub struct ManagedEnvironment {
     /// Matched installed SDK/worker version.
     pub runtime_version: String,
 }
+/// Recover the explicit base interpreter selected by a completed `env sync`.
+/// This private locator is local execution configuration, never a request-supplied path.
+pub fn recorded_interpreter(root: &Path) -> Result<PathBuf, EnvironmentError> {
+    use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+    let file = std::fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(rustix::fs::OFlags::NOFOLLOW.bits() as i32)
+        .open(root.join(".transflow/runtime/environment.json"))?;
+    let m = file.metadata()?;
+    if !m.is_file() || m.nlink() != 1 || m.mode() & 0o077 != 0 || m.len() > 1024 * 1024 {
+        return Err(EnvironmentError::Protocol);
+    }
+    let mut bytes = Vec::new();
+    file.take(1024 * 1024 + 1).read_to_end(&mut bytes)?;
+    if bytes.len() > 1024 * 1024 {
+        return Err(EnvironmentError::Protocol);
+    }
+    let value: serde_json::Value =
+        serde_json::from_slice(&bytes).map_err(|_| EnvironmentError::Protocol)?;
+    let path = PathBuf::from(
+        value["interpreter_locator"]
+            .as_str()
+            .ok_or(EnvironmentError::Protocol)?,
+    );
+    if !path.is_absolute() {
+        return Err(EnvironmentError::Protocol);
+    }
+    Ok(path)
+}
 /// Inspect with the explicit base interpreter recorded at env sync, without runtime writes.
 pub fn inspect(
     root: &Path,
     python: &Path,
     request: &EnvironmentRequest,
 ) -> Result<ManagedEnvironment, EnvironmentError> {
+    inspect_interruptible(root, python, request, &|| false)
+}
+/// Read-only inspection that cooperates with the caller's independent phase deadline.
+/// Cancellation kills and reaps this fixed application-owned inspection process.
+pub fn inspect_interruptible(
+    root: &Path,
+    python: &Path,
+    request: &EnvironmentRequest,
+    stop: &dyn Fn() -> bool,
+) -> Result<ManagedEnvironment, EnvironmentError> {
     if !matches!(request.action, EnvironmentAction::Check) {
         return Err(EnvironmentError::Protocol);
     }
-    let result = invoke(root, python, request)?;
+    let result = invoke(root, python, request, Some(stop))?;
     let interpreter = PathBuf::from(
         result["interpreter"]
             .as_str()
@@ -125,6 +169,7 @@ pub fn inspect(
         return Err(EnvironmentError::Protocol);
     }
     Ok(ManagedEnvironment {
+        query_available: result["query_available"].as_bool().unwrap_or(false),
         interpreter,
         fingerprint: result["fingerprint"]
             .as_str()
@@ -137,6 +182,7 @@ fn invoke(
     root: &Path,
     python: &Path,
     request: &EnvironmentRequest,
+    stop: Option<&dyn Fn() -> bool>,
 ) -> Result<serde_json::Value, EnvironmentError> {
     let mut value = serde_json::to_value(request).map_err(|_| EnvironmentError::Protocol)?;
     value
@@ -178,13 +224,18 @@ fn invoke(
                 return Err(e.into());
             }
         }
-        if start.elapsed() > Duration::from_secs(1800) {
+        let interrupted = stop.is_some_and(|stop| stop());
+        if interrupted || start.elapsed() > Duration::from_secs(1800) {
             if let Some(pid) = rustix::process::Pid::from_raw(child.id() as i32) {
                 let _ = rustix::process::kill_process_group(pid, rustix::process::Signal::KILL);
             }
             let _ = child.wait();
             let _ = reader.join();
-            return Err(EnvironmentError::Timeout);
+            return Err(if interrupted {
+                EnvironmentError::Interrupted
+            } else {
+                EnvironmentError::Timeout
+            });
         }
         thread::sleep(Duration::from_millis(20));
     };

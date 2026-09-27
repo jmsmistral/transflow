@@ -927,3 +927,27 @@ The connection page is not the workspace UI. Event streaming, previews/log route
 scheduling and editor integration remain later tasks. Interrupted pending HTTP
 receipts require explicit inspection before a new key; no cross-filesystem atomic
 receipt guarantee, currentness claim or new memory/performance benchmark is made.
+
+
+## T080 — Interactive query lifecycle (2026-09-27)
+
+The [T080 receipt](evidence/t080-macos-arm64.json) records exact commands, local
+corrections and pending owner CI. Local qualification passed 386 Rust tests plus
+one doc test, 926 Python tests, 360 web tests, 58 installed CLI/API tests, 304 shared
+contract cases, and 8 query/9 existing API/11 SQL native scenario groups. The full
+Rust/Python/web/CLI gates were followed only by affected final rechecks. Socket
+checks blocked by the sandbox passed in authorized reruns. Specification, safety,
+boundary and generated-contract checks passed.
+
+The query probe exercises exact typed results, provider reads without replication,
+row/byte truncation, refused SQL, LIMIT-independent deadlines, zero-timer running
+and queued cancellation, process reaping, shutdown/restart, lease/file cleanup and
+unchanged dataset heads. Rust tests cover deterministic expiry, context guards,
+shared FIFO admission, orphan cleanup safety and independent validation timers.
+The SQL probe additionally forces an oversized sort with an 8 MiB engine memory
+limit and zero spill allocation. No hostile-SQL or hard RSS guarantee is claimed.
+
+Arrow IPC 60.0.0 and rustix became direct dependencies at the relevant boundaries;
+the locked package set, license records and advisory findings did not change.
+The advisory check date is retained. No UI changed and no new browser journey was
+performed. The owner monitors the push workflows, without agent polling.

@@ -24,6 +24,7 @@ publish = false
 [workspace.dependencies]
 arrow-array = "=60.0.0"
 arrow-schema = "=60.0.0"
+arrow-ipc = "=60.0.0"
 parquet = { version = "=60.0.0", default-features = false, features = ["arrow", "snap", "zstd"] }
 serde = "=1.0.229"
 serde_json = "=1.0.151"

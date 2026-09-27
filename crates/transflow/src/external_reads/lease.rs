@@ -106,12 +106,7 @@ pub(crate) struct Reads {
     entries: BTreeMap<(String, String), (PathBuf, Value)>,
 }
 impl Reads {
-    pub(crate) fn open(
-        workspace: &Workspace,
-        plan: &DraftPlan,
-        cancel: Cancellation,
-        verify: bool,
-    ) -> Result<Self, Error> {
+    pub(crate) fn empty(cancel: Cancellation) -> Self {
         let state = Arc::new(Mutex::new(State::default()));
         let (stop, rx) = mpsc::sync_channel(1);
         let shared = state.clone();
@@ -133,12 +128,55 @@ impl Reads {
                 }
             }
         });
-        let mut reads = Self {
+        Self {
             state,
             stop,
             thread: Some(thread),
             entries: BTreeMap::new(),
-        };
+        }
+    }
+    pub(crate) fn query_binding(
+        &mut self,
+        root: PathBuf,
+        origin: WorkspaceId,
+        selection: Selection,
+        version: VersionId,
+        operation: &str,
+    ) -> Result<Value, Error> {
+        let alias = selection.alias.clone();
+        let dataset = selection.dataset.clone();
+        let (ticket, response) = Ticket::resolve(
+            root.clone(),
+            origin,
+            selection,
+            Some(version),
+            tf_exec::discovery::random_id().map_err(failure)?,
+            operation.into(),
+        )?;
+        self.state.lock().map_err(failure)?.tickets.push(ticket);
+        let m = &response["metadata"];
+        if m["workspace"] != origin.to_string()
+            || m["dataset"] != dataset
+            || m["version"] != version.to_string()
+        {
+            return Err(failure("Query origin mismatch"));
+        }
+        let digest = digest(m)?.hex();
+        self.check()?;
+        Ok(
+            json!({"alias":alias,"workspace_id":origin.to_string(),"dataset_id":dataset,
+            "version_id":version.to_string(),"artifact_digest":digest,
+            "artifact_root":root.join(".transflow/runtime/objects").join(&digest[..2]).join(&digest),
+            "manifest":m["manifest"]}),
+        )
+    }
+    pub(crate) fn open(
+        workspace: &Workspace,
+        plan: &DraftPlan,
+        cancel: Cancellation,
+        verify: bool,
+    ) -> Result<Self, Error> {
+        let mut reads = Self::empty(cancel);
         for read in &plan.reads {
             if read.provenance["workspace"] == plan.workspace {
                 continue;

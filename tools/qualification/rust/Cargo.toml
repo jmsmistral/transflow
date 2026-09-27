@@ -9,6 +9,7 @@ publish = false
 [workspace]
 
 [dependencies]
+arrow-ipc = "=60.0.0"
 arrow-array = "=60.0.0"
 arrow-schema = "=60.0.0"
 axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }

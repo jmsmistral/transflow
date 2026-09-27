@@ -213,6 +213,7 @@ class Session:
             "expectation.core.v1",
             "duckdb.checks.v1",
             "duckdb.samples.v1",
+            "duckdb.query.v1",
         }:
             raise ProtocolError("capability")
         self._request = request_id
@@ -254,6 +255,10 @@ class Session:
             if self._operation != "discover":
                 raise ProtocolError("order")
             required.add("discovery.v1")
+        if frame.message_type == "query_results":
+            if self._operation != "query_preview":
+                raise ProtocolError("order")
+            required.add("duckdb.query.v1")
         if not required <= negotiated.capabilities:
             raise ProtocolError("capability")
         self._negotiated = negotiated

@@ -388,3 +388,4 @@ pub mod events;
 
 /// Version-specific bounded physical previews.
 pub mod preview;
+pub mod query_results;

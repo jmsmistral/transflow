@@ -228,6 +228,7 @@ fn invariant(name: &str, v: &Value) -> bool {
                                 | "expectation.core.v1"
                                 | "duckdb.checks.v1"
                                 | "duckdb.samples.v1"
+                                | "duckdb.query.v1"
                         )
                     })
             }) && unique(extensions, "capability")

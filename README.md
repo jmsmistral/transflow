@@ -73,8 +73,10 @@ validation. Pandas and DuckDB SQL transform adapters remain later work. The
 [DuckDB feasibility probe](tools/qualification/duckdb/README.md) is contributor
 evidence. T079 adds the private [restricted SQL helper](python/worker/SQL.md),
 with a parsed AST allowlist, locked engine settings and exact-version input reads.
-The public scratchpad API, supervised query lifecycle and UI remain subsequent work;
-this helper does not enable a SQL transform adapter.
+T080 adds the authenticated [query lifecycle API](crates/tf-api/README.md#interactive-queries):
+exact local/foreign versions, independent interactive limits, cancellation and temporary
+results. Foreign inputs are read directly under leases. The scratchpad UI remains
+later work; queries do not publish datasets or enable a SQL transform adapter.
 
 The Python distribution is named **transflow**, containing both `transflow` (SDK) and `transflow_worker` (worker). See [local wheel installation and checks](python/README.md). The intended public install is `pip install transflow` after publication; no package has been published yet. The Rust binary remains a separate native artifact.
 

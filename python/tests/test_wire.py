@@ -226,3 +226,30 @@ def test_printed_json_is_not_a_control_frame() -> None:
     printed = frame(0, hello()).payload() + b"\n"
     with pytest.raises(ProtocolError, match="size"):
         read_frame(io.BytesIO(printed))
+
+
+def test_query_results_require_operation_and_negotiated_capability() -> None:
+    def frame(sequence: int, message: dict[str, object]) -> ControlFrame:
+        return ControlFrame.from_json(raw(sequence, message))
+
+    result = frame(
+        1, {"type": "query_results", "results_path": "result.json", "results_digest": "a" * 64}
+    )
+    for capability in (False, True):
+        capabilities = frozenset({"duckdb.query.v1"}) if capability else frozenset()
+        guard = Session(REQUEST, ATTEMPT, "query_preview", capabilities)
+        guard.accept(
+            frame(
+                0,
+                {"type": "hello", "operation": "query_preview", "capabilities": list(capabilities)},
+            )
+        )
+        if capability:
+            guard.accept(result)
+        else:
+            with pytest.raises(ProtocolError):
+                guard.accept(result)
+    guard = session()
+    guard.accept(frame(0, hello()))
+    with pytest.raises(ProtocolError):
+        guard.accept(result)

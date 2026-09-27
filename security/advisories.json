@@ -1,7 +1,7 @@
 {
   "checked_at": "2026-09-23T14:42:02.997935+00:00",
   "findings": [],
-  "inventory_sha256": "9ceba33ad2d0d63a93f36183e1c10360326b31431f511d9b55a0c5ff052c1133",
+  "inventory_sha256": "86c2ef129f18ea367058a7bbc7bc73b05a5f7ac5c3dc0b77c8101fe6521c89a1",
   "provider": "https://api.osv.dev/v1/querybatch",
   "queried": [
     "PyPI:ast-serialize@0.11.2",

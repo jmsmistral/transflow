@@ -61,7 +61,10 @@ def _schema(schema: Any, pa: Any) -> None:
             )
 
 
-def _connect(paths: dict[str, list[str]], temporary: Path) -> Any:
+def _connect(
+    paths: dict[str, list[str]], temporary: Path, limits: dict[str, Any] | None = None
+) -> Any:
+    limits = limits or {"threads": 1, "spill_bytes": "268435456", "memory_bytes": None}
     duckdb = importlib.import_module("duckdb")
     require(duckdb.__version__ == MANAGED_PACKAGES["duckdb"], "Unqualified SQL engine version")
     db = duckdb.connect(
@@ -72,7 +75,7 @@ def _connect(paths: dict[str, list[str]], temporary: Path) -> Any:
             "allow_unsigned_extensions": False,
             "allow_persistent_secrets": False,
             "python_enable_replacements": False,
-            "threads": 1,
+            "threads": limits["threads"],
         }
     )
     try:
@@ -81,7 +84,7 @@ def _connect(paths: dict[str, list[str]], temporary: Path) -> Any:
             "allowed_directories": [],
             "allowed_configs": [],
             "temp_directory": str(temporary),
-            "max_temp_directory_size": "256MiB",
+            "max_temp_directory_size": f"{limits['spill_bytes']}B",
             "extension_directory": str(temporary / "extensions"),
             "secret_directory": str(temporary / "secrets"),
             "enable_progress_bar": False,
@@ -89,6 +92,8 @@ def _connect(paths: dict[str, list[str]], temporary: Path) -> Any:
         }
         for name, value in settings.items():
             db.execute(f"SET {name} = ?", [value])  # Application constants, never authored keys.
+        if limits["memory_bytes"] is not None:
+            db.execute("SET memory_limit = ?", [f"{limits['memory_bytes']}B"])
         db.execute("SET enable_external_access = false")
         for alias, files in paths.items():
             db.read_parquet(files, hive_partitioning=False, union_by_name=False).create_view(alias)
@@ -99,7 +104,11 @@ def _connect(paths: dict[str, list[str]], temporary: Path) -> Any:
         raise
 
 
-def _results(db: Any, request: dict[str, Any], output: Path, pa: Any) -> dict[str, Any]:
+def _results(
+    db: Any, request: dict[str, Any], output: Path, pa: Any, limits: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    max_rows = limits["rows"] if limits else ROWS
+    max_bytes = limits["bytes"] if limits else BYTES
     # No string interpolation, relation.sql() or Python replacement scans. The exact
     # validated statement reaches the same pinned connection, with parameters separate.
     reader = db.execute(request["sql"], request["parameters"]).to_arrow_reader(batch_size=128)
@@ -115,22 +124,22 @@ def _results(db: Any, request: dict[str, Any], output: Path, pa: Any) -> dict[st
         return sink.getvalue()
 
     payload = encode()
-    require(payload.size <= BYTES, "SQL result schema exceeds the byte limit")
+    require(payload.size <= max_bytes, "SQL result schema exceeds the byte limit")
     with reader:
         for batch in reader:
-            if rows == ROWS:
+            if rows == max_rows:
                 truncated = True
                 break
             # Bound retained output before serialization, including a single oversized
             # cell. Decode/query working memory is not promised to be hard-bounded here.
-            take = min(batch.num_rows, ROWS - rows)
+            take = min(batch.num_rows, max_rows - rows)
             candidate = batch.slice(0, take)
-            if candidate.nbytes > BYTES:
+            if candidate.nbytes > max_bytes:
                 truncated = True
                 break
             batches.append(candidate)
             encoded = encode()
-            if encoded.size > BYTES:
+            if encoded.size > max_bytes:
                 batches.pop()
                 truncated = True
                 break
@@ -156,9 +165,12 @@ def _results(db: Any, request: dict[str, Any], output: Path, pa: Any) -> dict[st
     }
 
 
-def execute(request: dict[str, Any]) -> None:
+def execute(request: dict[str, Any], limits: dict[str, Any] | None = None) -> None:
     """Application-only entry; caller owns read leases and process/resource supervision."""
     validate_document("ScratchpadRequestV1", request)
+    if limits is not None:
+        validate_document("QueryLimitsV1", limits)
+        require(int(limits["spill_bytes"]) <= 268435456, "Query spill exceeds the service ceiling")
     view_names([binding["alias"] for binding in request["bindings"]])
     # Validate text size before importing engines or reading any artifact bytes.
     require(len(request["sql"].encode()) <= 16384, "SQL exceeds the text limit")
@@ -186,9 +198,9 @@ def execute(request: dict[str, Any]) -> None:
         # DuckDB adds this one owned empty directory to allowed_directories. No
         # provider or workspace directory is granted. Temporary files never publish.
         with tempfile.TemporaryDirectory(prefix="spill-", dir=directory) as temporary:
-            with _connect(paths, Path(temporary)) as db:
+            with _connect(paths, Path(temporary), limits) as db:
                 validate_query(db, request["sql"], list(paths))
-                result = _results(db, request, output, pa)
+                result = _results(db, request, output, pa, limits)
         require(
             all(_file(Path(path)) == guard for path, guard in guards),
             "SQL inputs changed during the query",

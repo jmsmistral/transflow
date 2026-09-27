@@ -232,6 +232,7 @@ pub(crate) async fn execute_build(
         json_mode,
         endpoint.commands.clone(),
         endpoint.providers.clone(),
+        None,
     )
     .await
 }
@@ -241,6 +242,7 @@ pub(crate) async fn execute_commands(
     json_mode: bool,
     commands: crate::build_transport::Mailbox,
     providers: crate::provider::Mailbox,
+    admission: Option<tf_exec::admission::Admission>,
 ) -> Result<crate::dispatch::Completion, Error> {
     // A public build with an explicit budget conservatively reserves that entire
     // budget per worker. This is admission accounting, never a measured RSS bound.
@@ -292,6 +294,7 @@ pub(crate) async fn execute_commands(
         build,
         cancel,
         crate::dispatch::Options {
+            admission,
             progress: Some(tx),
             commands: Some(commands),
             providers: Some(providers),

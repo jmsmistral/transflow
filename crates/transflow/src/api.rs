@@ -20,6 +20,7 @@ pub(crate) struct Command {
     reply: SyncSender<Result<Reply>>,
 }
 pub(crate) struct Service {
+    pub(crate) queries: Arc<crate::api_query::Manager>,
     cursors: std::sync::Mutex<crate::api_preview::Cursors>,
     root: PathBuf,
     workspace: WorkspaceId,
@@ -27,15 +28,22 @@ pub(crate) struct Service {
     sender: SyncSender<Command>,
     cancel: SyncSender<crate::dispatch::CancelCommand>,
 }
+impl Drop for Service {
+    fn drop(&mut self) {
+        self.queries.cancel_all();
+    }
+}
 pub(crate) fn service(
     root: PathBuf,
     workspace: WorkspaceId,
     busy: Arc<AtomicBool>,
     cancel: SyncSender<crate::dispatch::CancelCommand>,
+    admission: tf_exec::admission::Admission,
 ) -> (Arc<Service>, Receiver<Command>) {
     let (sender, receiver) = mpsc::sync_channel(1);
     (
         Arc::new(Service {
+            queries: crate::api_query::Manager::new(root.clone(), workspace, admission),
             cursors: Default::default(),
             root,
             workspace,
@@ -65,9 +73,26 @@ fn replay(v: Value) -> Result<Reply> {
 }
 impl Application for Service {
     fn capabilities(&self) -> Value {
-        json!({"api_version":1,"protocol_major":1,"workspace":self.workspace.to_string(),"operations":["context","datasets","versions","lineage","source","validation","catalog_diff","plan","catalog_sync","build_accept","build_cancel","catalog_lifecycle","branch_lifecycle","external_lifecycle","events","preview"],"engines":["polars"],"limits":{"body_bytes":tf_api::BODY_LIMIT,"in_flight":tf_api::IN_FLIGHT_LIMIT,"page_default":50,"page_max":200,"graph_default":100,"graph_max":500,"graph_expansion_threshold":500,"source_bytes":65536,"event_replay":10000,"event_streams":4,"preview_rows":1000,"preview_bytes":2097152,"preview_cell_bytes":4096},"metadata_reads_import_code":false,"external_reads":"provider_owned_leased","schedules":false,"ui":false})
+        let mut value = json!({"api_version":1,"protocol_major":1,"workspace":self.workspace.to_string(),"operations":["context","datasets","versions","lineage","source","validation","catalog_diff","plan","catalog_sync","build_accept","build_cancel","catalog_lifecycle","branch_lifecycle","external_lifecycle","events","preview"],"engines":["polars"],"limits":{"body_bytes":tf_api::BODY_LIMIT,"in_flight":tf_api::IN_FLIGHT_LIMIT,"page_default":50,"page_max":200,"graph_default":100,"graph_max":500,"graph_expansion_threshold":500,"source_bytes":65536,"event_replay":10000,"event_streams":4,"preview_rows":1000,"preview_bytes":2097152,"preview_cell_bytes":4096},"metadata_reads_import_code":false,"external_reads":"provider_owned_leased","schedules":false,"ui":false});
+        if self.queries.available() {
+            if let Some(operations) = value["operations"].as_array_mut() {
+                operations.extend([
+                    json!("query"),
+                    json!("query_results"),
+                    json!("query_cancel"),
+                ]);
+            }
+            value["engines"] = json!(["polars", "duckdb"]);
+            value["limits"]["query_active"] = json!(4);
+            value["limits"]["query_retention_seconds"] = json!(300);
+            value["limits"]["query_spill_bytes"] = json!(268435456);
+        }
+        value
     }
     fn call(&self, r: Request) -> Result<Reply> {
+        if r.path == "/api/v1/queries" || r.path.starts_with("/api/v1/queries/") {
+            return self.queries.call(&r);
+        }
         if r.path == "/api/v1/previews" && r.method == "POST" {
             return crate::api_preview::read(&self.root, self.workspace, &r, &self.cursors);
         }

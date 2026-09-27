@@ -40,9 +40,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     evaluation.add_argument("--request", type=Path, required=True)
     evaluation.add_argument("--control-socket", type=Path, required=True)
+    query = subcommands.add_parser("query_preview", help="run a private restricted SQL query")
+    query.add_argument("--request", type=Path, required=True)
+    query.add_argument("--control-socket", type=Path, required=True)
     try:
         args = parser.parse_args(argv)
-        if args.command in ("discover", "execute", "evaluate_checks"):
+        if args.command in ("discover", "execute", "evaluate_checks", "query_preview"):
             from .lifetime import start
 
             start(args.request)
@@ -88,6 +91,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "Check setup failed; verify the exact subject and private channel",
                     file=sys.stderr,
                 )
+                return 1
+        elif args.command == "query_preview":
+            from .query import serve as query_serve
+
+            try:
+                return query_serve(args.request, args.control_socket)
+            except OSError, ValueError:
+                print("Query setup failed; verify the private request and channel", file=sys.stderr)
                 return 1
         elif args.command_help:
             print(compatibility.format_help(), end="")

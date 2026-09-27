@@ -319,5 +319,44 @@
     "query": [],
     "context": true,
     "mutation": false
+  },
+  {
+    "path": "/api/v1/queries",
+    "method": "POST",
+    "response": "ApiQueryV1",
+    "request": "ApiQueryRequestV1",
+    "query": [],
+    "mutation": true,
+    "context": true
+  },
+  {
+    "path": "/api/v1/queries/{id}",
+    "method": "GET",
+    "response": "ApiQueryV1",
+    "request": null,
+    "query": [],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/queries/{id}/results",
+    "method": "GET",
+    "response": "ApiQueryResultsV1",
+    "request": null,
+    "query": [
+      "offset",
+      "limit"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/queries/{id}/cancel",
+    "method": "POST",
+    "response": "ApiQueryV1",
+    "request": "ApiEmptyV1",
+    "query": [],
+    "mutation": true,
+    "context": true
   }
 ]

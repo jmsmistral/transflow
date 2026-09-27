@@ -45,7 +45,7 @@ export type CatalogSnapshotV1 = { readonly "format_version": 1; readonly "worksp
 export type ProtocolVersion = { readonly "major": 1; readonly "minor": number };
 
 // prettier-ignore
-export type ControlMessageV1 = ({ readonly "type": "hello"; readonly "operation": ("discover" | "execute" | "evaluate_checks" | "query_preview" | "infer_lineage" | "inspect_environment"); readonly "capabilities": ReadonlyArray<string> } | { readonly "type": "phase"; readonly "phase": ("setup" | "discovering" | "validating_inputs" | "running" | "materializing" | "validating_outputs" | "querying" | "inferring_lineage" | "inspecting_environment") } | { readonly "type": "heartbeat" } | { readonly "type": "metric"; readonly "name": string; readonly "value": ScalarValue } | { readonly "type": "artifact_ready"; readonly "manifest_path": RelativePath; readonly "artifact_digest": Sha256 } | { readonly "type": "check_results"; readonly "results_path": RelativePath; readonly "results_digest": Sha256 } | { readonly "type": "discovery_ready"; readonly "result_path": RelativePath; readonly "result_digest": Sha256 } | { readonly "type": "completed" } | { readonly "type": "error"; readonly "code": string; readonly "message": string; readonly "retryable": boolean });
+export type ControlMessageV1 = ({ readonly "type": "hello"; readonly "operation": ("discover" | "execute" | "evaluate_checks" | "query_preview" | "infer_lineage" | "inspect_environment"); readonly "capabilities": ReadonlyArray<string> } | { readonly "type": "phase"; readonly "phase": ("setup" | "discovering" | "validating_inputs" | "running" | "materializing" | "validating_outputs" | "querying" | "inferring_lineage" | "inspecting_environment") } | { readonly "type": "heartbeat" } | { readonly "type": "metric"; readonly "name": string; readonly "value": ScalarValue } | { readonly "type": "artifact_ready"; readonly "manifest_path": RelativePath; readonly "artifact_digest": Sha256 } | { readonly "type": "check_results"; readonly "results_path": RelativePath; readonly "results_digest": Sha256 } | { readonly "type": "discovery_ready"; readonly "result_path": RelativePath; readonly "result_digest": Sha256 } | { readonly "type": "completed" } | { readonly "type": "error"; readonly "code": string; readonly "message": string; readonly "retryable": boolean } | { readonly "type": "query_results"; readonly "results_path": RelativePath; readonly "results_digest": Sha256 });
 
 // prettier-ignore
 export type ControlFrameV1 = { readonly "protocol": ProtocolVersion; readonly "request_id": Uuid; readonly "attempt_id": Uuid; readonly "sequence": Count; readonly "required_capabilities": ReadonlyArray<string>; readonly "extensions": ReadonlyArray<{ readonly "capability": string; readonly "value": ScalarValue }>; readonly "message": ControlMessageV1 };
@@ -286,3 +286,18 @@ export type ScratchpadRequestV1 = { readonly "format_version": 1; readonly "requ
 
 // prettier-ignore
 export type ScratchpadResultV1 = { readonly "format_version": 1; readonly "request_id": Uuid; readonly "row_count": Count; readonly "truncated": boolean; readonly "bindings": ReadonlyArray<{ readonly "alias": string; readonly "workspace_id": Uuid; readonly "dataset_id": Uuid; readonly "version_id": Uuid; readonly "artifact_digest": Sha256 }> };
+
+// prettier-ignore
+export type QueryLimitsV1 = { readonly "rows": number; readonly "bytes": number; readonly "spill_bytes": Count; readonly "threads": number; readonly "memory_bytes": (null | Count) };
+
+// prettier-ignore
+export type QueryExecutionRequestV1 = { readonly "format_version": 1; readonly "protocol": ProtocolVersion; readonly "request_id": Uuid; readonly "attempt_id": Uuid; readonly "auth_token": Sha256; readonly "query": ScratchpadRequestV1; readonly "limits": QueryLimitsV1 };
+
+// prettier-ignore
+export type ApiQueryRequestV1 = { readonly "sql": string; readonly "parameters": ReadonlyArray<(null | boolean | string)>; readonly "bindings": ReadonlyArray<{ readonly "alias": string; readonly "dataset": Uuid; readonly "origin_workspace": Uuid; readonly "version": Uuid }>; readonly "rows"?: number; readonly "bytes"?: number; readonly "spill_bytes"?: Count };
+
+// prettier-ignore
+export type ApiQueryV1 = { readonly "id": Uuid; readonly "state": ("QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED" | "TIMED_OUT"); readonly "bindings": ReadonlyArray<{ readonly "alias": string; readonly "dataset": Uuid; readonly "origin_workspace": Uuid; readonly "version": Uuid }>; readonly "sql": string; readonly "parameters": ReadonlyArray<(null | boolean | string)>; readonly "elapsed_ms": Count; readonly "error": (null | string); readonly "truncated": boolean; readonly "rows": Count; readonly "limits": QueryLimitsV1; readonly "timeout_seconds": Count; readonly "expires_in_seconds": (null | number) };
+
+// prettier-ignore
+export type ApiQueryResultsV1 = { readonly "id": Uuid; readonly "schema": LogicalSchemaV1; readonly "rows": ReadonlyArray<ReadonlyArray<WireValue>>; readonly "next_offset": (null | number); readonly "truncated": boolean };

@@ -369,3 +369,26 @@ fn operation_phase_mapping_cannot_switch_a_validation_helpers_budget() {
         Err(TimerError::State)
     );
 }
+
+#[test]
+fn coordinator_nonblocking_admission_keeps_query_fifo_and_cancellation_releases_queue() {
+    let pool = Admission::new(Capacity {
+        jobs: 1,
+        cpu: 1,
+        ..Capacity::default()
+    })
+    .unwrap();
+    let build = pool.try_reserve(Demand::default()).unwrap().unwrap();
+    let mut query = pool.request(Demand::default()).unwrap();
+    assert!(poll(&mut query).is_pending());
+    assert!(pool.try_reserve(Demand::default()).unwrap().is_none());
+    drop(build);
+    // The owner services its mailbox instead of bypassing/waiting on the queued query.
+    assert!(pool.try_reserve(Demand::default()).unwrap().is_none());
+    let admitted = take(query);
+    let queued = pool.request(Demand::default()).unwrap();
+    drop(queued);
+    drop(admitted);
+    assert!(pool.try_reserve(Demand::default()).unwrap().is_some());
+    assert_eq!(pool.usage().unwrap().jobs, 0);
+}

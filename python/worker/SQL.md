@@ -1,9 +1,9 @@
 # Restricted SQL helper
 
 T079 provides the production AST policy and a private, isolated one-query helper.
-It does not expose a browser/HTTP scratchpad yet. T080 connects query IDs, leases,
-timeouts, cancellation and result delivery to the coordinator; it must also check
-that the qualified Arrow dependency is available before advertising the service.
+T080 connects it to the authenticated [query API](../../crates/tf-api/README.md#interactive-queries),
+renewable read leases, independent deadlines, cancellation and bounded result delivery.
+Capabilities require a byte-verified matched worker, DuckDB 1.5.5 and PyArrow 25.0.1.
 
 ## Query policy
 
@@ -33,8 +33,10 @@ still have DuckDB semantics: for example, decimal AVG produces a floating result
 External access, extension installation/autoload, community/unsigned extensions,
 persistent secrets and Python replacement scans are disabled. Configuration is
 locked after trusted view creation. Only exact input paths and the engine's one
-fresh private spill directory are accessible. The fixed helper spill ceiling is
-256 MiB; no Transflow memory cap is installed. These are defence-in-depth controls
+fresh private spill directory are accessible. The default spill ceiling is 256 MiB; API callers may lower it to zero.
+The supervised helper installs the reserved thread count and, when configured,
+the workspace memory budget as a DuckDB memory limit. This is not a hard RSS cap.
+The private standalone entry retains its default one thread and no Transflow memory cap. These are defence-in-depth controls
 for trusted local use, not a hostile-SQL sandbox. Engine permissions alone do not
 prevent every write, so bypassing the AST validator is forbidden.
 
@@ -84,3 +86,22 @@ The native aggregate runs this automatically using its freshly built wheel and
 prepared `target/qualification/wheelhouse`. PyArrow 25.0.1 is required for this
 helper; this task does not change existing workspace environment locks or add
 automatic dependency installation during queries.
+
+## Supervised query operation
+
+`query_preview` consumes `QueryExecutionRequestV1` over the existing private
+supervisor channel, negotiates `duckdb.query.v1`, and sends a `query_results`
+content reference followed by completion. Only the coordinator constructs file
+paths, limits, authentication and exact bindings. The process starts with a clean
+environment, runs no producer imports and cannot extend its own deadline.
+
+The interactive phase includes read-only environment verification, binding setup,
+file hashing, engine execution and result acceptance. Queue wait and supervised
+termination grace are separate. Explicit zero disables only this phase's deadline;
+transform and expectation timers are independent. Cancellation/expiry terminates
+and reaps the helper before releasing its shared admission reservation and provider
+leases. The coordinator deletes result/spill/log directories and retains only
+bounded typed results in memory for five minutes. Startup recovery authenticates
+and stops orphan query helpers before deleting their temporary directories.
+Unreachable providers or a coordinator crash retain the existing finite lease
+expiry as a backstop; provider data is never copied or deleted by query cleanup.

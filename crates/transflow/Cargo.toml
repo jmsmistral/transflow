@@ -7,6 +7,7 @@ publish.workspace = true
 description = "Transflow CLI and application composition root"
 
 [dependencies]
+rustix.workspace = true
 tf-api = { path = "../tf-api" }
 tf-domain = { path = "../tf-domain" }
 tf-protocol = { path = "../tf-protocol" }
