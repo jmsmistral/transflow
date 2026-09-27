@@ -130,3 +130,8 @@ pub trait Application: Send + Sync + 'static {
 }
 /// Type-erased application service, not a second coordinator.
 pub type Service = Arc<dyn Application>;
+
+/// Unpredictable opaque cursor identity; carries no credential or encoded source path.
+pub fn cursor_token() -> Result<String, ApiError> {
+    auth::secret()
+}

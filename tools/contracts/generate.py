@@ -58,7 +58,7 @@ def example(node, definitions):
         return [example(node["items"], definitions) for _ in range(node.get("minItems", 0))]
     if kind == "string":
         formats = {"transflow-uuid": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "transflow-sha256": "a" * 64,
-                   "transflow-u64": "0", "transflow-relative-path": "raw/example"}
+                   "transflow-u64": "0", "transflow-i64": "0", "transflow-relative-path": "raw/example"}
         return formats.get(node.get("format"), "x" * node["minLength"] if node.get("minLength") else "example")
     return {"integer": node.get("minimum", 0), "number": 0, "boolean": False, "null": None}[kind]
 
@@ -100,6 +100,17 @@ def openapi(source):
             "data": example(source['$defs'][route['response']], source['$defs'])}
         if route['request']:
             operation['requestBody']['content']['application/json']['example'] = example(source['$defs'][route['request']], source['$defs'])
+        if route['path'] in ('/api/v1/events', '/api/v1/read'):
+            fact = example(source['$defs']['ApiEventV1'], source['$defs'])
+            fact['sequence'] = '1'
+            stream = {"schema": {"type": "string"}, "example": "id: 1\nevent: fact\ndata: " + json.dumps(fact) + "\n\n"}
+            if route['path'] == '/api/v1/events':
+                operation['responses']['200']['content'] = {"text/event-stream": stream}
+                operation['responses']['200']['description'] = 'Committed facts, checkpoints or resync_required; reconnect with the last received sequence'
+                operation['parameters'].append({"name": "Last-Event-ID", "in": "header", "required": False, "schema": {"type": "string"}})
+            else:
+                operation['responses']['200']['content']['text/event-stream'] = stream
+            operation['x-transflow-event-schema'] = {"$ref": "#/$defs/ApiEventV1"}
         document['paths'].setdefault(route['path'], {})[route['method'].lower()] = operation
     encoded = json.dumps(document, indent=2).replace('#/$defs/', '#/components/schemas/')
     write('schemas/generated/openapi-v1.json', encoded + '\n')

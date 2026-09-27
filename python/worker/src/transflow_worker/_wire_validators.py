@@ -436,3 +436,33 @@ def validate_ApiReadV1(value: object) -> None:
 def validate_ApiMetadataPageV1(value: object) -> None:
     """Assert the ApiMetadataPageV1 contract, including custom formats."""
     validate_document("ApiMetadataPageV1", value)
+
+
+def validate_ApiEventV1(value: object) -> None:
+    """Assert the ApiEventV1 contract, including custom formats."""
+    validate_document("ApiEventV1", value)
+
+
+def validate_ApiEventsV1(value: object) -> None:
+    """Assert the ApiEventsV1 contract, including custom formats."""
+    validate_document("ApiEventsV1", value)
+
+
+def validate_ApiPreviewRequestV1(value: object) -> None:
+    """Assert the ApiPreviewRequestV1 contract, including custom formats."""
+    validate_document("ApiPreviewRequestV1", value)
+
+
+def validate_ApiPreviewCellV1(value: object) -> None:
+    """Assert the ApiPreviewCellV1 contract, including custom formats."""
+    validate_document("ApiPreviewCellV1", value)
+
+
+def validate_ApiPreviewV1(value: object) -> None:
+    """Assert the ApiPreviewV1 contract, including custom formats."""
+    validate_document("ApiPreviewV1", value)
+
+
+def validate_JsonObject(value: object) -> None:
+    """Assert the JsonObject contract, including custom formats."""
+    validate_document("JsonObject", value)

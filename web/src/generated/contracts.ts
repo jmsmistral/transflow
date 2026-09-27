@@ -259,3 +259,21 @@ export type ApiReadV1 = { readonly "path": string; readonly "query": { readonly 
 
 // prettier-ignore
 export type ApiMetadataPageV1 = { readonly "entries": ReadonlyArray<ExecutionJsonV1>; readonly "next_cursor": (null | string) };
+
+// prettier-ignore
+export type ApiEventV1 = { readonly "sequence": string; readonly "id": Uuid; readonly "type": string; readonly "payload": JsonObject; readonly "causation": (null | Uuid); readonly "correlation": (null | Uuid); readonly "timestamp_us": string; readonly "workspace": Uuid; readonly "context": JsonObject };
+
+// prettier-ignore
+export type ApiEventsV1 = { readonly "events": ReadonlyArray<ApiEventV1>; readonly "cursor": string; readonly "high_water": string; readonly "retention_floor": string; readonly "resync_required": boolean };
+
+// prettier-ignore
+export type ApiPreviewRequestV1 = { readonly "dataset": Uuid; readonly "version": Uuid; readonly "origin_workspace": Uuid; readonly "columns": ReadonlyArray<string>; readonly "rows"?: number; readonly "cell_bytes"?: number; readonly "cursor"?: string };
+
+// prettier-ignore
+export type ApiPreviewCellV1 = { readonly "value": (null | WireValue); readonly "truncated": boolean };
+
+// prettier-ignore
+export type ApiPreviewV1 = { readonly "workspace": Uuid; readonly "origin_workspace": Uuid; readonly "dataset": Uuid; readonly "version": Uuid; readonly "requested_branch": string; readonly "resolved_branch": string; readonly "published_us": string; readonly "source": Uuid; readonly "schema": LogicalSchemaV1; readonly "rows": ReadonlyArray<ReadonlyArray<ApiPreviewCellV1>>; readonly "next_cursor": (null | string); readonly "physical_order": true; readonly "integrity": "projected_read" };
+
+// prettier-ignore
+export type JsonObject = { readonly [key: string]: ExecutionJsonV1 };

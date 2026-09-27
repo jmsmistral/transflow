@@ -492,3 +492,52 @@ fn verify_directory(dir: &File, digest: ContentDigest) -> Result<Value> {
     }
     Ok(manifest)
 }
+
+impl ArtifactStore {
+    /// Open one ordinal data file beneath a verified canonical manifest. This checks
+    /// identity/size and containment, not the full data digest; preview decodes only its projection.
+    pub fn preview_file(
+        &self,
+        digest: ContentDigest,
+        expected: &Value,
+        ordinal: usize,
+    ) -> Result<File> {
+        self.validate()?;
+        let hex = digest.hex();
+        let prefix = directory(self.root()?, &hex[..2], false)?;
+        let object = directory(&prefix, &hex, false)?;
+        let mut input = file(&object, Path::new("manifest.json"))?;
+        let before = guard(&input)?;
+        if before.2 > 16 * 1024 * 1024 {
+            return Err(ArtifactError::Metadata);
+        }
+        let mut bytes = Vec::new();
+        Read::by_ref(&mut input)
+            .take(before.2 + 1)
+            .read_to_end(&mut bytes)?;
+        if canonical_json(expected).map_err(|_| ArtifactError::Metadata)? != bytes
+            || artifact_digest(expected).map_err(|_| ArtifactError::Metadata)? != digest
+            || guard(&input)? != before
+        {
+            return Err(ArtifactError::Integrity);
+        }
+        let entry = expected["files"]
+            .as_array()
+            .and_then(|a| a.get(ordinal))
+            .ok_or(ArtifactError::Metadata)?;
+        let name = format!("part-{ordinal:05}.parquet");
+        if entry["path"] != name {
+            return Err(ArtifactError::Integrity);
+        }
+        let f = file(&object, Path::new(&name))?;
+        if entry["byte_length"]
+            .as_str()
+            .and_then(|s| s.parse::<u64>().ok())
+            != Some(guard(&f)?.2)
+        {
+            return Err(ArtifactError::Integrity);
+        }
+        self.validate()?;
+        Ok(f)
+    }
+}

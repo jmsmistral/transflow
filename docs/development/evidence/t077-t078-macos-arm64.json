@@ -1,0 +1,163 @@
+{
+  "tasks": [
+    "T077",
+    "T078"
+  ],
+  "date": "2026-09-27",
+  "specification": "1.1.3",
+  "runtime_schema": 12,
+  "worker_protocol": "1.0",
+  "platform": "macOS-15.3.1-arm64-arm-64bit",
+  "python": "3.14.7",
+  "implementation_base": "ecdf6faec65e37a1b888e69513275e7449e9ab0f",
+  "specification_base": "edf005c23c41940cf522a7c1b4f7bae8f0068c39",
+  "result": "All local gates passed, with separate completion runs after corrected failures",
+  "ci": "Pending owner confirmation after push; workflows are not polled",
+  "counts": {
+    "rust_tests": 382,
+    "rust_doc_tests": 1,
+    "python_tests": 869,
+    "web_tests": 342,
+    "shared_contract_cases": 286,
+    "specification_regressions": 44,
+    "safety_regressions": 27,
+    "rust_boundary_regressions": 12,
+    "installed_cli_tests": 58,
+    "native_api_scenarios": 9,
+    "dispatch_scenarios": 36,
+    "developer_core_scenarios": 48,
+    "foreign_data_scenarios": 15,
+    "qualification_web_tests": 5,
+    "native_expectation_cases": 29
+  },
+  "commands": [
+    {
+      "command": "bash tools/check.sh",
+      "result": "Specification, safety and Rust gates passed; stopped at new native API probe Ruff findings. Remaining gates run separately after fixes."
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+      "result": "Passed after final Rust changes, including the native timeout-fixture clock."
+    },
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "Passed: pinned tooling, pip check, Ruff, formatting, mypy and 869 tests."
+    },
+    {
+      "command": "bash tools/check-web.sh",
+      "result": "Passed: typecheck, lint, format, 342 tests, production build and deterministic asset verification."
+    },
+    {
+      "command": "cargo clippy --manifest-path tools/qualification/rust/Cargo.toml --all-targets --locked --offline -- -D warnings",
+      "result": "Passed with the direct tokio-stream qualification pin."
+    },
+    {
+      "command": "bash tools/check-cli.sh",
+      "result": "Passed: 58 installed CLI/API tests, including real coordinator authentication, context and durable command retries."
+    },
+    {
+      "command": "cargo test -p tf-api --test security --locked --offline; cargo clippy -p tf-api --all-targets --locked --offline -- -D warnings",
+      "result": "Passed: all five auth/stream tests and Clippy after enforcing the stream lifetime on each bounded send."
+    },
+    {
+      "command": "bash tools/qualification/check.sh",
+      "result": "Initial runs stopped at corrected publication-event count and pre-query startup timeout assertions. All preceding native engine/resource/normalization/Polars probes passed; corrected expectations and remaining phases completed separately below."
+    },
+    {
+      "command": "python -I -B python/tools/check_expectations.py <checks_probe> <polars_probe> <current-wheel>",
+      "result": "Passed all 29 real native cases after rebuilding checks_probe: timeout, memory error, disk error, spill cleanup, precision and typed checks. Native engine Python 3.14.7 was used."
+    },
+    {
+      "command": "Remaining commands from tools/qualification/check.sh: check_lifecycle.py, check_dispatch.py, check_developer_core.py, check_foreign.py, check_api.py and qualification web typecheck/test/build",
+      "result": "All passed using the native.tHqFVr wheel and qualification binaries; the complete API probe includes branch/version/projection cursor conflicts, continuation after another build, SSE resume and leased foreign preview without copies."
+    },
+    {
+      "command": "bash tools/check-safety.sh; python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .; cargo fmt --all -- --check; git diff --check in both repositories",
+      "result": "Passed after documentation/evidence reconciliation."
+    }
+  ],
+  "corrected_failures": [
+    "Migration marker used a hardcoded previous version; it now uses the shared schema constant. Historical migration fixtures remove newer triggers when reconstructing older schemas.",
+    "Publication-only counts now filter publication events, preserving their old invariants while lifecycle events are verified separately. This also corrected the native Polars probe.",
+    "OpenAPI sample generator now emits valid signed-integer timestamp strings; fixture totals and generated exports were updated.",
+    "The existing qualified tokio-stream version is now an explicitly pinned direct dependency of HTTP transport and the native qualification manifest; the architecture boundary allowlist records that reviewed use.",
+    "The native query-timeout probe could expire during cold Python startup. It now advances its existing injected monotonic clock when the synthetic query-start marker is atomically published, retaining the same timeout policy and real DuckDB interruption/cleanup. Production timers are unchanged.",
+    "API probe import/formatting/type findings were corrected; a deliberately oversized audit fixture was reduced to the existing event-admission bound."
+  ],
+  "dependency_change": "No new external package versions; the same 641-version inventory remains. Lock hashes changed to record direct tokio-stream use. Existing license/advisory observations and advisory date are preserved.",
+  "browser": "No UI change or manual browser journey is claimed. Real loopback SSE plus automated browser Origin/session/CSRF facade tests passed; connected UI integration remains T082.",
+  "limits": [
+    "Local qualification is macOS arm64; pushed CI awaits owner confirmation.",
+    "Events replay the latest 10000 sequences without deleting immutable audit evidence. Clients must refetch authoritative read models on resync.",
+    "Preview handles expire after five minutes, cache eviction or coordinator restart. Each page holds a renewable query lease; handles retain no between-page lease. Foreign availability and retention remain provider responsibilities.",
+    "Projected preview integrity verifies contained files, canonical manifest, lengths, schema and selected decoding, not full artifact hashes or freshness/quality PASS.",
+    "Preview uses bounded row groups, batches, cells and output with cooperative deadlines. No hard process-memory/RSS or general latency benchmark is claimed.",
+    "Workspace UI, SQL scratchpad, scheduling, other transform adapters and native editor qualification remain subsequent tasks."
+  ],
+  "native_reports": {
+    "api.json": {
+      "path": "target/qualification/runs/native.tHqFVr/api.json",
+      "sha256": "67a77ce7483b30578e9e47a77158c5750cc228b017aa3408511d6742c59f56b8"
+    },
+    "build-dispatch.json": {
+      "path": "target/qualification/runs/native.tHqFVr/build-dispatch.json",
+      "sha256": "580957e187d81142ebbf28662840a8ce8c4b4e0326af97cf9b24514803204964"
+    },
+    "declaration-returns.json": {
+      "path": "target/qualification/runs/native.tHqFVr/declaration-returns.json",
+      "sha256": "232bf921c903a9582b07b5ea32478ae8f462e8427389c17434fdaa8724089cd1"
+    },
+    "developer-core.json": {
+      "path": "target/qualification/runs/native.tHqFVr/developer-core.json",
+      "sha256": "4beffd2e6ac9ffbde2c31abc384c374edbfe4362033a85db420529ef66fac231"
+    },
+    "duckdb-capabilities.json": {
+      "path": "target/qualification/runs/native.tHqFVr/duckdb-capabilities.json",
+      "sha256": "5a121ce28c3ecea6a283f2a0b3b1709a3cc5890c03a2203e895859abe7fee846"
+    },
+    "expectation-evaluation.json": {
+      "path": "target/qualification/runs/native.tHqFVr/expectation-evaluation.json",
+      "sha256": "5336892c4a2e92af79e2e1553de669b310cb332e0d3f159d10c4b5e8f224c6fd"
+    },
+    "expectation-lifecycle.json": {
+      "path": "target/qualification/runs/native.tHqFVr/expectation-lifecycle.json",
+      "sha256": "9de4b3a37b2e0f99d656733cf3e8a973683b368ab9f6ce7ddb58f37885982965"
+    },
+    "foreign-data.json": {
+      "path": "target/qualification/runs/native.tHqFVr/foreign-data.json",
+      "sha256": "a771d4b8f871346d6e7fa21888ec32c6e24eeb33a35baee4d5a72902bdb236f7"
+    },
+    "normalization.json": {
+      "path": "target/qualification/runs/native.tHqFVr/normalization.json",
+      "sha256": "2447c9a8d40de5116acc8331bfd5d308a3e9b23cd768f3eec4056d7b51652f73"
+    },
+    "polars-execution.json": {
+      "path": "target/qualification/runs/native.tHqFVr/polars-execution.json",
+      "sha256": "1a81e740a3d4dd57812ef51230eab41abd291a1502c3197051e9d42bc71a6a19"
+    },
+    "python.json": {
+      "path": "target/qualification/runs/native.tHqFVr/python.json",
+      "sha256": "312871696aee979da94c8b82dd9486cfcbab1cb2cd00a68bc8aae93d4892fcb0"
+    },
+    "resource-capabilities.json": {
+      "path": "target/qualification/runs/native.tHqFVr/resource-capabilities.json",
+      "sha256": "d23bae30881f391022c14c1e3ddd0f23366155ae950e73e3263195fe465ee65a"
+    },
+    "rust.json": {
+      "path": "target/qualification/runs/native.tHqFVr/rust.json",
+      "sha256": "4dd991651dab8967e196f53586bd5a307fb451600ed30ef583b205425dc0ff2e"
+    }
+  },
+  "api_journeys": [
+    "new HTTP build survives client disconnect and retry creates one build/publication",
+    "local version context binds exact source/lineage/schema/row-count metadata",
+    "projected preview physical cursors, lossless nulls, labelled truncation and explicit bounded cell inspection",
+    "authenticated SSE matches committed replay and resumes without duplicate facts",
+    "saved-plan acceptance is explicit and cannot be accepted twice",
+    "foreign preview uses a renewable provider query lease without producer imports or replication",
+    "foreign API registration/build uses provider-owned bytes; retained reads import no provider code",
+    "active HTTP cancellation is replayable and preserves every last-good head",
+    "cancellation receipt survives coordinator restart"
+  ],
+  "qualification_web": "Typecheck, five tests and build passed. The existing React Flow use-client bundling warning remains."
+}

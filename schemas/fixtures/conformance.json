@@ -6431,5 +6431,76 @@
       "copy": true
     },
     "valid": false
+  },
+  {
+    "name": "preview-request",
+    "schema": "ApiPreviewRequestV1",
+    "value": {
+      "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "version": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "origin_workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "columns": [
+        "amount"
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "preview-budget",
+    "schema": "ApiPreviewRequestV1",
+    "value": {
+      "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "version": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "origin_workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "columns": [
+        "amount"
+      ],
+      "rows": 1001
+    },
+    "valid": false
+  },
+  {
+    "name": "preview-truncated",
+    "schema": "ApiPreviewCellV1",
+    "value": {
+      "value": null,
+      "truncated": true
+    },
+    "valid": true
+  },
+  {
+    "name": "preview-null",
+    "schema": "ApiPreviewCellV1",
+    "value": {
+      "value": {
+        "type": "null"
+      },
+      "truncated": false
+    },
+    "valid": true
+  },
+  {
+    "name": "events-empty",
+    "schema": "ApiEventsV1",
+    "value": {
+      "events": [],
+      "cursor": "0",
+      "high_water": "0",
+      "retention_floor": "0",
+      "resync_required": false
+    },
+    "valid": true
+  },
+  {
+    "name": "events-number-cursor",
+    "schema": "ApiEventsV1",
+    "value": {
+      "events": [],
+      "cursor": 0,
+      "high_water": "0",
+      "retention_floor": "0",
+      "resync_required": false
+    },
+    "valid": false
   }
 ]

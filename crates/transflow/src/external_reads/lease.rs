@@ -224,3 +224,59 @@ impl Drop for Reads {
         // Drop tickets after the renewal thread exits: their final fencing generations release.
     }
 }
+
+/// Execute a bounded preview under the same renewable provider protection as builds.
+/// Local providers route back through the live coordinator mailbox, never a second writer.
+pub(crate) fn preview<T>(
+    root: PathBuf,
+    origin: WorkspaceId,
+    selection: Selection,
+    version: VersionId,
+    operation: tf_domain::RequestId,
+    work: impl FnOnce(&Value, &dyn Fn() -> bool) -> Result<T, Error>,
+) -> Result<T, Error> {
+    let lease = operation;
+    let (ticket, response) = Ticket::resolve(
+        root,
+        origin,
+        selection,
+        Some(version),
+        lease.to_string(),
+        operation.to_string(),
+    )?;
+    let shared = Arc::new(Mutex::new(State {
+        tickets: vec![ticket],
+        error: None,
+    }));
+    let state = shared.clone();
+    let (stop, rx) = mpsc::sync_channel(1);
+    let worker = thread::spawn(move || {
+        while matches!(
+            rx.recv_timeout(Duration::from_secs(30)),
+            Err(mpsc::RecvTimeoutError::Timeout)
+        ) {
+            let Ok(mut s) = state.lock() else { return };
+            if let Some(ticket) = s.tickets.first_mut()
+                && let Err(e) = ticket.renew()
+            {
+                s.error = Some(e.to_string());
+                return;
+            }
+        }
+    });
+    let check = || {
+        shared.lock().is_ok_and(|s| {
+            s.error.is_none()
+                && s.tickets
+                    .iter()
+                    .all(|t| t.confirmed.elapsed() < Duration::from_secs(840))
+        })
+    };
+    let result = work(&response, &check);
+    let _ = stop.try_send(());
+    let joined = worker.join();
+    if joined.is_err() || !check() {
+        return Err(failure("Preview read lease was lost"));
+    }
+    result
+}

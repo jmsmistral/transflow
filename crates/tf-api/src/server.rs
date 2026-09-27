@@ -25,6 +25,7 @@ struct Shared {
     origin: String,
     grants: Mutex<auth::Grants>,
     permits: Arc<tokio::sync::Semaphore>,
+    streams: Arc<tokio::sync::Semaphore>,
 }
 /// Running loopback server. Drop stops listening before coordinator ownership can be released.
 pub struct Server {
@@ -120,6 +121,7 @@ fn state(address: SocketAddr, token: String, app: Service) -> Arc<Shared> {
         origin: format!("http://{address}"),
         grants: Mutex::new(auth::Grants::new()),
         permits: Arc::new(tokio::sync::Semaphore::new(IN_FLIGHT_LIMIT)),
+        streams: Arc::new(tokio::sync::Semaphore::new(4)),
     })
 }
 fn routes(shared: Arc<Shared>) -> Router {
@@ -426,6 +428,23 @@ async fn dispatch(
         return reply(Reply::metadata(s.app.capabilities()), id);
     }
     let route = crate::contracts::route(&request.method, &request.path)?;
+    if request.method == "GET" && request.path == "/api/v1/events" {
+        if let Some(last) = one(h, "last-event-id")? {
+            if request.query.get("after").is_some_and(|v| v != last) {
+                return Err(ApiError::invalid());
+            }
+            request.query.insert("after".into(), last.into());
+        }
+        let cookie = one(h, "cookie")?
+            .and_then(|v| {
+                v.split(';')
+                    .map(str::trim)
+                    .find_map(|v| v.strip_prefix("tf_session="))
+            })
+            .map(str::to_owned);
+        drop(permit);
+        return event_stream(s, request, bearer, cookie).await;
+    }
     tokio::task::spawn_blocking(move || {
         let _permit = permit;
         let result = s.app.call(request)?;
@@ -476,4 +495,110 @@ fn query_pairs(query: &str) -> Result<Vec<(String, String)>, ApiError> {
             Ok((decode(k)?, decode(v)?))
         })
         .collect()
+}
+
+async fn event_stream(
+    s: Arc<Shared>,
+    mut request: Request,
+    bearer: bool,
+    cookie: Option<String>,
+) -> Result<Response, ApiError> {
+    use axum::response::sse::{Event, KeepAlive, Sse};
+    use std::convert::Infallible;
+    let slot = s
+        .streams
+        .clone()
+        .try_acquire_owned()
+        .map_err(|_| ApiError::busy())?;
+    let app = s.app.clone();
+    let first_request = request.clone();
+    let first = tokio::task::spawn_blocking(move || app.call(first_request))
+        .await
+        .map_err(|_| ApiError::internal())??;
+    crate::contracts::validate("ApiEventsV1", &first.data).map_err(|_| ApiError::internal())?;
+    let (tx, rx) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(1);
+    tokio::spawn(async move {
+        let _slot = slot;
+        let deadline = Instant::now() + Duration::from_secs(60);
+        let mut page = first;
+        loop {
+            if !bearer
+                && !s.grants.lock().is_ok_and(|mut g| {
+                    g.validate(cookie.as_deref().unwrap_or(""), None, false, Instant::now())
+                })
+            {
+                break;
+            }
+            let resync = page.data["resync_required"] == true;
+            let Some(cursor) = page.data["cursor"].as_str().map(str::to_owned) else {
+                break;
+            };
+            let Some(events) = page.data["events"].as_array() else {
+                break;
+            };
+            for fact in events {
+                if Instant::now() >= deadline {
+                    return;
+                }
+                let Some(seq) = fact["sequence"].as_str() else {
+                    return;
+                };
+                let event = Event::default()
+                    .event("fact")
+                    .id(seq)
+                    .data(fact.to_string());
+                if !matches!(
+                    tokio::time::timeout(
+                        deadline
+                            .saturating_duration_since(Instant::now())
+                            .min(Duration::from_secs(5)),
+                        tx.send(Ok(event)),
+                    )
+                    .await,
+                    Ok(Ok(()))
+                ) {
+                    return;
+                }
+            }
+            let message = Event::default().event(if resync {"resync_required"}else{"checkpoint"}).id(&cursor).data(json!({"cursor":cursor,"workspace":s.app.capabilities()["workspace"],"action":if resync {"refetch_context_and_read_models"}else{"resume_after_cursor"}}).to_string());
+            if !matches!(
+                tokio::time::timeout(
+                    deadline
+                        .saturating_duration_since(Instant::now())
+                        .min(Duration::from_secs(5)),
+                    tx.send(Ok(message)),
+                )
+                .await,
+                Ok(Ok(()))
+            ) || resync
+                || Instant::now() >= deadline
+            {
+                break;
+            }
+            request.query.insert("after".into(), cursor);
+            if events.is_empty() {
+                tokio::time::sleep(Duration::from_millis(500)).await;
+            }
+            if tx.is_closed() {
+                break;
+            }
+            let Ok(permit) = s.permits.clone().try_acquire_owned() else {
+                break;
+            };
+            let app = s.app.clone();
+            let r = request.clone();
+            let result = tokio::task::spawn_blocking(move || {
+                let _permit = permit;
+                app.call(r)
+            })
+            .await;
+            match result {
+                Ok(Ok(p)) if crate::contracts::validate("ApiEventsV1", &p.data).is_ok() => page = p,
+                _ => break,
+            }
+        }
+    });
+    Ok(Sse::new(tokio_stream::wrappers::ReceiverStream::new(rx))
+        .keep_alive(KeepAlive::default())
+        .into_response())
 }

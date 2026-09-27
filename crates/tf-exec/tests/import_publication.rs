@@ -90,7 +90,7 @@ fn import_fence_reservation_and_late_sql_failure_preserve_last_good() {
             assert!(!commit(&mut h,&r,&a).await,"{failure}");
             assert_eq!(h.scalar("SELECT count(*) FROM dataset_versions").await,1);
             assert_eq!(h.scalar("SELECT generation FROM dataset_heads").await,1);
-            assert_eq!(h.scalar("SELECT count(*) FROM events").await,1);
+            assert_eq!(h.scalar("SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')").await,1);
             assert_eq!(sqlx::query_scalar::<_,i64>("SELECT count(*) FROM source_snapshots WHERE id=?").bind(r.source.to_string()).fetch_one(&mut h.db).await.unwrap(),0);
         }
     });

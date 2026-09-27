@@ -13,7 +13,7 @@
   "implementation_base": "bbc90be3ff9b9f8d087fe91df964555ea6002fb9",
   "specification_base": "6299a86771825c045973c3d5882b7e5c0bafb563",
   "result": "All local gates passed, including separate completion runs after corrected regressions",
-  "ci": "Pending owner confirmation after push; no workflow polling",
+  "ci": "All GitHub CI jobs passed, owner-confirmed 2026-09-27",
   "counts": {
     "rust_tests": 376,
     "rust_doc_tests": 1,
@@ -144,10 +144,17 @@
     "Closed empty-object TypeScript uses Readonly<Record<string, never>>; OpenAPI launch is bearer-only."
   ],
   "limits": [
-    "Only macOS arm64 was executed locally; new push CI remains pending owner confirmation.",
+    "Local execution was macOS arm64; all GitHub CI jobs were subsequently owner-confirmed for the paired revisions below.",
     "Workspace UI, SSE, preview/log APIs, scheduling, other transform engines and native editor integration remain later tasks.",
     "Metadata reads retain unknown freshness and do not prove provider availability or byte integrity. Execution uses existing direct provider leases and verification.",
     "Incomplete HTTP receipts refuse replay after interruption; filesystem changes and receipt completion are not a single atomic transaction.",
     "Catalogue metadata enrichment caps at 16 MiB and requires narrower path/identity filters when exceeded; no general memory/performance benchmark is claimed."
-  ]
+  ],
+  "owner_ci_confirmation": {
+    "implementation": "ecdf6faec65e37a1b888e69513275e7449e9ab0f",
+    "specification": "edf005c23c41940cf522a7c1b4f7bae8f0068c39",
+    "date": "2026-09-27",
+    "result": "All GitHub CI jobs passed, owner-reported",
+    "workflow_polling": false
+  }
 }

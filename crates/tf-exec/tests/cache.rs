@@ -87,7 +87,7 @@ fn unchanged_selected_job_reuses_original_version_without_attempt_or_new_event()
         for query in [
             "SELECT count(*) FROM attempts",
             "SELECT count(*) FROM dataset_versions",
-            "SELECT count(*) FROM events",
+            "SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')",
             "SELECT count(*) FROM jobs WHERE state='CACHED'",
             "SELECT count(*) FROM cached_jobs",
             "SELECT count(*) FROM audit_log WHERE operation='cache_reuse'",
@@ -206,7 +206,7 @@ fn cancellation_generation_fence_terminal_and_force_guards_preserve_head() {
                 _=>{r.contract.compute_fingerprint="e".repeat(64);"SELECT 1"}
             };
             sqlx::query(sql).execute(&mut h.db).await.unwrap();
-            assert!(reuse(&mut h,r).await.is_err(),"{change}");assert_eq!(h.scalar("SELECT count(*) FROM cached_jobs").await,0);assert_eq!(h.scalar("SELECT count(*) FROM events").await,1);
+            assert!(reuse(&mut h,r).await.is_err(),"{change}");assert_eq!(h.scalar("SELECT count(*) FROM cached_jobs").await,0);assert_eq!(h.scalar("SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')").await,1);
         }
     });
 }
@@ -264,7 +264,7 @@ fn expired_or_released_lease_and_changed_evidence_cannot_adopt() {
                 "rollback"=>{sqlx::raw_sql("CREATE TRIGGER fail_cache_audit BEFORE INSERT ON audit_log WHEN NEW.operation='cache_reuse' BEGIN SELECT RAISE(ABORT,'injected disk write failure'); END;").execute(&mut h.db).await.unwrap();},_=>{}
             }
             assert!(store.adopt_cache(&candidate,&artifact,if change=="expired"{50}else{41}).await.is_err(),"{change}");owned.close().await.unwrap();
-            assert_eq!(h.scalar("SELECT count(*) FROM cached_jobs").await,0);assert_eq!(h.scalar("SELECT generation FROM dataset_heads").await,2);assert_eq!(h.scalar("SELECT count(*) FROM events").await,2);
+            assert_eq!(h.scalar("SELECT count(*) FROM cached_jobs").await,0);assert_eq!(h.scalar("SELECT generation FROM dataset_heads").await,2);assert_eq!(h.scalar("SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')").await,2);
         }
     });
 }

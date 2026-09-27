@@ -151,7 +151,7 @@ fn cancellation_after_install_preserves_old_head_and_refuses_prebound_worker_spa
         store.close().await.unwrap();
         assert_eq!(h.scalar("SELECT generation FROM dataset_heads").await, 1);
         assert_eq!(h.scalar("SELECT count(*) FROM dataset_versions").await, 1);
-        assert_eq!(h.scalar("SELECT count(*) FROM events").await, 1);
+        assert_eq!(h.scalar("SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')").await, 1);
         assert_eq!(h.scalar("SELECT count(*) FROM write_reservations").await, 1);
     });
 }
@@ -181,7 +181,7 @@ fn publication_wins_then_cancel_reports_too_late_without_rewriting_success() {
                 .await,
             1
         );
-        assert_eq!(h.scalar("SELECT count(*) FROM events").await, 1);
+        assert_eq!(h.scalar("SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')").await, 1);
         assert_eq!(h.scalar("SELECT count(*) FROM outbox_deliveries").await, 1);
     });
 }
@@ -406,7 +406,7 @@ fn simultaneous_sqlite_writers_choose_one_visibility_winner() {
             for sql in [
                 "SELECT count(*) FROM dataset_versions",
                 "SELECT count(*) FROM dataset_heads",
-                "SELECT count(*) FROM events",
+                "SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')",
                 "SELECT count(*) FROM outbox_deliveries",
                 "SELECT count(*) FROM attempts WHERE state='SUCCEEDED'",
             ] {
@@ -485,7 +485,7 @@ fn canceling_pending_sibling_keeps_an_already_published_job_successful() {
         );
         assert_eq!(h.scalar("SELECT count(*) FROM dataset_versions").await, 1);
         assert_eq!(h.scalar("SELECT generation FROM dataset_heads").await, 1);
-        assert_eq!(h.scalar("SELECT count(*) FROM events").await, 1);
+        assert_eq!(h.scalar("SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')").await, 1);
         assert_eq!(h.scalar("SELECT count(*) FROM write_reservations").await, 2);
     });
 }

@@ -1837,6 +1837,7 @@ dependencies = [
  "sqlx",
  "thiserror",
  "tokio",
+ "tokio-stream",
  "toml",
  "tower",
  "tracing",

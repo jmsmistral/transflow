@@ -3716,6 +3716,12 @@
                   "context": null,
                   "data": null
                 }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "id: 1\nevent: fact\ndata: {\"sequence\": \"1\", \"id\": \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\", \"type\": \"example\", \"payload\": {}, \"causation\": null, \"correlation\": null, \"timestamp_us\": \"0\", \"workspace\": \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\", \"context\": {}}\n\n"
               }
             }
           },
@@ -3754,6 +3760,9 @@
               }
             }
           }
+        },
+        "x-transflow-event-schema": {
+          "$ref": "#/components/schemas/ApiEventV1"
         }
       }
     },
@@ -3937,6 +3946,293 @@
             }
           }
         ]
+      }
+    },
+    "/api/v1/events": {
+      "get": {
+        "operationId": "get_api_v1_events",
+        "responses": {
+          "200": {
+            "description": "Committed facts, checkpoints or resync_required; reconnect with the last received sequence",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "id: 1\nevent: fact\ndata: {\"sequence\": \"1\", \"id\": \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\", \"type\": \"example\", \"payload\": {}, \"causation\": null, \"correlation\": null, \"timestamp_us\": \"0\", \"workspace\": \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\", \"context\": {}}\n\n"
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Last-Event-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-transflow-event-schema": {
+          "$ref": "#/components/schemas/ApiEventV1"
+        }
+      }
+    },
+    "/api/v1/events/page": {
+      "get": {
+        "operationId": "get_api_v1_events_page",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiEventsV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "events": [],
+                    "cursor": "0",
+                    "high_water": "0",
+                    "retention_floor": "0",
+                    "resync_required": false
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/previews": {
+      "post": {
+        "operationId": "post_api_v1_previews",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiPreviewV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "branch": "example",
+                    "source": null,
+                    "registry": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "runtime_revision": "example",
+                    "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "selection": {
+                      "kind": "retained_current",
+                      "id": null,
+                      "digest": null
+                    },
+                    "graph": null,
+                    "freshness": "unknown",
+                    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "fallback_policy": []
+                  },
+                  "data": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "origin_workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "version": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "requested_branch": "example",
+                    "resolved_branch": "example",
+                    "published_us": "0",
+                    "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "schema": {
+                      "format_version": 1,
+                      "fields": []
+                    },
+                    "rows": [],
+                    "next_cursor": null,
+                    "physical_order": true,
+                    "integrity": "projected_read"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Transflow-CSRF",
+            "in": "header",
+            "required": false,
+            "description": "Required for browser session POSTs, except initial exchange",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiPreviewRequestV1"
+              },
+              "example": {
+                "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                "version": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                "origin_workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                "columns": [
+                  "example"
+                ]
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -10894,6 +11190,251 @@
           "next_cursor"
         ],
         "additionalProperties": false
+      },
+      "ApiEventV1": {
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "type": "string",
+            "format": "transflow-u64"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/JsonObject"
+          },
+          "causation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          },
+          "correlation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          },
+          "timestamp_us": {
+            "type": "string",
+            "format": "transflow-i64"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "context": {
+            "$ref": "#/components/schemas/JsonObject"
+          }
+        },
+        "required": [
+          "sequence",
+          "id",
+          "type",
+          "payload",
+          "causation",
+          "correlation",
+          "timestamp_us",
+          "workspace",
+          "context"
+        ],
+        "additionalProperties": false
+      },
+      "ApiEventsV1": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiEventV1"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "cursor": {
+            "type": "string",
+            "format": "transflow-u64"
+          },
+          "high_water": {
+            "type": "string",
+            "format": "transflow-u64"
+          },
+          "retention_floor": {
+            "type": "string",
+            "format": "transflow-u64"
+          },
+          "resync_required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "events",
+          "cursor",
+          "high_water",
+          "retention_floor",
+          "resync_required"
+        ],
+        "additionalProperties": false
+      },
+      "ApiPreviewRequestV1": {
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "version": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "origin_workspace": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 128
+          },
+          "rows": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "cell_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65536
+          },
+          "cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset",
+          "version",
+          "origin_workspace",
+          "columns"
+        ],
+        "additionalProperties": false
+      },
+      "ApiPreviewCellV1": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WireValue"
+              }
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "value",
+          "truncated"
+        ],
+        "additionalProperties": false
+      },
+      "ApiPreviewV1": {
+        "type": "object",
+        "properties": {
+          "workspace": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "origin_workspace": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "version": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "requested_branch": {
+            "type": "string"
+          },
+          "resolved_branch": {
+            "type": "string"
+          },
+          "published_us": {
+            "type": "string",
+            "format": "transflow-u64"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/LogicalSchemaV1"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ApiPreviewCellV1"
+              },
+              "minItems": 0,
+              "maxItems": 128
+            },
+            "minItems": 0,
+            "maxItems": 1000
+          },
+          "next_cursor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "physical_order": {
+            "const": true
+          },
+          "integrity": {
+            "const": "projected_read"
+          }
+        },
+        "required": [
+          "workspace",
+          "origin_workspace",
+          "dataset",
+          "version",
+          "requested_branch",
+          "resolved_branch",
+          "published_us",
+          "source",
+          "schema",
+          "rows",
+          "next_cursor",
+          "physical_order",
+          "integrity"
+        ],
+        "additionalProperties": false
+      },
+      "JsonObject": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/ExecutionJsonV1"
+        }
       }
     },
     "securitySchemes": {

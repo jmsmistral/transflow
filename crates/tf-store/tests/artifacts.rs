@@ -287,3 +287,187 @@ fn changed_runtime_namespace_is_rejected_without_following_it() {
     );
     assert_eq!(fs::read_dir(old).unwrap().count(), 0);
 }
+
+#[test]
+fn projected_preview_pages_exact_files_and_never_reads_later_parts_eagerly() {
+    use tf_store::preview::{self, Options, Position};
+    let tree = Tree::new();
+    let store = ArtifactStore::open(&tree.0).unwrap();
+    fs::copy(tree.0.join("source/one"), tree.0.join("source/two")).unwrap();
+    let candidate = store
+        .prepare(
+            &tree.source(),
+            &["one".into(), "two".into()],
+            writer(),
+            id(71),
+            |_| Ok(()),
+        )
+        .unwrap();
+    let digest = candidate.digest().unwrap();
+    let manifest = candidate.manifest().clone();
+    candidate.install(|_| Ok(())).unwrap();
+    let column = manifest["logical_schema"]["fields"][0]["name"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let columns = vec![column];
+    let options = || Options {
+        columns: &columns,
+        rows: 1,
+        cell_bytes: 4096,
+        row_bytes: 1536 * 1024,
+        timeout: Some(std::time::Duration::from_secs(30)),
+    };
+    let first = preview::read(
+        &store,
+        digest,
+        &manifest,
+        Position::default(),
+        options(),
+        || true,
+    )
+    .unwrap();
+    assert_eq!(first.rows.len(), 1);
+    assert_eq!(first.rows[0].len(), 1);
+    let second = preview::read(
+        &store,
+        digest,
+        &manifest,
+        first.next.unwrap(),
+        options(),
+        || true,
+    )
+    .unwrap();
+    assert_eq!(second.next.unwrap().file, 1);
+    let third = preview::read(
+        &store,
+        digest,
+        &manifest,
+        second.next.unwrap(),
+        options(),
+        || true,
+    )
+    .unwrap();
+    assert_eq!(first.rows, third.rows);
+    assert!(
+        preview::read(
+            &store,
+            digest,
+            &manifest,
+            Position {
+                row: 999,
+                ..Position::default()
+            },
+            options(),
+            || true
+        )
+        .is_err()
+    );
+    assert!(
+        preview::read(
+            &store,
+            digest,
+            &manifest,
+            Position::default(),
+            options(),
+            || false
+        )
+        .is_err()
+    );
+    let later = tree.object(&digest.hex()).join("part-00001.parquet");
+    writable(&later);
+    fs::write(&later, b"not parquet").unwrap();
+    assert!(
+        preview::read(
+            &store,
+            digest,
+            &manifest,
+            Position::default(),
+            options(),
+            || true
+        )
+        .is_ok()
+    );
+    assert!(
+        preview::read(
+            &store,
+            digest,
+            &manifest,
+            second.next.unwrap(),
+            options(),
+            || true
+        )
+        .is_err()
+    );
+}
+
+mod support {
+    pub mod normalization_fixture;
+}
+#[test]
+fn projected_preview_preserves_precise_cells_and_schema_across_row_groups() {
+    use parquet::{arrow::ArrowWriter, file::properties::WriterProperties};
+    use tf_store::{
+        normalization::cell,
+        preview::{self, Options, Position},
+    };
+    let tree = Tree::new();
+    let input = support::normalization_fixture::portable();
+    let mut writer_file = ArrowWriter::try_new(
+        File::create(tree.0.join("source/precise")).unwrap(),
+        input.schema(),
+        Some(
+            WriterProperties::builder()
+                .set_max_row_group_row_count(Some(1))
+                .build(),
+        ),
+    )
+    .unwrap();
+    writer_file.write(&input).unwrap();
+    writer_file.close().unwrap();
+    let store = ArtifactStore::open(&tree.0).unwrap();
+    let object = store
+        .prepare(
+            &tree.source(),
+            &["precise".into()],
+            writer(),
+            id(72),
+            |_| Ok(()),
+        )
+        .unwrap()
+        .install(|_| Ok(()))
+        .unwrap();
+    let names = ["aware_ns", "decimal", "float", "u64", "naive_ns"];
+    let columns = names.iter().map(|n| (*n).to_owned()).collect::<Vec<_>>();
+    let mut position = Position::default();
+    for row in 0..3 {
+        let page = preview::read(
+            &store,
+            object.digest(),
+            object.manifest(),
+            position,
+            Options {
+                columns: &columns,
+                rows: 1,
+                cell_bytes: 65536,
+                row_bytes: 1536 * 1024,
+                timeout: Some(std::time::Duration::from_secs(30)),
+            },
+            || true,
+        )
+        .unwrap();
+        for (col, name) in names.iter().enumerate() {
+            assert_eq!(
+                page.rows[0][col],
+                json!({"value":cell(input.column_by_name(name).unwrap().as_ref(), row).unwrap(),"truncated":false})
+            );
+            assert_eq!(page.schema["fields"][col]["name"], *name);
+        }
+        if row < 2 {
+            position = page.next.unwrap();
+            assert_eq!(position.group, row + 1);
+        } else {
+            assert!(page.next.is_none());
+        }
+    }
+}

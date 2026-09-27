@@ -220,3 +220,10 @@ strings and measured integer timestamps/durations remain decimal strings. This i
 an additive pre-release contract change, not a released protocol-version change.
 
 T069 adds bounded `ExternalResultV1`/`ExternalEntryV1` CLI contracts and four external-registration capabilities. Private locator paths are excluded; replica state is explicitly not inspected. Worker protocol remains 1.0.
+
+
+T077–T078 add closed event-page/fact and exact-version preview request/result shapes.
+The shared corpus now contains 286 cases. OpenAPI describes the SSE media type and
+resume header; Python/Rust/TypeScript exports share lossless cells and string event
+sequences. Checkpoints/resync frames are described in the HTTP guide. Runtime schema
+12 adds transactional lifecycle events; API v1 and worker protocol 1.0 are unchanged.

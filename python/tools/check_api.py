@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import sqlite3
 import subprocess
@@ -42,9 +43,10 @@ def main() -> None:
             [binary, "--workspace", root, *args, "--json"],
             capture_output=True,
             text=True,
-            check=True,
+            check=False,
             timeout=180,
         )
+        assert p.returncode == 0, (args, p.stdout, p.stderr)
         value: dict[str, Any] = json.loads(p.stdout)
         return value["result"]  # type: ignore[no-any-return]
 
@@ -77,7 +79,7 @@ def main() -> None:
         code = (
             "import polars as pl\nfrom transflow import transform, Output\n"
             '@transform(output=Output("raw/items"))\n'
-            'def items(): return pl.DataFrame({"id":[1,2]}).lazy()\n'
+            'def items(): return pl.DataFrame({"id":[1,2],"label":["x"*5000,None]}).lazy()\n'
         )
         (root / "src/items.py").write_text(code)
         (provider / "src/items.py").write_text(code)
@@ -158,6 +160,103 @@ def main() -> None:
             cases.append(
                 "local version context binds exact source/lineage/schema/row-count metadata"
             )
+            preview_body = {
+                "dataset": dataset,
+                "version": version,
+                "origin_workspace": client.call("GET", "/api/v1/capabilities")["data"]["workspace"],
+                "columns": ["label", "id"],
+                "rows": 1,
+            }
+            page = client.call("POST", "/api/v1/previews", preview_body, query={"branch": "main"})[
+                "data"
+            ]
+            assert page["rows"][0][0] == {"value": None, "truncated": True}, page
+            assert page["rows"][0][1]["value"]["value"] == "1"
+            following = client.call(
+                "POST",
+                "/api/v1/previews",
+                {**preview_body, "cursor": page["next_cursor"]},
+                query={"branch": "main"},
+            )["data"]
+            assert following["rows"][0][0] == {"value": {"type": "null"}, "truncated": False}
+            assert following["next_cursor"] is None
+            client.call(
+                "POST",
+                "/api/v1/previews",
+                {**preview_body, "cursor": page["next_cursor"]},
+                query={"branch": "other"},
+                status=409,
+            )
+            client.call(
+                "POST",
+                "/api/v1/previews",
+                {**preview_body, "cursor": page["next_cursor"], "columns": ["id"]},
+                query={"branch": "main"},
+                status=409,
+            )
+            client.call(
+                "POST",
+                "/api/v1/previews",
+                {**preview_body, "cursor": "forged"},
+                query={"branch": "main"},
+                status=409,
+            )
+            client.call(
+                "POST",
+                "/api/v1/previews",
+                {**preview_body, "cursor": page["next_cursor"], "version": str(uuid4())},
+                query={"branch": "main"},
+                status=409,
+            )
+            full_cell = client.call(
+                "POST",
+                "/api/v1/previews",
+                {**preview_body, "cell_bytes": 65536},
+                query={"branch": "main"},
+            )["data"]
+            assert len(full_cell["rows"][0][0]["value"]["value"]) == 5000
+            assert rows("SELECT count(*) FROM read_leases WHERE kind='query' AND released=0") == [
+                (0,)
+            ]
+            cases.append(
+                "projected preview physical cursors, lossless nulls, labelled truncation "
+                "and explicit bounded cell inspection"
+            )
+            events = client.call("GET", "/api/v1/events/page", query={"after": "0"})["data"]
+            facts = events["events"]
+            assert any(
+                e["type"] == "build.state" and e["payload"]["state"] == "SUCCEEDED" for e in facts
+            )
+            assert len({e["id"] for e in facts}) == len(facts)
+            connection = http.client.HTTPConnection(client.endpoint, timeout=10)
+            connection.request(
+                "GET",
+                "/api/v1/events",
+                headers={"Authorization": "Bearer " + client.token, "Last-Event-ID": "0"},
+            )
+            stream = connection.getresponse()
+            assert stream.status == 200 and (stream.getheader("Content-Type") or "").startswith(
+                "text/event-stream"
+            )
+            received: list[dict[str, Any]] = []
+            while len(received) < len(facts):
+                line = stream.readline().decode().strip()
+                if line.startswith("data: "):
+                    fact = json.loads(line[6:])
+                    if "sequence" in fact:
+                        received.append(fact)
+            connection.close()
+            assert received == facts
+            resumed = client.call(
+                "GET", "/api/v1/events/page", query={"after": facts[-1]["sequence"]}
+            )["data"]
+            assert resumed["events"] == []
+            assert client.call(
+                "GET", "/api/v1/events/page", query={"after": "9223372036854775807"}
+            )["data"]["resync_required"]
+            cases.append(
+                "authenticated SSE matches committed replay and resumes without duplicate facts"
+            )
             draft = client.mutate("/api/v1/plans", selection)["data"]
             accepted = client.mutate(
                 "/api/v1/builds",
@@ -172,6 +271,14 @@ def main() -> None:
                 status=409,
             )
             cases.append("saved-plan acceptance is explicit and cannot be accepted twice")
+            continued = client.call(
+                "POST",
+                "/api/v1/previews",
+                {**preview_body, "cursor": page["next_cursor"]},
+                query={"branch": "main"},
+            )["data"]
+            assert continued["version"] == version and continued["rows"] == following["rows"]
+
             client.mutate(
                 "/api/v1/externals",
                 {
@@ -210,6 +317,26 @@ def main() -> None:
             )
             assert versions["data"]["entries"][0]["availability"] == "not_verified"
             assert rows("SELECT count(*) FROM replicas") == [(0,)]
+            foreign_preview = client.call(
+                "POST",
+                "/api/v1/previews",
+                {
+                    "dataset": provider_dataset,
+                    "version": foreign_version,
+                    "origin_workspace": provider_id,
+                    "columns": ["id"],
+                },
+                query={"branch": "main"},
+            )["data"]
+            assert (
+                len(foreign_preview["rows"]) == 2
+                and foreign_preview["origin_workspace"] == provider_id
+            )
+            assert rows("SELECT count(*) FROM replicas") == [(0,)]
+            cases.append(
+                "foreign preview uses a renewable provider query lease "
+                "without producer imports or replication"
+            )
             cases.append(
                 "foreign API registration/build uses provider-owned bytes; "
                 "retained reads import no provider code"
@@ -278,7 +405,8 @@ def main() -> None:
             cases.append("cancellation receipt survives coordinator restart")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
-        json.dumps({"tasks": ["T074", "T075", "T076"], "cases": cases}, indent=2) + "\n"
+        json.dumps({"tasks": ["T074", "T075", "T076", "T077", "T078"], "cases": cases}, indent=2)
+        + "\n"
     )
 
 

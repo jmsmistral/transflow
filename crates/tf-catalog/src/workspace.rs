@@ -397,6 +397,10 @@ impl WorkspaceConfig {
     pub fn sample_rows(&self) -> u32 {
         self.raw.validation.sample_rows
     }
+    /// Interactive query deadline; zero disables this timer independently of build timers.
+    pub fn interactive_timeout_seconds(&self) -> u64 {
+        self.raw.interactive.query_timeout_seconds
+    }
     /// Preview rows, maximum rows and maximum bytes.
     pub fn interactive_limits(&self) -> (u32, u32, u64) {
         (

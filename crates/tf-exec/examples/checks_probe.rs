@@ -1,16 +1,25 @@
 //! Native canonical evaluator qualification over strictly normalized synthetic artifacts.
 use serde_json::{Value, json};
-use std::{error::Error, fs::File, path::PathBuf, time::Duration};
+use std::{error::Error, fs::File, path::PathBuf, sync::Arc, time::Duration};
 use tf_exec::{
     checks::{self, Subject},
     supervisor::{Cancellation, Launch, Policy},
-    timing::{Budget, Limits, Phase, Work},
+    timing::{Budget, Clock, Limits, Phase, Work},
 };
 use tf_protocol::{
     Operation,
     canonical::{ContentDigest, DigestKind},
 };
 use tf_store::artifacts::ArtifactStore;
+// The native query-start marker advances only this fixture's virtual phase clock.
+// Production startup still consumes its normal phase budget; cold imports must not
+// make this query-interruption test expire before the query is reached.
+struct QueryClock(PathBuf);
+impl Clock for QueryClock {
+    fn now(&self) -> Duration {
+        Duration::from_secs(if self.0.is_file() { 4 } else { 0 })
+    }
+}
 fn main() -> Result<(), Box<dyn Error>> {
     let a = std::env::args_os().skip(1).collect::<Vec<_>>();
     let workspace = PathBuf::from(a.first().ok_or("workspace")?);
@@ -32,14 +41,22 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
     let mut limits = Limits::default();
     if mode == "timeout" {
-        // Leave helper startup room on loaded CI hosts; the injected query is unbounded
-        // relative to this deadline and must actually begin before qualification passes.
+        // Keep the three-second policy; inject its expiry at the observed query boundary.
         limits.validation.value = 3;
     }
     if mode == "disabled" {
         limits.validation.value = 0;
     }
-    let budget = Budget::new(limits, "synthetic canonical checks".into())?;
+    let log = PathBuf::from(input["result_directory"].as_str().ok_or("result")?);
+    let budget = if mode == "timeout" {
+        Budget::with_clock(
+            limits,
+            "synthetic canonical checks".into(),
+            Arc::new(QueryClock(log.join("measurement.json"))),
+        )?
+    } else {
+        Budget::new(limits, "synthetic canonical checks".into())?
+    };
     let cancel = Cancellation::default();
     if mode == "canceled" {
         cancel.cancel();
@@ -49,7 +66,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         input["subject_version"] = Value::Null;
         input["binding"] = Value::Null;
     }
-    let log = PathBuf::from(input["result_directory"].as_str().ok_or("result")?);
     let launch = Launch {
         python,
         operation: Operation::EvaluateChecks,

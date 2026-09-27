@@ -172,3 +172,118 @@ async fn rejects_duplicate_json_oversize_unknown_methods_and_token_queries()
     assert_eq!(app.0.load(Ordering::SeqCst), 0);
     Ok(())
 }
+
+struct EventsApp;
+impl Application for EventsApp {
+    fn capabilities(&self) -> Value {
+        json!({"workspace":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"})
+    }
+    fn call(&self, r: tf_api::Request) -> Result<Reply, ApiError> {
+        let workspace = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+        let events = if r.query.get("after").is_none_or(|s| s == "0") {
+            (1..=2).map(|n|json!({"sequence":n.to_string(),"id":format!("00000000-0000-4000-8000-{n:012}"),"type":"job.state","payload":{},"context":{},"workspace":workspace,"timestamp_us":"1","causation":null,"correlation":null})).collect::<Vec<_>>()
+        } else {
+            vec![]
+        };
+        Ok(Reply::metadata(
+            json!({"events":events,"cursor":"2","high_water":"2","retention_floor":"0","resync_required":r.query.get("after").is_some_and(|s|s=="9")}),
+        ))
+    }
+}
+#[tokio::test]
+async fn unread_streams_are_bounded_leave_command_capacity_and_explicitly_resync()
+-> Result<(), Box<dyn std::error::Error>> {
+    let r = tf_api::router(
+        "127.0.0.1:12345".parse()?,
+        TOKEN.into(),
+        Arc::new(EventsApp),
+    )?;
+    let send = |path: &str| {
+        request("GET", path, "")
+            .header("authorization", format!("Bearer {TOKEN}"))
+            .body(Body::empty())
+    };
+    let mut held = Vec::new();
+    for _ in 0..4 {
+        let response = r.clone().oneshot(send("/api/v1/events?after=0")?).await?;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers()["content-type"], "text/event-stream");
+        held.push(response);
+    }
+    assert_eq!(
+        r.clone().oneshot(send("/api/v1/events")?).await?.status(),
+        StatusCode::SERVICE_UNAVAILABLE
+    );
+    assert_eq!(
+        r.clone()
+            .oneshot(send("/api/v1/capabilities")?)
+            .await?
+            .status(),
+        StatusCode::OK
+    );
+    drop(held);
+    // A separate transport has no held clients and closes an expired-cursor stream after resync.
+    let r = tf_api::router(
+        "127.0.0.1:12345".parse()?,
+        TOKEN.into(),
+        Arc::new(EventsApp),
+    )?;
+    let response = r.oneshot(send("/api/v1/events?after=9")?).await?;
+    let text = String::from_utf8(to_bytes(response.into_body(), 4096).await?.to_vec())?;
+    assert!(text.contains("event: resync_required"));
+    assert!(text.contains("refetch_context_and_read_models"));
+    Ok(())
+}
+
+#[tokio::test]
+async fn browser_event_facade_requires_origin_session_and_csrf()
+-> Result<(), Box<dyn std::error::Error>> {
+    let r = tf_api::router(
+        "127.0.0.1:12345".parse()?,
+        TOKEN.into(),
+        Arc::new(EventsApp),
+    )?;
+    let launch = r
+        .clone()
+        .oneshot(
+            request("POST", "/api/v1/sessions/launch", "{}")
+                .header("authorization", format!("Bearer {TOKEN}"))
+                .body(Body::from("{}"))?,
+        )
+        .await?;
+    let code = data(launch).await?["data"]["code"].clone();
+    let response = r
+        .clone()
+        .oneshot(
+            request("POST", "/api/v1/sessions/exchange", "")
+                .header("origin", "http://127.0.0.1:12345")
+                .body(Body::from(json!({"code":code}).to_string()))?,
+        )
+        .await?;
+    let set = response.headers()["set-cookie"].to_str()?.to_owned();
+    let cookie = set.split(';').next().ok_or("cookie")?;
+    let csrf = data(response).await?["data"]["csrf"]
+        .as_str()
+        .ok_or("csrf")?
+        .to_owned();
+    let body = json!({"path":"/api/v1/events","query":{"after":"9"}}).to_string();
+    for (origin, csrf_header, expected) in
+        [(false, false, 401), (true, false, 401), (true, true, 200)]
+    {
+        let mut b = request("POST", "/api/v1/read", &body).header("cookie", cookie);
+        if origin {
+            b = b.header("origin", "http://127.0.0.1:12345");
+        }
+        if csrf_header {
+            b = b.header("x-transflow-csrf", &csrf);
+        }
+        let response = r.clone().oneshot(b.body(Body::from(body.clone()))?).await?;
+        assert_eq!(response.status().as_u16(), expected);
+        if expected == 200 {
+            assert_eq!(response.headers()["content-type"], "text/event-stream");
+            let bytes = to_bytes(response.into_body(), 4096).await?;
+            assert!(std::str::from_utf8(&bytes)?.contains("resync_required"));
+        }
+    }
+    Ok(())
+}

@@ -10,7 +10,7 @@ use tf_domain::{BranchName, DatasetKey, VersionId, WorkspaceId, input::InputBind
 use tf_protocol::canonical::{ContentDigest, DigestKind};
 use tf_store::{Store, input_resolution::ReadRequest, planning::PlannedRead};
 mod lease;
-pub(crate) use lease::Reads;
+pub(crate) use lease::{Reads, preview};
 pub(crate) fn selection(
     registry: &RegistrySnapshot,
     input: &CandidateInput,

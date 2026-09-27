@@ -77,7 +77,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let completion = tf_exec::polars::run(&store, launch, &inputs, Cancellation::default(), tf_exec::discovery::random_id()?.parse()?);
         let head = h.scalar("SELECT generation FROM dataset_heads").await;
         let versions = h.scalar("SELECT count(*) FROM dataset_versions").await;
-        let events = h.scalar("SELECT count(*) FROM events").await;
+        let events = h.scalar("SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')").await;
         if head != 1 || versions != 1 || events != 1 { return Err("Execution changed the old publication".into()); }
         let evidence = completion.report.as_ref().map(|r|json!({"outcome":format!("{:?}",r.outcome),
             "stdout":String::from_utf8_lossy(&r.stdout.bytes),"stderr":String::from_utf8_lossy(&r.stderr.bytes),

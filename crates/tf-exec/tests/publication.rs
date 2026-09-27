@@ -22,7 +22,7 @@ fn commits_one_version_head_event_and_outbox_then_replays_without_execution() {
             "SELECT count(*) FROM dataset_versions",
             "SELECT count(*) FROM dataset_heads",
             "SELECT count(*) FROM head_changes",
-            "SELECT count(*) FROM events",
+            "SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')",
             "SELECT count(*) FROM outbox_deliveries",
         ] {
             assert_eq!(h.scalar(table).await, 1);
@@ -114,7 +114,7 @@ fn stale_generation_fence_and_contract_changes_never_publish() {
             }
             assert!(h.publish(r, 10).await.is_err(), "{change}");
             assert_eq!(h.scalar("SELECT count(*) FROM dataset_versions").await, 0);
-            assert_eq!(h.scalar("SELECT count(*) FROM events").await, 0);
+            assert_eq!(h.scalar("SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')").await, 0);
         }
     });
 }
@@ -208,7 +208,7 @@ fn readers_observe_only_committed_heads_and_late_sql_failure_rolls_every_visibil
             assert_eq!(completion.result.is_ok(),!abort);
             assert_eq!(h.scalar("SELECT count(*) FROM dataset_versions").await,i64::from(!abort));
             assert_eq!(h.scalar("SELECT count(*) FROM head_changes").await,i64::from(!abort));
-            assert_eq!(h.scalar("SELECT count(*) FROM events").await,i64::from(!abort));
+            assert_eq!(h.scalar("SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')").await,i64::from(!abort));
             if abort {assert_eq!(h.scalar("SELECT count(*) FROM publication_intents WHERE state='PREPARED'").await,1);}
             else {
                 let object=tf_store::artifacts::ArtifactStore::open(&h.root).unwrap().verify(h.digest).unwrap();
@@ -280,7 +280,7 @@ fn cancellation_or_head_conflict_after_install_preserves_the_previous_publicatio
                     .await,
                 1
             );
-            assert_eq!(h.scalar("SELECT count(*) FROM events").await, 1);
+            assert_eq!(h.scalar("SELECT count(*) FROM events WHERE type IN ('dataset.published','dataset.head_changed')").await, 1);
         }
     });
 }
@@ -296,4 +296,51 @@ fn complete_reservations_and_metadata_only_authority_are_required() {
  let mut store=h.owner.as_mut().unwrap().open_store().await.unwrap();assert!(store.repository().unwrap().reserve_publications(workspace(),job.build(),job.fence(),&[target],2).await.is_err());store.close().await.unwrap();assert_eq!(h.scalar("SELECT count(*) FROM write_reservations").await,0);
  h.owner.take();let mut owner=tf_exec::ownership::RuntimeOwner::acquire(&h.root,workspace(),tf_exec::ownership::CoordinatorMode::MetadataOnly).unwrap();assert!(matches!(publication::recover(&mut owner,40).await,Err(publication::Error::Mode)));h.owner=Some(owner);
 });
+}
+
+#[test]
+fn lifecycle_event_visibility_is_atomic_with_the_state_change() {
+    runtime().block_on(async {
+        let mut h = Harness::new().await;
+        h.start(71, 71, 0, contract()).await;
+        let before = h
+            .scalar("SELECT count(*) FROM events WHERE type='job.state'")
+            .await;
+        assert!(before > 0);
+        sqlx::raw_sql("BEGIN; UPDATE jobs SET state='FAILED';")
+            .execute(&mut h.db)
+            .await
+            .unwrap();
+        let mut reader =
+            tf_store::Reader::open_existing(&h.root.join(".transflow/runtime/catalog.sqlite"))
+                .await
+                .unwrap();
+        let page = reader
+            .event_page(&workspace().to_string(), Some(0))
+            .await
+            .unwrap();
+        assert!(
+            !page["events"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|e| e["payload"]["state"] == "FAILED")
+        );
+        reader.close().await.unwrap();
+        sqlx::raw_sql("ROLLBACK;").execute(&mut h.db).await.unwrap();
+        assert_eq!(
+            h.scalar("SELECT count(*) FROM events WHERE type='job.state'")
+                .await,
+            before
+        );
+        sqlx::query("UPDATE jobs SET state='FAILED'")
+            .execute(&mut h.db)
+            .await
+            .unwrap();
+        assert_eq!(
+            h.scalar("SELECT count(*) FROM events WHERE type='job.state'")
+                .await,
+            before + 1
+        );
+    });
 }

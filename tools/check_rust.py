@@ -34,7 +34,7 @@ EXTERNAL = {
     "tf-store": {"rustix", "sqlx", "libsqlite3-sys", "arrow-array", "arrow-schema", "parquet", "fs4", "serde", "serde_json", "thiserror"},
     "tf-exec": {"serde", "serde_json", "rustix", "tokio", "fs4", "tracing", "thiserror"},
     "tf-schedule": {"chrono", "chrono-tz", "serde", "thiserror"},
-    "tf-api": {"axum", "tower", "serde", "serde_json", "tokio", "tracing", "thiserror"},
+    "tf-api": {"axum", "tower", "tokio-stream", "serde", "serde_json", "tokio", "tracing", "thiserror"},
     "tf-lsp": {"serde", "serde_json", "tokio", "tracing", "thiserror"},
     "transflow": {"clap", "thiserror", "tokio", "tracing", "serde", "serde_json"},
 }

@@ -1,6 +1,7 @@
 //! CLI argument handling, human diagnostics and versioned JSON results.
 //! Help/version require no workspace I/O. Application services remain later work.
 mod api;
+mod api_preview;
 mod api_read;
 mod branch;
 mod browse;

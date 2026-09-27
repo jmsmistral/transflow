@@ -20,6 +20,7 @@ pub(crate) struct Command {
     reply: SyncSender<Result<Reply>>,
 }
 pub(crate) struct Service {
+    cursors: std::sync::Mutex<crate::api_preview::Cursors>,
     root: PathBuf,
     workspace: WorkspaceId,
     busy: Arc<AtomicBool>,
@@ -35,6 +36,7 @@ pub(crate) fn service(
     let (sender, receiver) = mpsc::sync_channel(1);
     (
         Arc::new(Service {
+            cursors: Default::default(),
             root,
             workspace,
             busy,
@@ -63,9 +65,36 @@ fn replay(v: Value) -> Result<Reply> {
 }
 impl Application for Service {
     fn capabilities(&self) -> Value {
-        json!({"api_version":1,"protocol_major":1,"workspace":self.workspace.to_string(),"operations":["context","datasets","versions","lineage","source","validation","catalog_diff","plan","catalog_sync","build_accept","build_cancel","catalog_lifecycle","branch_lifecycle","external_lifecycle"],"engines":["polars"],"limits":{"body_bytes":tf_api::BODY_LIMIT,"in_flight":tf_api::IN_FLIGHT_LIMIT,"page_default":50,"page_max":200,"graph_default":100,"graph_max":500,"graph_expansion_threshold":500,"source_bytes":65536},"metadata_reads_import_code":false,"external_reads":"provider_owned_leased","schedules":false,"ui":false})
+        json!({"api_version":1,"protocol_major":1,"workspace":self.workspace.to_string(),"operations":["context","datasets","versions","lineage","source","validation","catalog_diff","plan","catalog_sync","build_accept","build_cancel","catalog_lifecycle","branch_lifecycle","external_lifecycle","events","preview"],"engines":["polars"],"limits":{"body_bytes":tf_api::BODY_LIMIT,"in_flight":tf_api::IN_FLIGHT_LIMIT,"page_default":50,"page_max":200,"graph_default":100,"graph_max":500,"graph_expansion_threshold":500,"source_bytes":65536,"event_replay":10000,"event_streams":4,"preview_rows":1000,"preview_bytes":2097152,"preview_cell_bytes":4096},"metadata_reads_import_code":false,"external_reads":"provider_owned_leased","schedules":false,"ui":false})
     }
     fn call(&self, r: Request) -> Result<Reply> {
+        if r.path == "/api/v1/previews" && r.method == "POST" {
+            return crate::api_preview::read(&self.root, self.workspace, &r, &self.cursors);
+        }
+        if r.method == "GET" && matches!(r.path.as_str(), "/api/v1/events" | "/api/v1/events/page")
+        {
+            if r.query.keys().any(|k| k != "after") {
+                return Err(E::invalid());
+            }
+            let after = r
+                .query
+                .get("after")
+                .map(|s| {
+                    let n = s.parse::<i64>().map_err(|_| E::invalid())?;
+                    if n < 0 || s != &n.to_string() {
+                        return Err(E::invalid());
+                    }
+                    Ok(n)
+                })
+                .transpose()?;
+            let rt = api_read::runtime()?;
+            let mut rd = rt.block_on(api_read::reader(&self.root))?;
+            let page = rt
+                .block_on(rd.event_page(&self.workspace.to_string(), after))
+                .map_err(bad)?;
+            rt.block_on(rd.close()).map_err(bad)?;
+            return Ok(Reply::metadata(page));
+        }
         if r.method == "GET" {
             return api_read::read(&self.root, self.workspace, &r);
         }

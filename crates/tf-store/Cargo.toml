@@ -20,7 +20,7 @@ arrow-array.workspace = true
 arrow-schema.workspace = true
 
 [dev-dependencies]
-tokio.workspace = true
+tokio = { workspace = true, features = ["macros"] }
 
 [[test]]
 name = "infrastructure"

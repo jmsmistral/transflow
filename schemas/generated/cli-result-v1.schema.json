@@ -6956,6 +6956,251 @@
         "next_cursor"
       ],
       "additionalProperties": false
+    },
+    "ApiEventV1": {
+      "type": "object",
+      "properties": {
+        "sequence": {
+          "type": "string",
+          "format": "transflow-u64"
+        },
+        "id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "type": {
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "causation": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "correlation": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "timestamp_us": {
+          "type": "string",
+          "format": "transflow-i64"
+        },
+        "workspace": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "context": {
+          "$ref": "#/$defs/JsonObject"
+        }
+      },
+      "required": [
+        "sequence",
+        "id",
+        "type",
+        "payload",
+        "causation",
+        "correlation",
+        "timestamp_us",
+        "workspace",
+        "context"
+      ],
+      "additionalProperties": false
+    },
+    "ApiEventsV1": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiEventV1"
+          },
+          "minItems": 0,
+          "maxItems": 100
+        },
+        "cursor": {
+          "type": "string",
+          "format": "transflow-u64"
+        },
+        "high_water": {
+          "type": "string",
+          "format": "transflow-u64"
+        },
+        "retention_floor": {
+          "type": "string",
+          "format": "transflow-u64"
+        },
+        "resync_required": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "events",
+        "cursor",
+        "high_water",
+        "retention_floor",
+        "resync_required"
+      ],
+      "additionalProperties": false
+    },
+    "ApiPreviewRequestV1": {
+      "type": "object",
+      "properties": {
+        "dataset": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "version": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "origin_workspace": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "maxItems": 128
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "cell_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536
+        },
+        "cursor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "dataset",
+        "version",
+        "origin_workspace",
+        "columns"
+      ],
+      "additionalProperties": false
+    },
+    "ApiPreviewCellV1": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/WireValue"
+            }
+          ]
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "value",
+        "truncated"
+      ],
+      "additionalProperties": false
+    },
+    "ApiPreviewV1": {
+      "type": "object",
+      "properties": {
+        "workspace": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "origin_workspace": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "dataset": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "version": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "requested_branch": {
+          "type": "string"
+        },
+        "resolved_branch": {
+          "type": "string"
+        },
+        "published_us": {
+          "type": "string",
+          "format": "transflow-u64"
+        },
+        "source": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "schema": {
+          "$ref": "#/$defs/LogicalSchemaV1"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ApiPreviewCellV1"
+            },
+            "minItems": 0,
+            "maxItems": 128
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "physical_order": {
+          "const": true
+        },
+        "integrity": {
+          "const": "projected_read"
+        }
+      },
+      "required": [
+        "workspace",
+        "origin_workspace",
+        "dataset",
+        "version",
+        "requested_branch",
+        "resolved_branch",
+        "published_us",
+        "source",
+        "schema",
+        "rows",
+        "next_cursor",
+        "physical_order",
+        "integrity"
+      ],
+      "additionalProperties": false
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/ExecutionJsonV1"
+      }
     }
   },
   "$ref": "#/$defs/CliEnvelopeV1"

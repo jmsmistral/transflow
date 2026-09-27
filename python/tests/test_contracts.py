@@ -42,7 +42,13 @@ def test_generated_openapi_examples_and_parameter_names() -> None:
         operation = document["paths"][route["path"]][route["method"].lower()]
         parameters = [(p["in"], p["name"]) for p in operation["parameters"]]
         assert len(parameters) == len(set(parameters))
-        response = operation["responses"]["200"]["content"]["application/json"]["example"]
+        content = operation["responses"]["200"]["content"]
+        if route["path"] == "/api/v1/events":
+            event = json.loads(content["text/event-stream"]["example"].split("data: ")[1])
+            validate(SCHEMA["$defs"]["ApiEventV1"], event, SCHEMA["$defs"])
+            assert ("header", "Last-Event-ID") in parameters
+            continue
+        response = content["application/json"]["example"]
         validate(SCHEMA["$defs"][route["response"]], response["data"], SCHEMA["$defs"])
         if response["context"] is not None:
             validate(SCHEMA["$defs"]["ApiContextV1"], response["context"], SCHEMA["$defs"])

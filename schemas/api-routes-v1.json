@@ -288,5 +288,36 @@
     ],
     "mutation": false,
     "context": true
+  },
+  {
+    "path": "/api/v1/events",
+    "method": "GET",
+    "response": "ApiEventsV1",
+    "request": null,
+    "query": [
+      "after"
+    ],
+    "context": false,
+    "mutation": false
+  },
+  {
+    "path": "/api/v1/events/page",
+    "method": "GET",
+    "response": "ApiEventsV1",
+    "request": null,
+    "query": [
+      "after"
+    ],
+    "context": false,
+    "mutation": false
+  },
+  {
+    "path": "/api/v1/previews",
+    "method": "POST",
+    "response": "ApiPreviewV1",
+    "request": "ApiPreviewRequestV1",
+    "query": [],
+    "context": true,
+    "mutation": false
   }
 ]

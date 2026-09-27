@@ -23,7 +23,7 @@ CORS, token query support, remote bind, web-storage credential or background dae
 
 ## Context and reads
 
-Start with `GET /api/v1/context?branch=main`. Every domain request explicitly names
+Start with `GET /api/v1/context?branch=main`. Every contextual domain request explicitly names
 a data branch. Supply the returned `context` fingerprint on subsequent requests;
 a changed registry, configuration or runtime revision returns HTTP 409. Cursors
 bind the context, route and filters. Refresh the context and restart pagination
@@ -91,6 +91,90 @@ while publication is in progress; retry reads with a newly selected context.
 
 Errors contain safe codes/messages, retryability and server-generated request IDs.
 Bodies cap at 2 MiB, application concurrency at 16, the mutation queue at one and
-responses at 32 MiB. Logs, row previews, SSE, scheduling, UI panels and query helpers
-remain their subsequent tasks. Read metadata is not a substitute for leased,
+metadata responses at 32 MiB. Preview and event bounds are stricter, as described below.
+Logs, scheduling, UI panels and SQL query helpers remain subsequent tasks. Read metadata is not a substitute for leased,
 verified execution reads.
+
+
+## Committed events
+
+`GET /api/v1/events/page?after=SEQUENCE` returns at most 100 committed facts and
+1 MiB of stored payload. `GET /api/v1/events` delivers the same facts as SSE;
+resume with `Last-Event-ID` or `after`. Browser clients use the authenticated
+`POST /api/v1/read` facade with path `/api/v1/events` and consume its streaming
+response with fetch. Native EventSource cannot supply this facade's CSRF header.
+
+Facts carry decimal-string sequence, UUID, workspace, type, safe payload,
+correlation/causation, available source/branch context and UTC microseconds.
+Publication/head facts retain their existing transaction. Schema 12 adds build,
+job and attempt state notifications in the same transaction as each state change.
+A rolled-back transition has no visible event. Heartbeats and raw logs are excluded.
+The stream covers the workspace; it does not authorize painting another branch's
+state into a selected inspector. Treat facts as invalidations and refetch the
+appropriate contextual read models. The frontend `EventCursor` helper deduplicates
+sequence/UUID delivery without converting large sequence numbers to JS numbers.
+
+No `after` establishes a current checkpoint. Reconnect can replay the last 10,000
+sequences; older or future cursors explicitly return `resync_required`. This is a
+delivery window, not deletion of immutable audit evidence. To resynchronize, take
+the returned checkpoint, refetch context/build/dataset read models, then resume
+from that checkpoint. Facts racing the refetch can repeat; never guess missing
+transitions. Persisted build/job terminal state survives the replay window.
+
+Four streams have separate capacity from the 16 ordinary HTTP operations. Each
+holds one bounded page and a one-message channel. A blocked send closes after five
+seconds, idle polls run every 500 ms, and streams reconnect after 60 seconds.
+Disconnect/slow readers hold no writer transaction and cannot backpressure builds.
+Session validity is checked throughout delivery; reconnect uses normal auth.
+
+## Exact-version previews
+
+`POST /api/v1/previews?branch=main` accepts, for example:
+
+```json
+{
+  "dataset": "11111111-1111-4111-8111-111111111111",
+  "origin_workspace": "22222222-2222-4222-8222-222222222222",
+  "version": "33333333-3333-4333-8333-333333333333",
+  "columns": ["id", "label"],
+  "rows": 100
+}
+```
+
+Use IDs from retained dataset/version metadata. Pass `next_cursor` as `cursor`
+with the same branch, origin, dataset, exact version and projection. Cursors are
+unguessable server-side handles to physical file/row-group/row positions, valid
+for five minutes in a 256-entry cache. They hold no data or lease between requests.
+Wrong context, expiry, eviction or coordinator restart returns 409; restart paging
+at the chosen version. New head publications do not rebind that exact selection.
+Positions describe immutable physical order, not a semantic sort.
+
+The workspace's `interactive.preview_rows`, `max_result_rows`, `max_result_bytes`
+and independent `query_timeout_seconds` apply. Transport ceilings are 1,000 rows,
+128 projected columns and a 2 MiB complete JSON envelope; encoded rows occupy at
+most 1.5 MiB to leave schema/context space. A page decodes projected columns in
+batches of 128 from one row group at a time. Footer metadata is capped at 8 MiB
+and selected row-group uncompressed bytes at 64 MiB. An oversized projection fails
+explicitly; reduce columns or use smaller writer row groups. The interactive timer
+is cooperative between decoded batches/rows, not a hard interrupt of a filesystem
+read. Zero disables that timer; the other bounds remain enforced.
+
+Cells use shared lossless wire values: null, NaN/infinity, integer/decimal strings,
+timestamp precision/timezone and nested values stay distinct. The default encoded
+cell cap is 4 KiB. A larger cell is `{ "value": null, "truncated": true }`, distinct
+from a real null `{ "value": { "type": "null" }, "truncated": false }`. Explicit
+bounded inspection can repeat a one-row page with `cell_bytes` up to 65,536.
+
+The header reports exact version, requested branch, recorded publication branch,
+publication time and producing source. There is no latest-head fallback in this
+endpoint. Local and external reads acquire and renew provider query leases through
+the existing owner channel, then release them when the request finishes or fails.
+An external preview opens the registered provider's immutable files directly;
+it never copies inputs or executes provider code. Between pages, retention remains
+the provider's responsibility; an unavailable version fails visibly.
+
+`integrity: "projected_read"` means contained regular files, canonical manifest,
+lengths, schema and selected Parquet decoding were checked. Preview intentionally
+does not hash/decode every file or assert freshness/quality PASS. Full execution
+integrity checks remain unchanged. Preview is a CSRF-protected read operation;
+it does not require a mutation idempotency key.
