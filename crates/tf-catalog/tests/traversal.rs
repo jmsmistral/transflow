@@ -492,3 +492,69 @@ fn seeded_dags_match_topological_shortest_distance_reference() {
         }
     }
 }
+
+#[test]
+fn paths_include_all_diamond_branches_but_not_unrelated_descendants() {
+    let g = diamond().graph("main");
+    let paths = g
+        .paths(g.resolve("data/n0").unwrap(), g.resolve("data/n3").unwrap())
+        .unwrap();
+    let (nodes, edges) = all(&paths, 1);
+    assert_eq!(nodes.len(), 4);
+    assert_eq!(edges.len(), 4);
+    assert!(
+        !nodes
+            .iter()
+            .any(|v| v.node.identity == g.resolve("data/n4").unwrap())
+    );
+    let first = paths.page(None, 1).unwrap();
+    assert_eq!((first.omitted_nodes, first.omitted_edges), (0, 0));
+    assert!(first.scope_complete);
+    let other = g
+        .paths(g.resolve("data/n0").unwrap(), g.resolve("data/n4").unwrap())
+        .unwrap();
+    assert_eq!(
+        other.page(first.next_cursor.as_deref(), 1),
+        Err(Error::Cursor)
+    );
+    let reverse = g
+        .paths(g.resolve("data/n3").unwrap(), g.resolve("data/n0").unwrap())
+        .unwrap();
+    assert_eq!(all(&reverse, 100), (vec![], vec![]));
+    let same = g
+        .paths(g.resolve("data/n2").unwrap(), g.resolve("data/n2").unwrap())
+        .unwrap();
+    assert_eq!(all(&same, 100).0.len(), 1);
+    assert_eq!(
+        g.paths(
+            Id::Pending("absent/path".parse().unwrap()),
+            g.resolve("data/n0").unwrap()
+        )
+        .unwrap_err(),
+        Error::Missing
+    );
+}
+
+#[test]
+fn path_queries_bound_wide_dag_delivery_without_enumerating_combinations() {
+    let mut defs = vec![definition(0, vec![])];
+    for i in 1..=600 {
+        defs.push(definition(i, vec![input("root", "data/n0")]));
+    }
+    defs.push(definition(
+        601,
+        (1..=600)
+            .map(|i| input(&format!("p{i}"), &format!("data/n{i}")))
+            .collect(),
+    ));
+    let g = Fixture::new("", defs).graph("main");
+    let result = g
+        .paths(
+            g.resolve("data/n0").unwrap(),
+            g.resolve("data/n601").unwrap(),
+        )
+        .unwrap();
+    let (nodes, edges) = all(&result, 100);
+    assert_eq!((nodes.len(), edges.len()), (602, 1200));
+    assert_eq!(nodes.last().unwrap().depth, 2);
+}

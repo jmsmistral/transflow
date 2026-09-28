@@ -30,3 +30,13 @@ the bearer token.
    end-to-end preview/source rendering before those tasks ship.
 
 Keep private reference screenshots and credentials out of committed evidence.
+
+## Graph journeys (T083)
+
+Use a synthetic diamond, validation-only foreign boundary and a fan-out above 500
+nodes. Confirm depth 0/1/unlimited counts, endpoint-complete edges, deduplication,
+path queries with hidden intermediates, list checkboxes, keyboard position pinning
+across expansion, explicit relayout, whole-catalogue search beyond its first page,
+and branch reset. Step through batches to the 500-node guard, opt in and exhaust
+all remaining pages. Check worker errors/CSP, viewport fit/zoom, narrow screens and
+unchanged domain heads. Distinguish actual Browser observations from unit tests.

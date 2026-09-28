@@ -1,0 +1,81 @@
+{
+  "task": "T083",
+  "date": "2026-09-28",
+  "platform": "macOS arm64",
+  "specification": "1.1.3",
+  "implementation_base": "6f19c2bd79d318ce1eafb973af8a1917a3eadd6d",
+  "specification_base": "91d6a5a2c9b022ae9c8ec089541965aeaeae6de5",
+  "verification": {
+    "rust": "395 tests plus one documentation test, 12 boundary regressions, formatting/build/Clippy/standalone-storage passed",
+    "python": "942 tests, Ruff/format/mypy/offline packaging passed",
+    "web": "391 tests; strict types/lint/format; declaration correction regression; actual production worker diamond and invalid-graph probes; byte-identical five-asset rebuilds passed",
+    "qualification_probe": "Five existing web/ELK probe tests plus one production xyflow declaration test passed",
+    "native_api": [
+      "new HTTP build survives client disconnect and retry creates one build/publication",
+      "history/timeline/metrics retain measured phases, exact statistics and captured source after edits",
+      "local version context binds exact source/lineage/schema/row-count metadata",
+      "path query shares retained lineage context and rejects ambiguous depth/direction",
+      "projected preview physical cursors, lossless nulls, labelled truncation and explicit bounded cell inspection",
+      "authenticated SSE matches committed replay and resumes without duplicate facts",
+      "cache reuse adds history without duration samples; history cursors reject branch changes",
+      "saved-plan acceptance is explicit and cannot be accepted twice",
+      "foreign preview uses a renewable provider query lease without producer imports or replication",
+      "foreign API registration/build uses provider-owned bytes; retained reads import no provider code",
+      "active HTTP cancellation is replayable and preserves every last-good head",
+      "cancellation receipt survives coordinator restart"
+    ],
+    "documents_and_safety": "Specification validator, 44 specification regressions, safety checker and 27 safety regressions passed"
+  },
+  "commands": [
+    "PATH=\"$HOME/.cargo/bin:$PATH\" PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-rust.sh",
+    "bash tools/check-python.sh",
+    "bash tools/check-web.sh",
+    "node --test tools/qualification/web/smoke.test.mjs",
+    "target/qualification/py314/bin/python python/tools/check_api.py target/debug/transflow <locally-built-wheel> target/qualification/wheelhouse --output <temporary-report>",
+    "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+    "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+    "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests"
+  ],
+  "browser": {
+    "tool": "Codex internal Browser against real synthetic coordinator",
+    "observed": [
+      "Five unique diamond/foreign nodes and five typed directed edges; final edge titles retain alias/role",
+      "Keyboard arrow move pins a node; position retained through parent expansion",
+      "Path query resolves all four diamond nodes/four edges without including the foreign non-path input",
+      "Foreign parent expansion disabled; all graph operations use read APIs",
+      "Switch to review clears main graph before new graph content",
+      "604 reachable nodes and edges delivered in 100-item batches; 500-node guard preserves continuation; opt-in permits final pages with zero pending/omitted counts",
+      "Whole catalogue search finds wide/item_599 beyond first catalogue page and adds its depth-zero root",
+      "Real ELK worker under same-origin CSP; fit view, light/dark mode, keyboard list, 390x844 viewport override with 375px content/client width and no horizontal overflow; override reset",
+      "Final bundle rechecked; no console errors/warnings; created Browser tab closed and coordinator stopped"
+    ],
+    "limits": "No full screen-reader audit or T089 performance certification; no persisted views/groups/overlays"
+  },
+  "corrections": [
+    "Qualified ELK declaration patch reused; xyflow exact-optional generic constraint corrected in declarations without relaxing strict checks",
+    "Bundled ELK adapter fails inside a worker; use native worker entry with main-thread message adapter, verified by real Browser and new production-worker regression",
+    "Worker asset basename changed to respect existing production asset allowlist",
+    "Secondary exploration controls collapsed to keep the canvas visible; graph theme follows application theme",
+    "Temporary synthetic fixture corrected to one producer per module before browser verification"
+  ],
+  "dependencies": "Same 641 package versions. Updated production lock associations and inventory digest while preserving prior advisory checked_at and findings; no new advisory scan claimed.",
+  "ci": "Pending owner monitoring; no workflow polling",
+  "source_sha256": {
+    "web/src/graph/model.ts": "9a1055d875590c02406e7bbfc01d0b47e468c90664ac05590e2988ab93c1753e",
+    "web/src/graph/Graph.tsx": "677fd284a68f886cab7fb475f722d8a95273ee1a8f46a13e9db26ee4c2821bfc",
+    "web/src/graph/positions.ts": "a21e5e83f45c14bc9a26eb30466cc8ee40b4dafd95e7f5717bf5bccb1cc6bfc6",
+    "web/src/graph/worker.ts": "113c0a7559ecf22d51a3b4922b3ac07c0514dc8cbb8b118d3126a265883cdc00",
+    "web/src/graph/layout-worker.ts": "711fbd97f36af96a46d3cacc8812c8f1c5e8c00c3cdd2c10bcd026e760e2bbdf",
+    "web/src/graph/graph.test.tsx": "49a5b3546d49c2c67ce9f908a509f9e30da28ae5fe53a95353bf162da6fdeff4",
+    "crates/tf-catalog/src/traversal.rs": "42e753495c0c53f8de4eeef18db4cfadeae0d330650d2229bc60dfdcb42f38af",
+    "crates/transflow/src/api_read.rs": "9e09d45d3f4ef60e04a7f744f809f8f8c03afcf5e585356d5ced5da0e4f80a18",
+    "schemas/api-routes-v1.json": "d683198ab568693bdaa1c426f82807e7fffb174cf663c45206e3597e5cce1fb7"
+  },
+  "production_assets": {
+    ".vite/manifest.json": "a58cd3989de03de8f6f1e4cc54b37f7ae46217a1eaf3b2481c56dd3bdf751e66",
+    "assets/index-BPPG-2GV.js": "7d92ae0854752a10cd2d6f8ea3bb39623116efc276451b1dfaaa3c597e1aca25",
+    "assets/index-DCRKspQT.css": "03b589bb6c3a9e26fae7e382c94044b5b497315331fc66e28876bdd659bf4cb7",
+    "assets/layout-worker-UjtT9XpI.js": "f34c39b86c8a8d185d6922fbdcf9c17b63316787311e8459afed5c076be8f27c",
+    "index.html": "bf6f47d5ccf32011ea601437b38299a72250118f8d6fad797b7ae933b3438330"
+  }
+}

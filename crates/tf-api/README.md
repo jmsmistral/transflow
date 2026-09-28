@@ -305,7 +305,18 @@ rebuilding. Capability `ui` reflects whether a bundle was supplied; existing eve
 preview and optional query limits now appear in the shared capability schema.
 
 Assets retain exact Host/Origin checks, no-store, nosniff and CSP. Local stylesheets
-and dynamic panel-size style attributes are permitted; scripts/connect remain
+and dynamic panel-size style attributes are permitted; scripts/workers/connect remain
 same-origin, and framing/remote resources stay blocked. Authenticated reads and
 commands retain their Origin/session/CSRF rules. Asset-less startup keeps the
 bootstrap page. Native embedding/offline packaging remains T117.
+
+## Directed graph paths (T083)
+
+`GET /api/v1/lineage` also accepts `start=PATH&end=PATH&direction=downstream`.
+The same option is available on the dataset-specific lineage route. Do not combine
+`end` with `depth` or upstream direction. The result contains the unique nodes and
+edges on all directed paths between the endpoints, preserving data/validation
+roles and foreign boundaries. An unreachable end gives an empty complete scope;
+identical endpoints give one node. It uses the same context fencing, explicit large
+expansion and node/edge pagination as traversal. Cursors bind both endpoints.
+No provider code or data is loaded. The UI requests 100 items per stream per action.

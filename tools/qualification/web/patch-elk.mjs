@@ -1,9 +1,13 @@
 // ELK 0.12.0 indexes optional children without first removing undefined.
 // Keep strict dependency type checking; change only this declaration expression.
 import { readFile, writeFile } from 'node:fs/promises';
+import { resolve, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-const packagePath = new URL('./node_modules/elkjs/package.json', import.meta.url);
-const declarationPath = new URL('./node_modules/elkjs/lib/elk-api.d.ts', import.meta.url);
+// Optional explicit package root lets the production UI reuse the qualified patch.
+const root = process.argv[3] ? pathToFileURL(resolve(process.argv[3]) + sep) : new URL('.', import.meta.url);
+const packagePath = new URL('./node_modules/elkjs/package.json', root);
+const declarationPath = new URL('./node_modules/elkjs/lib/elk-api.d.ts', root);
 const version = JSON.parse(await readFile(packagePath, 'utf8')).version;
 if (version !== '0.12.0') throw new Error(`Review the ELK type patch for version ${version}`);
 const original = "T['children'][number]";

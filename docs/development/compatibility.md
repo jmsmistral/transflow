@@ -194,3 +194,22 @@ T033 promotes the already qualified serde_json pin into the application composit
 root and adds the permitted tf-exec → tf-protocol edge. No dependency version changes.
 The native Rust CI jobs now also run the installed Python 3.14 worker/CLI lifecycle
 bridge; independent Python jobs retain the 3.14 matrix.
+
+### T083 production graph integration
+
+The production UI uses the qualified React Flow 12.11.6 / ELK 0.12.0 pins. Run
+`npm --prefix web run prepare:types` after explicit `npm ci --ignore-scripts`.
+It reuses the exact ELK declaration correction above. Under the application's
+`exactOptionalPropertyTypes`, xyflow system 0.0.82's generic `Omit` loses its
+existing NodeBase constraint; a second guarded declaration-only correction
+restates that constraint as `NodeBase & Omit<NodeType, 'measured'>`. Version,
+content and idempotence tests reject unexpected changes. Runtime library files
+and application strictness remain unchanged.
+
+Use ELK's native worker entry with its small main-thread message adapter. Creating
+the bundled emulated adapter inside a worker fails because ELK detects `self` and
+does not export its emulated Worker constructor there. Production build checks
+now execute the actual native worker bundle on a diamond and invalid graph in a
+background thread; internal Browser verification additionally checks real CSP and
+rendering. Dependency inventory still contains the same 641 package versions;
+lock associations/digest were refreshed without claiming a new advisory scan.

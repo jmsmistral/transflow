@@ -9,6 +9,7 @@
   },
   "packageManager": "npm@11.4.2",
   "scripts": {
+    "prepare:types": "node ../tools/qualification/web/patch-elk.mjs --apply ./ && node scripts/prepare-xyflow.mjs --apply",
     "dev": "vite --host 127.0.0.1",
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
@@ -19,6 +20,8 @@
     "build:verify": "node scripts/check-build.mjs"
   },
   "dependencies": {
+    "@xyflow/react": "12.11.6",
+    "elkjs": "0.12.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

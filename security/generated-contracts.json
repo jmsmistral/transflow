@@ -7,7 +7,7 @@
         "tools/contracts/generate.py": "75b4fabeb152a3062d213ad65548027c3e8abd0baa0e7023f8cde8bdf76d713c",
         "schemas/contracts-v1.schema.json": "f742b2d87410cdaf61ce880f5a4794fe4d691f4595b6788be0a80716edbdae67",
         "schemas/versions.json": "beb4e63198f8a245c2735b23f3fa9890697b166d20cc6812f0b47aa19ec4080f",
-        "schemas/api-routes-v1.json": "e41441164418d3d317d85f7325b1e80ce3ce8692b6cdf18c52aff09c31a446bb"
+        "schemas/api-routes-v1.json": "d683198ab568693bdaa1c426f82807e7fffb174cf663c45206e3597e5cce1fb7"
       },
       "outputs": [
         "schemas/generated/worker-control-v1.schema.json",

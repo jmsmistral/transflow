@@ -474,7 +474,15 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
     };
     keys(
         r,
-        &["start", "direction", "depth", "limit", "cursor", "expand"],
+        &[
+            "start",
+            "end",
+            "direction",
+            "depth",
+            "limit",
+            "cursor",
+            "expand",
+        ],
     )?;
     let g = c.graph.as_ref().ok_or_else(E::missing)?;
     let capture = c.capture()?;
@@ -510,19 +518,33 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
         "downstream" => traversal::Direction::Downstream,
         _ => return Err(E::invalid()),
     };
-    let traversal = graph
-        .traverse(traversal::Request {
-            start: graph
-                .resolve(r.query.get("start").ok_or_else(E::invalid)?)
-                .map_err(|_| E::missing())?,
-            direction,
-            depth: r
-                .query
-                .get("depth")
-                .map(|s| traversal::parse_depth(s).map_err(|_| E::invalid()))
-                .transpose()?,
-        })
-        .map_err(bad)?;
+    let traversal = if let Some(end) = r.query.get("end") {
+        if r.query.contains_key("depth") || direction != traversal::Direction::Downstream {
+            return Err(E::invalid());
+        }
+        graph
+            .paths(
+                graph
+                    .resolve(r.query.get("start").ok_or_else(E::invalid)?)
+                    .map_err(|_| E::missing())?,
+                graph.resolve(end).map_err(|_| E::missing())?,
+            )
+            .map_err(bad)?
+    } else {
+        graph
+            .traverse(traversal::Request {
+                start: graph
+                    .resolve(r.query.get("start").ok_or_else(E::invalid)?)
+                    .map_err(|_| E::missing())?,
+                direction,
+                depth: r
+                    .query
+                    .get("depth")
+                    .map(|s| traversal::parse_depth(s).map_err(|_| E::invalid()))
+                    .transpose()?,
+            })
+            .map_err(bad)?
+    };
     let n = limit(r, 100, 500)?;
     let first = traversal.page(None, n).map_err(bad)?;
     if first.total_nodes > 500 && r.query.get("expand").map(String::as_str) != Some("true") {

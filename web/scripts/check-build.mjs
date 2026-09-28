@@ -13,6 +13,7 @@ import path from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import process from "node:process";
 import assert from "node:assert/strict";
+import { checkLayoutWorker } from "./check-layout-worker.mjs";
 
 const web = fileURLToPath(new URL("..", import.meta.url));
 const output = path.resolve(web, "../target/web");
@@ -59,6 +60,11 @@ try {
     ],
     { cwd: web, stdio: "pipe" },
   );
+  const worker = Object.keys(first).find((name) =>
+    /^assets\/layout-worker-[\w-]+\.js$/.test(name),
+  );
+  assert(worker, "Missing production layout worker");
+  await checkLayoutWorker(path.join(web, "dist", worker));
   const second = await hashes(temporary);
   assert.deepEqual(first, second, "Production builds differ");
   await writeFile(
@@ -66,7 +72,7 @@ try {
     JSON.stringify(first, null, 2) + "\n",
   );
   process.stdout.write(
-    `Production builds match: ${Object.keys(first).length} local assets.\n`,
+    `Production worker diamond/error probes passed. Production builds match: ${Object.keys(first).length} local assets.\n`,
   );
 } finally {
   await rm(temporary, { recursive: true, force: true });

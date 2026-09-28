@@ -11,10 +11,12 @@ import type {
   ApiSessionV1,
   ApiVerifiedV1,
   ApiEventV1,
+  ApiLineageV1,
 } from "../generated/contracts";
 import { obj, same, validate } from "./validate";
 
 export interface Contracts {
+  ApiLineageV1: ApiLineageV1;
   ApiCapabilitiesV1: ApiCapabilitiesV1;
   ApiContextV1: ApiContextV1;
   ApiDatasetV1: ApiDatasetV1;

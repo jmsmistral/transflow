@@ -53,7 +53,13 @@
     "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
     "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests"
   ],
-  "ci": "Pending owner confirmation after push; no workflow polling",
+  "ci": {
+    "status": "passed",
+    "confirmation": "Owner confirmed all GitHub CI jobs passed on 2026-09-28",
+    "implementation": "6f19c2bd79d318ce1eafb973af8a1917a3eadd6d",
+    "specification": "91d6a5a2c9b022ae9c8ec089541965aeaeae6de5",
+    "workflow_polling": false
+  },
   "limits": [
     "Graph/list navigation and layout worker remain T083; full inspectors/actions remain T085-T088",
     "No rows/source text displayed by this shell; guarded inspector boundary has delayed-response regressions",

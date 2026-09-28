@@ -229,6 +229,7 @@ export class Workspace {
     name: K,
     path: string,
     extra: Query = {},
+    cancellation?: AbortSignal,
   ): Promise<Contracts[K]> {
     if (this.state.kind !== "ready" || !this.request)
       throw new ApiFailure(
@@ -236,7 +237,9 @@ export class Workspace {
         "Load a workspace context before opening an inspector.",
       );
     const epoch = this.epoch;
-    const signal = this.request.signal;
+    const signal = cancellation
+      ? AbortSignal.any([this.request.signal, cancellation])
+      : this.request.signal;
     const { context } = this.state.value;
     const result = await this.client.read(
       name,

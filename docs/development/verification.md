@@ -62,6 +62,7 @@ cargo fetch --locked  # Explicit first-time setup; requires registry access.
 python -m venv target/python/py314
 target/python/py314/bin/python -m pip install --require-hashes --only-binary=:all: -r python/dev-py314.lock
 npm --prefix web ci --ignore-scripts
+npm --prefix web run prepare:types
 bash tools/check.sh
 ```
 
@@ -968,3 +969,14 @@ source editor, graph or build planner is claimed; those dependent tasks remain.
 
 The owner confirmed the T081 recovery correction CI passed for implementation
 `2501f14` and specification `e971371`. T082 CI remains pending after its new push.
+
+## T083 graph exploration — 2026-09-28
+
+The [T083 receipt](evidence/t083-macos-arm64.json) records the final local checks:
+395 Rust plus one doc test, 942 Python, 391 web, 12 native API journeys, explicit
+production-worker diamond/error probes and reproducible five-asset builds. It also
+records actual internal Browser checks of the diamond, foreign boundary, pinned
+keyboard movement, directed paths, catalogue search, context switch, 604-node/edge
+paged traversal, 500-node guard, themes and narrow-screen list. Worker startup and
+layout-space issues found during Browser verification were corrected before handoff.
+The owner's T082 CI confirmation is recorded separately; new T083 CI is pending.

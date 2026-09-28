@@ -203,6 +203,27 @@ def main() -> None:
             cases.append(
                 "local version context binds exact source/lineage/schema/row-count metadata"
             )
+            path_query = {
+                "branch": "main",
+                "start": "raw/items",
+                "end": "raw/items",
+                "direction": "downstream",
+                "limit": "1",
+            }
+            path_result = client.call("GET", "/api/v1/lineage", query=path_query)["data"]
+            assert path_result["total_nodes"] == 1 and path_result["total_edges"] == 0
+            assert path_result["scope_complete"] and path_result["external_expanded"] is False
+            client.call("GET", "/api/v1/lineage", query={**path_query, "depth": "1"}, status=400)
+            client.call(
+                "GET", "/api/v1/lineage", query={**path_query, "direction": "upstream"}, status=400
+            )
+            client.call(
+                "GET", "/api/v1/lineage", query={**path_query, "end": "missing/path"}, status=404
+            )
+            cases.append(
+                "path query shares retained lineage context and rejects ambiguous depth/direction"
+            )
+
             preview_body = {
                 "dataset": dataset,
                 "version": version,

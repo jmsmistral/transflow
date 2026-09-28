@@ -1201,6 +1201,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ]
       }
@@ -3931,6 +3939,14 @@
           },
           {
             "name": "expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
             "in": "query",
             "required": false,
             "schema": {

@@ -84,6 +84,12 @@ paths; exact medians, trailing averages and failure rates with sample counts.
 Historical inspection uses captured source. Unknown timings and ETA remain explicit;
 charts and schedule occurrence metrics follow in later tasks.
 
+T083 adds the [interactive dataset graph](web/README.md#graph-exploration-t083):
+keyboard-accessible exploration, depth and path queries, explicit bounded batches,
+typed edges, read-only foreign boundaries and worker layout with pinned positions.
+Use the contributor UI bundle through `serve --ui-dir`; graph actions change only
+visual exploration. Saved views, full inspectors and build controls follow later.
+
 The Python distribution is named **transflow**, containing both `transflow` (SDK) and `transflow_worker` (worker). See [local wheel installation and checks](python/README.md). The intended public install is `pip install transflow` after publication; no package has been published yet. The Rust binary remains a separate native artifact.
 
 ## Specification and contributor setup

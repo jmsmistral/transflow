@@ -106,7 +106,8 @@
       "depth",
       "limit",
       "cursor",
-      "expand"
+      "expand",
+      "end"
     ],
     "mutation": false,
     "context": true
@@ -260,7 +261,8 @@
       "depth",
       "limit",
       "cursor",
-      "expand"
+      "expand",
+      "end"
     ],
     "mutation": false,
     "context": true

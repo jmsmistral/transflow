@@ -1,4 +1,4 @@
-# Transflow workspace shell
+# Transflow workspace and lineage
 
 T082 connects the original React interface to a local coordinator. It provides
 bounded catalogue pages, requested branch/fallback metadata, dataset and exact
@@ -7,8 +7,9 @@ light/dark themes and resizable right/bottom panels. Tabs, splitters and selecti
 work by keyboard. Narrow screens stack panels; layout survives context changes
 within the page session.
 
-Graph rendering, search, saved views, full preview/code/history inspectors and
-build/schedule actions remain later tasks. The shell does not fetch rows or source
+T083 adds the React Flow dataset graph, accessible dataset list, typed data/validation
+edges, foreign boundaries and an off-thread ELK layout. Saved views, full
+preview/code/history inspectors and build/schedule actions remain later tasks. The shell does not fetch rows or source
 text for display. Selecting a version cannot run a build or change dataset heads.
 Metadata availability is not byte verification or freshness evidence.
 
@@ -18,6 +19,7 @@ Use Node 24.4.1/npm 11.4.2 and the exact lockfile. Installation is explicit:
 
 ```bash
 npm --prefix web ci --ignore-scripts
+npm --prefix web run prepare:types
 bash tools/check-web.sh
 npm --prefix web run build
 cargo build --locked --offline -p transflow
@@ -71,3 +73,38 @@ React Flow/ELK interaction and worker layout remain T083. The exact React 19.3.0
 TypeScript 6.0.3, Vite 8.3.0, jsdom 26.1.0 and ESLint 9.39.5 baseline is unchanged.
 Existing development dependency exceptions remain in the safety inventory; no
 new package was added. Public fixtures and browser journeys use synthetic data.
+
+## Graph exploration (T083)
+
+Select a catalogue dataset to add its depth-zero root, or open **Explore / search**
+to enter a path, search the entire paginated catalogue, or find visible nodes.
+Parent/child handles load one hop; ancestor/descendant queries accept depth 0/1/N
+or blank for all reachable local datasets. Each action fetches at most 100 nodes
+and 100 edges. Counts distinguish depth omissions, pending pages and edges whose
+endpoints are not loaded yet. **Load next graph batch** continues explicitly;
+views above 500 nodes require opt-in. Shared identities and alias-qualified edges
+are deduplicated across overlapping expansions.
+
+Use Shift/Cmd/Ctrl, drag selection, or the list checkboxes for multi-selection.
+**Show paths** queries all declared directed paths from the first selected dataset
+to the second, including initially hidden intermediate nodes; it highlights the
+returned scope as pages arrive. This is a read-only graph query, not a build mode.
+The server intersects forward/reverse reachability without enumerating paths.
+Foreign nodes are read-only boundaries; browsing never executes provider code.
+Provider provenance expansion remains available through the existing CLI.
+
+Drag nodes or move a focused selected node with arrow keys to pin its position.
+Incremental layout preserves pins, including moves made while a worker is running.
+**Relayout all** clears pins; **Remove from view** changes only the view. Groups,
+annotations, persisted positions and undo/redo belong to T084. Freshness/quality
+remain explicitly unknown until the later overlay task. Imported/producer types
+use available retained metadata; missing type information stays generic.
+
+Context changes fence both graph requests and worker replies. Manual view state
+survives dataset selection in the same frozen context, and resets for a different
+fingerprint. Layout failure preserves the accessible list and offers retry.
+ELK's native worker is bundled locally, with a same-origin worker CSP. The explicit
+preparation command applies reviewed, version-checked ELK and xyflow declaration
+corrections; it does not change runtime library code or disable strict checking.
+Production verification executes the actual worker asset in a background thread,
+checks a diamond and an invalid graph, and compares reproducible build hashes.

@@ -6,7 +6,7 @@
     "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
     "tools/qualification/rust/Cargo.lock": "5f9a764a0b893a1aefac1495f24c9f2c425bd5c375690ea6f162c8c4e364f632",
     "tools/qualification/web/package-lock.json": "a9105bbe9e499ec2f60b679f0f838cbf7a5bc7bdee19b1b03de8a6c606f49574",
-    "web/package-lock.json": "d6001f7ec228fc459a67c214b46e4299f6151186a3b528f0c18e6ddfd0dadc90"
+    "web/package-lock.json": "1f46dfbf5207726bec8021fd9a73e2024ef10cd7631c8b13583a84b125f8bc8d"
   },
   "packages": [
     {
@@ -4326,7 +4326,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "@types/d3-color",
       "version": "3.1.3"
@@ -4339,7 +4340,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "@types/d3-drag",
       "version": "3.0.7"
@@ -4352,7 +4354,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "@types/d3-interpolate",
       "version": "3.0.4"
@@ -4365,7 +4368,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "@types/d3-selection",
       "version": "3.0.12"
@@ -4378,7 +4382,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "@types/d3-transition",
       "version": "3.0.9"
@@ -4391,7 +4396,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "@types/d3-zoom",
       "version": "3.0.8"
@@ -4640,7 +4646,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "@xyflow/react",
       "version": "12.11.6"
@@ -4653,7 +4660,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "@xyflow/system",
       "version": "0.0.82"
@@ -5108,7 +5116,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "classcat",
       "version": "5.0.5"
@@ -5213,7 +5222,8 @@
         "ISC"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "d3-color",
       "version": "3.1.0"
@@ -5226,7 +5236,8 @@
         "ISC"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "d3-dispatch",
       "version": "3.0.1"
@@ -5239,7 +5250,8 @@
         "ISC"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "d3-drag",
       "version": "3.0.0"
@@ -5252,7 +5264,8 @@
         "BSD-3-Clause"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "d3-ease",
       "version": "3.0.1"
@@ -5265,7 +5278,8 @@
         "ISC"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "d3-interpolate",
       "version": "3.0.1"
@@ -5278,7 +5292,8 @@
         "ISC"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "d3-selection",
       "version": "3.0.0"
@@ -5291,7 +5306,8 @@
         "ISC"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "d3-timer",
       "version": "3.0.1"
@@ -5304,7 +5320,8 @@
         "ISC"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "d3-transition",
       "version": "3.0.1"
@@ -5317,7 +5334,8 @@
         "ISC"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "d3-zoom",
       "version": "3.0.0"
@@ -5526,7 +5544,8 @@
         "EPL-2.0 OR GPL-3.0-or-later"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "elkjs",
       "version": "0.12.0"
@@ -8309,7 +8328,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "use-sync-external-store",
       "version": "1.7.0"
@@ -8598,7 +8618,8 @@
         "MIT"
       ],
       "locks": [
-        "tools/qualification/web/package-lock.json"
+        "tools/qualification/web/package-lock.json",
+        "web/package-lock.json"
       ],
       "name": "zustand",
       "version": "4.5.7"

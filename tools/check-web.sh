@@ -18,6 +18,9 @@ if [[ ! -d node_modules ]]; then
     exit 1
 fi
 mkdir -p -- "$implementation_root/target/web"
+node ../tools/qualification/web/patch-elk.mjs --check ./
+node scripts/prepare-xyflow.mjs
+node --test scripts/prepare-xyflow.test.mjs
 npm run typecheck
 npm run lint
 npm run format:check

@@ -284,6 +284,35 @@ impl Graph {
         }
         Err(Error::Missing)
     }
+    /// All nodes and edges on directed paths from start to end, without enumerating paths.
+    /// An unreachable end returns an empty scope. Foreign nodes remain terminal boundaries.
+    pub fn paths(&self, start: Id, end: Id) -> Result<Traversal, Error> {
+        let mut forward = self.traverse(Request {
+            start,
+            direction: Direction::Downstream,
+            depth: None,
+        })?;
+        let reverse = self.traverse(Request {
+            start: end,
+            direction: Direction::Upstream,
+            depth: None,
+        })?;
+        let ancestors: BTreeSet<_> = reverse.nodes.iter().map(|v| &v.node.identity).collect();
+        forward
+            .nodes
+            .retain(|v| ancestors.contains(&v.node.identity));
+        let selected: BTreeSet<_> = forward.nodes.iter().map(|v| &v.node.identity).collect();
+        forward
+            .edges
+            .retain(|e| selected.contains(&e.parent) && selected.contains(&e.consumer));
+        forward.fingerprint = content_digest(
+            DigestKind::Compute,
+            &json!({"paths_version":1,"forward":forward.fingerprint,"reverse":reverse.fingerprint}),
+        )
+        .map_err(|_| Error::Context)?
+        .hex();
+        Ok(forward)
+    }
     /// One breadth-first search enqueues each identity once, with no recursion/path expansion.
     /// Counts omitted depth continuation exactly; page size never caps semantic reachability.
     pub fn traverse(&self, request: Request) -> Result<Traversal, Error> {

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { Button, Status } from "./components";
 import { ResizeHandle } from "./panels";
+import { GraphExplorer } from "./graph/Graph";
 import { Workspace } from "./workspace";
 import type { ExecutionJsonV1 } from "./generated/contracts";
 
@@ -199,35 +200,8 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
               </div>
             </div>
             <div className="canvas">
-              {ready ? (
-                <div className="canvas-message">
-                  <span className="canvas-mark" aria-hidden="true">
-                    ◈
-                  </span>
-                  <h2>
-                    {ready.datasets.total === "0"
-                      ? "No datasets in this context"
-                      : "Your workspace is connected"}
-                  </h2>
-                  <p>
-                    {ready.datasets.total === "0"
-                      ? "Register or build a dataset with the CLI to get started."
-                      : "Select a dataset in the catalogue to inspect its retained context."}
-                  </p>
-                  <p className="muted">
-                    Interactive graph navigation is coming next.
-                  </p>
-                  <p className="context-label">
-                    {ready.context.selection.kind === "retained_current"
-                      ? "Current retained definition"
-                      : "Historical frozen context"}{" "}
-                    ·{" "}
-                    {ready.context.graph
-                      ? "Graph retained"
-                      : "Graph unavailable"}
-                  </p>
-                </div>
-              ) : (
+              <GraphExplorer workspace={workspace} dark={dark} />
+              {!ready && (
                 <div className="canvas-message" role="status">
                   <h2>
                     {state.kind === "failed"
