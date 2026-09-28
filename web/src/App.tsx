@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { Button, Status } from "./components";
 import { ResizeHandle } from "./panels";
+import { BranchControls } from "./BranchControls";
+import { CatalogueSearch } from "./graph/Search";
 import { GraphExplorer } from "./graph/Graph";
 import { Workspace } from "./workspace";
 import type { ExecutionJsonV1 } from "./generated/contracts";
@@ -60,14 +62,14 @@ function moveTab(
 export function App({ workspace: supplied }: { workspace?: Workspace }) {
   const [workspace] = useState(() => supplied ?? new Workspace());
   const state = useSyncExternalStore(workspace.subscribe, workspace.snapshot);
+  const [visible, setVisible] = useState<readonly string[]>([]);
   const [dark, setDark] = useState(false);
-  const [right, setRight] = useState(30),
+  const [right, setRight] = useState(26),
     [bottom, setBottom] = useState(32);
-  const [inspectorOpen, setInspectorOpen] = useState(true),
-    [bottomOpen, setBottomOpen] = useState(true);
+  const [inspectorOpen, setInspectorOpen] = useState(false),
+    [bottomOpen, setBottomOpen] = useState(false);
   const [mode, setMode] = useState<string>("Catalogue"),
     [tab, setTab] = useState<string>("Preview");
-  const [branch, setBranch] = useState("main");
   const ready = state.kind === "ready" ? state.value : null;
   const dataset = ready?.dataset;
   const selectedButton = useRef<HTMLButtonElement>(null);
@@ -108,63 +110,17 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
           <strong>{title === "Workspace" ? "Overview" : title}</strong>
         </nav>
         <div className="top-actions">
+          <BranchControls
+            workspace={workspace}
+            state={state}
+            visible={visible}
+          />
           <Status>{status}</Status>
           <Button aria-pressed={dark} onClick={() => setDark(!dark)}>
             Dark theme
           </Button>
         </div>
       </header>
-      <section className="contextbar" aria-label="Workspace context">
-        <div>
-          <span className="eyebrow">View</span>
-          <strong>Unsaved workspace view</strong>
-          <span className="muted">View saving comes later</span>
-        </div>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void workspace.select({ branch: branch.trim() });
-          }}
-        >
-          <label htmlFor="branch">Source / data branch</label>
-          <div className="input-group">
-            <input
-              id="branch"
-              list="branches"
-              value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-              maxLength={256}
-              disabled={state.kind === "connecting"}
-            />
-            <Button
-              type="submit"
-              disabled={!branch.trim() || state.kind === "connecting"}
-            >
-              Apply branch
-            </Button>
-          </div>
-          <datalist id="branches">
-            {ready?.branches.entries.map((entry) => {
-              const name = text(entry, "name");
-              return name ? <option key={name} value={name} /> : null;
-            })}
-          </datalist>
-        </form>
-        <div>
-          <span className="eyebrow">Requested branch</span>
-          <strong>{requested}</strong>
-          <span className="muted">
-            {ready
-              ? `Fallback: ${ready.context.fallback_policy.join(" → ")}`
-              : "Fallback policy not loaded"}
-          </span>
-        </div>
-        <div>
-          <span className="eyebrow">Build output branch</span>
-          <strong>{requested}</strong>
-          <span className="muted">Build controls are not available yet</span>
-        </div>
-      </section>
       <main
         id="workspace"
         tabIndex={-1}
@@ -173,34 +129,15 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
       >
         <div className="work-area">
           <section className="graph-region" aria-labelledby="workspace-title">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">Workspace / lineage</p>
-                <h1 id="workspace-title">
-                  {state.kind === "disconnected"
-                    ? "No workspace connected"
-                    : "Dataset workspace"}
-                </h1>
-              </div>
-              <div className="toolbar">
-                <Button
-                  aria-expanded={inspectorOpen}
-                  aria-controls="inspector"
-                  onClick={() => setInspectorOpen(!inspectorOpen)}
-                >
-                  Inspector
-                </Button>
-                <Button
-                  aria-expanded={bottomOpen}
-                  aria-controls="bottom-panel"
-                  onClick={() => setBottomOpen(!bottomOpen)}
-                >
-                  Bottom panel
-                </Button>
-              </div>
-            </div>
+            <h1 id="workspace-title" className="sr-only">
+              Dataset lineage
+            </h1>
             <div className="canvas">
-              <GraphExplorer workspace={workspace} dark={dark} />
+              <GraphExplorer
+                workspace={workspace}
+                dark={dark}
+                onVisible={setVisible}
+              />
               {!ready && (
                 <div className="canvas-message" role="status">
                   <h2>
@@ -225,15 +162,36 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 </div>
               )}
             </div>
-            <footer className="canvas-footer">
-              <span>
-                {ready
-                  ? `${ready.datasets.entries.length} of ${ready.datasets.total} datasets on this page`
-                  : "Context unavailable"}
-              </span>
-              <span>Read-only browsing</span>
-            </footer>
           </section>
+          <nav className="inspector-rail" aria-label="Inspector tools">
+            {modes.map((name, i) => (
+              <button
+                key={name}
+                title={name}
+                aria-label={name}
+                aria-pressed={inspectorOpen && mode === name}
+                onClick={() => {
+                  setMode(name);
+                  setInspectorOpen(true);
+                }}
+              >
+                <span aria-hidden="true">{["⌕", "☷", "⚒", "▦", "◇"][i]}</span>
+              </button>
+            ))}
+            <button
+              title={
+                inspectorOpen ? "Collapse right panel" : "Expand right panel"
+              }
+              aria-label={
+                inspectorOpen ? "Collapse right panel" : "Expand right panel"
+              }
+              aria-expanded={inspectorOpen}
+              aria-controls="inspector"
+              onClick={() => setInspectorOpen(!inspectorOpen)}
+            >
+              <span aria-hidden="true">{inspectorOpen ? "»" : "«"}</span>
+            </button>
+          </nav>
           {inspectorOpen && (
             <>
               <ResizeHandle
@@ -247,20 +205,28 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 className="inspector"
                 aria-label="Right inspector"
               >
-                <label className="inspector-mode">
-                  Inspector mode
-                  <select
-                    value={mode}
-                    onChange={(event) => setMode(event.target.value)}
-                  >
-                    {modes.map((name) => (
-                      <option key={name}>{name}</option>
-                    ))}
-                  </select>
-                </label>
+                <header className="inspector-header">
+                  <h2>{mode}</h2>
+                </header>
                 {mode === "Catalogue" ? (
                   <>
-                    <h2>Datasets</h2>
+                    <CatalogueSearch
+                      workspace={workspace}
+                      active={!!ready}
+                      expanded
+                      select={(entry) => {
+                        void workspace.select({
+                          branch: requested,
+                          dataset: entry.dataset_id,
+                          origin: entry.workspace_id,
+                          ...(state.selection.fallback
+                            ? { fallback: state.selection.fallback }
+                            : {}),
+                        });
+                      }}
+                      add={() => {}}
+                    />
+                    <h3>Datasets</h3>
                     {ready ? (
                       <>
                         <ul className="dataset-list">
@@ -284,6 +250,9 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                                 onClick={() => {
                                   void workspace.select({
                                     branch: requested,
+                                    ...(state.selection.fallback
+                                      ? { fallback: state.selection.fallback }
+                                      : {}),
                                     dataset: entry.dataset_id,
                                     origin: entry.workspace_id,
                                   });
@@ -304,7 +273,12 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                           <Button
                             disabled={!state.selection.cursor}
                             onClick={() => {
-                              void workspace.select({ branch: requested });
+                              void workspace.select({
+                                branch: requested,
+                                ...(state.selection.fallback
+                                  ? { fallback: state.selection.fallback }
+                                  : {}),
+                              });
                             }}
                           >
                             First page
@@ -315,6 +289,9 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                               if (ready.datasets.next_cursor)
                                 void workspace.select({
                                   branch: requested,
+                                  ...(state.selection.fallback
+                                    ? { fallback: state.selection.fallback }
+                                    : {}),
                                   cursor: ready.datasets.next_cursor,
                                 });
                             }}
@@ -427,62 +404,82 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
             </>
           )}
         </div>
-        {bottomOpen && (
-          <>
+        <>
+          {bottomOpen && (
             <ResizeHandle
               axis="vertical"
               value={bottom}
               change={setBottom}
               controls="bottom-panel"
             />
-            <section
-              id="bottom-panel"
-              className="bottom-panel"
-              aria-label="Dataset inspectors"
-            >
-              <div role="tablist" aria-label="Dataset inspector tabs">
-                {tabs.map((name, index) => (
-                  <button
-                    key={name}
-                    id={`tab-${index}`}
-                    role="tab"
-                    aria-controls="inspector-content"
-                    aria-selected={tab === name}
-                    tabIndex={tab === name ? 0 : -1}
-                    onClick={() => setTab(name)}
-                    onKeyDown={(event) => moveTab(event, tabs, index, setTab)}
-                  >
-                    {name}
-                  </button>
-                ))}
-              </div>
-              <div
-                id="inspector-content"
-                role="tabpanel"
-                aria-labelledby={`tab-${tabs.findIndex((name) => name === tab)}`}
-                tabIndex={0}
+          )}
+          <section
+            id="bottom-panel"
+            className={`bottom-panel ${bottomOpen ? "" : "collapsed"}`}
+            aria-label="Dataset inspectors"
+          >
+            <div role="tablist" aria-label="Dataset inspector tabs">
+              {tabs.map((name, index) => (
+                <button
+                  key={name}
+                  id={`tab-${index}`}
+                  role="tab"
+                  aria-controls="inspector-content"
+                  aria-selected={tab === name}
+                  tabIndex={tab === name ? 0 : -1}
+                  onClick={() => {
+                    setTab(name);
+                    setBottomOpen(true);
+                  }}
+                  onKeyDown={(event) =>
+                    moveTab(event, tabs, index, (name) => {
+                      setTab(name);
+                      setBottomOpen(true);
+                    })
+                  }
+                >
+                  {name}
+                </button>
+              ))}
+              <button
+                className="panel-toggle"
+                aria-label={
+                  bottomOpen ? "Collapse bottom panel" : "Expand bottom panel"
+                }
+                aria-expanded={bottomOpen}
+                aria-controls="inspector-content"
+                onClick={() => setBottomOpen(!bottomOpen)}
               >
-                <p className="eyebrow">
-                  {title} · {requested}
+                <span aria-hidden="true">{bottomOpen ? "⌄" : "⌃"}</span>
+              </button>
+            </div>
+            <div
+              hidden={!bottomOpen}
+              id="inspector-content"
+              role="tabpanel"
+              aria-labelledby={`tab-${tabs.findIndex((name) => name === tab)}`}
+              tabIndex={0}
+            >
+              <p className="eyebrow">
+                {title} · {requested}
+              </p>
+              <h2>{tab}</h2>
+              <p>
+                {!ready
+                  ? "Content is unavailable until this context is loaded."
+                  : !dataset
+                    ? "Select a dataset to establish inspector context."
+                    : `${tab} content will be available in a later inspector task.`}
+              </p>
+              {dataset && (
+                <p className="muted">
+                  This panel is bound to the selected context. No rows or source
+                  code have been fetched.
                 </p>
-                <h2>{tab}</h2>
-                <p>
-                  {!ready
-                    ? "Content is unavailable until this context is loaded."
-                    : !dataset
-                      ? "Select a dataset to establish inspector context."
-                      : `${tab} content will be available in a later inspector task.`}
-                </p>
-                {dataset && (
-                  <p className="muted">
-                    This panel is bound to the selected context. No rows or
-                    source code have been fetched.
-                  </p>
-                )}
-              </div>
-            </section>
-          </>
-        )}
+              )}
+            </div>
+          </section>
+        </>
       </main>
       <footer className="app-footer">
         <span>

@@ -87,6 +87,9 @@ charts and schedule occurrence metrics follow in later tasks.
 T083 adds the [interactive dataset graph](web/README.md#graph-exploration-t083):
 keyboard-accessible exploration, depth and path queries, explicit bounded batches,
 typed edges, read-only foreign boundaries and worker layout with pinned positions.
+Compact toolbars and collapsed inspector rails leave more room for lineage.
+Internal node arrows expand/retract neighbours without changing zoom. The searchable
+Branch picker defaults to master; its adjacent editor sets view-local fallbacks.
 Use the contributor UI bundle through `serve --ui-dir`; graph actions change only
 visual exploration. Saved views, full inspectors and build controls follow later.
 

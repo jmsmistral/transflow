@@ -268,6 +268,16 @@ impl Graph {
         node.paths.push(path);
         node.producer |= producer;
     }
+    /// Number of unique neighbours in this direction in the complete captured local graph.
+    /// Independent of traversal depth, pagination and the currently rendered view.
+    /// Foreign nodes have no upstream expansion into the provider workspace.
+    pub fn neighbour_count(&self, identity: &Id, direction: Direction) -> usize {
+        let adjacency = match direction {
+            Direction::Upstream => &self.upstream,
+            Direction::Downstream => &self.downstream,
+        };
+        adjacency.get(identity).map_or(0, BTreeSet::len)
+    }
     /// Resolve exact local/foreign paths, aliases, pending paths or local dataset:UUID syntax.
     pub fn resolve(&self, reference: &str) -> Result<Id, Error> {
         if let Some(id) = self.names.get(reference) {

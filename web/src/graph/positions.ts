@@ -91,7 +91,8 @@ export class Positions {
         worker.terminate();
         this.set({
           busy: false,
-          error: "Layout worker failed. Use the dataset list or retry layout.",
+          error:
+            "Layout worker failed. Retry layout; manual node positioning remains available.",
         });
       };
       worker.postMessage({ id, graph: layoutGraph(nodes, edges) });
@@ -99,7 +100,7 @@ export class Positions {
       this.set({
         busy: false,
         error:
-          "Layout worker is unavailable. Use the dataset list or retry layout.",
+          "Layout worker is unavailable. Retry layout; manual node positioning remains available.",
       });
     }
   }

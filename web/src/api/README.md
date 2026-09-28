@@ -16,3 +16,13 @@ selected exact version. Do not infer domain semantics or mutate build state from
 event notifications. Graph interactions and layout workers remain T083.
 
 See the [HTTP guide](../../../crates/tf-api/README.md) for authentication and replay.
+
+Lineage responses use `ApiLineageNodeV1`: `parent_count` and `child_count`
+come from the complete captured local graph, not the returned page's edges.
+This lets a depth-zero node offer valid expansion without per-node requests.
+Foreign nodes have no upstream provider expansion. CLI `GraphNodeV1` is unchanged.
+
+Current-context reads accept a JSON-encoded ordered `fallback` tail (empty disables
+fallback; omission uses configuration). It participates in the context fingerprint.
+Frozen plans/versions reject overrides. `/branches?datasets=<JSON UUID array>`
+filters branches by local dataset heads, without reading data or providers.

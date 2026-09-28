@@ -59,7 +59,7 @@
     "Temporary synthetic fixture corrected to one producer per module before browser verification"
   ],
   "dependencies": "Same 641 package versions. Updated production lock associations and inventory digest while preserving prior advisory checked_at and findings; no new advisory scan claimed.",
-  "ci": "Pending owner monitoring; no workflow polling",
+  "ci": "Owner confirmed all GitHub CI jobs passed on 2026-09-28 for implementation 08e7c99178a8baf48e6bb53e211f46771b0c28ab and specification 4c2d42495f4ee9e4904080ff3bac51addfdde6da; no workflow polling",
   "source_sha256": {
     "web/src/graph/model.ts": "9a1055d875590c02406e7bbfc01d0b47e468c90664ac05590e2988ab93c1753e",
     "web/src/graph/Graph.tsx": "677fd284a68f886cab7fb475f722d8a95273ee1a8f46a13e9db26ee4c2821bfc",

@@ -1,35 +1,25 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { Client } from "../api/client";
 import type {
   ApiLineageV1,
   GraphEdgeV1,
-  GraphNodeV1,
+  ApiLineageNodeV1,
 } from "../generated/contracts";
-import {
-  context,
-  datasetId,
-  fixtureTransport,
-  json,
-  workspaceId,
-} from "../test-fixtures";
+import { context, fixtureTransport, json } from "../test-fixtures";
 import { Workspace } from "../workspace";
 import { GraphModel, depthQuery } from "./model";
 import { Positions, type LayoutWorker } from "./positions";
 import { layoutGraph, type LayoutReply } from "./layout";
 import { GraphExplorer } from "./Graph";
-const node = (id: string, external = false): GraphNodeV1 => ({
+const node = (id: string, external = false): ApiLineageNodeV1 => ({
   identity: id,
   paths: [`data/${id}`],
   depth: "0",
   external,
   producer: !external,
+  parent_count: external ? "0" : "1",
+  child_count: external ? "1" : "0",
 });
 const edge = (
   parent: string,
@@ -46,7 +36,7 @@ const edge = (
   checks: [],
 });
 const page = (
-  nodes: readonly GraphNodeV1[],
+  nodes: readonly ApiLineageNodeV1[],
   edges: readonly GraphEdgeV1[] = [],
   extra: Partial<ApiLineageV1> = {},
 ): ApiLineageV1 => ({
@@ -291,56 +281,64 @@ test("unavailable worker leaves a recoverable error and no invented layout succe
   expect(positions.snapshot().busy).toBe(false);
   expect(positions.snapshot().error).toContain("unavailable");
 });
-test("keyboard graph list exposes foreign boundaries, typed edges and view-only removal", async () => {
-  const local = {
-    ...node(`dataset:${workspaceId}:${datasetId}`),
-    paths: ["raw/example"],
-  };
-  const foreign = node("foreign", true);
-  const calls: string[] = [];
+test("graph exposes a diagram without the removed dataset list", async () => {
+  const workspace = new Workspace(new Client(fixtureTransport()));
+  await workspace.connect("launch");
+  render(<GraphExplorer workspace={workspace} />);
+  expect(
+    screen.queryByRole("button", { name: "Show dataset list" }),
+  ).toBeNull();
+  expect(
+    screen.getByRole("application", { name: "Dataset lineage diagram" }),
+  ).toBeTruthy();
+  workspace.dispose();
+});
+
+test("neighbour toggle drains every page, returns all selections and retracts", async () => {
+  const root = { ...node("root"), parent_count: "0", child_count: "2" };
+  const left = node("left"),
+    right = node("right");
+  const calls: Record<string, string>[] = [];
   const workspace = new Workspace(
     new Client(
       fixtureTransport((path, q) => {
-        if (path.endsWith("/lineage")) {
-          calls.push(path);
-          return Promise.resolve(
-            json(
-              page(
-                [local, foreign],
-                [edge(foreign.identity, local.identity, "audit", "validation")],
-              ),
-              context(q.branch),
-            ),
-          );
-        }
+        if (!path.endsWith("/lineage")) return;
+        calls.push(q);
+        return Promise.resolve(
+          json(
+            q.depth === "0"
+              ? page([root])
+              : q.cursor
+                ? page([right], [edge("root", "right")])
+                : page([root, left], [edge("root", "left")], {
+                    next_cursor: "next",
+                    total_nodes: 3,
+                    remaining_nodes: 1,
+                  }),
+            context(q.branch),
+          ),
+        );
       }),
     ),
   );
   await workspace.connect("launch");
-  await workspace.select({
-    branch: "main",
-    origin: workspaceId,
-    dataset: datasetId,
+  const model = new GraphModel(workspace);
+  model.connect();
+  await model.explore({
+    start: "data/root",
+    direction: "downstream",
+    depth: "0",
   });
-  render(<GraphExplorer workspace={workspace} />);
-  await screen.findByText(/2 visible datasets/);
-  fireEvent.click(screen.getByRole("button", { name: "Show dataset list" }));
-  expect(
-    screen
-      .getByRole("button", { name: "Parents of data/foreign" })
-      .hasAttribute("disabled"),
-  ).toBe(true);
-  expect(screen.getByText(/audit \(validation/)).toBeTruthy();
-  fireEvent.click(screen.getByRole("checkbox", { name: "data/foreign" }));
-  fireEvent.click(screen.getByText("Selection and layout"));
-  fireEvent.click(screen.getByRole("button", { name: "Remove from view" }));
-  expect(screen.queryByRole("checkbox", { name: "data/foreign" })).toBeNull();
-  expect(calls).toEqual(["/api/v1/lineage"]);
-  await act(async () => {
-    await workspace.select({ branch: "feature" });
-  });
-  await waitFor(() =>
-    expect(screen.queryByText(/2 visible datasets/)).toBeNull(),
+  expect(model.expanded(root, "downstream")).toBe(false);
+  expect(await model.toggle(root, "downstream")).toEqual(
+    new Set(["left", "right"]),
   );
+  expect(model.expanded(root, "downstream")).toBe(true);
+  expect(model.snapshot().nodes).toHaveLength(3);
+  expect(calls.map((c) => c.cursor)).toEqual([undefined, undefined, "next"]);
+  expect(await model.toggle(root, "downstream")).toEqual(new Set(["root"]));
+  expect(model.snapshot().nodes.map((n) => n.identity)).toEqual(["root"]);
+  expect(model.snapshot().edges).toHaveLength(0);
+  expect(model.expanded(root, "downstream")).toBe(false);
   workspace.dispose();
 });

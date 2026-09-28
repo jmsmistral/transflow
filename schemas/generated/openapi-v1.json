@@ -170,6 +170,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -625,6 +633,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -824,6 +840,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -952,6 +976,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -1110,6 +1142,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -1294,6 +1334,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -1484,6 +1532,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -1609,6 +1665,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -1758,6 +1822,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -1919,6 +1991,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -2097,6 +2177,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -2264,6 +2352,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -2426,6 +2522,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -2562,6 +2666,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -2752,6 +2864,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -2921,6 +3041,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -3101,6 +3229,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -3134,6 +3270,14 @@
           },
           {
             "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "datasets",
             "in": "query",
             "required": false,
             "schema": {
@@ -3263,6 +3407,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -3312,6 +3464,14 @@
           },
           {
             "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "datasets",
             "in": "query",
             "required": false,
             "schema": {
@@ -3406,6 +3566,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -3573,6 +3741,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -3861,6 +4037,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -4182,6 +4366,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -4352,6 +4544,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -4552,6 +4752,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -4686,6 +4894,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -4858,6 +5074,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -5055,6 +5279,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -5207,6 +5439,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -5373,6 +5613,14 @@
             }
           },
           {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -5511,6 +5759,14 @@
             "name": "branch",
             "in": "query",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -12021,7 +12277,7 @@
           "nodes": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GraphNodeV1"
+              "$ref": "#/components/schemas/ApiLineageNodeV1"
             },
             "maxItems": 500,
             "minItems": 0
@@ -13821,6 +14077,46 @@
           "trailing_mean_ns",
           "trailing_window",
           "trailing_samples"
+        ],
+        "additionalProperties": false
+      },
+      "ApiLineageNodeV1": {
+        "type": "object",
+        "properties": {
+          "identity": {
+            "type": "string"
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 0
+          },
+          "depth": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "external": {
+            "type": "boolean"
+          },
+          "producer": {
+            "type": "boolean"
+          },
+          "parent_count": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "child_count": {
+            "$ref": "#/components/schemas/Count"
+          }
+        },
+        "required": [
+          "identity",
+          "paths",
+          "depth",
+          "external",
+          "producer",
+          "parent_count",
+          "child_count"
         ],
         "additionalProperties": false
       }

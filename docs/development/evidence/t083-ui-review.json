@@ -1,0 +1,42 @@
+{
+  "task": "T083 UI review follow-up",
+  "date": "2026-09-28",
+  "status": "Owner requested this reviewed baseline be committed and pushed before the next UI iteration; CI pending",
+  "changes": [
+    "Compact single-row nodes with internal, count-labelled chevrons; expand all immediate neighbours, select them, reverse and retract without automatic zoom",
+    "Unlabelled edges with retained dependency accessibility text; separate dataset-list view removed by owner request",
+    "Top-row searchable Branch picker defaults to master, applies immediately and filters branches to visible local dataset heads",
+    "Adjacent ordered view-local fallback modal with add, move, remove, save, cancel and workspace-default reset",
+    "Lazy metadata tooltip with actual publication branch, timestamp, rows, bytes and columns; unknown health remains explicit",
+    "Right icon rail and bottom tabs with expand/retract controls, both initially collapsed"
+  ],
+  "verification": {
+    "web": "bash tools/check-web.sh: 397 tests, strict types/lint/format, production worker diamond/error probes and reproducible five-asset builds passed, including final inspector fallback-preservation change",
+    "python": "bash tools/check-python.sh: 946 tests, lint/types/format/packaging passed; final native-probe fixture correction also passed focused Ruff checks",
+    "rust": "bash tools/check-rust.sh: workspace and documentation tests, formatting, build, Clippy and boundary checks passed",
+    "native_api": "check_api.py: 13 real API integration groups passed, including normalized view fallback, frozen-version override rejection, visible-dataset branch filtering and authoritative neighbour counts",
+    "safety": "bash tools/check-safety.sh: checker and 27 regressions passed",
+    "specification": "Specification validator passed; original T083 CI success recorded from owner"
+  },
+  "browser": {
+    "tool": "Codex internal Browser; synthetic workspace",
+    "observed": [
+      "master selected initially; both inspector panels collapsed; Apply branch, Viewing label and dataset-list toggle absent",
+      "Three-parent expansion selected all three; reversal/retraction returned to the anchor with viewport transform unchanged",
+      "602-child expansion drained bounded API pages, selected all 602 and produced 605 visible nodes; viewport transform unchanged; retraction left three unrelated/anchor nodes",
+      "Searchable branch selection applies immediately; fallback main/master order saved and retained on reopen; workspace defaults restored",
+      "Real master tooltip showed resolved master, publication time, 4 rows, 514 bytes and one column; freshness/quality Unknown",
+      "Catalogue right panel and bottom Preview opened and collapsed via their controls",
+      "390x844 viewport: content and client width both 375, canvas height approximately 491; viewport override reset",
+      "Final preview console had no errors or warnings"
+    ],
+    "handoff": "Preview coordinator and Browser tab left running with five-node lineage for owner review"
+  },
+  "corrections": [
+    "Lineage-only count contract keeps existing CLI GraphNodeV1 unchanged; shared fixture count updated to 314",
+    "Invalid fallback regression uses an empty branch label: slash-containing labels are valid branch names",
+    "Opening a dataset inspector retains the selected view fallback",
+    "Building the synthetic master example during review correctly invalidated the earlier read context; Refresh re-established a verified context"
+  ],
+  "limits": "Fallback policy is view-local; future T086 build controls must pass it explicitly. No new dependencies or runtime schema migration. Owner requested baseline commit/push; new CI has not run."
+}

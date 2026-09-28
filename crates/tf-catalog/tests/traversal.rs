@@ -558,3 +558,18 @@ fn path_queries_bound_wide_dag_delivery_without_enumerating_combinations() {
     assert_eq!((nodes.len(), edges.len()), (602, 1200));
     assert_eq!(nodes.last().unwrap().depth, 2);
 }
+
+#[test]
+fn neighbour_availability_uses_complete_graph_even_for_depth_zero_pages() {
+    let graph = diamond().graph("feature");
+    for (path, parents, children) in [("data/n0", 0, 3), ("data/n1", 1, 1), ("data/n4", 2, 0)] {
+        let page = query(&graph, path, Direction::Upstream, Some(0))
+            .page(None, 1)
+            .unwrap();
+        assert_eq!(page.nodes.len(), 1);
+        assert!(page.edges.is_empty());
+        let id = &page.nodes[0].node.identity;
+        assert_eq!(graph.neighbour_count(id, Direction::Upstream), parents);
+        assert_eq!(graph.neighbour_count(id, Direction::Downstream), children);
+    }
+}

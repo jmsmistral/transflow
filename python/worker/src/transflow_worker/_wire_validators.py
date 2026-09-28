@@ -546,3 +546,8 @@ def validate_ApiAttemptV1(value: object) -> None:
 def validate_ApiExecutionMetricsV1(value: object) -> None:
     """Assert the ApiExecutionMetricsV1 contract, including custom formats."""
     validate_document("ApiExecutionMetricsV1", value)
+
+
+def validate_ApiLineageNodeV1(value: object) -> None:
+    """Assert the ApiLineageNodeV1 contract, including custom formats."""
+    validate_document("ApiLineageNodeV1", value)

@@ -179,11 +179,18 @@ impl Reader {
         workspace: WorkspaceId,
         after: &str,
         limit: u32,
+        datasets: Option<&[DatasetId]>,
     ) -> Result<Vec<Value>> {
         if !(1..=201).contains(&limit) {
             return Err(StoreError::InvalidRequest);
         }
-        let rows=sqlx::query("SELECT id,name,revision,deleted_at_us FROM data_branches WHERE workspace_id=? AND id>? ORDER BY id LIMIT ?").bind(workspace.to_string()).bind(after).bind(limit).fetch_all(&mut self.db).await?;
+        let filter = datasets
+            .map(|ids| {
+                serde_json::to_string(&ids.iter().map(ToString::to_string).collect::<Vec<_>>())
+            })
+            .transpose()
+            .map_err(|_| StoreError::InvalidRequest)?;
+        let rows=sqlx::query("SELECT b.id,b.name,b.revision,b.deleted_at_us FROM data_branches b WHERE b.workspace_id=? AND b.id>? AND (? IS NULL OR EXISTS (SELECT 1 FROM dataset_heads h WHERE h.branch_id=b.id AND h.dataset_id IN (SELECT value FROM json_each(?)))) ORDER BY b.id LIMIT ?").bind(workspace.to_string()).bind(after).bind(&filter).bind(&filter).bind(limit).fetch_all(&mut self.db).await?;
         rows.into_iter().map(|r|Ok(json!({"id":r.try_get::<String,_>(0)?,"name":r.try_get::<String,_>(1)?,"revision":r.try_get::<i64,_>(2)?.to_string(),"deleted":r.try_get::<Option<i64>,_>(3)?.is_some()}))).collect()
     }
     /// Accepted builds for the requested branch, ordered by immutable identity.

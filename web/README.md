@@ -7,7 +7,7 @@ light/dark themes and resizable right/bottom panels. Tabs, splitters and selecti
 work by keyboard. Narrow screens stack panels; layout survives context changes
 within the page session.
 
-T083 adds the React Flow dataset graph, accessible dataset list, typed data/validation
+T083 adds the React Flow dataset graph, keyboard graph controls, typed data/validation
 edges, foreign boundaries and an off-thread ELK layout. Saved views, full
 preview/code/history inspectors and build/schedule actions remain later tasks. The shell does not fetch rows or source
 text for display. Selecting a version cannot run a build or change dataset heads.
@@ -78,14 +78,30 @@ new package was added. Public fixtures and browser journeys use synthetic data.
 
 Select a catalogue dataset to add its depth-zero root, or open **Explore / search**
 to enter a path, search the entire paginated catalogue, or find visible nodes.
-Parent/child handles load one hop; ancestor/descendant queries accept depth 0/1/N
-or blank for all reachable local datasets. Each action fetches at most 100 nodes
-and 100 edges. Counts distinguish depth omissions, pending pages and edges whose
-endpoints are not loaded yet. **Load next graph batch** continues explicitly;
-views above 500 nodes require opt-in. Shared identities and alias-qualified edges
-are deduplicated across overlapping expansions.
+The canvas fills the available workspace below a compact toolbar. Both inspectors
+start collapsed, with right-side icons and bottom tabs beside expand/retract buttons.
+Search/layout controls open over the canvas; counts and the legend are collapsible.
 
-Use Shift/Cmd/Ctrl, drag selection, or the list checkboxes for multi-selection.
+Compact nodes contain `<` / `>` handles inside their ends, only where neighbours
+exist. Hover labels give the total unique count from the complete captured graph.
+Clicking drains bounded 100-node/100-edge pages for all immediate neighbours and
+selects them, preserving zoom. Fully visible neighbours reverse the arrow; clicking
+retract removes those neighbours and their incident edges from the view. Unrelated
+nodes remain. Generic depth/path exploration still offers explicit next-page actions
+and a 500-node opt-in. No automatic fitting occurs after expansion; use **Fit view**.
+Node hover/focus cards lazily fetch available retained metadata. Edge text and the
+separate dataset-list view have been removed; keyboard graph navigation remains.
+
+The top-row **Branch** menu searches available branches and applies a selection
+immediately. It defaults to `master` and lists branches with heads for visible local
+datasets, plus the selected branch (all workspace branches when the view is empty).
+The adjacent **Fallback branches** dialog adds, reorders and removes the view-local
+tail. Empty means no fallback; **Use workspace defaults** clears the override.
+The server normalizes it and binds it into read context fingerprints. Frozen
+versions/plans reject overrides. Workspace configuration is unchanged. Build controls
+are still a later task; they must pass this override explicitly when implemented.
+
+Use Shift/Cmd/Ctrl or drag selection for multi-selection.
 **Show paths** queries all declared directed paths from the first selected dataset
 to the second, including initially hidden intermediate nodes; it highlights the
 returned scope as pages arrive. This is a read-only graph query, not a build mode.
@@ -102,7 +118,7 @@ use available retained metadata; missing type information stays generic.
 
 Context changes fence both graph requests and worker replies. Manual view state
 survives dataset selection in the same frozen context, and resets for a different
-fingerprint. Layout failure preserves the accessible list and offers retry.
+fingerprint. Layout failure preserves manual graph interaction and offers retry.
 ELK's native worker is bundled locally, with a same-origin worker CSP. The explicit
 preparation command applies reviewed, version-checked ELK and xyflow declaration
 corrections; it does not change runtime library code or disable strict checking.

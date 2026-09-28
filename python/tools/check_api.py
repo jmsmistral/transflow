@@ -224,6 +224,54 @@ def main() -> None:
                 "path query shares retained lineage context and rejects ambiguous depth/direction"
             )
 
+            # View-local fallback overrides are normalized and bound into every read context.
+            fallback_query = {
+                "branch": "review",
+                "fallback": json.dumps(["main", "main", "review"]),
+            }
+            fallback_context = client.call("GET", "/api/v1/context", query=fallback_query)["data"]
+            assert fallback_context["fallback_policy"] == ["review", "main"]
+            fallback_dataset = client.call(
+                "GET", f"/api/v1/datasets/{dataset}", query=fallback_query
+            )["data"]
+            assert fallback_dataset["head"]["resolved_branch"] == "main"
+            no_fallback = client.call(
+                "GET", f"/api/v1/datasets/{dataset}", query={"branch": "review", "fallback": "[]"}
+            )["data"]
+            assert no_fallback["head"] is None
+            for invalid in ["null", "[1]", '[""]', json.dumps(["main"] * 101)]:
+                client.call(
+                    "GET",
+                    "/api/v1/context",
+                    query={"branch": "main", "fallback": invalid},
+                    status=400,
+                )
+            client.call(
+                "GET",
+                "/api/v1/context",
+                query={"branch": "main", "dataset": dataset, "version": version, "fallback": "[]"},
+                status=400,
+            )
+            available = client.call(
+                "GET",
+                "/api/v1/branches",
+                query={"branch": "main", "datasets": json.dumps([dataset])},
+            )["data"]
+            assert [entry["name"] for entry in available["entries"]] == ["main"]
+            assert (
+                client.call("GET", "/api/v1/branches", query={"branch": "main", "datasets": "[]"})[
+                    "data"
+                ]["entries"]
+                == []
+            )
+            assert path_result["nodes"][0]["parent_count"] == "0"
+            assert path_result["nodes"][0]["child_count"] == "0"
+            cases.append(
+                "view fallback ordering resolves exact branch metadata; "
+                "frozen versions reject overrides; "
+                "visible-dataset branches and neighbour counts are authoritative"
+            )
+
             preview_body = {
                 "dataset": dataset,
                 "version": version,

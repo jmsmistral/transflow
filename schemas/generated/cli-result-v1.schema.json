@@ -6456,7 +6456,7 @@
         "nodes": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/GraphNodeV1"
+            "$ref": "#/$defs/ApiLineageNodeV1"
           },
           "maxItems": 500,
           "minItems": 0
@@ -8256,6 +8256,46 @@
         "trailing_mean_ns",
         "trailing_window",
         "trailing_samples"
+      ],
+      "additionalProperties": false
+    },
+    "ApiLineageNodeV1": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "type": "string"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0
+        },
+        "depth": {
+          "$ref": "#/$defs/Count"
+        },
+        "external": {
+          "type": "boolean"
+        },
+        "producer": {
+          "type": "boolean"
+        },
+        "parent_count": {
+          "$ref": "#/$defs/Count"
+        },
+        "child_count": {
+          "$ref": "#/$defs/Count"
+        }
+      },
+      "required": [
+        "identity",
+        "paths",
+        "depth",
+        "external",
+        "producer",
+        "parent_count",
+        "child_count"
       ],
       "additionalProperties": false
     }

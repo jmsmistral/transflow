@@ -32,7 +32,7 @@ export function layoutGraph(
     children: sorted.map((node) => ({
       id: node.identity,
       width: 250,
-      height: 128,
+      height: 40,
     })),
     edges: edges
       .filter((edge) => ids.has(edge.parent) && ids.has(edge.consumer))

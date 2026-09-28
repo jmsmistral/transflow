@@ -29,7 +29,7 @@ test("abort-ignoring old branch responses never replace a newer snapshot", async
   const model = new Workspace(
     new Client(
       fixtureTransport((path, q, signal) => {
-        if (hold && path.endsWith("/datasets") && q.branch === "main") {
+        if (hold && path.endsWith("/datasets") && q.branch === "master") {
           oldSignal = signal;
           return late.promise;
         }
@@ -39,7 +39,7 @@ test("abort-ignoring old branch responses never replace a newer snapshot", async
   );
   await model.connect("launch");
   hold = true;
-  const first = model.select({ branch: "main" });
+  const first = model.select({ branch: "master" });
   await vi.waitFor(() => expect(oldSignal).toBeTruthy());
   const second = model.select({ branch: "feature" });
   expect(model.snapshot().kind).toBe("loading");
@@ -102,7 +102,7 @@ test("selected versions carry dataset and provider identity on every dependent r
   const model = new Workspace(new Client(transport));
   await model.connect("launch");
   await model.select({
-    branch: "main",
+    branch: "master",
     dataset: datasetId,
     origin: workspaceId,
     version: versionId,
@@ -123,7 +123,7 @@ test("selected versions carry dataset and provider identity on every dependent r
     expect(call.query).toMatchObject({
       dataset: datasetId,
       origin_workspace: workspaceId,
-      branch: "main",
+      branch: "master",
     });
   model.dispose();
 });
@@ -156,7 +156,7 @@ test("source and preview reads reject context mismatch at their shared boundary"
       client.read(
         schema,
         "/api/v1/source/example",
-        { branch: "main" },
+        { branch: "master" },
         new AbortController().signal,
         context(),
       ),
@@ -190,7 +190,7 @@ test("event resync racing a user selection waits for the latest read models", as
               { headers: { "content-type": "text/event-stream" } },
             ),
           );
-        if (hold && path.endsWith("/datasets") && q.branch === "main") {
+        if (hold && path.endsWith("/datasets") && q.branch === "master") {
           blocked = true;
           return late.promise;
         }
@@ -254,5 +254,41 @@ test("a late source inspector response is discarded after selection changes", as
   );
   await rejected;
   expect(model.snapshot().selection.branch).toBe("feature");
+  model.dispose();
+});
+
+test("branch picker loads all pages and fallback is explicit in contextual reads", async () => {
+  const cursors: (string | undefined)[] = [];
+  const fallbacks: (string | undefined)[] = [];
+  const model = new Workspace(
+    new Client(
+      fixtureTransport((path, q) => {
+        fallbacks.push(q.fallback);
+        if (path.endsWith("/branches")) {
+          cursors.push(q.cursor);
+          return Promise.resolve(
+            json(
+              {
+                entries: [{ name: q.cursor ? "later" : "master" }],
+                next_cursor: q.cursor ? null : "next",
+              },
+              context(q.branch),
+            ),
+          );
+        }
+      }),
+    ),
+  );
+  await model.connect("launch");
+  const state = model.snapshot();
+  expect(state.kind).toBe("ready");
+  if (state.kind === "ready")
+    expect(state.value.branches.entries).toEqual([
+      { name: "master" },
+      { name: "later" },
+    ]);
+  expect(cursors).toEqual([undefined, "next"]);
+  await model.select({ branch: "master", fallback: [] });
+  expect(fallbacks).toContain("[]");
   model.dispose();
 });

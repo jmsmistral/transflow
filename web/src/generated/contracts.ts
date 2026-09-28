@@ -222,7 +222,7 @@ export type ApiVersionsV1 = { readonly "entries": ReadonlyArray<({ readonly "ver
 export type ApiSourceV1 = { readonly "source": Uuid; readonly "path": RelativePath; readonly "offset": number; readonly "text": string; readonly "next_offset": (null | number) };
 
 // prettier-ignore
-export type ApiLineageV1 = { readonly "nodes": ReadonlyArray<GraphNodeV1>; readonly "edges": ReadonlyArray<GraphEdgeV1>; readonly "next_cursor": (null | string); readonly "total_nodes": number; readonly "total_edges": number; readonly "omitted_nodes": number; readonly "omitted_edges": number; readonly "remaining_nodes": number; readonly "remaining_edges": number; readonly "scope_complete": boolean; readonly "external_expanded": false };
+export type ApiLineageV1 = { readonly "nodes": ReadonlyArray<ApiLineageNodeV1>; readonly "edges": ReadonlyArray<GraphEdgeV1>; readonly "next_cursor": (null | string); readonly "total_nodes": number; readonly "total_edges": number; readonly "omitted_nodes": number; readonly "omitted_edges": number; readonly "remaining_nodes": number; readonly "remaining_edges": number; readonly "scope_complete": boolean; readonly "external_expanded": false };
 
 // prettier-ignore
 export type ApiEmptyV1 = Readonly<Record<string, never>>;
@@ -325,3 +325,6 @@ export type ApiAttemptV1 = { readonly "attempt": Uuid; readonly "build": Uuid; r
 
 // prettier-ignore
 export type ApiExecutionMetricsV1 = { readonly "from_us": Count; readonly "to_us": Count; readonly "time_zone": "UTC"; readonly "duration_unit": "ns"; readonly "cohort": "build_accepted"; readonly "branch": string; readonly "dataset": (null | Uuid); readonly "materialized_any": boolean; readonly "builds": Count; readonly "build_states": ReadonlyArray<ApiStateCountV1>; readonly "manual_requests": Count; readonly "scheduled_builds": Count; readonly "schedule_occurrences": null; readonly "jobs": Count; readonly "job_states": ReadonlyArray<ApiStateCountV1>; readonly "jobs_executed": Count; readonly "attempts": Count; readonly "failure_rate": (null | ApiExactRatioV1); readonly "materializations": Count; readonly "duration_samples": Count; readonly "missing_duration_samples": Count; readonly "median_ns": (null | ApiExactRatioV1); readonly "trailing_mean_ns": (null | ApiExactRatioV1); readonly "trailing_window": Count; readonly "trailing_samples": Count };
+
+// prettier-ignore
+export type ApiLineageNodeV1 = { readonly "identity": string; readonly "paths": ReadonlyArray<string>; readonly "depth": Count; readonly "external": boolean; readonly "producer": boolean; readonly "parent_count": Count; readonly "child_count": Count };

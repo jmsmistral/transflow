@@ -51,6 +51,24 @@ impl Context {
         .map_err(bad)
     }
 }
+/// View-local fallback tails are explicit; frozen plans/versions keep their own policy.
+fn fallback_query(r: &Request) -> Result<Option<Vec<BranchName>>> {
+    let Some(raw) = r.query.get("fallback") else {
+        return Ok(None);
+    };
+    if r.query.contains_key("plan") || r.query.contains_key("version") {
+        return Err(E::invalid());
+    }
+    let names: Vec<String> = serde_json::from_str(raw).map_err(|_| E::invalid())?;
+    if names.len() > 100 {
+        return Err(E::invalid());
+    }
+    names
+        .into_iter()
+        .map(|name| name.parse().map_err(|_| E::invalid()))
+        .collect::<Result<Vec<_>>>()
+        .map(Some)
+}
 pub(crate) fn context(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Context> {
     let workspace = Workspace::load(root, Some(root)).map_err(bad)?;
     if workspace.config().id() != wid {
@@ -65,7 +83,7 @@ pub(crate) fn context(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Cont
     let rt = runtime()?;
     let mut rd = rt.block_on(reader(root))?;
     let revision = rt.block_on(rd.api_revision()).map_err(bad)?;
-    let mut fallback_override: Option<Vec<BranchName>> = None;
+    let mut fallback_override = fallback_query(r)?;
     let (mut registry, mut graph, mut source, mut selection) = if let Some(id) = r.query.get("plan")
     {
         let p = rt
@@ -229,7 +247,7 @@ pub(crate) fn keys(r: &Request, extra: &[&str]) -> Result<()> {
     if r.query.keys().any(|k| {
         !matches!(
             k.as_str(),
-            "branch" | "plan" | "context" | "version" | "dataset" | "origin_workspace"
+            "branch" | "fallback" | "plan" | "context" | "version" | "dataset" | "origin_workspace"
         ) && !extra.contains(&k.as_str())
     }) {
         return Err(E::invalid());
@@ -331,7 +349,14 @@ pub(crate) fn read(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Reply> 
         );
         lineage(&c, &query)?
     } else if path == "branches" || path == "builds" {
-        keys(r, &["limit", "cursor"])?;
+        keys(
+            r,
+            if path == "branches" {
+                &["limit", "cursor", "datasets"]
+            } else {
+                &["limit", "cursor"]
+            },
+        )?;
         let n = limit(r, 50, 200)?;
         let (binding, after) = cursor(r, &c)?;
         if !after.is_empty() {
@@ -340,7 +365,18 @@ pub(crate) fn read(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Reply> 
         let rt = runtime()?;
         let mut rd = rt.block_on(reader(root))?;
         let mut entries = if path == "branches" {
-            rt.block_on(rd.api_branches(wid, &after, n as u32 + 1))
+            let datasets: Option<Vec<tf_domain::DatasetId>> = r
+                .query
+                .get("datasets")
+                .map(|raw| {
+                    let names: Vec<String> = serde_json::from_str(raw).map_err(|_| E::invalid())?;
+                    names
+                        .into_iter()
+                        .map(|name| name.parse().map_err(|_| E::invalid()))
+                        .collect::<Result<Vec<_>>>()
+                })
+                .transpose()?;
+            rt.block_on(rd.api_branches(wid, &after, n as u32 + 1, datasets.as_deref()))
                 .map_err(bad)?
         } else {
             rt.block_on(rd.api_builds(wid, &c.branch, &after, n as u32 + 1))
@@ -558,7 +594,7 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
     let p = traversal
         .page((!after.is_empty()).then_some(after.as_str()), n)
         .map_err(|_| E::conflict())?;
-    let nodes=p.nodes.iter().map(|n|json!({"identity":crate::why::identity(&n.node.identity),"paths":n.node.paths.iter().map(|p|p.as_str()).collect::<Vec<_>>(),"depth":n.depth.to_string(),"external":n.node.external,"producer":n.node.producer})).collect::<Vec<_>>();
+    let nodes=p.nodes.iter().map(|n|json!({"identity":crate::why::identity(&n.node.identity),"paths":n.node.paths.iter().map(|p|p.as_str()).collect::<Vec<_>>(),"depth":n.depth.to_string(),"external":n.node.external,"producer":n.node.producer,"parent_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Upstream).to_string(),"child_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Downstream).to_string()})).collect::<Vec<_>>();
     let edges=p.edges.iter().map(|e|{let branch=match &e.declared_branch{tf_domain::BranchSelector::Omitted=>json!({"kind":"omitted","name":null}),tf_domain::BranchSelector::Current=>json!({"kind":"current","name":null}),tf_domain::BranchSelector::Named(n)=>json!({"kind":"named","name":n.as_str()})};json!({"parent":crate::why::identity(&e.parent),"consumer":crate::why::identity(&e.consumer),"alias":e.alias,"role":e.role.name(),"declared_branch":branch,"stop_branch_fallback":e.stop_branch_fallback,"checks":e.checks})}).collect::<Vec<_>>();
     Ok(
         json!({"nodes":nodes,"edges":edges,"next_cursor":p.next_cursor.map(|s|format!("{binding}:{s}")),"total_nodes":p.total_nodes,"total_edges":p.total_edges,"omitted_nodes":p.omitted_nodes,"omitted_edges":p.omitted_edges,"remaining_nodes":p.remaining_nodes,"remaining_edges":p.remaining_edges,"scope_complete":p.scope_complete,"external_expanded":false}),

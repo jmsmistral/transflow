@@ -7532,5 +7532,36 @@
       "schedules": false,
       "ui": "true"
     }
+  },
+  {
+    "name": "api-lineage-node-neighbours",
+    "schema": "ApiLineageNodeV1",
+    "valid": true,
+    "value": {
+      "identity": "pending:curated/items",
+      "paths": [
+        "curated/items"
+      ],
+      "depth": "0",
+      "external": false,
+      "producer": true,
+      "parent_count": "1",
+      "child_count": "0"
+    }
+  },
+  {
+    "name": "api-lineage-node-neighbours-required",
+    "schema": "ApiLineageNodeV1",
+    "valid": false,
+    "value": {
+      "identity": "pending:curated/items",
+      "paths": [
+        "curated/items"
+      ],
+      "depth": "0",
+      "external": false,
+      "producer": true,
+      "child_count": "0"
+    }
   }
 ]

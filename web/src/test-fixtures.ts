@@ -3,7 +3,7 @@ import type { ApiContextV1 } from "./generated/contracts";
 export const workspaceId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 export const datasetId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 export const versionId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
-export const context = (branch = "main"): ApiContextV1 => ({
+export const context = (branch = "master"): ApiContextV1 => ({
   workspace: workspaceId,
   branch,
   source: workspaceId,
@@ -13,7 +13,7 @@ export const context = (branch = "main"): ApiContextV1 => ({
   selection: { kind: "retained_current", id: null, digest: null },
   graph: "c".repeat(64),
   freshness: "unknown",
-  fingerprint: (branch === "main" ? "d" : "e").repeat(64),
+  fingerprint: (branch === "master" ? "d" : "e").repeat(64),
   fallback_policy: [branch, "public"],
 });
 export const dataset = {
@@ -112,7 +112,10 @@ export function fixtureTransport(
       );
     if (path.endsWith("/branches"))
       return json(
-        { entries: [{ name: "main" }, { name: "feature" }], next_cursor: null },
+        {
+          entries: [{ name: "master" }, { name: "feature" }],
+          next_cursor: null,
+        },
         c,
       );
     if (path.endsWith("/versions"))

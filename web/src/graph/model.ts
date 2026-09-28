@@ -1,7 +1,7 @@
 import type {
   ApiLineageV1,
   GraphEdgeV1,
-  GraphNodeV1,
+  ApiLineageNodeV1,
 } from "../generated/contracts";
 import { ApiFailure, type Query } from "../api/client";
 import type { Workspace } from "../workspace";
@@ -14,7 +14,7 @@ export interface Exploration {
 }
 export interface GraphState {
   context: string;
-  nodes: readonly GraphNodeV1[];
+  nodes: readonly ApiLineageNodeV1[];
   edges: readonly GraphEdgeV1[];
   queryNodes: ReadonlySet<string>;
   pathNodes: ReadonlySet<string> | null;
@@ -25,8 +25,9 @@ export interface GraphState {
 }
 export const edgeId = (edge: GraphEdgeV1): string =>
   JSON.stringify([edge.parent, edge.consumer, edge.alias]);
-export const label = (node: GraphNodeV1): string =>
-  node.paths[0] ?? node.identity;
+export const label = (
+  node: Pick<ApiLineageNodeV1, "paths" | "identity">,
+): string => node.paths[0] ?? node.identity;
 export function depthQuery(value: string): Query {
   if (value === "") return {};
   if (!/^\d+$/.test(value) || BigInt(value) > 18446744073709551615n)
@@ -177,6 +178,105 @@ export class GraphModel {
             ? error.message
             : "The graph could not be loaded.",
       });
+    }
+  }
+  neighbours(
+    node: ApiLineageNodeV1,
+    direction: Exploration["direction"],
+  ): Set<string> {
+    const visible = new Set(this.state.nodes.map((n) => n.identity));
+    return new Set(
+      this.state.edges.flatMap((e) =>
+        direction === "upstream"
+          ? e.consumer === node.identity && visible.has(e.parent)
+            ? [e.parent]
+            : []
+          : e.parent === node.identity && visible.has(e.consumer)
+            ? [e.consumer]
+            : [],
+      ),
+    );
+  }
+  expanded(
+    node: ApiLineageNodeV1,
+    direction: Exploration["direction"],
+  ): boolean {
+    const count = BigInt(
+      direction === "upstream" ? node.parent_count : node.child_count,
+    );
+    return (
+      count > 0n && BigInt(this.neighbours(node, direction).size) === count
+    );
+  }
+  /** One explicit neighbour action drains bounded pages; zoom is owned solely by the view. */
+  async toggle(
+    node: ApiLineageNodeV1,
+    direction: Exploration["direction"],
+  ): Promise<Set<string> | undefined> {
+    if (this.expanded(node, direction)) {
+      this.remove(this.neighbours(node, direction));
+      return new Set([node.identity]);
+    }
+    this.cancel();
+    const generation = this.generation,
+      request = new AbortController();
+    this.request = request;
+    this.set({ busy: true, message: "" });
+    const nodes = new Map(this.state.nodes.map((n) => [n.identity, n]));
+    const edges = new Map(this.state.edges.map((e) => [edgeId(e), e]));
+    const selected = new Set<string>();
+    const queryNodes = new Set<string>();
+    let cursor: string | null = null;
+    const seen = new Set<string>();
+    try {
+      let page: ApiLineageV1;
+      do {
+        page = await this.workspace.read(
+          "ApiLineageV1",
+          "/api/v1/lineage",
+          {
+            start: label(node),
+            direction,
+            depth: "1",
+            limit: "100",
+            expand: "true",
+            ...(cursor ? { cursor } : {}),
+          },
+          request.signal,
+        );
+        if (request.signal.aborted || generation !== this.generation) return;
+        for (const item of page.nodes) {
+          nodes.set(item.identity, item);
+          queryNodes.add(item.identity);
+          if (item.identity !== node.identity) selected.add(item.identity);
+        }
+        for (const edge of page.edges) edges.set(edgeId(edge), edge);
+        cursor = page.next_cursor;
+        if (cursor) {
+          if (seen.has(cursor))
+            throw new Error("The graph page cursor repeated. Retry expansion.");
+          seen.add(cursor);
+        }
+      } while (cursor);
+      this.set({
+        nodes: [...nodes.values()],
+        edges: [...edges.values()],
+        queryNodes,
+        pathNodes: null,
+        page,
+        query: { start: label(node), direction, depth: "1" },
+        busy: false,
+        message: "",
+      });
+      return selected;
+    } catch (error) {
+      if (!request.signal.aborted && generation === this.generation)
+        this.set({
+          busy: false,
+          message:
+            error instanceof Error ? error.message : "Expansion failed. Retry.",
+        });
+      return undefined;
     }
   }
   remove(ids: ReadonlySet<string>): void {

@@ -6,10 +6,14 @@ export function CatalogueSearch({
   workspace,
   active,
   add,
+  expanded = false,
+  select,
 }: {
   workspace: Workspace;
   active: boolean;
   add: (path: string) => void;
+  expanded?: boolean;
+  select?: (entry: ApiDatasetsV1["entries"][number]) => void;
 }) {
   const [filter, setFilter] = useState("");
   const [result, setResult] = useState<{
@@ -48,7 +52,7 @@ export function CatalogueSearch({
     }
   };
   return (
-    <details className="catalogue-search">
+    <details className="catalogue-search" open={expanded || undefined}>
       <summary>Search the whole catalogue</summary>
       <form
         onSubmit={(event) => {
@@ -75,8 +79,10 @@ export function CatalogueSearch({
           <ul>
             {result.page.entries.map((entry) => (
               <li key={`${entry.workspace_id}:${entry.dataset_id}`}>
-                <Button onClick={() => add(entry.path)}>
-                  Add {entry.path} to view
+                <Button
+                  onClick={() => (select ? select(entry) : add(entry.path))}
+                >
+                  {select ? entry.path : `Add ${entry.path} to view`}
                 </Button>{" "}
                 {entry.kind}
                 {entry.origin === "external"

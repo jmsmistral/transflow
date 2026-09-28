@@ -7,6 +7,7 @@ import {
 } from "react";
 import {
   Background,
+  NodeToolbar,
   BaseEdge,
   getBezierPath,
   MarkerType,
@@ -22,7 +23,7 @@ import {
   type NodeChange,
   type Edge,
 } from "@xyflow/react";
-import type { GraphNodeV1 } from "../generated/contracts";
+import type { ApiLineageNodeV1 } from "../generated/contracts";
 import type { Workspace } from "../workspace";
 import { Button } from "../components";
 import {
@@ -33,78 +34,99 @@ import {
   type Exploration,
 } from "./model";
 import { CatalogueSearch } from "./Search";
+import { DatasetTooltip } from "./Tooltip";
 import { Positions } from "./positions";
 import "@xyflow/react/dist/style.css";
 
 type DatasetNode = Node<
   {
-    value: GraphNodeV1;
+    value: ApiLineageNodeV1;
     kind: string;
+    workspace: Workspace;
+    parentsExpanded: boolean;
+    childrenExpanded: boolean;
+    busy: boolean;
     pinned: boolean;
     onPath: boolean;
-    expand: (node: GraphNodeV1, direction: Exploration["direction"]) => void;
+    expand: (
+      node: ApiLineageNodeV1,
+      direction: Exploration["direction"],
+    ) => void;
   },
   "dataset"
 >;
 function Dataset({ data }: NodeProps<DatasetNode>) {
+  const [hovered, setHovered] = useState(false);
+  const parents = data.value.parent_count !== "0" && !data.value.external;
+  const children = data.value.child_count !== "0";
+  const arrow = (
+    side: Exploration["direction"],
+    expanded: boolean,
+    count: string,
+  ) => (
+    <button
+      type="button"
+      className={`node-expansion ${side === "upstream" ? "node-parents" : "node-children"} nodrag nopan`}
+      disabled={data.busy}
+      aria-label={`${expanded ? "Retract" : "Expand"} ${side === "upstream" ? "parents" : "children"} of ${label(data.value)}`}
+      title={`${count} ${side === "upstream" ? "parents" : "children"} · ${expanded ? "Retract" : "Expand all"}`}
+      aria-expanded={expanded}
+      onKeyDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        setHovered(false);
+        data.expand(data.value, side);
+      }}
+    >
+      {side === "upstream" ? (expanded ? ">" : "<") : expanded ? "<" : ">"}
+    </button>
+  );
   return (
     <div
       className={`dataset-node ${data.value.external ? "foreign-node" : ""}`}
     >
       <Handle type="target" position={Position.Left} isConnectable={false} />
-      <span className="node-kind">
-        {data.value.external ? "↗" : data.value.producer ? "ƒ" : "▤"}{" "}
-        {data.kind}
-      </span>
-      <strong title={data.value.paths.join(" · ")}>{label(data.value)}</strong>
-      <span className="node-status">
-        {data.value.external
-          ? "Read-only foreign boundary"
-          : "Freshness / quality: unknown"}
-        {data.pinned ? " · Pinned" : ""}
-        {data.onPath ? " · On path" : ""}
-      </span>
-      <div className="node-expansion nodrag nopan">
-        <button
-          type="button"
-          aria-label={`Show parents of ${label(data.value)}`}
-          disabled={data.value.external}
-          onKeyDown={(event) => event.stopPropagation()}
-          onClick={(event) => {
-            event.stopPropagation();
-            data.expand(data.value, "upstream");
-          }}
-        >
-          ← Parents
-        </button>
-        <button
-          type="button"
-          aria-label={`Show children of ${label(data.value)}`}
-          onKeyDown={(event) => event.stopPropagation()}
-          onClick={(event) => {
-            event.stopPropagation();
-            data.expand(data.value, "downstream");
-          }}
-        >
-          Children →
-        </button>
-      </div>
+      {parents &&
+        arrow("upstream", data.parentsExpanded, data.value.parent_count)}
+      <button
+        className="node-label"
+        aria-label={`Details for ${label(data.value)}`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setHovered(true)}
+        onBlur={() => setHovered(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            setHovered(false);
+            e.stopPropagation();
+          }
+        }}
+        onClick={() => setHovered(true)}
+      >
+        <span aria-hidden="true">
+          {data.value.external ? "↗" : data.value.producer ? "ƒ" : "▤"}
+        </span>{" "}
+        <span>{label(data.value)}</span>
+        {data.pinned && <span title="Pinned">⌖</span>}
+      </button>
+      {children &&
+        arrow("downstream", data.childrenExpanded, data.value.child_count)}
       <Handle type="source" position={Position.Right} isConnectable={false} />
+      <NodeToolbar isVisible={hovered} position={Position.Top} offset={12}>
+        <DatasetTooltip node={data.value} workspace={data.workspace} />
+      </NodeToolbar>
     </div>
   );
 }
 const nodeTypes = { dataset: Dataset };
 function Dependency(props: EdgeProps) {
-  const [path, labelX, labelY] = getBezierPath(props);
+  const [path] = getBezierPath(props);
   return (
     <g>
       <title>{props.label}</title>
       <BaseEdge
         id={props.id}
         path={path}
-        label={props.label}
-        labelX={labelX}
-        labelY={labelY}
         {...(props.style ? { style: props.style } : {})}
         {...(props.markerEnd ? { markerEnd: props.markerEnd } : {})}
       />
@@ -116,14 +138,20 @@ const edgeTypes = { dependency: Dependency };
 export function GraphExplorer({
   workspace,
   dark = false,
+  onVisible,
 }: {
   workspace: Workspace;
   dark?: boolean;
+  onVisible?: (identities: readonly string[]) => void;
 }) {
   const [model] = useState(() => new GraphModel(workspace));
   const graph = useSyncExternalStore(model.subscribe, model.snapshot);
   const state = useSyncExternalStore(workspace.subscribe, workspace.snapshot);
   useEffect(() => model.connect(), [model]);
+  useEffect(
+    () => onVisible?.(graph.nodes.map((n) => n.identity)),
+    [graph.nodes, onVisible],
+  );
   const ready =
     state.kind === "ready" && state.value.context.fingerprint === graph.context;
   return graph.context ? (
@@ -162,7 +190,6 @@ function GraphView({
     useState<Exploration["direction"]>("upstream");
   const [find, setFind] = useState("");
   const [large, setLarge] = useState(false);
-  const [list, setList] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const flow = useReactFlow<DatasetNode>();
   const workspaceState = workspace.snapshot();
@@ -171,14 +198,12 @@ function GraphView({
     graph.nodes.filter((node) => node.identity === id),
   );
   const expand = useCallback(
-    (node: GraphNodeV1, side: Exploration["direction"]) => {
-      void model.explore(
-        { start: label(node), direction: side, depth: "1" },
-        false,
-        large,
-      );
+    (node: ApiLineageNodeV1, side: Exploration["direction"]) => {
+      void model.toggle(node, side).then((ids) => {
+        if (ids) setSelected(ids);
+      });
     },
-    [model, large],
+    [model],
   );
   const nodes: DatasetNode[] = useMemo(
     () =>
@@ -193,6 +218,10 @@ function GraphView({
         ariaLabel: `${label(node)}, ${node.external ? "read-only foreign boundary" : "dataset"}`,
         data: {
           value: node,
+          workspace,
+          busy: graph.busy,
+          parentsExpanded: model.expanded(node, "upstream"),
+          childrenExpanded: model.expanded(node, "downstream"),
           pinned: layout.pins.has(node.identity),
           onPath: graph.pathNodes?.has(node.identity) ?? false,
           expand,
@@ -209,6 +238,9 @@ function GraphView({
       })),
     [
       graph.nodes,
+      graph.busy,
+      model,
+      workspace,
       graph.pathNodes,
       layout.positions,
       layout.pins,
@@ -263,18 +295,14 @@ function GraphView({
     },
     [positions],
   );
-  const choose = (id: string, multiple: boolean): void =>
-    setSelected((old) => {
-      const next = multiple ? new Set(old) : new Set<string>();
-      if (multiple && next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
   const inspect = (): void => {
     const identity = chosen[0]?.identity.match(/^dataset:([^:]+):([^:]+)$/);
     if (identity?.[1] && identity[2])
       void workspace.select({
         branch: workspaceState.selection.branch,
+        ...(workspaceState.selection.fallback !== undefined
+          ? { fallback: workspaceState.selection.fallback }
+          : {}),
         origin: identity[1],
         dataset: identity[2],
         ...(workspaceState.selection.plan
@@ -400,9 +428,6 @@ function GraphView({
         >
           Explore / search
         </Button>
-        <Button aria-pressed={list} onClick={() => setList(!list)}>
-          {list ? "Show diagram" : "Show dataset list"}
-        </Button>
         <Button
           onClick={() => {
             void flow.fitView({ duration: 200 });
@@ -496,14 +521,21 @@ function GraphView({
           </div>
         </details>
       </div>
-      <p className="graph-counts" role="status">
-        {graph.nodes.length} visible datasets · {edges.length} visible edges ·{" "}
-        {graph.edges.length - edges.length} edges awaiting endpoints.{" "}
-        {graph.busy ? "Loading batch… " : ""}
-        {layout.busy ? "Arranging graph… " : ""}
-        {graph.page &&
-          `Last query: ${graph.page.total_nodes} nodes / ${graph.page.total_edges} edges; ${graph.page.remaining_nodes} nodes / ${graph.page.remaining_edges} edges pending; ${graph.page.omitted_nodes} nodes / ${graph.page.omitted_edges} edges beyond depth.`}
-      </p>
+      <details className="graph-summary">
+        <summary>
+          {graph.nodes.length} visible datasets · {edges.length} visible edges
+          {graph.busy ? " · Loading batch…" : ""}
+          {layout.busy ? " · Arranging graph…" : ""}
+        </summary>
+        <p className="graph-counts" role="status">
+          {graph.nodes.length} visible datasets · {edges.length} visible edges ·{" "}
+          {graph.edges.length - edges.length} edges awaiting endpoints.{" "}
+          {graph.busy ? "Loading batch… " : ""}
+          {layout.busy ? "Arranging graph… " : ""}
+          {graph.page &&
+            `Last query: ${graph.page.total_nodes} nodes / ${graph.page.total_edges} edges; ${graph.page.remaining_nodes} nodes / ${graph.page.remaining_edges} edges pending; ${graph.page.omitted_nodes} nodes / ${graph.page.omitted_edges} edges beyond depth.`}
+        </p>
+      </details>
       {graph.page?.next_cursor && graph.query && (
         <Button
           disabled={graph.busy}
@@ -523,7 +555,7 @@ function GraphView({
             : "No validated graph retained in this context. Validate or build through the CLI, then refresh."}
         </p>
       )}
-      <div className="graph-diagram" hidden={list}>
+      <div className="graph-diagram">
         <ReactFlow<DatasetNode>
           nodes={nodes}
           edges={edges}
@@ -546,79 +578,14 @@ function GraphView({
           <Controls showInteractive={false} />
         </ReactFlow>
       </div>
-      {list && (
-        <div className="graph-list" aria-label="Dataset graph list">
-          <ul>
-            {matching.map((node) => (
-              <li key={node.identity}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selected.has(node.identity)}
-                    onChange={() => choose(node.identity, true)}
-                  />
-                  {label(node)}
-                </label>
-                <span>
-                  {node.external
-                    ? "Read-only foreign boundary"
-                    : node.producer
-                      ? "Producer"
-                      : "Dataset"}{" "}
-                  {graph.queryNodes.has(node.identity)
-                    ? ` · last-query depth ${node.depth}`
-                    : " · from earlier expansion"}
-                  {layout.pins.has(node.identity) ? " · Pinned" : ""}
-                  {graph.pathNodes?.has(node.identity) ? " · On path" : ""}
-                </span>
-                <Button
-                  disabled={node.external || graph.busy}
-                  onClick={() => expand(node, "upstream")}
-                >
-                  Parents of {label(node)}
-                </Button>
-                <Button
-                  disabled={graph.busy}
-                  onClick={() => expand(node, "downstream")}
-                >
-                  Children of {label(node)}
-                </Button>
-                <ul>
-                  {graph.edges
-                    .filter((edge) => edge.consumer === node.identity)
-                    .map((edge) => (
-                      <li key={edgeId(edge)}>
-                        {label(
-                          graph.nodes.find(
-                            (parent) => parent.identity === edge.parent,
-                          ) ?? {
-                            identity: edge.parent,
-                            paths: [],
-                            producer: false,
-                            external: false,
-                            depth: "0",
-                          },
-                        )}{" "}
-                        → {edge.alias} ({edge.role}; branch{" "}
-                        {edge.declared_branch.name ?? edge.declared_branch.kind}
-                        ;{" "}
-                        {edge.stop_branch_fallback
-                          ? "fallback blocked"
-                          : "fallback permitted"}
-                        ; {edge.checks.length} checks)
-                      </li>
-                    ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <p className="graph-legend">
-        Solid: data · Dashed: validation-only · ↗: foreign read boundary.
-        Provider code is never executed by graph navigation. Freshness and
-        quality overlays arrive separately.
-      </p>
+      <details className="graph-legend">
+        <summary>Legend</summary>
+        <p>
+          Solid: data · Dashed: validation-only · ↗: foreign read boundary.
+          Provider code is never executed by graph navigation. Freshness and
+          quality overlays arrive separately.
+        </p>
+      </details>
     </>
   );
 }

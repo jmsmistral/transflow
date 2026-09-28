@@ -13,6 +13,7 @@ import { follow } from "./api/stream";
 
 export interface Selection {
   branch: string;
+  fallback?: readonly string[];
   dataset?: string;
   origin?: string;
   version?: string;
@@ -34,6 +35,9 @@ export type WorkspaceState =
 export function queryFor(selection: Selection): Query {
   return {
     branch: selection.branch,
+    ...(!selection.plan && !selection.version && selection.fallback
+      ? { fallback: JSON.stringify(selection.fallback) }
+      : {}),
     ...(selection.plan ? { plan: selection.plan } : {}),
     ...(selection.version && selection.dataset
       ? {
@@ -68,7 +72,7 @@ export class Workspace {
     kind: "disconnected",
     message:
       "Open this interface through transflow serve --ui-dir <built-ui> --open.",
-    selection: { branch: "main" },
+    selection: { branch: "master" },
   };
   private listeners = new Set<() => void>();
   private request: AbortController | undefined;
@@ -206,13 +210,30 @@ export class Workspace {
           "conflict",
           "The dataset identity changed. Refresh before continuing.",
         );
+      const allBranches = [...branches.data.entries];
+      let branchCursor = branches.data.next_cursor;
+      const seen = new Set<string>();
+      while (branchCursor) {
+        if (seen.has(branchCursor)) throw new Error("Repeated branch cursor");
+        seen.add(branchCursor);
+        const page = await this.client.read(
+          "ApiMetadataPageV1",
+          "/api/v1/branches",
+          { ...query, limit: "200", cursor: branchCursor },
+          request.signal,
+          context,
+        );
+        if (!current()) return;
+        allBranches.push(...page.data.entries);
+        branchCursor = page.data.next_cursor;
+      }
       this.set({
         kind: "ready",
         selection: { ...selection },
         value: {
           context,
           datasets: datasets.data,
-          branches: branches.data,
+          branches: { entries: allBranches, next_cursor: null },
           dataset: dataset?.data ?? null,
           versions: versions?.data ?? null,
         },

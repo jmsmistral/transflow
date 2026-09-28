@@ -10,3 +10,13 @@ globalThis.ResizeObserver = class {
   unobserve(): void {}
   disconnect(): void {}
 };
+
+// jsdom does not implement native dialog opening; browsers are checked separately.
+if (typeof HTMLDialogElement !== "undefined") {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute("open", "");
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute("open");
+  };
+}

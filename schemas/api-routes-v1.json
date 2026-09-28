@@ -211,7 +211,9 @@
     "method": "POST",
     "response": "BranchResultV1",
     "request": "ApiBranchCommandV1",
-    "query": [],
+    "query": [
+      "datasets"
+    ],
     "mutation": true,
     "context": true
   },
@@ -274,7 +276,8 @@
     "request": null,
     "query": [
       "limit",
-      "cursor"
+      "cursor",
+      "datasets"
     ],
     "mutation": false,
     "context": true
