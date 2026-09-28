@@ -104,6 +104,43 @@ export class GraphModel {
     this.generation++;
     if (this.state.busy) this.set({ busy: false });
   };
+  private async connections(
+    nodes: readonly ApiLineageNodeV1[],
+    signal: AbortSignal,
+  ): Promise<GraphEdgeV1[]> {
+    const visible = new Set(nodes.map((n) => n.identity));
+    const edges = new Map<string, GraphEdgeV1>();
+    for (let offset = 0; offset < nodes.length; offset += 100) {
+      const paths = nodes.slice(offset, offset + 100).map(label);
+      let cursor: string | null = null;
+      const seen = new Set<string>();
+      do {
+        const page: ApiLineageV1 = await this.workspace.read(
+          "ApiLineageV1",
+          "/api/v1/lineage",
+          {
+            connections: JSON.stringify(paths),
+            limit: "100",
+            ...(cursor ? { cursor } : {}),
+          },
+          signal,
+        );
+        if (signal.aborted) return [];
+        for (const edge of page.edges)
+          if (visible.has(edge.parent) && visible.has(edge.consumer))
+            edges.set(edgeId(edge), edge);
+        cursor = page.next_cursor;
+        if (cursor) {
+          if (seen.has(cursor))
+            throw new Error(
+              "Connection page cursor repeated. Retry the graph action.",
+            );
+          seen.add(cursor);
+        }
+      } while (cursor);
+    }
+    return [...edges.values()];
+  }
   async explore(
     query: Exploration,
     more = false,
@@ -148,6 +185,12 @@ export class GraphModel {
         this.state.edges.map((edge) => [edgeId(edge), edge]),
       );
       for (const edge of page.edges) edges.set(edgeId(edge), edge);
+      for (const edge of await this.connections(
+        [...nodes.values()],
+        request.signal,
+      ))
+        edges.set(edgeId(edge), edge);
+      if (generation !== this.generation || request.signal.aborted) return;
       this.set({
         nodes: [...nodes.values()],
         edges: [...edges.values()],
@@ -258,6 +301,12 @@ export class GraphModel {
           seen.add(cursor);
         }
       } while (cursor);
+      for (const edge of await this.connections(
+        [...nodes.values()],
+        request.signal,
+      ))
+        edges.set(edgeId(edge), edge);
+      if (generation !== this.generation || request.signal.aborted) return;
       this.set({
         nodes: [...nodes.values()],
         edges: [...edges.values()],

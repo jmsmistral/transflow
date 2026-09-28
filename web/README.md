@@ -124,3 +124,11 @@ preparation command applies reviewed, version-checked ELK and xyflow declaration
 corrections; it does not change runtime library code or disable strict checking.
 Production verification executes the actual worker asset in a background thread,
 checks a diamond and an invalid graph, and compares reproducible build hashes.
+
+### UI review iteration: catalogue and canvas navigation
+
+The right catalogue has a single debounced fuzzy search input. Case-insensitive ordered-subsequence matches are highlighted; a green dot identifies nodes already in the lineage. Results are bounded and paginated across the entire catalogue. Clicking a result adds it if needed, then centres it without changing zoom.
+
+Drag the canvas to pan; hold Shift while dragging for box selection. Delete or Backspace removes selected nodes only when the diagram has focus, never while typing in catalogue search. Fit view and fit selection sit under the zoom buttons. Other graph actions float at the upper left. Node handles are visually hidden. Hover cards stay absent until the requested metadata is ready and the hover/focus is still active.
+
+After a successful expansion/add, the client queries incoming connections for bounded groups of visible consumers and retains edges whose endpoints are both visible. It drains edge pages before accepting the visual change, preserving aliases and data/validation distinctions. Abort/context guards prevent stale connections from replacing the current view.

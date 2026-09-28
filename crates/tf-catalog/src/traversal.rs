@@ -294,6 +294,32 @@ impl Graph {
         }
         Err(Error::Missing)
     }
+    /// Incoming declared edges for a bounded set of consumers, without expanding nodes.
+    /// Clients can reconstruct all connections in a visible induced subgraph.
+    pub fn connections(&self, consumers: &BTreeSet<Id>) -> Result<Traversal, Error> {
+        let start = consumers.first().ok_or(Error::Missing)?.clone();
+        if consumers.iter().any(|id| !self.nodes.contains_key(id)) {
+            return Err(Error::Missing);
+        }
+        let mut result = self.traverse(Request {
+            start,
+            direction: Direction::Upstream,
+            depth: Some(0),
+        })?;
+        result.nodes.clear();
+        result.edges = self
+            .edges
+            .iter()
+            .filter(|e| consumers.contains(&e.consumer))
+            .cloned()
+            .collect();
+        result.omitted_nodes = 0;
+        result.omitted_edges = 0;
+        result.fingerprint = content_digest(DigestKind::Compute,
+            &json!({"connections_version":1,"context":result.fingerprint,"consumers":consumers.iter().map(identity).collect::<Vec<_>>()}))
+            .map_err(|_| Error::Context)?.hex();
+        Ok(result)
+    }
     /// All nodes and edges on directed paths from start to end, without enumerating paths.
     /// An unreachable end returns an empty scope. Foreign nodes remain terminal boundaries.
     pub fn paths(&self, start: Id, end: Id) -> Result<Traversal, Error> {

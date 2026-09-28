@@ -350,3 +350,5 @@ and reports a blocked selection without hiding available freshness evidence.
 See the [inspection guide](crates/transflow/INSPECTION.md) for branch/Git context,
 selection modes, exact pins, parameters, timeouts, JSON output and current limits.
 See the [build guide](crates/transflow/BUILDS.md) for execution, recovery and replay.
+
+The lineage review preview supports live fuzzy catalogue search, add-or-centre selection, drag-to-pan and Shift-drag box selection. Delete/Backspace removes selected nodes only from the focused graph view. Hover cards wait for metadata, and visible datasets display all declared connections between them.

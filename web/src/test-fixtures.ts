@@ -77,6 +77,23 @@ export function fixtureTransport(
       query = body.query ?? {};
     const special = override?.(path, query, init?.signal);
     if (special) return special;
+    if (path.endsWith("/lineage") && query.connections)
+      return json(
+        {
+          nodes: [],
+          edges: [],
+          next_cursor: null,
+          total_nodes: 0,
+          total_edges: 0,
+          omitted_nodes: 0,
+          omitted_edges: 0,
+          remaining_nodes: 0,
+          remaining_edges: 0,
+          scope_complete: true,
+          external_expanded: false,
+        },
+        context(query.branch),
+      );
     if (path.endsWith("/capabilities")) return json(capabilities);
     if (path.endsWith("/events"))
       return new Promise<Response>((_resolve, reject) => {

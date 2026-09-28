@@ -54,7 +54,8 @@ export function DatasetTooltip({
       );
     return () => request.abort();
   }, [node.identity, workspace, fingerprint]);
-  const head = detail?.head;
+  if (!detail) return null;
+  const head = detail.head;
   const published = field(head, "published_at_us");
   const timestamp =
     typeof published === "string"

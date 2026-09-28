@@ -123,10 +123,11 @@ test("dataset selection clears old labels immediately and renders names only as 
   const user = userEvent.setup();
   render(<App workspace={workspace} />);
   fireEvent.click(screen.getByRole("button", { name: "Catalogue" }));
-  await user.click(screen.getByRole("button", { name: /raw\/example/ }));
+  await user.click(await screen.findByRole("button", { name: /raw\/example/ }));
   await vi.waitFor(() =>
     expect(workspace.snapshot().selection.dataset).toBe(datasetId),
   );
+  fireEvent.click(screen.getByRole("button", { name: "Properties" }));
   expect(screen.getByText("public")).toBeTruthy();
   expect(
     screen.getByText("Not pinned — browsing retained metadata"),
@@ -149,7 +150,7 @@ test("historical context never labels unqueried current head as missing data", a
     version: versionId,
   });
   render(<App workspace={workspace} />);
-  fireEvent.click(screen.getByRole("button", { name: "Catalogue" }));
+  fireEvent.click(screen.getByRole("button", { name: "Properties" }));
   expect(screen.getByText("Not queried in historical context")).toBeTruthy();
   expect(screen.queryByText("No published head")).toBeNull();
   expect(screen.getByText("Producing source capture")).toBeTruthy();

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { Button, Status } from "./components";
 import { ResizeHandle } from "./panels";
@@ -62,6 +62,10 @@ function moveTab(
 export function App({ workspace: supplied }: { workspace?: Workspace }) {
   const [workspace] = useState(() => supplied ?? new Workspace());
   const state = useSyncExternalStore(workspace.subscribe, workspace.snapshot);
+  const [focusRequest, setFocusRequest] = useState<{
+    path: string;
+    revision: number;
+  } | null>(null);
   const [visible, setVisible] = useState<readonly string[]>([]);
   const [dark, setDark] = useState(false);
   const [right, setRight] = useState(26),
@@ -72,11 +76,6 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     [tab, setTab] = useState<string>("Preview");
   const ready = state.kind === "ready" ? state.value : null;
   const dataset = ready?.dataset;
-  const selectedButton = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (state.kind === "ready" && document.activeElement === document.body)
-      selectedButton.current?.focus();
-  }, [state]);
   const requested = state.selection.branch;
   const title =
     dataset?.path ??
@@ -137,6 +136,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 workspace={workspace}
                 dark={dark}
                 onVisible={setVisible}
+                focusRequest={focusRequest}
               />
               {!ready && (
                 <div className="canvas-message" role="status">
@@ -202,7 +202,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
               />
               <aside
                 id="inspector"
-                className="inspector"
+                className={`inspector ${mode === "Catalogue" ? "catalogue-panel" : ""}`}
                 aria-label="Right inspector"
               >
                 <header className="inspector-header">
@@ -213,96 +213,25 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                     <CatalogueSearch
                       workspace={workspace}
                       active={!!ready}
-                      expanded
+                      visible={visible}
                       select={(entry) => {
-                        void workspace.select({
-                          branch: requested,
-                          dataset: entry.dataset_id,
-                          origin: entry.workspace_id,
-                          ...(state.selection.fallback
-                            ? { fallback: state.selection.fallback }
-                            : {}),
-                        });
+                        void workspace
+                          .select({
+                            branch: requested,
+                            dataset: entry.dataset_id,
+                            origin: entry.workspace_id,
+                            ...(state.selection.fallback
+                              ? { fallback: state.selection.fallback }
+                              : {}),
+                          })
+                          .then(() =>
+                            setFocusRequest((old) => ({
+                              path: entry.path,
+                              revision: (old?.revision ?? 0) + 1,
+                            })),
+                          );
                       }}
-                      add={() => {}}
                     />
-                    <h3>Datasets</h3>
-                    {ready ? (
-                      <>
-                        <ul className="dataset-list">
-                          {ready.datasets.entries.map((entry) => (
-                            <li
-                              key={`${entry.workspace_id}/${entry.dataset_id}`}
-                            >
-                              <button
-                                ref={
-                                  entry.dataset_id ===
-                                    state.selection.dataset &&
-                                  entry.workspace_id === state.selection.origin
-                                    ? selectedButton
-                                    : null
-                                }
-                                aria-pressed={
-                                  entry.dataset_id ===
-                                    state.selection.dataset &&
-                                  entry.workspace_id === state.selection.origin
-                                }
-                                onClick={() => {
-                                  void workspace.select({
-                                    branch: requested,
-                                    ...(state.selection.fallback
-                                      ? { fallback: state.selection.fallback }
-                                      : {}),
-                                    dataset: entry.dataset_id,
-                                    origin: entry.workspace_id,
-                                  });
-                                }}
-                              >
-                                <span>{entry.path}</span>
-                                <small>
-                                  {entry.origin} · {entry.kind}
-                                </small>
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                        {ready.datasets.entries.length === 0 && (
-                          <p className="muted">No datasets to display.</p>
-                        )}
-                        <div className="toolbar">
-                          <Button
-                            disabled={!state.selection.cursor}
-                            onClick={() => {
-                              void workspace.select({
-                                branch: requested,
-                                ...(state.selection.fallback
-                                  ? { fallback: state.selection.fallback }
-                                  : {}),
-                              });
-                            }}
-                          >
-                            First page
-                          </Button>
-                          <Button
-                            disabled={!ready.datasets.next_cursor}
-                            onClick={() => {
-                              if (ready.datasets.next_cursor)
-                                void workspace.select({
-                                  branch: requested,
-                                  ...(state.selection.fallback
-                                    ? { fallback: state.selection.fallback }
-                                    : {}),
-                                  cursor: ready.datasets.next_cursor,
-                                });
-                            }}
-                          >
-                            Next page
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <p className="muted">{status}</p>
-                    )}
                   </>
                 ) : mode === "Properties" ? (
                   <h2>Selected context</h2>
@@ -314,7 +243,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                     </p>
                   </>
                 )}
-                {(mode === "Catalogue" || mode === "Properties") && (
+                {mode === "Properties" && (
                   <section
                     className="selection-details"
                     aria-label="Selected dataset context"

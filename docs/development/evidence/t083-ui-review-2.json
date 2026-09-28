@@ -1,0 +1,44 @@
+{
+  "task": "T083 UI review iteration 2",
+  "date": "2026-09-28",
+  "baseline": {
+    "implementation": "30af2af",
+    "specification": "9b708e5",
+    "status": "Both pushed before this iteration at owner request; CI owner-monitored"
+  },
+  "status": "Owner requested commit/push before the next UI iteration; CI pending",
+  "changes": [
+    "Metadata tooltip stays absent until its request resolves and hover/focus remains relevant",
+    "Single debounced fuzzy catalogue search, highlighted subsequences and green visible-node indicators; catalogue fills the right panel, metadata stays in Properties",
+    "Catalogue selection adds or centres a node without changing zoom",
+    "Canvas drag pans; Shift-drag selects a box; Delete/Backspace removes focused graph selections only",
+    "Floating upper-left graph actions, lower-left fit controls, hidden connector dots and colour-only arrow hover",
+    "Bounded paginated incoming connection reads reconcile every declared edge between visible endpoints, including newly reintroduced shared parents"
+  ],
+  "verification": {
+    "web": "400 tests; strict types/lint/format and production worker/reproducibility gate passed",
+    "rust": "397 workspace tests plus one documentation test; formatting/build/Clippy/boundary gate passed with required process/socket permissions",
+    "python": "946 tests, lint/types/format/package checks passed with required local socket permissions",
+    "native_api": "14 real coordinator journey groups passed, including fuzzy search, connection-only query validation and existing fallback/context/lease/cancellation checks",
+    "safety": "27 regression tests and safety baseline passed",
+    "specification": "Specification validator and both git diff whitespace checks passed"
+  },
+  "browser": {
+    "tool": "Codex internal Browser; real synthetic workspace",
+    "observed": [
+      "Typing curleft finds curated/left and highlights matched characters without a submit button",
+      "Adding wide/item_001 then expanding its parent yields three nodes and two edges, including raw/root to the already-visible curated/left",
+      "Canvas drag moved translation by 140/50 pixels with the same zoom",
+      "Re-selecting a visible catalogue node kept the node count and centred it exactly (0px x/y centre difference)",
+      "Backspace in catalogue search preserved three nodes; Backspace on a focused selected graph node reduced the view to two; Delete then reduced it to one",
+      "Metadata tooltip showed actual publication statistics, without a loading card; five-node/five-edge sample restored",
+      "Console reported no errors or warnings"
+    ],
+    "limits": "Shift-box selection uses the explicit React Flow Shift selection key; physical modifier-drag is left for owner Firefox review. Firefox itself is owner-tested, not automated here."
+  },
+  "notes": [
+    "Initial sandboxed Rust/Python process/socket tests failed with Operation not permitted; reruns with required permissions passed",
+    "No dependency changes, runtime migrations, dataset deletion or source mutation from graph interactions",
+    "Owner requested this iteration be committed before further changes; no CI success is claimed"
+  ]
+}

@@ -298,6 +298,7 @@ pub(crate) fn read(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Reply> 
                 "limit",
                 "cursor",
                 "filter",
+                "fuzzy",
                 "origin",
                 "id",
                 "source_path",
@@ -518,6 +519,7 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
             "limit",
             "cursor",
             "expand",
+            "connections",
         ],
     )?;
     let g = c.graph.as_ref().ok_or_else(E::missing)?;
@@ -554,7 +556,23 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
         "downstream" => traversal::Direction::Downstream,
         _ => return Err(E::invalid()),
     };
-    let traversal = if let Some(end) = r.query.get("end") {
+    let traversal = if let Some(consumers) = r.query.get("connections") {
+        if ["start", "end", "depth", "direction"]
+            .iter()
+            .any(|k| r.query.contains_key(*k))
+        {
+            return Err(E::invalid());
+        }
+        let paths: Vec<String> = serde_json::from_str(consumers).map_err(|_| E::invalid())?;
+        if paths.is_empty() || paths.len() > 100 {
+            return Err(E::invalid());
+        }
+        let ids = paths
+            .iter()
+            .map(|p| graph.resolve(p).map_err(|_| E::missing()))
+            .collect::<Result<std::collections::BTreeSet<_>>>()?;
+        graph.connections(&ids).map_err(bad)?
+    } else if let Some(end) = r.query.get("end") {
         if r.query.contains_key("depth") || direction != traversal::Direction::Downstream {
             return Err(E::invalid());
         }
@@ -664,6 +682,14 @@ fn enrich(c: &Context, mut entries: Vec<Value>) -> Result<Vec<Value>> {
     rt.block_on(reader.close()).map_err(bad)?;
     Ok(entries)
 }
+fn fuzzy_match(path: &str, query: &str) -> bool {
+    let lowered = path.to_lowercase();
+    let mut chars = lowered.chars();
+    query
+        .to_lowercase()
+        .chars()
+        .all(|wanted| chars.any(|c| c == wanted))
+}
 fn entries(c: &Context, r: &Request) -> Result<Vec<Value>> {
     let raw = tf_catalog::browse::entries(&c.registry)
         .into_iter()
@@ -671,6 +697,9 @@ fn entries(c: &Context, r: &Request) -> Result<Vec<Value>> {
             (r.path != "/api/v1/externals" || e["origin"] == "external")
                 && r.query.get("origin").is_none_or(|v| e["origin"] == *v)
                 && r.query.get("id").is_none_or(|v| e["dataset_id"] == *v)
+                && r.query
+                    .get("fuzzy")
+                    .is_none_or(|v| e["path"].as_str().is_some_and(|p| fuzzy_match(p, v)))
                 && r.query
                     .get("filter")
                     .is_none_or(|v| e["path"].as_str().is_some_and(|p| p.contains(v)))

@@ -224,6 +224,40 @@ def main() -> None:
                 "path query shares retained lineage context and rejects ambiguous depth/direction"
             )
 
+            connections = client.call(
+                "GET",
+                "/api/v1/lineage",
+                query={"branch": "main", "connections": json.dumps(["raw/items"]), "limit": "1"},
+            )["data"]
+            assert connections["nodes"] == [] and connections["edges"] == []
+            for invalid in ["[]", "null", "[1]", json.dumps(["raw/items"] * 101)]:
+                client.call(
+                    "GET",
+                    "/api/v1/lineage",
+                    query={"branch": "main", "connections": invalid},
+                    status=400,
+                )
+            client.call(
+                "GET",
+                "/api/v1/lineage",
+                query={"branch": "main", "connections": '["raw/items"]', "start": "raw/items"},
+                status=400,
+            )
+            fuzzy = client.call(
+                "GET", "/api/v1/datasets", query={"branch": "main", "fuzzy": "RW/IT"}
+            )["data"]
+            assert [e["path"] for e in fuzzy["entries"]] == ["raw/items"]
+            assert (
+                client.call(
+                    "GET", "/api/v1/datasets", query={"branch": "main", "fuzzy": "missing-result"}
+                )["data"]["entries"]
+                == []
+            )
+            cases.append(
+                "bounded connection-only lineage reads reject ambiguous queries; "
+                "catalogue fuzzy matching is case-insensitive and ordered"
+            )
+
             # View-local fallback overrides are normalized and bound into every read context.
             fallback_query = {
                 "branch": "review",

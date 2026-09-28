@@ -67,6 +67,8 @@ test("diamond pages deduplicate shared nodes, retain aliases/roles and pending e
     new Client(
       fixtureTransport((path, q) => {
         if (!path.endsWith("/lineage")) return;
+        if (q.connections)
+          return Promise.resolve(json(page([]), context(q.branch)));
         calls.push(q);
         return Promise.resolve(
           json(
@@ -117,8 +119,10 @@ test("500-node guard pauses presentation without silently discarding continuatio
   let batch = 0;
   const workspace = new Workspace(
     new Client(
-      fixtureTransport((path) => {
+      fixtureTransport((path, q) => {
         if (!path.endsWith("/lineage")) return;
+        if (q.connections)
+          return Promise.resolve(json(page([]), context(q.branch)));
         const start = batch++ * 100;
         return Promise.resolve(
           json(
@@ -161,6 +165,8 @@ test("new query and branch changes cancel reads and ignore late responses", asyn
     new Client(
       fixtureTransport((path, q, s) => {
         if (!path.endsWith("/lineage")) return;
+        if (q.connections)
+          return Promise.resolve(json(page([]), context(q.branch)));
         if (slow) {
           signal = s;
           return new Promise<Response>((r) => {
@@ -199,6 +205,8 @@ test("failed expansion retains prior view and path requests are server-scoped", 
     new Client(
       fixtureTransport((path, q) => {
         if (!path.endsWith("/lineage")) return;
+        if (q.connections)
+          return Promise.resolve(json(page([]), context(q.branch)));
         queries.push(q);
         return Promise.resolve(
           fail
@@ -303,6 +311,8 @@ test("neighbour toggle drains every page, returns all selections and retracts", 
     new Client(
       fixtureTransport((path, q) => {
         if (!path.endsWith("/lineage")) return;
+        if (q.connections)
+          return Promise.resolve(json(page([]), context(q.branch)));
         calls.push(q);
         return Promise.resolve(
           json(
@@ -340,5 +350,56 @@ test("neighbour toggle drains every page, returns all selections and retracts", 
   expect(model.snapshot().nodes.map((n) => n.identity)).toEqual(["root"]);
   expect(model.snapshot().edges).toHaveLength(0);
   expect(model.expanded(root, "downstream")).toBe(false);
+  workspace.dispose();
+});
+
+test("adding a shared parent reveals connections to every visible child and fails atomically", async () => {
+  let fail = false;
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path, q) => {
+        if (!path.endsWith("/lineage")) return;
+        if (q.connections)
+          return fail
+            ? Promise.reject(new Error("Connection lookup failed"))
+            : Promise.resolve(
+                json(
+                  page([], [edge("root", "left"), edge("root", "right")]),
+                  context(q.branch),
+                ),
+              );
+        const id = q.start?.replace("data/", "") ?? "";
+        return Promise.resolve(json(page([node(id)]), context(q.branch)));
+      }),
+    ),
+  );
+  await workspace.connect("launch");
+  const model = new GraphModel(workspace);
+  model.connect();
+  for (const id of ["left", "right", "root"])
+    await model.explore({
+      start: `data/${id}`,
+      direction: "upstream",
+      depth: "0",
+    });
+  expect(
+    model
+      .snapshot()
+      .edges.map((e) => e.consumer)
+      .sort(),
+  ).toEqual(["left", "right"]);
+  model.remove(new Set(["root"]));
+  fail = true;
+  await model.explore({
+    start: "data/root",
+    direction: "upstream",
+    depth: "0",
+  });
+  expect(model.snapshot().nodes.map((n) => n.identity)).toEqual([
+    "left",
+    "right",
+  ]);
+  expect(model.snapshot().edges).toHaveLength(0);
+  expect(model.snapshot().message).toContain("coordinator is disconnected");
   workspace.dispose();
 });

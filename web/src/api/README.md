@@ -26,3 +26,5 @@ Current-context reads accept a JSON-encoded ordered `fallback` tail (empty disab
 fallback; omission uses configuration). It participates in the context fingerprint.
 Frozen plans/versions reject overrides. `/branches?datasets=<JSON UUID array>`
 filters branches by local dataset heads, without reading data or providers.
+
+Catalogue `fuzzy` search is a case-insensitive ordered subsequence of the path (the existing `filter` remains literal substring). Cursor bindings include the query. `lineage?connections=<JSON array of 1–100 paths>` returns only incoming edges for those consumers, paginated using the existing lineage contract. It rejects traversal/path parameters, never expands nodes and remains bound to the captured graph. Clients filter endpoints to reconstruct the complete visible induced graph.

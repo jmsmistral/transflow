@@ -743,6 +743,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "fuzzy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ]
       }
@@ -1244,6 +1252,14 @@
           },
           {
             "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "connections",
             "in": "query",
             "required": false,
             "schema": {

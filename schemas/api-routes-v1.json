@@ -66,7 +66,8 @@
       "id",
       "source_path",
       "tag",
-      "column"
+      "column",
+      "fuzzy"
     ],
     "mutation": false,
     "context": true
@@ -107,7 +108,8 @@
       "limit",
       "cursor",
       "expand",
-      "end"
+      "end",
+      "connections"
     ],
     "mutation": false,
     "context": true

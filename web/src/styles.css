@@ -1051,3 +1051,93 @@ summary {
     min-width: 0;
   }
 }
+
+/* Canvas controls float over the graph; the catalogue owns search. */
+.graph-floating-tools {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 6;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.graph-floating-tools > button,
+.graph-floating-tools > details > summary {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  width: 34px;
+  height: 34px;
+  padding: 5px;
+  display: grid;
+  place-items: center;
+  font-size: 19px;
+  list-style: none;
+}
+.graph-floating-tools summary::-webkit-details-marker {
+  display: none;
+}
+.graph-options > .graph-actions {
+  position: absolute;
+  left: 0;
+  top: 40px;
+  width: 280px;
+  max-width: 80vw;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 24px #142d4630;
+}
+.graph-explorer .react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+.graph-explorer .node-expansion:hover {
+  background: transparent;
+  color: var(--accent);
+}
+.fit-selection-icon {
+  width: 12px;
+  height: 12px;
+  border: 2px dotted currentColor;
+}
+.catalogue-search > input {
+  width: 100%;
+}
+.catalogue-search mark {
+  background: #f4dc84;
+  color: #192633;
+}
+.in-view-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background: #23845b;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: middle;
+}
+.graph-diagram:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.catalogue-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.catalogue-panel .catalogue-search {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+}
+.catalogue-panel .dataset-list {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  overflow: auto;
+}

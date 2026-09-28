@@ -573,3 +573,28 @@ fn neighbour_availability_uses_complete_graph_even_for_depth_zero_pages() {
         assert_eq!(graph.neighbour_count(id, Direction::Downstream), children);
     }
 }
+
+#[test]
+fn visible_connections_retain_every_incoming_alias_without_expanding_nodes() {
+    let graph = diamond().graph("master");
+    let left = graph.resolve("data/n1").unwrap();
+    let right = graph.resolve("data/n2").unwrap();
+    let connections = graph
+        .connections(&BTreeSet::from([left.clone(), right]))
+        .unwrap();
+    let page = connections.page(None, 1).unwrap();
+    assert!(page.nodes.is_empty());
+    assert_eq!(page.total_edges, 2);
+    assert_eq!(page.edges[0].parent, graph.resolve("data/n0").unwrap());
+    let next = connections.page(page.next_cursor.as_deref(), 1).unwrap();
+    assert_eq!(next.edges.len(), 1);
+    assert!(next.next_cursor.is_none());
+    assert!(
+        graph
+            .connections(&BTreeSet::from([left]))
+            .unwrap()
+            .page(page.next_cursor.as_deref(), 1)
+            .is_err()
+    );
+    assert!(graph.connections(&BTreeSet::new()).is_err());
+}

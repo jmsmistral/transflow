@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -13,6 +14,7 @@ import {
   MarkerType,
   type EdgeProps,
   Controls,
+  ControlButton,
   Handle,
   Position,
   ReactFlow,
@@ -33,7 +35,6 @@ import {
   type GraphState,
   type Exploration,
 } from "./model";
-import { CatalogueSearch } from "./Search";
 import { DatasetTooltip } from "./Tooltip";
 import { Positions } from "./positions";
 import "@xyflow/react/dist/style.css";
@@ -139,10 +140,12 @@ export function GraphExplorer({
   workspace,
   dark = false,
   onVisible,
+  focusRequest,
 }: {
   workspace: Workspace;
   dark?: boolean;
   onVisible?: (identities: readonly string[]) => void;
+  focusRequest?: { path: string; revision: number } | null;
 }) {
   const [model] = useState(() => new GraphModel(workspace));
   const graph = useSyncExternalStore(model.subscribe, model.snapshot);
@@ -163,6 +166,7 @@ export function GraphExplorer({
           graph={graph}
           workspace={workspace}
           active={ready}
+          focusRequest={focusRequest ?? null}
         />
       </ReactFlowProvider>
     </div>
@@ -174,12 +178,14 @@ function GraphView({
   graph,
   workspace,
   active,
+  focusRequest,
 }: {
   dark: boolean;
   model: GraphModel;
   graph: GraphState;
   workspace: Workspace;
   active: boolean;
+  focusRequest: { path: string; revision: number } | null;
 }) {
   const [positions] = useState(() => new Positions());
   const layout = useSyncExternalStore(positions.subscribe, positions.snapshot);
@@ -188,7 +194,6 @@ function GraphView({
   const [depth, setDepth] = useState("1");
   const [direction, setDirection] =
     useState<Exploration["direction"]>("upstream");
-  const [find, setFind] = useState("");
   const [large, setLarge] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const flow = useReactFlow<DatasetNode>();
@@ -310,23 +315,33 @@ function GraphView({
           : {}),
       });
   };
-  const matching = graph.nodes.filter((node) =>
-    node.paths.some((path) => path.toLowerCase().includes(find.toLowerCase())),
-  );
+  const focused = useRef<object | null>(null);
+  useEffect(() => {
+    if (
+      !active ||
+      !focusRequest ||
+      focused.current === focusRequest ||
+      graph.busy ||
+      layout.busy
+    )
+      return;
+    const node = graph.nodes.find((n) => n.paths.includes(focusRequest.path));
+    const position = node && layout.positions[node.identity];
+    if (!node || !position) return;
+    focused.current = focusRequest;
+    void flow
+      .setCenter(position.x + 125, position.y + 20, {
+        zoom: flow.getZoom(),
+        duration: 200,
+      })
+      .then(() => {
+        if (focused.current === focusRequest)
+          setSelected(new Set([node.identity]));
+      });
+  }, [active, focusRequest, graph.busy, graph.nodes, layout, flow]);
   return (
     <>
       <div className="graph-tools" hidden={!toolsOpen}>
-        <CatalogueSearch
-          workspace={workspace}
-          active={active}
-          add={(start) => {
-            void model.explore(
-              { start, direction: "upstream", depth: "0" },
-              false,
-              large,
-            );
-          }}
-        />
         <form
           className="graph-query"
           onSubmit={(event) => {
@@ -393,61 +408,30 @@ function GraphView({
           <summary>Navigation help</summary>{" "}
           <p className="graph-hint">
             Blank depth means all reachable local datasets; each action loads at
-            most 100 nodes and 100 edges. Drag or use arrow keys to pin
-            positions. Shift/Cmd/Ctrl adds to selection. Paths follow the first
-            selected dataset to the second. Removing nodes changes only this
-            view.
+            most 100 nodes and 100 edges. Drag the canvas to pan. Shift-drag
+            selects a box. Drag nodes or use arrow keys to pin positions.
+            Cmd/Ctrl adds to selection. Delete/Backspace removes focused graph
+            selections from the view. Paths follow the first selected dataset to
+            the second. Removing nodes changes only this view.
           </p>
         </details>
-        <div className="graph-find">
-          <label>
-            Find visible
-            <input
-              value={find}
-              onChange={(event) => setFind(event.target.value)}
-            />
-          </label>
-          <Button
-            disabled={!matching.length}
-            onClick={() => {
-              setSelected(new Set(matching.map((node) => node.identity)));
-              void flow.fitView({
-                nodes: matching.map((node) => ({ id: node.identity })),
-                duration: 200,
-              });
-            }}
-          >
-            Select matches ({matching.length})
-          </Button>
-        </div>
       </div>
-      <div className="graph-actions">
+      <div className="graph-floating-tools">
         <Button
+          title="Explore ancestors or descendants"
+          aria-label="Explore ancestors or descendants"
           aria-expanded={toolsOpen}
           onClick={() => setToolsOpen(!toolsOpen)}
         >
-          Explore / search
-        </Button>
-        <Button
-          onClick={() => {
-            void flow.fitView({ duration: 200 });
-          }}
-        >
-          Fit view
-        </Button>
-        <Button
-          disabled={!chosen.length}
-          onClick={() => {
-            void flow.fitView({
-              nodes: chosen.map((node) => ({ id: node.identity })),
-              duration: 200,
-            });
-          }}
-        >
-          Fit selection
+          ⑂
         </Button>
         <details className="graph-options">
-          <summary>Selection and layout</summary>
+          <summary
+            title="Selection and layout"
+            aria-label="Selection and layout"
+          >
+            ⚙
+          </summary>
           <div className="graph-actions">
             {" "}
             <label>
@@ -551,12 +535,39 @@ function GraphView({
       {!graph.nodes.length && (
         <p className="graph-empty">
           {ready?.context.graph
-            ? "Select a catalogue dataset, or open Explore / search to enter a path."
+            ? "Open the catalogue panel to select a dataset."
             : "No validated graph retained in this context. Validate or build through the CLI, then refresh."}
         </p>
       )}
       <div className="graph-diagram">
         <ReactFlow<DatasetNode>
+          tabIndex={0}
+          onMouseDown={(event) => {
+            if (
+              (event.target as HTMLElement).classList.contains(
+                "react-flow__pane",
+              )
+            )
+              event.currentTarget.focus();
+          }}
+          onKeyDownCapture={(event) => {
+            const target = event.target as HTMLElement;
+            if (
+              !["Delete", "Backspace"].includes(event.key) ||
+              target.closest(
+                "input, textarea, select, [contenteditable=true]",
+              ) ||
+              (target.closest("button") && !target.closest(".react-flow__node"))
+            )
+              return;
+            if (selected.size) {
+              event.preventDefault();
+              event.stopPropagation();
+              model.remove(selected);
+              setSelected(new Set());
+            }
+          }}
+
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
@@ -566,8 +577,9 @@ function GraphView({
           edgesReconnectable={false}
           deleteKeyCode={null}
           multiSelectionKeyCode={["Shift", "Meta", "Control"]}
-          selectionOnDrag
-          panOnDrag={[1, 2]}
+          selectionOnDrag={false}
+          selectionKeyCode="Shift"
+          panOnDrag={true}
           minZoom={0.05}
           maxZoom={2}
           fitView
@@ -575,7 +587,30 @@ function GraphView({
           colorMode={dark ? "dark" : "light"}
         >
           <Background />
-          <Controls showInteractive={false} />
+          <Controls showInteractive={false} showFitView={false}>
+            <ControlButton
+              title="Fit view"
+              aria-label="Fit view"
+              onClick={() => {
+                void flow.fitView({ duration: 200 });
+              }}
+            >
+              ⛶
+            </ControlButton>
+            <ControlButton
+              title="Fit selection"
+              aria-label="Fit selection"
+              disabled={!chosen.length}
+              onClick={() => {
+                void flow.fitView({
+                  nodes: chosen.map((n) => ({ id: n.identity })),
+                  duration: 200,
+                });
+              }}
+            >
+              <span className="fit-selection-icon" />
+            </ControlButton>
+          </Controls>
         </ReactFlow>
       </div>
       <details className="graph-legend">
