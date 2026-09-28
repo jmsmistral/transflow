@@ -89,7 +89,12 @@ pub(crate) fn execute(
         endpoint.cancel_sender.clone(),
         admission.clone(),
     );
-    let http = tf_api::Server::bind(
+    let assets = args
+        .get_one::<String>("ui-dir")
+        .map(|p| tf_api::Assets::load(Path::new(p)))
+        .transpose()
+        .map_err(failure)?;
+    let http = tf_api::Server::bind_with_assets(
         std::net::SocketAddr::from((
             [127, 0, 0, 1],
             *args
@@ -98,6 +103,7 @@ pub(crate) fn execute(
         )),
         owner.registration().nonce().to_owned(),
         service.clone(),
+        assets,
     )
     .map_err(failure)?;
     owner

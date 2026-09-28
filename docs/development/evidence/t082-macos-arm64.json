@@ -1,0 +1,81 @@
+{
+  "task": "T082",
+  "date": "2026-09-28",
+  "platform": "macOS arm64",
+  "specification": "1.1.3",
+  "implementation_base": "2501f14b16eb7db393a50247ce6733a3c79e67dc",
+  "specification_base": "e9713716f53e1713a8347ff9a9960d86fddc35fd",
+  "changes": [
+    "Connected original React shell, bounded dataset/branch/version context selection and explicit states",
+    "Keyboard/pointer resizable inspectors and responsive session-local layout",
+    "Schema-validated same-origin session client with abort/epoch/full-context fencing",
+    "Bounded SSE checkpoints, replay-gap refetch and event/user-selection races",
+    "Explicit frozen contributor assets with existing transport security; native embedding deferred"
+  ],
+  "verification": {
+    "rust": "393 tests plus one doc test; full formatting/build/Clippy/standalone-storage gate and 12 boundary regressions passed",
+    "python": "940 distinct tests passed across the 938-test full gate and final 333-test wire recheck including two new shared cases; Ruff/mypy/formatting/offline package checks passed",
+    "web": "383 tests; strict types, ESLint, formatting and byte-identical production rebuilds passed",
+    "cli": "58 installed CLI/API tests passed; three focused API tests passed after adding capability-schema assertion",
+    "shared_contracts": "312 cases in Rust/Python/TypeScript; capabilities now include actual advertised limits and boolean UI presence",
+    "documents_and_safety": "Specification validator, 44 specification regressions, safety checker and 27 safety regressions passed"
+  },
+  "browser": {
+    "tool": "Codex internal Browser, real loopback coordinator with synthetic main/review published datasets",
+    "observed": [
+      "One-use launch exchange and URL fragment removal; authenticated Connected state",
+      "Dataset selection and branch-matching published heads",
+      "Exact historical version selects its actual producing source; current head is not queried",
+      "Keyboard tab traversal and panel resizing; selection preserves panel/tab state",
+      "Light/dark display and 390x844 responsive layout with no horizontal overflow; viewport reset",
+      "A real CLI force build updates published head via SSE without manual refresh",
+      "Stopping coordinator clears metadata and shows explicit disconnected guidance",
+      "Final bundle confirmed producing-source/unqueried-head labels and restored selection focus",
+      "Reload without a new launch grant shows no dataset data"
+    ],
+    "limits": "No full screen-reader audit or rendered preview/code content; those inspectors remain T085/T086"
+  },
+  "corrections": [
+    "Shared capability schema omitted existing event/preview/query limits; aligned generated contracts without changing API major",
+    "A replay resync racing user selection now waits for the latest authoritative read",
+    "Interrupted stream cancellation originally masked disconnect as generic failure; preserve the mapped transport diagnostic",
+    "Historical unqueried head metadata is labelled unavailable in that context, not no published data",
+    "Completing T081 required the explicit Verification evidence heading expected by the document checker; final validator and all 44 regressions passed"
+  ],
+  "commands": [
+    "PYTHON=target/python/py314/bin/python bash tools/check-rust.sh",
+    "bash tools/check-python.sh",
+    "bash tools/check-cli.sh",
+    "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/integration/test_api.py",
+    "bash tools/check-web.sh",
+    "PYTHON=target/python/py314/bin/python bash tools/check-safety.sh",
+    "target/python/py314/bin/python -m pytest -c python/pyproject.toml python/tests/test_wire.py",
+    "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+    "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests"
+  ],
+  "ci": "Pending owner confirmation after push; no workflow polling",
+  "limits": [
+    "Graph/list navigation and layout worker remain T083; full inspectors/actions remain T085-T088",
+    "No rows/source text displayed by this shell; guarded inspector boundary has delayed-response regressions",
+    "No saved-view persistence, custom fallback overrides, catalogue search, active-build summary or build actions yet",
+    "Assets are an explicit trusted contributor build; native packaged embedding and release qualification remain T117",
+    "Only macOS arm64 was locally exercised; Linux qualification belongs to owner-monitored CI"
+  ],
+  "sha256": {
+    "web/src/App.tsx": "fab9c0a93a7ee92150c3b3b8b2781649931a36594b7739ea5e142f8e8ace9b3a",
+    "web/src/workspace.ts": "9f37e1e5656742caf4faf26d805e892da2e4cee618ec95b1662a61763b36b682",
+    "web/src/api/client.ts": "08fdd1dc8e6e1f5114fa836d9096c1575859e3cb3a0e6e7be35f5c061b3ea943",
+    "web/src/api/stream.ts": "01c3c89fbfb4f5463cb545bd7f73a7676a6d132d0d83e5ccdbbb8bf04d02594a",
+    "web/src/api/validate.ts": "2f684a9b399cbea0c8b71e3051698ec5e08471eab5a4f4badb4ee5e27fc1a810",
+    "web/src/panels.tsx": "bddbdca4f5187b7d270c18100573f9dd0b51b1d6c2cf3bb8b9e0cdbe7f72eaf1",
+    "crates/tf-api/src/assets.rs": "af43a295b77d819ffd4d87bbcb218b1c50ae525a44310af4a92fae2284acc5df",
+    "crates/tf-api/src/server.rs": "6424c25f185f54315aedeeedc0994aba31061bb45f4b99718d54b32abacb1213",
+    "schemas/contracts-v1.schema.json": "f742b2d87410cdaf61ce880f5a4794fe4d691f4595b6788be0a80716edbdae67"
+  },
+  "production_assets": {
+    ".vite/manifest.json": "e8a06c024d8353d25ff9d6fa72574d1ea8c7b6b81b1a8d6e24499b81ee4bf56c",
+    "assets/index-Av_r1sZS.js": "974c9807de7843e27ff6f5f941920690383adcbb5f5a3cac8fdb269d512cd338",
+    "assets/index-Bj4Wix5c.css": "af25379880ea6a21de4a73b834ae3487e4d402622e2cf92c969692db1af34305",
+    "index.html": "738418fe7bf3b83ec4970965ff1c839772848d17b49fc0bf7684e2821c26eb06"
+  }
+}

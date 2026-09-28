@@ -1,128 +1,521 @@
-import { useState } from "react";
-import { Button, Dialog, Status } from "./components";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
+import { Button, Status } from "./components";
+import { ResizeHandle } from "./panels";
+import { Workspace } from "./workspace";
+import type { ExecutionJsonV1 } from "./generated/contracts";
 
-export function App() {
+const tabs = [
+  "Preview",
+  "SQL scratchpad",
+  "History",
+  "Code",
+  "Build timeline",
+  "Data health",
+] as const;
+const modes = [
+  "Catalogue",
+  "Properties",
+  "Build planner",
+  "Schedules",
+  "Health",
+] as const;
+function text(value: ExecutionJsonV1, field: string): string | undefined {
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    field in value
+  ) {
+    const item: unknown = Reflect.get(value, field);
+    if (typeof item === "string") return item;
+  }
+  return undefined;
+}
+function moveTab(
+  event: KeyboardEvent,
+  names: readonly string[],
+  index: number,
+  set: (name: string) => void,
+): void {
+  let next = index;
+  if (event.key === "ArrowRight") next = (index + 1) % names.length;
+  else if (event.key === "ArrowLeft")
+    next = (index + names.length - 1) % names.length;
+  else if (event.key === "Home") next = 0;
+  else if (event.key === "End") next = names.length - 1;
+  else return;
+  event.preventDefault();
+  const name = names[next];
+  if (name) {
+    set(name);
+    const buttons =
+      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+        "[role=tab]",
+      );
+    buttons?.[next]?.focus();
+  }
+}
+export function App({ workspace: supplied }: { workspace?: Workspace }) {
+  const [workspace] = useState(() => supplied ?? new Workspace());
+  const state = useSyncExternalStore(workspace.subscribe, workspace.snapshot);
   const [dark, setDark] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false);
+  const [right, setRight] = useState(30),
+    [bottom, setBottom] = useState(32);
+  const [inspectorOpen, setInspectorOpen] = useState(true),
+    [bottomOpen, setBottomOpen] = useState(true);
+  const [mode, setMode] = useState<string>("Catalogue"),
+    [tab, setTab] = useState<string>("Preview");
+  const [branch, setBranch] = useState("main");
+  const ready = state.kind === "ready" ? state.value : null;
+  const dataset = ready?.dataset;
+  const selectedButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (state.kind === "ready" && document.activeElement === document.body)
+      selectedButton.current?.focus();
+  }, [state]);
+  const requested = state.selection.branch;
+  const title =
+    dataset?.path ??
+    (state.selection.dataset ? "Selected dataset" : "Workspace");
+  const status =
+    state.kind === "ready"
+      ? "Connected"
+      : state.kind === "failed"
+        ? "Request failed"
+        : state.kind === "disconnected"
+          ? "Not connected"
+          : state.kind === "connecting"
+            ? "Connecting"
+            : "Loading context";
+  const panelStyle = {
+    "--inspector": `${right}%`,
+    "--bottom": `${bottom}%`,
+  } as CSSProperties;
   return (
-    <div className="app" data-theme={dark ? "dark" : "light"}>
+    <div className={`app ${dark ? "theme-dark" : ""}`}>
       <a className="skip-link" href="#workspace">
         Skip to workspace
       </a>
       <header className="topbar">
-        <div className="brand">
-          <svg viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M5 9h9v14h13M14 16h13" />
-            <circle cx="5" cy="9" r="3" />
-            <circle cx="27" cy="16" r="3" />
-            <circle cx="27" cy="23" r="3" />
-          </svg>
-          <span>transflow</span>
-        </div>
-        <span className="topbar-divider" aria-hidden="true" />
-        <span className="workspace-label">Workspace</span>
-        <div className="topbar-actions">
-          <Status>Not connected</Status>
-          <Button
-            aria-pressed={dark}
-            aria-label="Dark theme"
-            onClick={() => setDark(!dark)}
-          >
-            <span aria-hidden="true">{dark ? "☀" : "◐"}</span>
-            <span className="theme-label">{dark ? "Light" : "Dark"}</span>
+        <a className="brand" href="#workspace" aria-label="Transflow workspace">
+          <span aria-hidden="true">◈</span> transflow
+        </a>
+        <nav aria-label="Workspace breadcrumb" className="breadcrumb">
+          <span>Workspace</span>
+          <span aria-hidden="true">/</span>
+          <strong>{title === "Workspace" ? "Overview" : title}</strong>
+        </nav>
+        <div className="top-actions">
+          <Status>{status}</Status>
+          <Button aria-pressed={dark} onClick={() => setDark(!dark)}>
+            Dark theme
           </Button>
         </div>
       </header>
-      <main id="workspace" tabIndex={-1}>
-        <div className="page-heading">
-          <div>
-            <p className="eyebrow">Your local data workspace</p>
-            <h1>Everything starts with a connection.</h1>
-          </div>
-          <span className="preview-badge">Development preview</span>
+      <section className="contextbar" aria-label="Workspace context">
+        <div>
+          <span className="eyebrow">View</span>
+          <strong>Unsaved workspace view</strong>
+          <span className="muted">View saving comes later</span>
         </div>
-        <section className="workspace-canvas" aria-labelledby="empty-title">
-          <div className="canvas-heading">
-            <span className="canvas-label">Lineage</span>
-            <span className="canvas-note">Awaiting a workspace</span>
-          </div>
-          <div className="empty-state">
-            <svg
-              className="lineage-mark"
-              viewBox="0 0 240 112"
-              aria-hidden="true"
-            >
-              <path d="M48 56h48q12 0 12-12V28q0-12 12-12h56M108 44v40q0 12 12 12h56" />
-              <rect x="12" y="37" width="48" height="38" rx="9" />
-              <rect x="174" y="1" width="48" height="32" rx="9" />
-              <rect x="174" y="79" width="48" height="32" rx="9" />
-              <path
-                className="mark-detail"
-                d="M26 50h20M26 58h12M188 12h20M188 20h12M188 90h20M188 98h12"
-              />
-            </svg>
-            <p className="eyebrow">A clear view of your data</p>
-            <h2 id="empty-title">No workspace connected</h2>
-            <p className="empty-description">
-              Your datasets and their relationships will appear here.
-              <br className="desktop-break" /> This preview isn’t connected to a
-              Transflow coordinator yet.
-            </p>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void workspace.select({ branch: branch.trim() });
+          }}
+        >
+          <label htmlFor="branch">Source / data branch</label>
+          <div className="input-group">
+            <input
+              id="branch"
+              list="branches"
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              maxLength={256}
+              disabled={state.kind === "connecting"}
+            />
             <Button
-              className="button-primary"
-              onClick={() => setAboutOpen(true)}
+              type="submit"
+              disabled={!branch.trim() || state.kind === "connecting"}
             >
-              About this preview <span aria-hidden="true">↗</span>
+              Apply branch
             </Button>
           </div>
-          <div className="canvas-footer">
-            <span>Local by design</span>
-            <span>No dataset information loaded</span>
-          </div>
-        </section>
-        <section className="principles" aria-label="The Transflow workflow">
-          <article>
-            <span className="step">01</span>
-            <div>
-              <h3>Write in Python</h3>
-              <p>Define datasets with the tools you already use.</p>
+          <datalist id="branches">
+            {ready?.branches.entries.map((entry) => {
+              const name = text(entry, "name");
+              return name ? <option key={name} value={name} /> : null;
+            })}
+          </datalist>
+        </form>
+        <div>
+          <span className="eyebrow">Requested branch</span>
+          <strong>{requested}</strong>
+          <span className="muted">
+            {ready
+              ? `Fallback: ${ready.context.fallback_policy.join(" → ")}`
+              : "Fallback policy not loaded"}
+          </span>
+        </div>
+        <div>
+          <span className="eyebrow">Build output branch</span>
+          <strong>{requested}</strong>
+          <span className="muted">Build controls are not available yet</span>
+        </div>
+      </section>
+      <main
+        id="workspace"
+        tabIndex={-1}
+        className={`workspace ${inspectorOpen ? "" : "inspector-closed"} ${bottomOpen ? "" : "bottom-closed"}`}
+        style={panelStyle}
+      >
+        <div className="work-area">
+          <section className="graph-region" aria-labelledby="workspace-title">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Workspace / lineage</p>
+                <h1 id="workspace-title">
+                  {state.kind === "disconnected"
+                    ? "No workspace connected"
+                    : "Dataset workspace"}
+                </h1>
+              </div>
+              <div className="toolbar">
+                <Button
+                  aria-expanded={inspectorOpen}
+                  aria-controls="inspector"
+                  onClick={() => setInspectorOpen(!inspectorOpen)}
+                >
+                  Inspector
+                </Button>
+                <Button
+                  aria-expanded={bottomOpen}
+                  aria-controls="bottom-panel"
+                  onClick={() => setBottomOpen(!bottomOpen)}
+                >
+                  Bottom panel
+                </Button>
+              </div>
             </div>
-          </article>
-          <article>
-            <span className="step">02</span>
-            <div>
-              <h3>Build with confidence</h3>
-              <p>Check results before publishing a new version.</p>
+            <div className="canvas">
+              {ready ? (
+                <div className="canvas-message">
+                  <span className="canvas-mark" aria-hidden="true">
+                    ◈
+                  </span>
+                  <h2>
+                    {ready.datasets.total === "0"
+                      ? "No datasets in this context"
+                      : "Your workspace is connected"}
+                  </h2>
+                  <p>
+                    {ready.datasets.total === "0"
+                      ? "Register or build a dataset with the CLI to get started."
+                      : "Select a dataset in the catalogue to inspect its retained context."}
+                  </p>
+                  <p className="muted">
+                    Interactive graph navigation is coming next.
+                  </p>
+                  <p className="context-label">
+                    {ready.context.selection.kind === "retained_current"
+                      ? "Current retained definition"
+                      : "Historical frozen context"}{" "}
+                    ·{" "}
+                    {ready.context.graph
+                      ? "Graph retained"
+                      : "Graph unavailable"}
+                  </p>
+                </div>
+              ) : (
+                <div className="canvas-message" role="status">
+                  <h2>
+                    {state.kind === "failed"
+                      ? "This context could not be loaded"
+                      : state.kind === "disconnected"
+                        ? "Connect to a local coordinator"
+                        : "Loading workspace context…"}
+                  </h2>
+                  <p>
+                    {state.kind === "failed" || state.kind === "disconnected"
+                      ? state.message
+                      : "Waiting for verified workspace metadata."}
+                  </p>
+                  <p className="muted">No dataset information loaded</p>
+                  {(state.kind === "failed" ||
+                    state.kind === "disconnected") && (
+                    <Button onClick={workspace.reconnect}>
+                      Reconnect / refresh
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
-          </article>
-          <article>
-            <span className="step">03</span>
-            <div>
-              <h3>Follow the lineage</h3>
-              <p>Understand the inputs behind every output.</p>
-            </div>
-          </article>
-        </section>
+            <footer className="canvas-footer">
+              <span>
+                {ready
+                  ? `${ready.datasets.entries.length} of ${ready.datasets.total} datasets on this page`
+                  : "Context unavailable"}
+              </span>
+              <span>Read-only browsing</span>
+            </footer>
+          </section>
+          {inspectorOpen && (
+            <>
+              <ResizeHandle
+                axis="horizontal"
+                value={right}
+                change={setRight}
+                controls="inspector"
+              />
+              <aside
+                id="inspector"
+                className="inspector"
+                aria-label="Right inspector"
+              >
+                <label className="inspector-mode">
+                  Inspector mode
+                  <select
+                    value={mode}
+                    onChange={(event) => setMode(event.target.value)}
+                  >
+                    {modes.map((name) => (
+                      <option key={name}>{name}</option>
+                    ))}
+                  </select>
+                </label>
+                {mode === "Catalogue" ? (
+                  <>
+                    <h2>Datasets</h2>
+                    {ready ? (
+                      <>
+                        <ul className="dataset-list">
+                          {ready.datasets.entries.map((entry) => (
+                            <li
+                              key={`${entry.workspace_id}/${entry.dataset_id}`}
+                            >
+                              <button
+                                ref={
+                                  entry.dataset_id ===
+                                    state.selection.dataset &&
+                                  entry.workspace_id === state.selection.origin
+                                    ? selectedButton
+                                    : null
+                                }
+                                aria-pressed={
+                                  entry.dataset_id ===
+                                    state.selection.dataset &&
+                                  entry.workspace_id === state.selection.origin
+                                }
+                                onClick={() => {
+                                  void workspace.select({
+                                    branch: requested,
+                                    dataset: entry.dataset_id,
+                                    origin: entry.workspace_id,
+                                  });
+                                }}
+                              >
+                                <span>{entry.path}</span>
+                                <small>
+                                  {entry.origin} · {entry.kind}
+                                </small>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                        {ready.datasets.entries.length === 0 && (
+                          <p className="muted">No datasets to display.</p>
+                        )}
+                        <div className="toolbar">
+                          <Button
+                            disabled={!state.selection.cursor}
+                            onClick={() => {
+                              void workspace.select({ branch: requested });
+                            }}
+                          >
+                            First page
+                          </Button>
+                          <Button
+                            disabled={!ready.datasets.next_cursor}
+                            onClick={() => {
+                              if (ready.datasets.next_cursor)
+                                void workspace.select({
+                                  branch: requested,
+                                  cursor: ready.datasets.next_cursor,
+                                });
+                            }}
+                          >
+                            Next page
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="muted">{status}</p>
+                    )}
+                  </>
+                ) : mode === "Properties" ? (
+                  <h2>Selected context</h2>
+                ) : (
+                  <>
+                    <h2>{mode}</h2>
+                    <p className="muted">
+                      This inspector is not available yet.
+                    </p>
+                  </>
+                )}
+                {(mode === "Catalogue" || mode === "Properties") && (
+                  <section
+                    className="selection-details"
+                    aria-label="Selected dataset context"
+                  >
+                    <h3>{dataset?.path ?? "No dataset selected"}</h3>
+                    {dataset && ready && (
+                      <>
+                        <dl>
+                          <dt>Requested branch</dt>
+                          <dd>{requested}</dd>
+                          <dt>Resolved head branch</dt>
+                          <dd>
+                            {text(dataset.head, "resolved_branch") ??
+                              (state.selection.version
+                                ? "Not queried for an exact version"
+                                : "Unavailable")}
+                          </dd>
+                          <dt>
+                            {state.selection.version
+                              ? "Producing source capture"
+                              : "Retained definition source"}
+                          </dt>
+                          <dd>
+                            {ready.context.source ??
+                              (dataset.origin === "external"
+                                ? "Foreign source metadata only"
+                                : "Unavailable")}
+                          </dd>
+                          <dt>Exact version</dt>
+                          <dd>
+                            {state.selection.version ??
+                              "Not pinned — browsing retained metadata"}
+                          </dd>
+                          <dt>Published head</dt>
+                          <dd>
+                            {text(dataset.head, "version") ??
+                              (state.selection.version
+                                ? "Not queried in historical context"
+                                : dataset.origin === "external"
+                                  ? "Foreign head not loaded"
+                                  : "No published head")}
+                          </dd>
+                        </dl>
+                        <label>
+                          Version context
+                          <select
+                            value={state.selection.version ?? ""}
+                            onChange={(event) => {
+                              void workspace.select({
+                                branch: requested,
+                                dataset: dataset.dataset_id,
+                                origin: dataset.workspace_id,
+                                ...(event.target.value
+                                  ? { version: event.target.value }
+                                  : {}),
+                              });
+                            }}
+                          >
+                            <option value="">
+                              Current retained definition
+                            </option>
+                            {ready.versions?.entries.map((version) => (
+                              <option
+                                key={version.version}
+                                value={version.version}
+                              >
+                                {version.version}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        {ready.versions?.next_cursor && (
+                          <p className="muted">
+                            More versions exist; the full history inspector is
+                            coming later.
+                          </p>
+                        )}
+                        <p className="muted">
+                          Metadata availability does not verify dataset bytes or
+                          freshness.
+                        </p>
+                      </>
+                    )}
+                  </section>
+                )}
+              </aside>
+            </>
+          )}
+        </div>
+        {bottomOpen && (
+          <>
+            <ResizeHandle
+              axis="vertical"
+              value={bottom}
+              change={setBottom}
+              controls="bottom-panel"
+            />
+            <section
+              id="bottom-panel"
+              className="bottom-panel"
+              aria-label="Dataset inspectors"
+            >
+              <div role="tablist" aria-label="Dataset inspector tabs">
+                {tabs.map((name, index) => (
+                  <button
+                    key={name}
+                    id={`tab-${index}`}
+                    role="tab"
+                    aria-controls="inspector-content"
+                    aria-selected={tab === name}
+                    tabIndex={tab === name ? 0 : -1}
+                    onClick={() => setTab(name)}
+                    onKeyDown={(event) => moveTab(event, tabs, index, setTab)}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+              <div
+                id="inspector-content"
+                role="tabpanel"
+                aria-labelledby={`tab-${tabs.findIndex((name) => name === tab)}`}
+                tabIndex={0}
+              >
+                <p className="eyebrow">
+                  {title} · {requested}
+                </p>
+                <h2>{tab}</h2>
+                <p>
+                  {!ready
+                    ? "Content is unavailable until this context is loaded."
+                    : !dataset
+                      ? "Select a dataset to establish inspector context."
+                      : `${tab} content will be available in a later inspector task.`}
+                </p>
+                {dataset && (
+                  <p className="muted">
+                    This panel is bound to the selected context. No rows or
+                    source code have been fetched.
+                  </p>
+                )}
+              </div>
+            </section>
+          </>
+        )}
       </main>
       <footer className="app-footer">
-        <span>Transflow</span>
-        <span>Connected datasets. Clear provenance.</span>
+        <span>
+          Local workspace · {ready?.context.workspace ?? "not connected"}
+        </span>
+        <span>Transflow · Development interface</span>
       </footer>
-      <Dialog
-        open={aboutOpen}
-        onClose={() => setAboutOpen(false)}
-        title="A foundation for your workspace"
-      >
-        <p>
-          This is an early interface preview. You can try the theme switch and
-          keyboard navigation.
-        </p>
-        <p>
-          Connecting workspaces, browsing datasets and running builds are still
-          being implemented. The workflow shown here describes the intended
-          product.
-        </p>
-      </Dialog>
     </div>
   );
 }

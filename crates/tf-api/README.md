@@ -294,3 +294,18 @@ range or dataset. Full build evidence is limited to 2,000 jobs, 10,000 attempts,
 Manual request and scheduled-build counts are available; `schedule_occurrences`
 is null until scheduling supplies accepted/ignored/coalesced occurrence evidence.
 Charts remain later frontend tasks. No provider data is copied or scanned.
+
+## Contributor UI bundle (T082)
+
+`transflow serve --ui-dir /absolute/path/to/web/dist --open` serves an explicitly
+built UI with the existing single-use launch/session flow. The server snapshots
+index.html plus flat JS/CSS assets before listening (64 files, 8 MiB total), rejects
+symlinks/unsupported names and never serves arbitrary workspace files. Restart after
+rebuilding. Capability `ui` reflects whether a bundle was supplied; existing event,
+preview and optional query limits now appear in the shared capability schema.
+
+Assets retain exact Host/Origin checks, no-store, nosniff and CSP. Local stylesheets
+and dynamic panel-size style attributes are permitted; scripts/connect remain
+same-origin, and framing/remote resources stay blocked. Authenticated reads and
+commands retain their Origin/session/CSRF rules. Asset-less startup keeps the
+bootstrap page. Native embedding/offline packaging remains T117.

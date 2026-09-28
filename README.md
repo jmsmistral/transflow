@@ -143,9 +143,19 @@ Help/version work outside either checkout without Python or Git; dataset builds
 require the explicitly prepared managed Python environment.
 `bash tools/check-rust.sh` runs the Rust checks without the sibling specification.
 
-Try the [web preview](web/README.md) with `npm --prefix web run dev`. Browser
-verification uses Codex’s internal Browser; no browser installation is needed.
-The preview does not connect to a coordinator or execute dataset operations.
+The [workspace UI shell](web/README.md) now supports authenticated branch/version
+browsing, live metadata refresh and resizable panels. For a contributor build:
+
+```bash
+npm --prefix web run build
+transflow --workspace /path/to/workspace serve --ui-dir "$PWD/web/dist" --open
+```
+
+Use the local `target/debug/transflow` binary when it is not installed on PATH.
+Graph rendering, full inspectors and build controls are later tasks. The Vite dev
+preview remains disconnected; connected browsing uses the coordinator's same-origin
+session. Browser verification uses Codex’s internal Browser. Native embedded UI
+packaging remains T117.
 
 The [test infrastructure](tests/README.md) provides virtual time, deterministic
 IDs/randomness, controlled failure barriers, real SQLite/filesystem fixtures and

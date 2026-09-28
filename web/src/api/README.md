@@ -1,13 +1,18 @@
 # API contract boundary
 
-Rust owns the domain and API schemas. T074 generated TypeScript contracts live in
-`../generated/contracts.ts`; do not duplicate backend shapes here.
+Rust owns the API schemas and generated TypeScript contracts. `client.ts` validates
+responses with the browser-safe `validate.ts` engine, also used by the shared
+conformance tests. Browser requests use same-origin sessions, in-memory CSRF and
+the read-only POST facade. Credentials never enter browser storage or logs.
 
-T077 adds `EventCursor`, a workspace-scoped sequence/UUID deduplicator for resumed
-SSE facts. Events invalidate contextual reads; they are not a second job state
-machine. An explicit resync refetches read models before accepting a new baseline.
-The connected shell and stream lifecycle remain T082; the current React preview
-does not connect to a coordinator. Graph interactions and ELK layout remain T083.
+`EventCursor` keeps lossless sequence and UUID resume state. `stream.ts` bounds SSE
+frames, deduplicates facts and refetches authoritative models at checkpoints.
+Resync gaps are acknowledged only after refetch; interrupted bodies are reported
+as disconnected separately from invalid schema responses.
 
-Authentication, browser fetch streaming and replay rules are described in the
-[HTTP guide](../../../crates/tf-api/README.md).
+`../workspace.ts` owns cancellation/selection epochs and context equality. New
+inspectors must use its guarded read boundary and keep source/rows bound to the
+selected exact version. Do not infer domain semantics or mutate build state from
+event notifications. Graph interactions and layout workers remain T083.
+
+See the [HTTP guide](../../../crates/tf-api/README.md) for authentication and replay.

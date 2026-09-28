@@ -12,6 +12,7 @@ from api_client import Client, coordinator
 from test_catalog_cli import CLI, DECLARATION, cli, source
 from test_catalog_cli import workspace as workspace
 from test_packaging import wheel as wheel
+from transflow_worker.wire import validate_document
 
 
 def test_http_auth_context_and_persistent_retries(workspace: Path) -> None:
@@ -26,6 +27,8 @@ def test_http_auth_context_and_persistent_retries(workspace: Path) -> None:
         )
         client.call("GET", "/api/v1/capabilities", headers={"Host": "attacker.invalid"}, status=403)
         capabilities = client.call("GET", "/api/v1/capabilities")["data"]
+        validate_document("ApiCapabilitiesV1", capabilities)
+        assert capabilities["ui"] is False
         assert capabilities["limits"]["page_max"] == 200
         context = client.context()
         key = str(uuid4())

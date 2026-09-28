@@ -242,3 +242,8 @@ and four contextual history routes. Exact ratios use decimal-string counts;
 cache-only timelines contain no synthetic attempt/duration. Six shared fixtures
 cover exact large values, numeric/unknown-field rejection and cached timelines.
 Existing immutable plan/check/process evidence retains its JSON carrier.
+
+T082 aligns `ApiCapabilitiesV1` with existing advertised event/preview/query limits
+and boolean contributor-UI availability. Two cases bring the shared corpus to 312.
+The browser now uses the same authored schema for runtime response validation;
+API v1, worker protocol 1.0 and runtime schema 12 remain unchanged.

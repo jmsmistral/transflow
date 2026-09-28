@@ -1,9 +1,11 @@
 //! Authenticated loopback HTTP transport over application services; no storage or worker access.
+mod assets;
 mod auth;
+pub use assets::Assets;
 mod contracts;
 mod server;
 use serde_json::{Value, json};
-pub use server::{Server, router};
+pub use server::{Server, router, router_with_assets};
 use std::{collections::BTreeMap, sync::Arc};
 use tf_domain::RequestId;
 

@@ -1,76 +1,73 @@
-# Transflow web foundation
+# Transflow workspace shell
 
-T006 provides a strict TypeScript/React application, accessible native controls,
-component tests and reproducible Vite assets. The development preview shows an
-unconnected workspace with a session-local light/dark theme and an information
-dialog. It makes no coordinator requests. Dataset operations, the application
-context shell (T082) and interactive lineage graph (T083) remain unimplemented.
+T082 connects the original React interface to a local coordinator. It provides
+bounded catalogue pages, requested branch/fallback metadata, dataset and exact
+version selection, explicit retained/historical source context, connection states,
+light/dark themes and resizable right/bottom panels. Tabs, splitters and selection
+work by keyboard. Narrow screens stack panels; layout survives context changes
+within the page session.
 
-The [canonical UI specification](../../transflow-spec/TECHNICAL_ARCHITECTURE.md#16-lineage-ui-specification)
-defines the intended application. Private screenshot references stay in the
-ignored specification directory; the preview uses original inline SVG and system
-fonts. No reference screenshots, credentials or remote assets are bundled.
+Graph rendering, search, saved views, full preview/code/history inspectors and
+build/schedule actions remain later tasks. The shell does not fetch rows or source
+text for display. Selecting a version cannot run a build or change dataset heads.
+Metadata availability is not byte verification or freshness evidence.
 
-## Setup and commands
+## Build and connect
 
-Use Node 24.4.1 from the root `.node-version` and npm 11.4.2. Dependencies are exact
-pins in `package.json`, resolved with integrity hashes in `package-lock.json`.
-Installation is explicit; the checks do not install dependencies or browsers.
+Use Node 24.4.1/npm 11.4.2 and the exact lockfile. Installation is explicit:
 
 ```bash
-cd ~/dev/transflow
 npm --prefix web ci --ignore-scripts
 bash tools/check-web.sh
-npm --prefix web run dev
-```
-
-The development server binds to loopback. To inspect the production assets:
-
-```bash
 npm --prefix web run build
-npm --prefix web run preview -- --port 4173 --strictPort
+cargo build --locked --offline -p transflow
+target/debug/transflow --workspace /path/to/workspace serve --ui-dir "$PWD/web/dist" --open
 ```
 
-Open `http://127.0.0.1:4173/` in Codex's internal Browser and follow the
-[browser checklist](../docs/development/browser-checks.md). Browser verification
-uses the internal Browser only: do not install Playwright, browser drivers or
-browser binaries. Vitest's jsdom component tests need no browser installation.
+`--ui-dir` is an explicit contributor bundle directory. It serves a frozen snapshot
+of `index.html` and flat `assets/*.js`/`*.css` files, up to 64 files/8 MiB total,
+rejecting symlinks and unsupported entries. Rebuild and restart the coordinator
+after changes. It never serves the workspace directory or arbitrary files.
+Without that option the coordinator retains its small authentication bootstrap.
+Native embedding and offline release packaging remain T117.
 
-`tools/check-web.sh` checks exact Node/npm versions, strict types, ESLint (including
-React hooks and accessibility rules), Prettier, six component tests and two
-production builds. It compares every asset byte and writes component results and
-SHA-256 hashes under ignored `target/web/`. The [web CI workflow](../.github/workflows/web.yml)
-runs these gates on macOS arm64 and Linux x86_64/arm64 without browser installs.
-The internal Browser checklist is a separate observed check, not an automated CI
-browser or full accessibility audit.
+The browser exchanges a one-use launch fragment for a same-origin HttpOnly session
+and in-memory CSRF value, then removes the fragment. Reload requires a fresh launch
+grant; credentials are not stored in localStorage. If a coordinator is already
+running, authenticated clients can request a new grant with the existing
+`POST /api/v1/sessions/launch` API; see the [HTTP guide](../crates/tf-api/README.md).
+Do not put the long-lived bearer token in a browser URL.
 
-## Boundaries and dependencies
+`npm --prefix web run dev` and `npm --prefix web run preview` still show the
+unconnected shell. They do not proxy authentication to another origin. Node is
+contributor tooling, not part of the eventual native runtime.
 
-`src/components.tsx` contains native buttons, a labelled modal dialog, textual
-status and a safe render-error fallback. Keyboard focus is visible, the skip link
-moves focus to the workspace and status is never conveyed by colour alone.
-`src/api/` reserves the coordinator-client boundary for T082. Shared generated
-types in `src/generated/contracts.ts` and OpenAPI in `schemas/generated/` now
-include the T074–T076 API. The UI does not yet connect to these endpoints.
-React Flow and ELK remain in the T003 probe until
-needed by T083.
+## Context and event boundaries
 
-The app uses the qualified React 19.3.0, TypeScript 6.0.3 and Vite 8.3.0 baseline.
-jsdom 26.1.0 supports the pinned Node version; the latest jsdom requires a newer
-Node patch. ESLint 9.39.5 is retained for the accessibility plugin's supported
-peer range. npm reports that ESLint version as unsupported and also deprecates
-jsdom's transitive `whatwg-encoding`; revisit these development-tool pins during
-T008's dependency audit. This is not a clean dependency-audit result.
+`src/api/client.ts` validates unknown responses against the authored schema and
+uses the Origin/CSRF-protected read facade. `src/workspace.ts` owns one visible
+selection epoch. It aborts superseded requests, compares the complete context and
+rejects late replies even when a transport ignores cancellation. Inspector reads
+use the same guard. No previous content is painted beneath a new selection label.
+Conflicts restart pagination through refresh; disconnected/failed states carry no
+old dataset snapshot.
 
-`dist/` contains relative local asset URLs and a Vite manifest for later Rust
-embedding (T117). Repeatability is measured across two local builds with the same
-lock/toolchain, not across platforms. Node is a development tool; native asset
-embedding and offline release verification have not yet been implemented.
+`src/api/stream.ts` consumes bounded SSE facts and checkpoints via fetch POST.
+Notifications trigger authoritative reads, coalesced per checkpoint. Replay gaps
+are acknowledged only after successful refetch; a simultaneous user selection
+wins. Network/session failures show explicit reconnect/relaunch guidance. Context,
+source, graph and branch semantics remain backend-owned.
 
-T014 adds generated readonly [contract types](src/generated/contracts.ts) from the
-authored schema. Compile-time and Node tests verify their tagged shapes; this does
-not yet add an HTTP client, connected graph or runtime UI operations.
+## Verification and scope
 
-`src/canonical.ts` implements canonical bytes and Web Crypto content hashing against
-the shared T015 golden vectors. It does not infer computation field selection or
-change the current preview UI.
+`tools/check-web.sh` verifies pinned tool versions, types, lint/accessibility rules,
+formatting, shared contract/component/race tests and two byte-identical production
+builds. It writes ignored results in `target/web/`. Browser journeys use Codex's
+internal Browser; do not install Playwright, browser drivers or browser binaries.
+See the [browser checklist](../docs/development/browser-checks.md) and
+[T082 measured receipt](../docs/development/evidence/t082-macos-arm64.json).
+
+React Flow/ELK interaction and worker layout remain T083. The exact React 19.3.0,
+TypeScript 6.0.3, Vite 8.3.0, jsdom 26.1.0 and ESLint 9.39.5 baseline is unchanged.
+Existing development dependency exceptions remain in the safety inventory; no
+new package was added. Public fixtures and browser journeys use synthetic data.

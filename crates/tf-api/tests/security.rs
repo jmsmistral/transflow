@@ -287,3 +287,66 @@ async fn browser_event_facade_requires_origin_session_and_csrf()
     }
     Ok(())
 }
+
+#[tokio::test]
+async fn contributor_assets_are_frozen_bounded_and_keep_transport_security()
+-> Result<(), Box<dyn std::error::Error>> {
+    let root = std::env::temp_dir().join(format!("tf-ui-{}", tf_api::cursor_token()?));
+    std::fs::create_dir_all(root.join("assets"))?;
+    std::fs::write(root.join("index.html"), "<h1>Synthetic UI</h1>")?;
+    std::fs::write(root.join("assets/app.js"), "// synthetic bundle")?;
+    std::fs::write(root.join("assets/app.css"), "body {}")?;
+    let assets = tf_api::Assets::load(&root)?;
+    // Requests cannot observe mutable files after startup, nor arbitrary adjacent files.
+    std::fs::write(root.join("assets/app.js"), "// replaced")?;
+    std::fs::write(root.join("private.txt"), "must not be served")?;
+    let r = tf_api::router_with_assets(
+        "127.0.0.1:12345".parse()?,
+        TOKEN.into(),
+        Arc::new(App(AtomicUsize::new(0))),
+        Some(assets),
+    )?;
+    for (path, status) in [
+        ("/", 200),
+        ("/assets/app.js", 200),
+        ("/assets/app.css", 200),
+        ("/private.txt", 401),
+        ("/assets/../private.txt", 401),
+        ("/assets/app.js?token=x", 400),
+    ] {
+        let response = r
+            .clone()
+            .oneshot(request("GET", path, "").body(Body::empty())?)
+            .await?;
+        assert_eq!(response.status().as_u16(), status, "{path}");
+        assert_eq!(response.headers()["x-content-type-options"], "nosniff");
+        assert!(
+            response.headers()["content-security-policy"]
+                .to_str()?
+                .contains("style-src 'self'")
+        );
+        let bytes = to_bytes(response.into_body(), 1024 * 1024).await?;
+        assert!(!String::from_utf8_lossy(&bytes).contains("must not be served"));
+        if path == "/assets/app.js" {
+            assert_eq!(bytes.as_ref(), b"// synthetic bundle");
+        }
+    }
+    let forbidden = r
+        .oneshot(
+            request("GET", "/assets/app.js", "")
+                .header("origin", "https://attacker.invalid")
+                .body(Body::empty())?,
+        )
+        .await?;
+    assert_eq!(forbidden.status(), StatusCode::FORBIDDEN);
+    #[cfg(unix)]
+    {
+        std::os::unix::fs::symlink(root.join("private.txt"), root.join("assets/leak.js"))?;
+        assert!(tf_api::Assets::load(&root).is_err());
+        std::fs::remove_file(root.join("assets/leak.js"))?;
+    }
+    std::fs::File::create(root.join("assets/large.js"))?.set_len(8 * 1024 * 1024 + 1)?;
+    assert!(tf_api::Assets::load(&root).is_err());
+    std::fs::remove_dir_all(root)?;
+    Ok(())
+}

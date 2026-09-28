@@ -951,3 +951,20 @@ Arrow IPC 60.0.0 and rustix became direct dependencies at the relevant boundarie
 the locked package set, license records and advisory findings did not change.
 The advisory check date is retained. No UI changed and no new browser journey was
 performed. The owner monitors the push workflows, without agent polling.
+
+## T082 — Connected workspace shell (2026-09-28)
+
+The [measured receipt](evidence/t082-macos-arm64.json) records 393 Rust tests plus
+one doc test, 940 distinct Python tests across the full gate and final wire recheck, 383 web tests, 58 installed CLI/API tests and 312
+shared contract cases. Full affected gates passed; three API integration tests
+were rechecked after adding capability validation. Types/lints/formatting,
+standalone storage, 12 boundary regressions and reproducible web assets passed.
+
+The internal Browser exercised actual branch/head/version metadata, historical
+source identity, keyboard tabs/resizing, narrow-screen layout, live event refresh
+and disconnect cleanup on a synthetic workspace. Component tests separately force
+stale and abort-ignoring replies and resync/selection races. No rendered preview,
+source editor, graph or build planner is claimed; those dependent tasks remain.
+
+The owner confirmed the T081 recovery correction CI passed for implementation
+`2501f14` and specification `e971371`. T082 CI remains pending after its new push.

@@ -6688,6 +6688,46 @@
               "type": "integer",
               "minimum": 0,
               "maximum": 4294967295
+            },
+            "event_replay": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "event_streams": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "preview_rows": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "preview_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "preview_cell_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "query_active": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "query_retention_seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "query_spill_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
             }
           },
           "required": [
@@ -6712,7 +6752,7 @@
           "const": false
         },
         "ui": {
-          "const": false
+          "type": "boolean"
         }
       },
       "required": [

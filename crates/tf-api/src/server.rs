@@ -19,6 +19,7 @@ use std::{
 use tf_domain::RequestId;
 
 struct Shared {
+    assets: Option<crate::Assets>,
     app: Service,
     token: String,
     host: String,
@@ -37,6 +38,15 @@ pub struct Server {
 impl Server {
     /// Bind loopback before starting the server. LAN binds are never supported.
     pub fn bind(address: SocketAddr, token: String, app: Service) -> Result<Self, ApiError> {
+        Self::bind_with_assets(address, token, app, None)
+    }
+    /// Bind with an explicitly supplied immutable contributor UI bundle.
+    pub fn bind_with_assets(
+        address: SocketAddr,
+        token: String,
+        app: Service,
+        assets: Option<crate::Assets>,
+    ) -> Result<Self, ApiError> {
         if !address.ip().is_loopback() || token.len() < 32 {
             return Err(ApiError::invalid());
         }
@@ -45,7 +55,7 @@ impl Server {
             .set_nonblocking(true)
             .map_err(|_| ApiError::internal())?;
         let address = listener.local_addr().map_err(|_| ApiError::internal())?;
-        let shared = state(address, token, app);
+        let shared = state(address, token, app, assets);
         let stop = Arc::new(AtomicBool::new(false));
         let stopping = stop.clone();
         let app = routes(shared.clone());
@@ -113,8 +123,14 @@ impl Drop for Server {
         }
     }
 }
-fn state(address: SocketAddr, token: String, app: Service) -> Arc<Shared> {
+fn state(
+    address: SocketAddr,
+    token: String,
+    app: Service,
+    assets: Option<crate::Assets>,
+) -> Arc<Shared> {
     Arc::new(Shared {
+        assets,
         app,
         token,
         host: address.to_string(),
@@ -133,10 +149,19 @@ pub fn router(
     token: String,
     app: Arc<dyn Application>,
 ) -> Result<Router, ApiError> {
+    router_with_assets(address, token, app, None)
+}
+/// Identical middleware with a frozen contributor asset bundle, for transport qualification.
+pub fn router_with_assets(
+    address: SocketAddr,
+    token: String,
+    app: Arc<dyn Application>,
+    assets: Option<crate::Assets>,
+) -> Result<Router, ApiError> {
     if !address.ip().is_loopback() || token.len() < 32 {
         return Err(ApiError::invalid());
     }
-    Ok(routes(state(address, token, app)))
+    Ok(routes(state(address, token, app, assets)))
 }
 fn one<'a>(headers: &'a HeaderMap, name: &str) -> Result<Option<&'a str>, ApiError> {
     if headers.get_all(name).iter().count() > 1 {
@@ -198,7 +223,7 @@ async fn handle(State(s): State<Arc<Shared>>, request: axum::extract::Request) -
         ("referrer-policy", "no-referrer"),
         (
             "content-security-policy",
-            "default-src 'none'; script-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+            "default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
         ),
     ] {
         response
@@ -247,6 +272,14 @@ async fn dispatch(
             "TF_API_METHOD",
             "This method is not supported",
         ));
+    }
+    if method == "GET"
+        && let Some(asset) = s.assets.as_ref().and_then(|a| a.get(path))
+    {
+        if parts.uri.query().is_some() {
+            return Err(ApiError::invalid());
+        }
+        return Ok(([("content-type", asset.0)], asset.1).into_response());
     }
     if method == "GET" && matches!(path, "/" | "/bootstrap.js" | "/health") {
         if parts.uri.query().is_some() {
@@ -374,7 +407,7 @@ async fn dispatch(
         };
     }
     if path == "/api/v1/capabilities" && method == "GET" && params.is_empty() {
-        return reply(Reply::metadata(s.app.capabilities()), id);
+        return reply(Reply::metadata(capabilities(&s)), id);
     }
     if path == "/api/v1/openapi.json" && method == "GET" && params.is_empty() {
         return Ok((
@@ -425,7 +458,7 @@ async fn dispatch(
     }
     if request.method == "GET" && request.path == "/api/v1/capabilities" && request.query.is_empty()
     {
-        return reply(Reply::metadata(s.app.capabilities()), id);
+        return reply(Reply::metadata(capabilities(&s)), id);
     }
     let route = crate::contracts::route(&request.method, &request.path)?;
     if request.method == "GET" && request.path == "/api/v1/events" {
@@ -601,4 +634,10 @@ async fn event_stream(
     Ok(Sse::new(tokio_stream::wrappers::ReceiverStream::new(rx))
         .keep_alive(KeepAlive::default())
         .into_response())
+}
+
+fn capabilities(s: &Shared) -> serde_json::Value {
+    let mut value = s.app.capabilities();
+    value["ui"] = json!(s.assets.is_some());
+    value
 }

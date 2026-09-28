@@ -67,7 +67,7 @@ fn command() -> clap::Command {
         .subcommands(inspection_cli::commands())
         .subcommand(external::command())
         .subcommand(build_cli::command())
-        .subcommand(clap::Command::new("serve").disable_help_flag(true).about("Run the authenticated loopback coordinator").arg(Arg::new("port").long("port").default_value("0").value_parser(clap::value_parser!(u16))).arg(Arg::new("open").long("open").action(ArgAction::SetTrue)))
+        .subcommand(clap::Command::new("serve").disable_help_flag(true).about("Run the authenticated loopback coordinator").arg(Arg::new("port").long("port").default_value("0").value_parser(clap::value_parser!(u16))).arg(Arg::new("open").long("open").action(ArgAction::SetTrue)).arg(Arg::new("ui-dir").long("ui-dir").help("Serve an explicitly built contributor UI directory")))
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
         .subcommand(clap::Command::new("branch").disable_help_flag(true).subcommand_required(true).about("List and manage data branches independently of Git")
             .subcommand(clap::Command::new("list").disable_help_flag(true)

@@ -34,9 +34,14 @@
     "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests -v"
   ],
   "initial_fixture_correction": "Removing the registry is classified as a guarded conflict, not an I/O error. Replaced that fixture with a SQLite abort trigger to exercise an actual recovery error without timing assumptions.",
-  "ci": "Pending owner confirmation after push; no workflow polling",
+  "ci": {
+    "status": "passed",
+    "source": "Owner confirmation on 2026-09-28; no workflow polling",
+    "implementation": "2501f14b16eb7db393a50247ce6733a3c79e67dc",
+    "specification": "e9713716f53e1713a8347ff9a9960d86fddc35fd"
+  },
   "limits": [
-    "Local verification is macOS arm64; the reported Linux ARM job must be confirmed by the owner after the new push.",
+    "Local verification is macOS arm64; Linux qualification is owner-reported from the corrected push.",
     "Python/web sources, wire contracts and dependencies unchanged; their full suites were not repeated."
   ],
   "sha256": {
