@@ -13,6 +13,8 @@ A local, code-first build system for dataframe datasets, with versioned Parquet 
 Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
 Package installation and workspace environment checks reject other minors.
 
+Lineage review now includes directional parent/child placement, focus-scoped Cmd/Ctrl+A, a Resource Type colour legend and bounded metadata caching for immediate cached additions. Uncached metadata still requires a coordinator read. Existing positions and the camera stay unchanged.
+
 ## Intended experience
 
 Write Python transforms, declare their input and output datasets, and build a target without managing a separate catalogue namespace for every source directory. Transflow is designed to validate the dependency graph, resolve exact input versions, run checks, preserve the previous successful output when a build fails, and explain what needs rebuilding.
@@ -86,7 +88,7 @@ charts and schedule occurrence metrics follow in later tasks.
 
 T083 adds the [interactive dataset graph](web/README.md#graph-exploration-t083):
 keyboard-accessible exploration, depth and path queries, explicit bounded batches,
-typed edges, read-only foreign boundaries and worker layout with pinned positions.
+typed edges, read-only foreign boundaries and stable manual positions. Adding/removing nodes never relayouts the graph or moves the camera; the Layout control is currently a placeholder.
 Compact toolbars and collapsed inspector rails leave more room for lineage.
 Internal node arrows expand/retract neighbours without changing zoom. The searchable
 Branch picker defaults to master; its adjacent editor sets view-local fallbacks.

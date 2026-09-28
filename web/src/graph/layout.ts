@@ -44,15 +44,3 @@ export function layoutGraph(
       .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)),
   };
 }
-/** Layout suggestions never overwrite a manual pin, even when dragged during a worker run. */
-export function positionsWithPins(
-  positions: Record<string, Position>,
-  pins: ReadonlyMap<string, Position>,
-): Record<string, Position> {
-  return Object.fromEntries(
-    Object.entries(positions).map(([id, position]) => [
-      id,
-      pins.get(id) ?? position,
-    ]),
-  );
-}

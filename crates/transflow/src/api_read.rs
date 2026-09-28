@@ -520,6 +520,8 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
             "cursor",
             "expand",
             "connections",
+            "lookup",
+            "incoming",
         ],
     )?;
     let g = c.graph.as_ref().ok_or_else(E::missing)?;
@@ -556,8 +558,36 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
         "downstream" => traversal::Direction::Downstream,
         _ => return Err(E::invalid()),
     };
-    let traversal = if let Some(consumers) = r.query.get("connections") {
-        if ["start", "end", "depth", "direction"]
+    let incoming = match r.query.get("incoming").map(String::as_str) {
+        None => false,
+        Some("true") => true,
+        _ => return Err(E::invalid()),
+    };
+    let traversal = if let Some(paths) = r.query.get("lookup") {
+        if [
+            "start",
+            "end",
+            "depth",
+            "direction",
+            "connections",
+            "incoming",
+        ]
+        .iter()
+        .any(|k| r.query.contains_key(*k))
+        {
+            return Err(E::invalid());
+        }
+        let paths: Vec<String> = serde_json::from_str(paths).map_err(|_| E::invalid())?;
+        if paths.is_empty() || paths.len() > 100 {
+            return Err(E::invalid());
+        }
+        let ids = paths
+            .iter()
+            .map(|p| graph.resolve(p).map_err(|_| E::missing()))
+            .collect::<Result<std::collections::BTreeSet<_>>>()?;
+        graph.lookup(&ids).map_err(bad)?
+    } else if let Some(consumers) = r.query.get("connections") {
+        if ["start", "end", "depth", "direction", "incoming"]
             .iter()
             .any(|k| r.query.contains_key(*k))
         {
@@ -599,6 +629,11 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
             })
             .map_err(bad)?
     };
+    let traversal = if incoming {
+        graph.with_incoming(traversal).map_err(bad)?
+    } else {
+        traversal
+    };
     let n = limit(r, 100, 500)?;
     let first = traversal.page(None, n).map_err(bad)?;
     if first.total_nodes > 500 && r.query.get("expand").map(String::as_str) != Some("true") {
@@ -612,7 +647,46 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
     let p = traversal
         .page((!after.is_empty()).then_some(after.as_str()), n)
         .map_err(|_| E::conflict())?;
-    let nodes=p.nodes.iter().map(|n|json!({"identity":crate::why::identity(&n.node.identity),"paths":n.node.paths.iter().map(|p|p.as_str()).collect::<Vec<_>>(),"depth":n.depth.to_string(),"external":n.node.external,"producer":n.node.producer,"parent_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Upstream).to_string(),"child_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Downstream).to_string()})).collect::<Vec<_>>();
+    let rt = runtime()?;
+    let mut reader = rt.block_on(reader(&c.root))?;
+    let mut nodes = Vec::with_capacity(p.nodes.len());
+    for n in &p.nodes {
+        // Never infer absence from unavailable foreign or historical metadata.
+        let publication = if n.node.external || c.value["selection"]["kind"] != "retained_current" {
+            "unknown"
+        } else if let tf_catalog::candidate::CandidateIdentity::Registered(key) = &n.node.identity {
+            if rt
+                .block_on(reader.api_head(key.workspace_id(), key.dataset_id(), &c.candidates))
+                .map_err(bad)?
+                .is_some()
+            {
+                "published"
+            } else {
+                "missing"
+            }
+        } else {
+            "missing"
+        };
+        let resource_type = if n.node.external {
+            "external"
+        } else if let Some(def) = validated
+            .candidate()
+            .definitions()
+            .iter()
+            .find(|d| d.output == n.node.identity)
+        {
+            match def.declaration["engine"].as_str() {
+                Some("polars") => "polars_transform",
+                Some("sql") | Some("duckdb") => "sql_transform",
+                _ => "unknown",
+            }
+        } else if n.node.producer {
+            "unknown"
+        } else {
+            "dataset"
+        };
+        nodes.push(json!({"identity":crate::why::identity(&n.node.identity),"paths":n.node.paths.iter().map(|p|p.as_str()).collect::<Vec<_>>(),"depth":n.depth.to_string(),"external":n.node.external,"producer":n.node.producer,"parent_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Upstream).to_string(),"child_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Downstream).to_string(),"publication":publication,"resource_type":resource_type}));
+    }
     let edges=p.edges.iter().map(|e|{let branch=match &e.declared_branch{tf_domain::BranchSelector::Omitted=>json!({"kind":"omitted","name":null}),tf_domain::BranchSelector::Current=>json!({"kind":"current","name":null}),tf_domain::BranchSelector::Named(n)=>json!({"kind":"named","name":n.as_str()})};json!({"parent":crate::why::identity(&e.parent),"consumer":crate::why::identity(&e.consumer),"alias":e.alias,"role":e.role.name(),"declared_branch":branch,"stop_branch_fallback":e.stop_branch_fallback,"checks":e.checks})}).collect::<Vec<_>>();
     Ok(
         json!({"nodes":nodes,"edges":edges,"next_cursor":p.next_cursor.map(|s|format!("{binding}:{s}")),"total_nodes":p.total_nodes,"total_edges":p.total_edges,"omitted_nodes":p.omitted_nodes,"omitted_edges":p.omitted_edges,"remaining_nodes":p.remaining_nodes,"remaining_edges":p.remaining_edges,"scope_complete":p.scope_complete,"external_expanded":false}),

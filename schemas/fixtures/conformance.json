@@ -7546,7 +7546,9 @@
       "external": false,
       "producer": true,
       "parent_count": "1",
-      "child_count": "0"
+      "child_count": "0",
+      "publication": "unknown",
+      "resource_type": "unknown"
     }
   },
   {

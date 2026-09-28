@@ -320,6 +320,44 @@ impl Graph {
             .map_err(|_| Error::Context)?.hex();
         Ok(result)
     }
+    /// Bounded transport lookup of named nodes and every incoming declaration.
+    pub fn lookup(&self, ids: &BTreeSet<Id>) -> Result<Traversal, Error> {
+        let mut result = self.connections(ids)?;
+        result.nodes = ids
+            .iter()
+            .map(|id| {
+                self.nodes
+                    .get(id)
+                    .cloned()
+                    .map(|node| Visit { node, depth: 0 })
+                    .ok_or(Error::Missing)
+            })
+            .collect::<Result<_, _>>()?;
+        result.fingerprint = content_digest(
+            DigestKind::Compute,
+            &json!({"lookup_version":1,"context":result.fingerprint}),
+        )
+        .map_err(|_| Error::Context)?
+        .hex();
+        Ok(result)
+    }
+    /// Include complete incoming declarations for the selected scope, including hidden parents.
+    pub fn with_incoming(&self, mut result: Traversal) -> Result<Traversal, Error> {
+        let ids: BTreeSet<_> = result.nodes.iter().map(|n| &n.node.identity).collect();
+        result.edges = self
+            .edges
+            .iter()
+            .filter(|e| ids.contains(&e.consumer))
+            .cloned()
+            .collect();
+        result.fingerprint = content_digest(
+            DigestKind::Compute,
+            &json!({"incoming_version":1,"context":result.fingerprint}),
+        )
+        .map_err(|_| Error::Context)?
+        .hex();
+        Ok(result)
+    }
     /// All nodes and edges on directed paths from start to end, without enumerating paths.
     /// An unreachable end returns an empty scope. Foreign nodes remain terminal boundaries.
     pub fn paths(&self, start: Id, end: Id) -> Result<Traversal, Error> {

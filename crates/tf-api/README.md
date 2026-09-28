@@ -320,3 +320,21 @@ roles and foreign boundaries. An unreachable end gives an empty complete scope;
 identical endpoints give one node. It uses the same context fencing, explicit large
 expansion and node/edge pagination as traversal. Cursors bind both endpoints.
 No provider code or data is loaded. The UI requests 100 items per stream per action.
+
+Lineage nodes include `publication`: `published` or `missing` for local current-context heads after the ordered fallback policy, and `unknown` for foreign/historical metadata. Missing publication can drive an unbuilt border; unknown must not be treated as missing. This read performs no provider contact and does not verify artifacts or freshness.
+
+
+Lineage supports `lookup=JSON_PATH_ARRAY` for 1–100 paths: it returns the named nodes
+and all incoming declarations, including parents outside that node set. It cannot be
+combined with `start`, `end`, `direction`, `depth`, `connections` or `incoming`.
+Traversal queries can instead use `incoming=true` to include all incoming declarations
+for their result nodes in the same read. Counts and cursors cover the complete response;
+clients must drain edge pages before treating a node's incoming set as cached. All
+cursors remain bound to the exact query and read context. Foreign nodes remain upstream
+boundaries, and these reads never import producer code or contact providers.
+
+Nodes also carry `resource_type`: `polars_transform`, `sql_transform`, `external`,
+`dataset` or `unknown`, derived from retained producer declarations and registry origin.
+This describes resource type only; `publication` and freshness retain separate meanings.
+The matched web client uses bounded context-owned metadata caching to avoid serial
+lineage/connection reads on each addition; cache hits do not perform a new live-state check.

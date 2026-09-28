@@ -8,7 +8,7 @@ work by keyboard. Narrow screens stack panels; layout survives context changes
 within the page session.
 
 T083 adds the React Flow dataset graph, keyboard graph controls, typed data/validation
-edges, foreign boundaries and an off-thread ELK layout. Saved views, full
+edges, foreign boundaries and stable manual positioning. An off-thread ELK layout foundation is retained for future explicit layout. Saved views, full
 preview/code/history inspectors and build/schedule actions remain later tasks. The shell does not fetch rows or source
 text for display. Selecting a version cannot run a build or change dataset heads.
 Metadata availability is not byte verification or freshness evidence.
@@ -76,21 +76,11 @@ new package was added. Public fixtures and browser journeys use synthetic data.
 
 ## Graph exploration (T083)
 
-Select a catalogue dataset to add its depth-zero root, or open **Explore / search**
-to enter a path, search the entire paginated catalogue, or find visible nodes.
-The canvas fills the available workspace below a compact toolbar. Both inspectors
-start collapsed, with right-side icons and bottom tabs beside expand/retract buttons.
-Search/layout controls open over the canvas; counts and the legend are collapsible.
+Select a catalogue dataset to add its root without reloading the workspace, moving existing nodes or changing the camera. Both inspectors start collapsed. Nodes use internal chevrons to expand/retract all immediate neighbours in bounded pages. Expanded neighbours are selected. External nodes stop at the provider boundary. New nodes occupy free positions; existing/manual positions never change on addition/removal.
 
-Compact nodes contain `<` / `>` handles inside their ends, only where neighbours
-exist. Hover labels give the total unique count from the complete captured graph.
-Clicking drains bounded 100-node/100-edge pages for all immediate neighbours and
-selects them, preserving zoom. Fully visible neighbours reverse the arrow; clicking
-retract removes those neighbours and their incident edges from the view. Unrelated
-nodes remain. Generic depth/path exploration still offers explicit next-page actions
-and a 500-node opt-in. No automatic fitting occurs after expansion; use **Fit view**.
-Node hover/focus cards lazily fetch available retained metadata. Edge text and the
-separate dataset-list view have been removed; keyboard graph navigation remains.
+The top-left toolbar contains **Layout** (placeholder), **Select → Clear all** (selection only), and **Expand** (forward/backward and levels from all selected nodes). Blank levels means all reachable nodes. Explicit expansion drains bounded pages and reconciles visible connections atomically. The bottom-right **N nodes selected** label centres the selection without changing zoom. Fit view/selection are separate zoom actions at the lower left. Messages appear at the bottom and expire after four seconds; the legend sits flush at the top-right. Controls use local SVG icons without a font or network dependency.
+
+Dashed node borders indicate a confirmed missing local publication on the selected branch and fallbacks. External or historical publication metadata is unknown and stays solid, not falsely labelled never-built. All dependency edges are solid; validation uses an accent colour. The API publication state does not verify bytes, freshness or quality.
 
 The top-row **Branch** menu searches available branches and applies a selection
 immediately. It defaults to `master` and lists branches with heads for visible local
@@ -101,34 +91,32 @@ The server normalizes it and binds it into read context fingerprints. Frozen
 versions/plans reject overrides. Workspace configuration is unchanged. Build controls
 are still a later task; they must pass this override explicitly when implemented.
 
-Use Shift/Cmd/Ctrl or drag selection for multi-selection.
-**Show paths** queries all declared directed paths from the first selected dataset
-to the second, including initially hidden intermediate nodes; it highlights the
-returned scope as pages arrive. This is a read-only graph query, not a build mode.
-The server intersects forward/reverse reachability without enumerating paths.
-Foreign nodes are read-only boundaries; browsing never executes provider code.
-Provider provenance expansion remains available through the existing CLI.
-
-Drag nodes or move a focused selected node with arrow keys to pin its position.
-Incremental layout preserves pins, including moves made while a worker is running.
-**Relayout all** clears pins; **Remove from view** changes only the view. Groups,
-annotations, persisted positions and undo/redo belong to T084. Freshness/quality
-remain explicitly unknown until the later overlay task. Imported/producer types
-use available retained metadata; missing type information stays generic.
-
-Context changes fence both graph requests and worker replies. Manual view state
-survives dataset selection in the same frozen context, and resets for a different
-fingerprint. Layout failure preserves manual graph interaction and offers retry.
-ELK's native worker is bundled locally, with a same-origin worker CSP. The explicit
-preparation command applies reviewed, version-checked ELK and xyflow declaration
-corrections; it does not change runtime library code or disable strict checking.
-Production verification executes the actual worker asset in a background thread,
-checks a diamond and an invalid graph, and compares reproducible build hashes.
+Drag the canvas to pan, Shift-drag for box selection, and Shift/Cmd/Ctrl-click to select multiple nodes. Drag nodes or use their arrow keys to change positions. There is no pin/unpin state. Delete/Backspace removes only focused graph selections from the view. Groups, persisted positions, annotations and undo/redo remain T084. Context fingerprints fence requests and reset the graph when the context changes. The worker foundation remains bundled and production-tested; it is not invoked by graph membership changes.
 
 ### UI review iteration: catalogue and canvas navigation
 
-The right catalogue has a single debounced fuzzy search input. Case-insensitive ordered-subsequence matches are highlighted; a green dot identifies nodes already in the lineage. Results are bounded and paginated across the entire catalogue. Clicking a result adds it if needed, then centres it without changing zoom.
+The right catalogue has a single debounced fuzzy search input. Case-insensitive ordered-subsequence matches are highlighted; a green dot identifies nodes already in the lineage. Results are bounded and paginated across the entire catalogue. Clicking a result adds/selects it without moving the camera or reloading the workspace.
 
 Drag the canvas to pan; hold Shift while dragging for box selection. Delete or Backspace removes selected nodes only when the diagram has focus, never while typing in catalogue search. Fit view and fit selection sit under the zoom buttons. Other graph actions float at the upper left. Node handles are visually hidden. Hover cards stay absent until the requested metadata is ready and the hover/focus is still active.
 
-After a successful expansion/add, the client queries incoming connections for bounded groups of visible consumers and retains edges whose endpoints are both visible. It drains edge pages before accepting the visual change, preserving aliases and data/validation distinctions. Abort/context guards prevent stale connections from replacing the current view.
+The current catalogue page warms a context-owned lineage cache (at most 100 requested
+paths per lookup; at most 2,000 cached nodes and 10,000 incoming declarations).
+Lookup/expansion responses include every incoming dependency of their returned nodes,
+including hidden parents. Rendering shows only edges whose endpoints are visible.
+Cached additions and complete cached neighbourhoods render immediately; first uncached
+reads still wait for the coordinator. A partially cached neighbour set is never treated
+as complete. Context changes/disconnection discard the cache and fence late responses.
+No producer imports or data copies are needed for these metadata reads.
+
+New parents are placed to the left and children to the right, including successive
+levels, without moving existing nodes or the camera. Cmd+A (Ctrl+A on Windows/Linux)
+selects all visible nodes when the graph has focus. The box-selection overlay is removed
+on release while node selection remains. Search inputs keep native text shortcuts.
+
+The upper-right icon toggles a legend below it. The adjacent selector defaults to
+**Resource Type** (Polars Transform, SQL Transform, External Dataset, Dataset, Unknown);
+**Publication** shows Published, Not built on these branches, or Unknown. Colour does
+not replace the missing-publication border or other status evidence. Transform nodes
+use the ƒ symbol; external nodes use a compact arrow. The React Flow attribution badge
+is hidden through its supported option; its MIT license remains in the dependency.
+Progress/messages are centred at the bottom; no startup text covers the graph toolbar.

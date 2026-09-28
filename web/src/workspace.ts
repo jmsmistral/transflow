@@ -78,6 +78,7 @@ export class Workspace {
   private request: AbortController | undefined;
   private connection: AbortController | undefined;
   private epoch = 0;
+  private inspection = 0;
   private pending: Promise<void> | undefined;
   private capabilities: ApiCapabilitiesV1 | undefined;
   private cursor: EventCursor | undefined;
@@ -108,9 +109,59 @@ export class Workspace {
     }
   }
   select(selection: Selection): Promise<void> {
-    const pending = this.load(selection);
+    const state = this.state;
+    const sameContext =
+      state.kind === "ready" &&
+      selection.dataset &&
+      same(queryFor(selection), queryFor(state.selection)) &&
+      selection.cursor === state.selection.cursor;
+    const pending = sameContext
+      ? this.inspect(selection)
+      : this.load(selection);
     this.pending = pending;
     return pending;
+  }
+  /** Dataset-only selection leaves the current canvas and catalogue mounted. */
+  private async inspect(selection: Selection): Promise<void> {
+    const initial = this.state;
+    if (initial.kind !== "ready" || !selection.dataset) return;
+    const generation = ++this.inspection,
+      epoch = this.epoch;
+    try {
+      const base = `/api/v1/datasets/${encodeURIComponent(selection.dataset)}`;
+      const query = {
+        origin_workspace: selection.origin ?? initial.value.context.workspace,
+      };
+      const [dataset, versions] = await Promise.all([
+        this.read("ApiDatasetV1", base, query),
+        this.read("ApiVersionsV1", `${base}/versions`, {
+          ...query,
+          limit: "50",
+        }),
+      ]);
+      if (
+        generation !== this.inspection ||
+        epoch !== this.epoch ||
+        this.state.kind !== "ready"
+      )
+        return;
+      if (
+        dataset.dataset_id !== selection.dataset ||
+        dataset.workspace_id !== query.origin_workspace
+      )
+        throw new ApiFailure(
+          "conflict",
+          "Dataset metadata does not match the selection.",
+        );
+      this.set({
+        kind: "ready",
+        selection: { ...selection },
+        value: { ...this.state.value, dataset, versions },
+      });
+    } catch (error) {
+      if (generation === this.inspection && epoch === this.epoch)
+        this.fail(error);
+    }
   }
   private async load(selection: Selection): Promise<void> {
     this.request?.abort();
@@ -290,7 +341,9 @@ export class Workspace {
   refresh = async (): Promise<void> => {
     const selection = { ...this.state.selection };
     delete selection.cursor;
-    await this.select(selection);
+    const pending = this.load(selection);
+    this.pending = pending;
+    await pending;
   };
   reconnect = (): void => {
     if (!this.connection || this.connection.signal.aborted || !this.cursor)

@@ -21,10 +21,12 @@ export function CatalogueSearch({
   active,
   visible,
   select,
+  onPage,
 }: {
   workspace: Workspace;
   active: boolean;
   visible: readonly string[];
+  onPage?: (paths: readonly string[]) => void;
   select: (entry: ApiDatasetsV1["entries"][number]) => void;
 }) {
   const state = useSyncExternalStore(workspace.subscribe, workspace.snapshot);
@@ -79,6 +81,9 @@ export function CatalogueSearch({
     };
   }, [workspace, active, fingerprint, filter, cursor, key]);
   const page = result?.key === key ? result.page : null;
+  useEffect(() => {
+    if (page) onPage?.(page.entries.map((e) => e.path));
+  }, [page, onPage]);
   return (
     <div className="catalogue-search">
       <input

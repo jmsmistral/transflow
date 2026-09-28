@@ -273,6 +273,18 @@ def main() -> None:
                 "GET", f"/api/v1/datasets/{dataset}", query={"branch": "review", "fallback": "[]"}
             )["data"]
             assert no_fallback["head"] is None
+            for fallback, expected in [(json.dumps(["main"]), "published"), ("[]", "missing")]:
+                lineage = client.call(
+                    "GET",
+                    "/api/v1/lineage",
+                    query={
+                        "branch": "review",
+                        "fallback": fallback,
+                        "start": "raw/items",
+                        "depth": "0",
+                    },
+                )["data"]
+                assert lineage["nodes"][0]["publication"] == expected, lineage
             for invalid in ["null", "[1]", '[""]', json.dumps(["main"] * 101)]:
                 client.call(
                     "GET",
@@ -477,6 +489,74 @@ def main() -> None:
             )["data"]
             foreign = wait(client, external["build"])
             assert foreign["state"] == "SUCCEEDED", foreign
+            external_graph = client.call(
+                "GET",
+                "/api/v1/lineage",
+                query={
+                    "branch": "main",
+                    "start": "curated/external",
+                    "direction": "upstream",
+                    "depth": "1",
+                },
+            )["data"]
+            assert any(n["external"] for n in external_graph["nodes"])
+            assert all(
+                n["publication"] == "unknown" for n in external_graph["nodes"] if n["external"]
+            )
+            assert {n["resource_type"] for n in external_graph["nodes"]} == {
+                "polars_transform",
+                "external",
+            }
+            lookup_query = {
+                "branch": "main",
+                "lookup": json.dumps(["curated/external", "external/provider/items"]),
+                "limit": "1",
+            }
+            lookup = client.call("GET", "/api/v1/lineage", query=lookup_query)["data"]
+            assert lookup["total_nodes"] == 2 and lookup["total_edges"] == 1
+            assert lookup["next_cursor"]
+            continued_lookup = client.call(
+                "GET",
+                "/api/v1/lineage",
+                query={**lookup_query, "cursor": lookup["next_cursor"]},
+            )["data"]
+            assert continued_lookup["remaining_nodes"] == 0
+            for invalid in ["[]", "null", "[1]", json.dumps(["raw/items"] * 101)]:
+                client.call(
+                    "GET",
+                    "/api/v1/lineage",
+                    query={"branch": "main", "lookup": invalid},
+                    status=400,
+                )
+            for extra in [{"start": "raw/items"}, {"incoming": "true"}, {"depth": "1"}]:
+                client.call("GET", "/api/v1/lineage", query={**lookup_query, **extra}, status=400)
+            client.call(
+                "GET",
+                "/api/v1/lineage",
+                query={
+                    **lookup_query,
+                    "lookup": '["curated/external"]',
+                    "cursor": lookup["next_cursor"],
+                },
+                status=409,
+            )
+            incoming_query = {
+                "branch": "main",
+                "start": "curated/external",
+                "depth": "0",
+                "incoming": "true",
+            }
+            incoming = client.call("GET", "/api/v1/lineage", query=incoming_query)["data"]
+            assert len(incoming["nodes"]) == 1 and len(incoming["edges"]) == 1
+            assert incoming["edges"][0]["consumer"] == incoming["nodes"][0]["identity"]
+            assert incoming["edges"][0]["parent"] != incoming["nodes"][0]["identity"]
+            client.call(
+                "GET", "/api/v1/lineage", query={**incoming_query, "incoming": "false"}, status=400
+            )
+            cases.append(
+                "batched lineage lookup pages and binds cursors; ambiguous requests fail; "
+                "incoming edges include hidden parents; resource types use retained producers"
+            )
             foreign_version = foreign["jobs"][0]["inputs"][0]["version"]
             # Reading retained foreign metadata must not import changed provider code.
             (provider / "src/items.py").write_text(

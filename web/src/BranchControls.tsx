@@ -1,3 +1,4 @@
+import { Icon } from "./Icons";
 import { useEffect, useRef, useState } from "react";
 import type { ApiMetadataPageV1 } from "./generated/contracts";
 import type { Workspace, WorkspaceState } from "./workspace";
@@ -136,8 +137,8 @@ export function BranchControls({
             setSearch("");
           }}
         >
-          <span aria-hidden="true">⑂</span> Branch <strong>{branch}</strong>{" "}
-          <span aria-hidden="true">▾</span>
+          <Icon name="branch" /> Branch <strong>{branch}</strong>{" "}
+          <Icon name="down" />
         </Button>
         {open && (
           <div
@@ -217,7 +218,7 @@ export function BranchControls({
           setEditing(true);
         }}
       >
-        <span aria-hidden="true">⑂</span>
+        <Icon name="branch" />
       </button>
       <dialog
         ref={dialog}

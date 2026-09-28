@@ -292,3 +292,40 @@ test("branch picker loads all pages and fallback is explicit in contextual reads
   expect(fallbacks).toContain("[]");
   model.dispose();
 });
+
+test("dataset-only selection preserves ready context while metadata loads", async () => {
+  const late = deferred<Response>();
+  let hold = false;
+  const reads: string[] = [];
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path) => {
+        reads.push(path);
+        if (hold && path.endsWith(`/datasets/${datasetId}`))
+          return late.promise;
+      }),
+    ),
+  );
+  await workspace.connect("launch");
+  const before = workspace.snapshot();
+  reads.length = 0;
+  hold = true;
+  const pending = workspace.select({
+    branch: "master",
+    dataset: datasetId,
+    origin: workspaceId,
+  });
+  expect(workspace.snapshot()).toBe(before);
+  late.resolve(json(dataset, context()));
+  await pending;
+  expect(workspace.snapshot().kind).toBe("ready");
+  expect(workspace.snapshot().selection.dataset).toBe(datasetId);
+  expect(reads).not.toContain("/api/v1/context");
+  expect(reads).not.toContain("/api/v1/datasets");
+  hold = false;
+  reads.length = 0;
+  await workspace.refresh();
+  expect(reads).toContain("/api/v1/context");
+  expect(reads).toContain("/api/v1/datasets");
+  workspace.dispose();
+});

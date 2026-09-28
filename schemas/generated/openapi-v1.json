@@ -14123,6 +14123,24 @@
           },
           "child_count": {
             "$ref": "#/components/schemas/Count"
+          },
+          "publication": {
+            "type": "string",
+            "enum": [
+              "published",
+              "missing",
+              "unknown"
+            ]
+          },
+          "resource_type": {
+            "type": "string",
+            "enum": [
+              "polars_transform",
+              "sql_transform",
+              "external",
+              "dataset",
+              "unknown"
+            ]
           }
         },
         "required": [
@@ -14132,7 +14150,9 @@
           "external",
           "producer",
           "parent_count",
-          "child_count"
+          "child_count",
+          "publication",
+          "resource_type"
         ],
         "additionalProperties": false
       }

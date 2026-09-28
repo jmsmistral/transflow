@@ -1,3 +1,4 @@
+import { GraphCache, type Scope } from "./cache";
 import type {
   ApiLineageV1,
   GraphEdgeV1,
@@ -14,6 +15,10 @@ export interface Exploration {
 }
 export interface GraphState {
   context: string;
+  placement: {
+    roots: readonly string[];
+    direction: Exploration["direction"];
+  } | null;
   nodes: readonly ApiLineageNodeV1[];
   edges: readonly GraphEdgeV1[];
   queryNodes: ReadonlySet<string>;
@@ -40,6 +45,7 @@ export function depthQuery(value: string): Query {
 export class GraphModel {
   private state: GraphState = {
     context: "",
+    placement: null,
     nodes: [],
     edges: [],
     queryNodes: new Set(),
@@ -52,7 +58,11 @@ export class GraphModel {
   private listeners = new Set<() => void>();
   private request: AbortController | undefined;
   private generation = 0;
-  constructor(private readonly workspace: Workspace) {}
+  private pendingAdds = new Set<string>();
+  private cache: GraphCache;
+  constructor(private readonly workspace: Workspace) {
+    this.cache = new GraphCache(workspace);
+  }
   snapshot = (): GraphState => this.state;
   subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
@@ -65,8 +75,16 @@ export class GraphModel {
   connect = (): (() => void) => {
     const sync = (): void => {
       const state = this.workspace.snapshot();
-      this.cancel();
-      if (state.kind !== "ready") return;
+      if (state.kind !== "ready") {
+        this.cancel();
+        this.cache.reset();
+        return;
+      }
+      const changed = state.value.context.fingerprint !== this.state.context;
+      if (changed) {
+        this.cancel();
+        this.cache.reset();
+      }
       const context = state.value.context.fingerprint;
       if (this.state.context !== context)
         this.set({
@@ -82,24 +100,82 @@ export class GraphModel {
       // Catalogue selection adds a root, never replaces the existing visual exploration.
       const root = state.value.dataset;
       if (
+        changed &&
         root &&
         state.value.context.graph &&
         !this.state.nodes.some((node) => node.paths.includes(root.path))
       )
-        void this.explore({
-          start: root.path,
-          direction: "upstream",
-          depth: "0",
-        });
+        void this.add(root.path);
     };
     const unsubscribe = this.workspace.subscribe(sync);
     sync();
     return () => {
       unsubscribe();
       this.cancel();
+      this.cache.reset();
     };
   };
+  prefetch(paths: readonly string[]): void {
+    void this.cache.warm(paths).catch(() => {});
+  }
+  private accept(
+    scope: Scope,
+    placement: GraphState["placement"] = null,
+  ): void {
+    const nodes = new Map(this.state.nodes.map((n) => [n.identity, n]));
+    for (const node of scope.nodes) nodes.set(node.identity, node);
+    const replaced = new Set(scope.nodes.map((n) => n.identity));
+    const edges = new Map(
+      this.state.edges
+        .filter((e) => !replaced.has(e.consumer))
+        .map((e) => [edgeId(e), e]),
+    );
+    for (const edge of scope.edges) edges.set(edgeId(edge), edge);
+    this.set({
+      nodes: [...nodes.values()],
+      edges: [...edges.values()],
+      placement,
+      busy: this.pendingAdds.size > 0,
+      message: "",
+      page: null,
+      query: null,
+      pathNodes: null,
+    });
+  }
+  async add(path: string): Promise<void> {
+    if (this.state.nodes.some((n) => n.paths.includes(path))) return;
+    if (this.pendingAdds.has(path)) return;
+    if (!this.pendingAdds.size) this.cancel();
+    const generation = this.generation;
+    const known = this.cache.known([path]);
+    if (known) {
+      this.accept(known);
+      return;
+    }
+    this.pendingAdds.add(path);
+    this.set({ busy: true, message: "" });
+    try {
+      const scope = await this.cache.lookup([path]);
+      if (generation === this.generation) {
+        this.pendingAdds.delete(path);
+        this.accept(scope);
+      }
+    } catch (error) {
+      if (generation === this.generation)
+        this.set({
+          busy: false,
+          message:
+            error instanceof Error ? error.message : "Could not add dataset.",
+        });
+    } finally {
+      if (generation === this.generation) {
+        this.pendingAdds.delete(path);
+        this.set({ busy: this.pendingAdds.size > 0 });
+      }
+    }
+  }
   cancel = (): void => {
+    this.pendingAdds.clear();
     this.request?.abort();
     this.generation++;
     if (this.state.busy) this.set({ busy: false });
@@ -260,64 +336,32 @@ export class GraphModel {
       this.remove(this.neighbours(node, direction));
       return new Set([node.identity]);
     }
+    return this.expand([node], direction, "1");
+  }
+  /** Explicit multi-root expansion drains bounded pages atomically within one context. */
+  async expand(
+    roots: readonly ApiLineageNodeV1[],
+    direction: Exploration["direction"],
+    depth: string,
+  ): Promise<Set<string> | undefined> {
     this.cancel();
     const generation = this.generation,
       request = new AbortController();
     this.request = request;
     this.set({ busy: true, message: "" });
-    const nodes = new Map(this.state.nodes.map((n) => [n.identity, n]));
-    const edges = new Map(this.state.edges.map((e) => [edgeId(e), e]));
-    const selected = new Set<string>();
-    const queryNodes = new Set<string>();
-    let cursor: string | null = null;
-    const seen = new Set<string>();
     try {
-      let page: ApiLineageV1;
-      do {
-        page = await this.workspace.read(
-          "ApiLineageV1",
-          "/api/v1/lineage",
-          {
-            start: label(node),
-            direction,
-            depth: "1",
-            limit: "100",
-            expand: "true",
-            ...(cursor ? { cursor } : {}),
-          },
-          request.signal,
-        );
-        if (request.signal.aborted || generation !== this.generation) return;
-        for (const item of page.nodes) {
-          nodes.set(item.identity, item);
-          queryNodes.add(item.identity);
-          if (item.identity !== node.identity) selected.add(item.identity);
-        }
-        for (const edge of page.edges) edges.set(edgeId(edge), edge);
-        cursor = page.next_cursor;
-        if (cursor) {
-          if (seen.has(cursor))
-            throw new Error("The graph page cursor repeated. Retry expansion.");
-          seen.add(cursor);
-        }
-      } while (cursor);
-      for (const edge of await this.connections(
-        [...nodes.values()],
-        request.signal,
-      ))
-        edges.set(edgeId(edge), edge);
+      depthQuery(depth);
+      const scope =
+        this.cache.neighbourhood(roots, direction, depth) ??
+        (await this.cache.expansion(roots, direction, depth, request.signal));
       if (generation !== this.generation || request.signal.aborted) return;
-      this.set({
-        nodes: [...nodes.values()],
-        edges: [...edges.values()],
-        queryNodes,
-        pathNodes: null,
-        page,
-        query: { start: label(node), direction, depth: "1" },
-        busy: false,
-        message: "",
-      });
-      return selected;
+      this.accept(scope, { roots: roots.map((n) => n.identity), direction });
+      const rootIds = new Set(roots.map((n) => n.identity));
+      return new Set(
+        scope.nodes
+          .filter((n) => !rootIds.has(n.identity))
+          .map((n) => n.identity),
+      );
     } catch (error) {
       if (!request.signal.aborted && generation === this.generation)
         this.set({
@@ -332,9 +376,7 @@ export class GraphModel {
     this.cancel();
     this.set({
       nodes: this.state.nodes.filter((node) => !ids.has(node.identity)),
-      edges: this.state.edges.filter(
-        (edge) => !ids.has(edge.parent) && !ids.has(edge.consumer),
-      ),
+      edges: this.state.edges.filter((edge) => !ids.has(edge.consumer)),
       queryNodes: new Set(),
       pathNodes: null,
       page: null,

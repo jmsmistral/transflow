@@ -540,7 +540,7 @@ dd {
 .node-status {
   font-size: 10px;
 }
-.foreign-node {
+.unbuilt-node {
   border-style: double;
   border-width: 3px;
 }
@@ -947,7 +947,7 @@ summary {
   border-radius: 4px;
   box-shadow: none;
 }
-.dataset-node.foreign-node {
+.dataset-node.unbuilt-node {
   border-width: 1px;
   border-style: dashed;
 }
@@ -1067,12 +1067,15 @@ summary {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 4px;
-  width: 34px;
+  width: auto;
   height: 34px;
-  padding: 5px;
-  display: grid;
-  place-items: center;
-  font-size: 19px;
+  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
   list-style: none;
 }
 .graph-floating-tools summary::-webkit-details-marker {
@@ -1140,4 +1143,168 @@ summary {
   max-height: none;
   margin: 0;
   overflow: auto;
+}
+
+/* Shared SVG metrics keep controls aligned independently of platform fonts. */
+.icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  vertical-align: middle;
+  pointer-events: none;
+}
+.inspector-rail button,
+.panel-toggle,
+.node-expansion,
+.graph-floating-tools .button,
+.graph-floating-tools summary,
+.branch-controls .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.graph-floating-tools summary {
+  list-style: none;
+}
+.graph-floating-tools summary::-webkit-details-marker {
+  display: none;
+}
+.graph-legend {
+  bottom: auto;
+  top: 0;
+  right: 0;
+  margin: 0;
+  border-radius: 0 0 0 5px;
+}
+.graph-summary {
+  cursor: pointer;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+}
+.graph-notice {
+  position: absolute;
+  bottom: 12px;
+  left: 55px;
+  z-index: 5;
+  max-width: calc(100% - 240px);
+  font-size: 12px;
+  background: var(--surface);
+  border-radius: 4px;
+}
+.graph-notice:not(:empty) {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+}
+
+/* Colour controls share the canvas toolbar's inset and control height. */
+.graph-colour-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 6;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.graph-colour-controls > button {
+  width: 34px;
+  height: 34px;
+  padding: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.graph-colour-controls > select {
+  height: 34px;
+  padding: 4px 28px 4px 10px;
+  font-size: 13px;
+}
+.graph-colour-legend {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: 270px;
+  max-width: 80vw;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 14px;
+  background: var(--surface);
+  box-shadow: 0 6px 24px #142d4630;
+  font-size: 12px;
+}
+.graph-colour-legend > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.graph-colour-legend .muted {
+  margin-left: auto;
+}
+.graph-colour-legend p {
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+.colour-polars_transform,
+.colour-published {
+  background: #dcefe2;
+}
+.colour-sql_transform {
+  background: #dfe7ff;
+}
+.colour-external {
+  background: #f6e4ce;
+}
+.colour-dataset {
+  background: #d9eef1;
+}
+.colour-unknown {
+  background: #e8eaee;
+}
+.colour-missing {
+  background: #f4e6cf;
+}
+.theme-dark .colour-polars_transform,
+.theme-dark .colour-published {
+  background: #234334;
+}
+.theme-dark .colour-sql_transform {
+  background: #303e5b;
+}
+.theme-dark .colour-external,
+.theme-dark .colour-missing {
+  background: #4c3c2b;
+}
+.theme-dark .colour-dataset {
+  background: #29434a;
+}
+.theme-dark .colour-unknown {
+  background: #353e4a;
+}
+.resource-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 16px;
+  font-size: 17px;
+}
+.resource-icon.external-icon .icon {
+  width: 13px;
+  height: 13px;
+  flex-basis: 13px;
+}
+.graph-notice {
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  width: max-content;
+  max-width: calc(100% - 300px);
 }

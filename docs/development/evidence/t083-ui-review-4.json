@@ -1,0 +1,83 @@
+{
+  "task": "T083 owner UI review, fourth iteration",
+  "date": "2026-09-29",
+  "platform": "macOS arm64",
+  "status": "Local implementation verified; owner requested committing and pushing the reviewed UI on 2026-09-29; CI pending",
+  "previous_pushed": {
+    "implementation": "3116bd8",
+    "specification": "1f899dd",
+    "ci": "Owner-monitored; not confirmed"
+  },
+  "changes": [
+    "Place new parents left and new children right through successive levels; preserve existing positions and camera",
+    "Bounded context-owned node/incoming-edge cache; warm displayed catalogue page; one lineage read for cold additions rather than serial graph/connection reads",
+    "Resource Type default colour selector and icon legend toggle; Publication alternative; missing-publication border remains independent",
+    "Graph-scoped Cmd/Ctrl+A; Shift-drag rectangle removed on release with node selection retained",
+    "No top startup text; bottom-centred notices; supported attribution-hide option; retained MIT license; restored function glyph and smaller external arrow"
+  ],
+  "verification": [
+    {
+      "command": "bash tools/check-web.sh",
+      "result": "409 tests; strict types, lint/accessibility, formatting and shared contracts; production worker probes and byte-identical builds passed; pointer release and rapid uncached-addition regressions passed"
+    },
+    {
+      "command": "PATH=\"$HOME/.cargo/bin:$PATH\" PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-rust.sh",
+      "result": "397 Rust tests plus one doc test; formatting, compilation, Clippy and 12 boundary regressions passed"
+    },
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "946 tests; tooling pins, lint, format and types passed"
+    },
+    {
+      "command": "target/python/py314/bin/python python/tools/check_api.py target/debug/transflow target/ui5-wheels/transflow-0.0.0.dev0-py3-none-any.whl target/qualification/wheelhouse --output /tmp/ui5-api.json",
+      "result": "15 real coordinator journey groups passed, including paginated lookup, cursor binding, invalid/ambiguous requests, incoming hidden parents and resource type"
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+      "result": "27 regressions and safety baseline passed; unchanged 641 package versions"
+    },
+    {
+      "command": "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .; git diff --check (both repositories)",
+      "result": "Specification 1.1.3 and whitespace checks passed"
+    },
+    {
+      "command": "target/python/py314/bin/python -B tools/safety/check.py",
+      "result": "Final generated-contract and public artifact scan passed"
+    }
+  ],
+  "latency": {
+    "workspace": "Synthetic 605 datasets, debug coordinator build",
+    "before_ms": {
+      "context": 287,
+      "lineage_depth_zero": 605,
+      "lineage_depth_one": 607,
+      "connections": 604
+    },
+    "after_browser_action_and_dom_roundtrip_ms": {
+      "cached_catalogue_add": 130,
+      "cached_parent_expansion": 133,
+      "cached_child_expansion": 130
+    },
+    "interpretation": "Not a benchmark guarantee: browser measurements include automation action and DOM wait overhead; first uncached reads still validate with the coordinator."
+  },
+  "browser": {
+    "tool": "Codex internal Browser",
+    "observed": [
+      "Empty graph has no startup text over toolbar; Resource Type selected initially; attribution absent",
+      "Added curated/left at (60,100), parent raw/root at (-280,100), child curated/result at (400,100), viewport unchanged translate(0,0) scale(1)",
+      "Expanding result parents adds foreign and shared child at x60, retains original nodes, and shows all five visible dependencies",
+      "Cmd+A selects five then six visible nodes; search Cmd+A/Backspace does not change graph membership or selection",
+      "Legend reflects four published local nodes and one unknown foreign node; resource colours distinguish external and Polars; unbuilt wide node remains dashed",
+      "Subsequent catalogue addition preserves fitted viewport and existing positions"
+    ],
+    "selection_rectangle": "Actual React Flow pointer lifecycle regression in jsdom confirms selection overlay visible during drag and both selection overlays absent after release while nodes stay selected. Physical Shift-drag in Firefox remains owner review."
+  },
+  "limits": [
+    "Warm at most 100 catalogue paths; cache at most 2000 nodes and 10000 incoming declarations; cache is cleared on context change/disconnection and late responses are fenced",
+    "Cold additions/expansions still wait for complete context-validated metadata; large expansions still require paginated reads",
+    "Cache hits represent the selected context, not a fresh live-state or freshness check",
+    "Publication mode is retained metadata; foreign/historical availability remains unknown and does not contact providers",
+    "No new dependency, runtime migration, API major change or layout implementation; later metric overlays remain T088",
+    "CI remains owner-monitored; owner requested commit/push after preview review"
+  ]
+}

@@ -20,6 +20,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  useStoreApi,
   type Node,
   type NodeProps,
   type NodeChange,
@@ -27,6 +28,7 @@ import {
 } from "@xyflow/react";
 import type { ApiLineageNodeV1 } from "../generated/contracts";
 import type { Workspace } from "../workspace";
+import { Icon } from "../Icons";
 import { Button } from "../components";
 import {
   GraphModel,
@@ -47,8 +49,8 @@ type DatasetNode = Node<
     parentsExpanded: boolean;
     childrenExpanded: boolean;
     busy: boolean;
-    pinned: boolean;
     onPath: boolean;
+    colour: "resource" | "publication";
     expand: (
       node: ApiLineageNodeV1,
       direction: Exploration["direction"],
@@ -79,12 +81,22 @@ function Dataset({ data }: NodeProps<DatasetNode>) {
         data.expand(data.value, side);
       }}
     >
-      {side === "upstream" ? (expanded ? ">" : "<") : expanded ? "<" : ">"}
+      <Icon
+        name={
+          side === "upstream"
+            ? expanded
+              ? "right"
+              : "left"
+            : expanded
+              ? "left"
+              : "right"
+        }
+      />
     </button>
   );
   return (
     <div
-      className={`dataset-node ${data.value.external ? "foreign-node" : ""}`}
+      className={`dataset-node colour-${data.colour === "resource" ? data.value.resource_type : data.value.publication} ${data.value.publication === "missing" ? "unbuilt-node" : ""}`}
     >
       <Handle type="target" position={Position.Left} isConnectable={false} />
       {parents &&
@@ -104,11 +116,17 @@ function Dataset({ data }: NodeProps<DatasetNode>) {
         }}
         onClick={() => setHovered(true)}
       >
-        <span aria-hidden="true">
-          {data.value.external ? "↗" : data.value.producer ? "ƒ" : "▤"}
+        <span
+          className={`resource-icon ${data.value.external ? "external-icon" : ""}`}
+          aria-hidden="true"
+        >
+          {data.value.producer ? (
+            "ƒ"
+          ) : (
+            <Icon name={data.value.external ? "external" : "table"} />
+          )}
         </span>{" "}
         <span>{label(data.value)}</span>
-        {data.pinned && <span title="Pinned">⌖</span>}
       </button>
       {children &&
         arrow("downstream", data.childrenExpanded, data.value.child_count)}
@@ -141,9 +159,11 @@ export function GraphExplorer({
   dark = false,
   onVisible,
   focusRequest,
+  cataloguePaths,
 }: {
   workspace: Workspace;
   dark?: boolean;
+  cataloguePaths?: readonly string[];
   onVisible?: (identities: readonly string[]) => void;
   focusRequest?: { path: string; revision: number } | null;
 }) {
@@ -151,6 +171,15 @@ export function GraphExplorer({
   const graph = useSyncExternalStore(model.subscribe, model.snapshot);
   const state = useSyncExternalStore(workspace.subscribe, workspace.snapshot);
   useEffect(() => model.connect(), [model]);
+  const fingerprint =
+    state.kind === "ready" ? state.value.context.fingerprint : "";
+  useEffect(() => {
+    if (fingerprint && cataloguePaths?.length) model.prefetch(cataloguePaths);
+  }, [model, fingerprint, cataloguePaths]);
+  useEffect(() => {
+    if (fingerprint && focusRequest) void model.add(focusRequest.path);
+  }, [model, fingerprint, focusRequest]);
+
   useEffect(
     () => onVisible?.(graph.nodes.map((n) => n.identity)),
     [graph.nodes, onVisible],
@@ -190,13 +219,14 @@ function GraphView({
   const [positions] = useState(() => new Positions());
   const layout = useSyncExternalStore(positions.subscribe, positions.snapshot);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
-  const [reference, setReference] = useState("");
   const [depth, setDepth] = useState("1");
   const [direction, setDirection] =
     useState<Exploration["direction"]>("upstream");
-  const [large, setLarge] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const flow = useReactFlow<DatasetNode>();
+  const flowStore = useStoreApi();
+  const [legendOpen, setLegendOpen] = useState(false);
+  const [colour, setColour] = useState<"resource" | "publication">("resource");
   const workspaceState = workspace.snapshot();
   const ready = workspaceState.kind === "ready" ? workspaceState.value : null;
   const chosen = [...selected].flatMap((id) =>
@@ -223,11 +253,11 @@ function GraphView({
         ariaLabel: `${label(node)}, ${node.external ? "read-only foreign boundary" : "dataset"}`,
         data: {
           value: node,
+          colour,
           workspace,
           busy: graph.busy,
           parentsExpanded: model.expanded(node, "upstream"),
           childrenExpanded: model.expanded(node, "downstream"),
-          pinned: layout.pins.has(node.identity),
           onPath: graph.pathNodes?.has(node.identity) ?? false,
           expand,
           kind:
@@ -243,12 +273,12 @@ function GraphView({
       })),
     [
       graph.nodes,
+      colour,
       graph.busy,
       model,
       workspace,
       graph.pathNodes,
       layout.positions,
-      layout.pins,
       selected,
       expand,
       ready,
@@ -267,7 +297,7 @@ function GraphView({
         label: `${edge.alias} · ${edge.role}`,
         ariaLabel: `${edge.alias}: ${edge.role} dependency, branch ${edge.declared_branch.name ?? edge.declared_branch.kind}, ${edge.stop_branch_fallback ? "fallback blocked" : "fallback permitted"}, ${edge.checks.length} checks`,
         style: {
-          ...(edge.role === "validation" ? { strokeDasharray: "7 5" } : {}),
+          ...(edge.role === "validation" ? { stroke: "var(--accent)" } : {}),
           strokeWidth:
             graph.pathNodes?.has(edge.parent) &&
             graph.pathNodes.has(edge.consumer)
@@ -279,9 +309,9 @@ function GraphView({
       }));
   }, [graph.nodes, graph.edges, graph.pathNodes]);
   useEffect(() => {
-    if (active) positions.run(graph.nodes, graph.edges);
+    if (active) positions.sync(graph.nodes, graph.edges, graph.placement);
     return positions.stop;
-  }, [positions, graph.nodes, graph.edges, active]);
+  }, [positions, graph.nodes, graph.edges, graph.placement, active]);
   const changes = useCallback(
     (updates: NodeChange<DatasetNode>[]) => {
       for (const change of updates)
@@ -300,21 +330,6 @@ function GraphView({
     },
     [positions],
   );
-  const inspect = (): void => {
-    const identity = chosen[0]?.identity.match(/^dataset:([^:]+):([^:]+)$/);
-    if (identity?.[1] && identity[2])
-      void workspace.select({
-        branch: workspaceState.selection.branch,
-        ...(workspaceState.selection.fallback !== undefined
-          ? { fallback: workspaceState.selection.fallback }
-          : {}),
-        origin: identity[1],
-        dataset: identity[2],
-        ...(workspaceState.selection.plan
-          ? { plan: workspaceState.selection.plan }
-          : {}),
-      });
-  };
   const focused = useRef<object | null>(null);
   useEffect(() => {
     if (
@@ -328,217 +343,106 @@ function GraphView({
     const node = graph.nodes.find((n) => n.paths.includes(focusRequest.path));
     const position = node && layout.positions[node.identity];
     if (!node || !position) return;
-    focused.current = focusRequest;
-    void flow
-      .setCenter(position.x + 125, position.y + 20, {
-        zoom: flow.getZoom(),
-        duration: 200,
-      })
-      .then(() => {
-        if (focused.current === focusRequest)
-          setSelected(new Set([node.identity]));
-      });
+    const frame = requestAnimationFrame(() => {
+      focused.current = focusRequest;
+      setSelected(new Set([node.identity]));
+    });
+    return () => cancelAnimationFrame(frame);
   }, [active, focusRequest, graph.busy, graph.nodes, layout, flow]);
   return (
     <>
-      <div className="graph-tools" hidden={!toolsOpen}>
-        <form
-          className="graph-query"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setToolsOpen(false);
-            void model.explore(
-              {
-                start: reference.trim() || (chosen[0] ? label(chosen[0]) : ""),
-                direction,
-                depth,
-              },
-              false,
-              large,
-            );
-          }}
-        >
-          <label>
-            Dataset path
-            <input
-              aria-label="Dataset path to explore"
-              placeholder="path/from/catalogue"
-              value={reference}
-              onChange={(event) => setReference(event.target.value)}
-            />
-          </label>
-          <label>
-            Direction
-            <select
-              value={direction}
-              onChange={(event) =>
-                setDirection(
-                  event.target.value === "downstream"
-                    ? "downstream"
-                    : "upstream",
-                )
-              }
-            >
-              <option value="upstream">Ancestors</option>
-              <option value="downstream">Descendants</option>
-            </select>
-          </label>
-          <label>
-            Depth
-            <input
-              aria-label="Traversal depth"
-              placeholder="All"
-              inputMode="numeric"
-              value={depth}
-              onChange={(event) => setDepth(event.target.value)}
-            />
-          </label>
-          <Button
-            type="submit"
-            disabled={
-              !ready?.context.graph ||
-              graph.busy ||
-              (!reference.trim() && chosen.length !== 1)
-            }
-          >
-            Explore
-          </Button>
-        </form>
-        <details className="graph-help">
-          <summary>Navigation help</summary>{" "}
-          <p className="graph-hint">
-            Blank depth means all reachable local datasets; each action loads at
-            most 100 nodes and 100 edges. Drag the canvas to pan. Shift-drag
-            selects a box. Drag nodes or use arrow keys to pin positions.
-            Cmd/Ctrl adds to selection. Delete/Backspace removes focused graph
-            selections from the view. Paths follow the first selected dataset to
-            the second. Removing nodes changes only this view.
-          </p>
-        </details>
-      </div>
       <div className="graph-floating-tools">
+        <Button disabled title="Layout options are coming in a later iteration">
+          <Icon name="layout" /> Layout
+        </Button>
+        <details className="graph-options">
+          <summary>
+            <Icon name="select" /> Select
+          </summary>
+          <div className="graph-actions">
+            <Button
+              disabled={!chosen.length}
+              onClick={() => setSelected(new Set())}
+            >
+              Clear all
+            </Button>
+          </div>
+        </details>
         <Button
-          title="Explore ancestors or descendants"
-          aria-label="Explore ancestors or descendants"
+          disabled={!chosen.length || graph.busy}
           aria-expanded={toolsOpen}
           onClick={() => setToolsOpen(!toolsOpen)}
         >
-          ⑂
+          <Icon name="expand" /> Expand
         </Button>
-        <details className="graph-options">
-          <summary
-            title="Selection and layout"
-            aria-label="Selection and layout"
-          >
-            ⚙
-          </summary>
-          <div className="graph-actions">
-            {" "}
-            <label>
-              <input
-                type="checkbox"
-                checked={large}
-                onChange={(event) => setLarge(event.target.checked)}
-              />{" "}
-              Allow more than 500 visible datasets
-            </label>
-            <Button
-              disabled={!chosen.length}
-              onClick={() => {
-                model.remove(selected);
-                setSelected(new Set());
-              }}
-            >
-              Remove from view
-            </Button>
-            <Button
-              disabled={!chosen.length}
-              onClick={() => positions.unpin(selected)}
-            >
-              Unpin selection
-            </Button>
-            <Button
-              disabled={
-                chosen.length !== 1 ||
-                !chosen[0]?.identity.startsWith("dataset:")
-              }
-              onClick={inspect}
-            >
-              Inspect selection
-            </Button>
-            <Button
-              disabled={chosen.length !== 2 || graph.busy}
-              onClick={() => {
-                const [start, end] = chosen;
-                if (start && end)
-                  void model.explore(
-                    {
-                      start: label(start),
-                      end: label(end),
-                      direction: "downstream",
-                      depth: "",
-                    },
-                    false,
-                    large,
-                  );
-              }}
-            >
-              Show paths
-            </Button>
-            {chosen.length === 2 && (
-              <span>
-                Path direction: {chosen[0] && label(chosen[0])} →{" "}
-                {chosen[1] && label(chosen[1])}
-              </span>
-            )}
-            <Button
-              disabled={!graph.nodes.length}
-              onClick={() => positions.run(graph.nodes, graph.edges, true)}
-            >
-              Relayout all (clear pins)
-            </Button>
-            {layout.error && (
-              <Button onClick={() => positions.run(graph.nodes, graph.edges)}>
-                Retry layout
-              </Button>
-            )}
-          </div>
-        </details>
       </div>
-      <details className="graph-summary">
-        <summary>
-          {graph.nodes.length} visible datasets · {edges.length} visible edges
-          {graph.busy ? " · Loading batch…" : ""}
-          {layout.busy ? " · Arranging graph…" : ""}
-        </summary>
-        <p className="graph-counts" role="status">
-          {graph.nodes.length} visible datasets · {edges.length} visible edges ·{" "}
-          {graph.edges.length - edges.length} edges awaiting endpoints.{" "}
-          {graph.busy ? "Loading batch… " : ""}
-          {layout.busy ? "Arranging graph… " : ""}
-          {graph.page &&
-            `Last query: ${graph.page.total_nodes} nodes / ${graph.page.total_edges} edges; ${graph.page.remaining_nodes} nodes / ${graph.page.remaining_edges} edges pending; ${graph.page.omitted_nodes} nodes / ${graph.page.omitted_edges} edges beyond depth.`}
-        </p>
-      </details>
-      {graph.page?.next_cursor && graph.query && (
-        <Button
-          disabled={graph.busy}
-          onClick={() => {
-            if (graph.query) void model.explore(graph.query, true, large);
-          }}
-        >
-          Load next graph batch
-        </Button>
+      {toolsOpen && chosen.length > 0 && (
+        <div className="graph-tools">
+          <form
+            className="graph-query"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setToolsOpen(false);
+              void model.expand(chosen, direction, depth).then((ids) => {
+                if (ids) setSelected(ids);
+              });
+            }}
+          >
+            <label>
+              Direction
+              <select
+                value={direction}
+                onChange={(e) =>
+                  setDirection(
+                    e.target.value === "downstream" ? "downstream" : "upstream",
+                  )
+                }
+              >
+                <option value="downstream">Forward (children)</option>
+                <option value="upstream">Backward (parents)</option>
+              </select>
+            </label>
+            <label>
+              Levels
+              <input
+                aria-label="Expansion levels"
+                inputMode="numeric"
+                placeholder="All"
+                value={depth}
+                onChange={(e) => setDepth(e.target.value)}
+              />
+            </label>
+            <Button type="submit" disabled={graph.busy}>
+              Expand selection
+            </Button>
+          </form>
+          <p className="graph-hint">
+            Blank levels expands all reachable local datasets. Drag to pan;
+            Shift-drag selects a box. Delete/Backspace removes the selection
+            from this view. Node positions and zoom stay unchanged.
+          </p>
+        </div>
       )}
-      {graph.message && <p role="alert">{graph.message}</p>}
-      {layout.error && <p role="alert">{layout.error}</p>}
-      {!graph.nodes.length && (
-        <p className="graph-empty">
-          {ready?.context.graph
-            ? "Open the catalogue panel to select a dataset."
-            : "No validated graph retained in this context. Validate or build through the CLI, then refresh."}
-        </p>
-      )}
+      <button
+        className="graph-summary"
+        disabled={!chosen.length}
+        title="Centre selection"
+        onClick={() => {
+          const bounds = flow.getNodesBounds(chosen.map((n) => n.identity));
+          void flow.setCenter(
+            bounds.x + bounds.width / 2,
+            bounds.y + bounds.height / 2,
+            { zoom: flow.getZoom(), duration: 200 },
+          );
+        }}
+      >
+        {chosen.length} {chosen.length === 1 ? "node" : "nodes"} selected
+      </button>
+      <GraphNotice
+        key={`${graph.busy}:${graph.message}:${layout.error}`}
+        message={graph.message || layout.error}
+        busy={graph.busy}
+      />
       <div className="graph-diagram">
         <ReactFlow<DatasetNode>
           tabIndex={0}
@@ -553,13 +457,22 @@ function GraphView({
           onKeyDownCapture={(event) => {
             const target = event.target as HTMLElement;
             if (
-              !["Delete", "Backspace"].includes(event.key) ||
               target.closest(
                 "input, textarea, select, [contenteditable=true]",
               ) ||
               (target.closest("button") && !target.closest(".react-flow__node"))
             )
               return;
+            if (
+              (event.metaKey || event.ctrlKey) &&
+              event.key.toLowerCase() === "a"
+            ) {
+              event.preventDefault();
+              event.stopPropagation();
+              setSelected(new Set(graph.nodes.map((n) => n.identity)));
+              return;
+            }
+            if (!["Delete", "Backspace"].includes(event.key)) return;
             if (selected.size) {
               event.preventDefault();
               event.stopPropagation();
@@ -573,6 +486,12 @@ function GraphView({
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodesChange={changes}
+          onSelectionEnd={() =>
+            queueMicrotask(() =>
+              flowStore.setState({ nodesSelectionActive: false }),
+            )
+          }
+          proOptions={{ hideAttribution: true }}
           nodesConnectable={false}
           edgesReconnectable={false}
           deleteKeyCode={null}
@@ -582,7 +501,6 @@ function GraphView({
           panOnDrag={true}
           minZoom={0.05}
           maxZoom={2}
-          fitView
           aria-label="Dataset lineage diagram"
           colorMode={dark ? "dark" : "light"}
         >
@@ -595,7 +513,7 @@ function GraphView({
                 void flow.fitView({ duration: 200 });
               }}
             >
-              ⛶
+              <Icon name="fit" />
             </ControlButton>
             <ControlButton
               title="Fit selection"
@@ -613,14 +531,82 @@ function GraphView({
           </Controls>
         </ReactFlow>
       </div>
-      <details className="graph-legend">
-        <summary>Legend</summary>
-        <p>
-          Solid: data · Dashed: validation-only · ↗: foreign read boundary.
-          Provider code is never executed by graph navigation. Freshness and
-          quality overlays arrive separately.
-        </p>
-      </details>
+      <div className="graph-colour-controls">
+        <Button
+          aria-label="Toggle legend"
+          title="Legend"
+          aria-expanded={legendOpen}
+          onClick={() => setLegendOpen(!legendOpen)}
+        >
+          <Icon name="legend" />
+        </Button>
+        <select
+          aria-label="Node colouring"
+          value={colour}
+          onChange={(e) =>
+            setColour(
+              e.target.value === "publication" ? "publication" : "resource",
+            )
+          }
+        >
+          <option value="resource">Resource Type</option>
+          <option value="publication">Publication</option>
+        </select>
+        {legendOpen && (
+          <div className="graph-colour-legend" aria-label="Graph legend">
+            {(colour === "resource" ? resourceLabels : publicationLabels).map(
+              ([key, name]) => (
+                <div key={key}>
+                  <span className={`legend-swatch colour-${key}`} />
+                  {name}
+                  <span className="muted">
+                    {
+                      graph.nodes.filter(
+                        (n) =>
+                          (colour === "resource"
+                            ? n.resource_type
+                            : n.publication) === key,
+                      ).length
+                    }
+                  </span>
+                </div>
+              ),
+            )}
+            <p>
+              Counts show visible datasets. Dashed border: no publication on
+              this branch or its fallbacks. Unknown is not missing. Publication
+              does not verify freshness or dataset files.
+            </p>
+          </div>
+        )}
+      </div>
     </>
   );
 }
+
+function GraphNotice({ message, busy }: { message: string; busy: boolean }) {
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  useEffect(() => {
+    if (!message) return;
+    const timeout = window.setTimeout(() => setDismissed(message), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
+  return (
+    <div className="graph-notice" role="status" aria-live="polite">
+      {busy ? "Adding datasets…" : message !== dismissed ? message : ""}
+    </div>
+  );
+}
+
+const resourceLabels = [
+  ["polars_transform", "Polars Transform"],
+  ["sql_transform", "SQL Transform"],
+  ["external", "External Dataset"],
+  ["dataset", "Dataset"],
+  ["unknown", "Unknown"],
+] as const;
+const publicationLabels = [
+  ["published", "Published"],
+  ["missing", "Not built on these branches"],
+  ["unknown", "Unknown"],
+] as const;

@@ -1,0 +1,69 @@
+{
+  "task": "T083 owner UI review, third iteration",
+  "date": "2026-09-29",
+  "platform": "macOS arm64",
+  "status": "Local implementation verified; final browser preview for owner review; new iteration uncommitted",
+  "previous_iteration_pushed": {
+    "implementation": "3116bd8",
+    "specification": "1f899dd",
+    "ci": "Owner-monitored; not yet confirmed"
+  },
+  "changes": [
+    "Stable existing/manual positions and unchanged camera on graph membership changes; no position pins",
+    "Dataset-only metadata selection preserves ready workspace and catalogue; explicit refresh and branch/version changes retain full context reload",
+    "Layout placeholder, Select/Clear all, multi-root forward/backward depth expansion in bounded pages",
+    "Local SVG controls; removed placeholder breadcrumb; flush legend; vertically centred panel toggles; bottom transient messages",
+    "Selected-node count centres bounds without zoom; separate fit-selection control",
+    "Solid external nodes/edges; dashed border only for confirmed missing local publication across requested branch/fallbacks; foreign/historical unknown stays solid"
+  ],
+  "verification": [
+    {
+      "command": "bash tools/check-web.sh",
+      "result": "403 tests; strict types, lint/accessibility, formatting, shared contracts; production worker diamond/error probes and two byte-identical builds (five local assets)"
+    },
+    {
+      "command": "PATH=\"$HOME/.cargo/bin:$PATH\" bash tools/check-rust.sh",
+      "result": "397 Rust tests plus one doc test; formatting, build, Clippy and 12 boundary regressions passed"
+    },
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "946 tests, lint, format, types and environment checks passed"
+    },
+    {
+      "command": "target/python/py314/bin/python python/tools/check_api.py target/debug/transflow target/ui4-wheels/transflow-0.0.0.dev0-py3-none-any.whl target/qualification/wheelhouse --output /tmp/ui4-api.json",
+      "result": "14 real coordinator journey groups passed, including new missing/published fallback and foreign unknown assertions"
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+      "result": "27 safety regressions and baseline passed; unchanged 641 locked package versions"
+    },
+    {
+      "command": "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .; git diff --check (both repositories)",
+      "result": "Specification 1.1.3 validation and both whitespace checks passed"
+    },
+    {
+      "command": "target/python/py314/bin/python -B tools/safety/check.py",
+      "result": "Final public artifact and generated-contract scan passed (677 public candidates, unchanged 641 package versions)"
+    }
+  ],
+  "browser": {
+    "tool": "Codex internal Browser",
+    "data": "Synthetic diamond, provider boundary and 600 wide datasets",
+    "observed": [
+      "Sequential catalogue additions keep Connected and preserve all existing transforms and viewport translate(0,0) scale(1)",
+      "Adding shared parent exposes edges to both visible children",
+      "Two-level selected expansion adds ancestors without changing camera",
+      "Built local nodes and foreign node solid; unbuilt wide node dashed; all six visible edges solid",
+      "Selection-count action centres without changing scale(1)",
+      "Keyboard move changes selected positions; subsequent addition and Backspace removal preserve surviving positions and viewport translate(-69,267.5) scale(1)",
+      "Select contains only Clear all; clearing leaves five nodes and disables Expand",
+      "Legend and canvas top both 54px; SVG toolbar spacing corrected after visual inspection"
+    ]
+  },
+  "limits": [
+    "Firefox review belongs to owner; browser automation used internal browser",
+    "Foreign/historical publication status is unknown; no provider contact or artifact/freshness verification",
+    "Layout intentionally disabled; saved views, grouping and complete inspector content remain later tasks",
+    "CI not monitored; no new dependency, runtime migration or API major change"
+  ]
+}

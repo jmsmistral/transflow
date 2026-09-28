@@ -25,6 +25,8 @@ const node = {
   depth: "0",
   producer: false,
   external: false,
+  resource_type: "unknown" as const,
+  publication: "unknown" as const,
   parent_count: "0",
   child_count: "0",
 };

@@ -1,6 +1,7 @@
 import { useState, useSyncExternalStore } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { Button, Status } from "./components";
+import { Icon, type IconName } from "./Icons";
 import { ResizeHandle } from "./panels";
 import { BranchControls } from "./BranchControls";
 import { CatalogueSearch } from "./graph/Search";
@@ -66,6 +67,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     path: string;
     revision: number;
   } | null>(null);
+  const [cataloguePaths, setCataloguePaths] = useState<readonly string[]>([]);
   const [visible, setVisible] = useState<readonly string[]>([]);
   const [dark, setDark] = useState(false);
   const [right, setRight] = useState(26),
@@ -103,11 +105,6 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
         <a className="brand" href="#workspace" aria-label="Transflow workspace">
           <span aria-hidden="true">◈</span> transflow
         </a>
-        <nav aria-label="Workspace breadcrumb" className="breadcrumb">
-          <span>Workspace</span>
-          <span aria-hidden="true">/</span>
-          <strong>{title === "Workspace" ? "Overview" : title}</strong>
-        </nav>
         <div className="top-actions">
           <BranchControls
             workspace={workspace}
@@ -137,6 +134,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 dark={dark}
                 onVisible={setVisible}
                 focusRequest={focusRequest}
+                cataloguePaths={cataloguePaths}
               />
               {!ready && (
                 <div className="canvas-message" role="status">
@@ -175,7 +173,19 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                   setInspectorOpen(true);
                 }}
               >
-                <span aria-hidden="true">{["⌕", "☷", "⚒", "▦", "◇"][i]}</span>
+                <Icon
+                  name={
+                    (
+                      [
+                        "search",
+                        "list",
+                        "build",
+                        "calendar",
+                        "health",
+                      ] satisfies IconName[]
+                    )[i] ?? "search"
+                  }
+                />
               </button>
             ))}
             <button
@@ -189,7 +199,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
               aria-controls="inspector"
               onClick={() => setInspectorOpen(!inspectorOpen)}
             >
-              <span aria-hidden="true">{inspectorOpen ? "»" : "«"}</span>
+              <Icon name={inspectorOpen ? "collapse" : "reveal"} />
             </button>
           </nav>
           {inspectorOpen && (
@@ -214,22 +224,20 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                       workspace={workspace}
                       active={!!ready}
                       visible={visible}
+                      onPage={setCataloguePaths}
                       select={(entry) => {
-                        void workspace
-                          .select({
-                            branch: requested,
-                            dataset: entry.dataset_id,
-                            origin: entry.workspace_id,
-                            ...(state.selection.fallback
-                              ? { fallback: state.selection.fallback }
-                              : {}),
-                          })
-                          .then(() =>
-                            setFocusRequest((old) => ({
-                              path: entry.path,
-                              revision: (old?.revision ?? 0) + 1,
-                            })),
-                          );
+                        setFocusRequest((old) => ({
+                          path: entry.path,
+                          revision: (old?.revision ?? 0) + 1,
+                        }));
+                        void workspace.select({
+                          branch: requested,
+                          dataset: entry.dataset_id,
+                          origin: entry.workspace_id,
+                          ...(state.selection.fallback
+                            ? { fallback: state.selection.fallback }
+                            : {}),
+                        });
                       }}
                     />
                   </>
@@ -379,7 +387,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 aria-controls="inspector-content"
                 onClick={() => setBottomOpen(!bottomOpen)}
               >
-                <span aria-hidden="true">{bottomOpen ? "⌄" : "⌃"}</span>
+                <Icon name={bottomOpen ? "down" : "up"} />
               </button>
             </div>
             <div
