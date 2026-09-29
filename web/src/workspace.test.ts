@@ -118,7 +118,7 @@ test("selected versions carry dataset and provider identity on every dependent r
         JSON.parse(String(init?.body)) as { query?: Record<string, string> },
     );
   const pinned = calls.filter((call) => call.query?.version === versionId);
-  expect(pinned).toHaveLength(5);
+  expect(pinned).toHaveLength(6);
   for (const call of pinned)
     expect(call.query).toMatchObject({
       dataset: datasetId,

@@ -97,6 +97,15 @@
     "context": true
   },
   {
+    "path": "/api/v1/datasets/{dataset}/inspection",
+    "method": "GET",
+    "response": "ApiDatasetInspectionV1",
+    "request": null,
+    "query": ["origin_workspace"],
+    "mutation": false,
+    "context": true
+  },
+  {
     "path": "/api/v1/lineage",
     "method": "GET",
     "response": "ApiLineageV1",

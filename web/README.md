@@ -163,27 +163,31 @@ inspectors remain later work.
 ## Dataset inspection (T085)
 
 The right **Properties** panel follows the selected graph or catalogue dataset.
-About displays stable ID, logical path, origin/workspace, producer location,
-requested/resolved branch and fallback rank, published head, exact version,
-source capture, publication time and physical row/file/byte counts. Columns lists
-the selected version's logical schema with types and nullability. Missing metadata
-is labelled unknown or unavailable; a real zero stays zero. Description, created
-time, data-health and schedules are labelled unavailable until their APIs or
-inspectors exist. For multiple graph selections, the panel deduplicates identities,
+About displays stable ID, logical path, origin, transform type, producer location,
+creation time when recorded, publication time and physical row/file/byte counts.
+The compact detail list has no row dividers. Columns lists the current preview
+version's logical schema with types and nullability. Missing metadata is labelled
+unknown or unavailable; a real zero stays zero. Description and data-health remain
+explicitly unavailable where their metadata is absent. For multiple graph selections,
+the panel deduplicates identities,
 shows origin/type/publication distributions, sums known physical counts and reports
 unknown members separately. It inspects up to 50 selected datasets to bound reads.
 
-The bottom **Preview** tab projects up to 12 columns by default from the selected
-immutable head or an explicitly chosen retained version. Search and checkboxes
-change the projected columns; pages are bounded to 100 physical rows, with the
-coordinator's cursor, limits and provider leases. The header identifies requested
-and resolved branches, exact version, publication time and producing source. Typed
-null, truncated cells, decimal precision, timestamp units and nested values remain
-distinct. Selecting a cell offers an explicit sensitive-data notice before copying.
-An unavailable version, missing schema or failed read produces an explicit state;
-no current-head substitution occurs. Foreign manifests supply metadata counts,
-while provider byte availability and freshness remain separate and unverified.
-The preview does not claim full artifact integrity or data-health PASS.
+The bottom **Preview** tab contains a compact dataset row and the table immediately
+below it. The row shows publication time and row/column counts; resolved branch
+appears only when it differs from the selected branch. The preview uses the selected
+branch's head, ordered configured fallbacks, then an available retained branch for
+browsing if none has a head. That last choice never changes build fallback policy.
+Each read binds an exact immutable version and requests the available schema columns
+within the coordinator's 128-column limit. Pages are bounded to 100 physical rows,
+with the coordinator's cursor, limits and provider leases. Column types remain in
+tooltips rather than a second header line. Typed null, truncated cells, decimal
+precision, timestamp units and nested values remain distinct. Selecting a cell
+offers an explicit sensitive-data notice before copying. An unavailable version,
+missing schema or failed read produces an explicit state; no page rebinds to a newer
+head. Foreign manifests supply metadata counts, while provider byte availability and
+freshness remain separate and unverified. The preview does not claim full artifact
+integrity or data-health PASS.
 
 UI focus and node selection use thin, muted teal outlines (with a lighter dark-theme
 variant). Custom menu rows separate icons, labels and checkmarks, with consistent

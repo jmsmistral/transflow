@@ -137,6 +137,16 @@ export function fixtureTransport(
       );
     if (path.endsWith("/versions"))
       return json({ entries: [], next_cursor: null }, c);
+    if (path.endsWith("/inspection"))
+      return json(
+        {
+          origin_workspace: query.origin_workspace ?? workspaceId,
+          dataset: datasetId,
+          created_us: "1700000000000000",
+          suggested_head: null,
+        },
+        c,
+      );
     return json(query.version ? { ...dataset, head: null } : dataset, c);
   });
 }

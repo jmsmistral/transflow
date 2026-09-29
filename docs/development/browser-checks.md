@@ -34,14 +34,17 @@ Keep private reference screenshots and credentials out of committed evidence.
 ## Dataset inspection (T085)
 
 On a real synthetic coordinator, select a published local dataset and open the
-right Properties and bottom Preview panels. Check stable identity, branch, source,
-schema, exact physical counts and returned rows. Pin a retained version and confirm
-the preview header and page request keep that version. Select a registered foreign
-dataset: metadata counts come from its retained manifest, while provider byte
-availability and freshness remain distinct; a preview reads the provider under
-its lease. Exercise a missing head, unavailable schema/read and multi-selection
-unknown counts. Record actual browser observations separately from deterministic
-component tests; no private reference images enter the repository.
+right Properties and bottom Preview panels. Check creation/publication times,
+stable identity, producer, schema, exact physical counts and returned rows. The
+Preview has one compact dataset row above the table; it shows resolved branch only
+when different from the selected branch. Exercise an absent selected-branch head:
+ordered fallbacks precede the browse-only retained-branch suggestion. Page requests
+must keep the initially bound exact version. Select a registered foreign dataset:
+metadata counts come from its retained manifest, while provider byte availability
+and freshness remain distinct; a preview reads the provider under its lease.
+Exercise unavailable schema/read and multi-selection unknown counts. Record actual
+browser observations separately from deterministic component tests; no private
+reference images enter the repository.
 
 ## Graph journeys (T083)
 

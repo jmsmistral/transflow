@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type {
   ApiDatasetV1,
+  ApiDatasetInspectionV1,
   ApiLineageNodeV1,
   ApiPreviewV1,
   ApiVersionsV1,
-  ExecutionJsonV1,
   LogicalSchemaV1,
   LogicalType,
   WireValue,
@@ -56,8 +56,11 @@ export function versionMetadata(
   dataset: ApiDatasetV1,
   versions: ApiVersionsV1 | null,
   pinned?: string,
+  inspection?: ApiDatasetInspectionV1 | null,
 ) {
-  const version = pinned ?? field(dataset.head, "version");
+  const headVersion = field(dataset.head, "version");
+  const suggested = !pinned && !headVersion ? inspection?.suggested_head : null;
+  const version = pinned ?? headVersion ?? suggested?.version;
   const entry = versions?.entries.find((item) => item.version === version);
   const metadata = entry?.origin === "external" ? entry.metadata : null;
   const physical = manifestCounts(metadata);
@@ -66,7 +69,8 @@ export function versionMetadata(
       ? entry.schema
       : (nested(metadata, "manifest", "logical_schema") ??
           nested(metadata, "schema") ??
-          nested(dataset.head, "schema")),
+          nested(dataset.head, "schema") ??
+          suggested?.schema),
   );
   return {
     version,
@@ -76,28 +80,34 @@ export function versionMetadata(
         ? entry.row_count
         : (field(metadata, "row_count") ??
           physical.rows ??
-          (!pinned ? field(dataset.head, "row_count") : undefined)),
+          (!pinned ? field(dataset.head, "row_count") : undefined) ??
+          suggested?.row_count),
     bytes:
       entry?.origin === "local"
         ? entry.byte_count
         : (field(metadata, "byte_count") ??
           physical.bytes ??
-          (!pinned ? field(dataset.head, "byte_count") : undefined)),
+          (!pinned ? field(dataset.head, "byte_count") : undefined) ??
+          suggested?.byte_count),
     files:
       entry?.origin === "local"
         ? entry.file_count
-        : (field(metadata, "file_count") ?? physical.files),
+        : (field(metadata, "file_count") ??
+          physical.files ??
+          suggested?.file_count),
     published:
       entry?.origin === "local"
         ? entry.published_at_us
         : (field(metadata, "published_us") ??
-          (!pinned ? field(dataset.head, "published_at_us") : undefined)),
+          (!pinned ? field(dataset.head, "published_at_us") : undefined) ??
+          suggested?.published_us),
     source:
       entry?.origin === "local"
         ? entry.source
         : (field(nested(metadata, "source"), "id") ??
           (!pinned ? field(dataset.head, "source") : undefined)),
-    originBranch: field(nested(metadata, "origin_branch"), "name"),
+    originBranch:
+      field(nested(metadata, "origin_branch"), "name") ?? suggested?.branch,
     attempt: entry?.origin === "local" ? entry.attempt : undefined,
   };
 }
@@ -122,11 +132,6 @@ function typeName(type: LogicalType): string {
     return `list<${typeName(type.element.logical_type)}>`;
   if (type.type === "struct") return `struct (${type.fields.length} fields)`;
   return type.type;
-}
-function tags(value: ExecutionJsonV1): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
 }
 function Detail({ name, value }: { name: string; value: string }) {
   return (
@@ -325,7 +330,12 @@ export function PropertiesInspector({
   const dataset = ready?.dataset;
   const pinned = state.selection.version;
   const meta = dataset
-    ? versionMetadata(dataset, ready?.versions ?? null, pinned)
+    ? versionMetadata(
+        dataset,
+        ready?.versions ?? null,
+        pinned,
+        ready?.inspection,
+      )
     : null;
   if (selected.length > 1 && ready)
     return (
@@ -343,10 +353,7 @@ export function PropertiesInspector({
         </p>
       </section>
     );
-  const fallback = field(dataset.head, "resolved_branch");
-  const rank = fallback ? ready.context.fallback_policy.indexOf(fallback) : -1;
   const producerPath = field(dataset.producer, "path");
-  const tagNames = tags(dataset.tags);
   const graphNode = selected.find(
     (node) =>
       node.identity === `dataset:${dataset.workspace_id}:${dataset.dataset_id}`,
@@ -357,6 +364,12 @@ export function PropertiesInspector({
       : dataset.kind === "transform"
         ? "Polars"
         : "Unavailable";
+  const type =
+    dataset.kind === "transform"
+      ? `${engine} transform`
+      : dataset.origin === "external"
+        ? "External dataset"
+        : `${dataset.kind[0]?.toUpperCase()}${dataset.kind.slice(1)} dataset`;
   return (
     <section className="properties-body" aria-label="Selected dataset context">
       <div className="property-title">
@@ -369,13 +382,7 @@ export function PropertiesInspector({
         </span>
         <div>
           <h3>{dataset.path}</h3>
-          <p>
-            {dataset.origin === "external"
-              ? "External dataset"
-              : dataset.kind === "transform"
-                ? `${engine} transform`
-                : `${dataset.kind[0]?.toUpperCase()}${dataset.kind.slice(1)} dataset`}
-          </p>
+          <p>{type}</p>
         </div>
       </div>
       <div
@@ -407,12 +414,11 @@ export function PropertiesInspector({
               name="Origin"
               value={
                 dataset.origin === "external"
-                  ? `External provider · ${dataset.workspace_id}`
-                  : `Local workspace · ${dataset.workspace_id}`
+                  ? "External provider"
+                  : "Local workspace"
               }
             />
-            <Detail name="Type" value={dataset.kind} />
-            <Detail name="Engine" value={engine} />
+            <Detail name="Type" value={type} />
             <Detail
               name="Producer"
               value={
@@ -421,111 +427,15 @@ export function PropertiesInspector({
                   : "Unavailable"
               }
             />
-            <Detail name="Requested branch" value={state.selection.branch} />
             <Detail
-              name="Resolved head branch"
-              value={
-                fallback ??
-                (pinned ? "Not queried for an exact version" : "Unavailable")
-              }
-            />
-            <Detail
-              name="Fallback rank"
-              value={
-                rank < 0
-                  ? "Unavailable"
-                  : rank === 0
-                    ? "Requested branch"
-                    : String(rank)
-              }
-            />
-            {pinned && (
-              <Detail
-                name="Published version branch"
-                value={meta?.originBranch ?? "Unavailable"}
-              />
-            )}
-            <Detail
-              name="Published head"
-              value={
-                field(dataset.head, "version") ??
-                (pinned
-                  ? "Not queried in historical context"
-                  : dataset.origin === "external"
-                    ? "Foreign head not loaded"
-                    : "No published head")
-              }
-            />
-            <Detail
-              name="Exact version"
-              value={pinned ?? "Not pinned — browsing retained metadata"}
-            />
-            <Detail
-              name={
-                pinned
-                  ? "Producing source capture"
-                  : "Retained definition source"
-              }
-              value={
-                pinned
-                  ? (meta?.source ??
-                    (dataset.origin === "external"
-                      ? "Foreign source metadata only"
-                      : "Unavailable"))
-                  : dataset.origin === "external"
-                    ? "Foreign source metadata only"
-                    : (ready.context.source ?? "Unavailable")
-              }
-            />
-            {!pinned && (
-              <Detail
-                name="Head producing source"
-                value={meta?.source ?? "Unavailable"}
-              />
-            )}
-            <Detail name="Created" value="Unavailable" />
-            <Detail
-              name="Last producing attempt"
-              value={meta?.attempt ?? "Unavailable"}
+              name="Created"
+              value={date(ready.inspection?.created_us ?? undefined)}
             />
             <Detail name="Published" value={date(meta?.published)} />
             <Detail name="Rows" value={display(meta?.rows)} />
             <Detail name="Files" value={display(meta?.files)} />
             <Detail name="Physical bytes" value={display(meta?.bytes)} />
           </dl>
-          <label className="property-version">
-            Version context
-            <select
-              value={pinned ?? ""}
-              onChange={(event) =>
-                void workspace.select({
-                  branch: state.selection.branch,
-                  dataset: dataset.dataset_id,
-                  origin: dataset.workspace_id,
-                  ...(event.target.value
-                    ? { version: event.target.value }
-                    : {}),
-                  ...(state.selection.fallback
-                    ? { fallback: state.selection.fallback }
-                    : {}),
-                })
-              }
-            >
-              <option value="">Current retained definition</option>
-              {ready.versions?.entries.map((item) => (
-                <option key={item.version} value={item.version}>
-                  {item.version}
-                </option>
-              ))}
-            </select>
-          </label>
-          {ready.versions?.next_cursor && (
-            <p className="muted">
-              More versions are available in the History inspector.
-            </p>
-          )}
-          <h4>Tags</h4>
-          <p>{tagNames.length ? tagNames.join(", ") : "No tags recorded"}</p>
           <h4>Connections</h4>
           <dl>
             <Detail
@@ -543,13 +453,6 @@ export function PropertiesInspector({
           <h4>Data health</h4>
           <p className="muted">
             Output checks unavailable · Latest attempt unavailable
-          </p>
-          <h4>Schedules</h4>
-          <p className="muted">Scheduling is not available yet.</p>
-          <p className="property-footnote">
-            {dataset.origin === "external"
-              ? "Foreign metadata is retained locally. Provider byte availability: not verified. Provider freshness: unknown."
-              : "Metadata availability does not verify local artifact bytes or freshness. Byte availability: not verified. Freshness: unknown."}
           </p>
         </>
       )}
@@ -581,7 +484,12 @@ export function PreviewInspector({
   const ready = state.kind === "ready" ? state.value : null;
   const dataset = ready?.dataset;
   const meta = dataset
-    ? versionMetadata(dataset, ready?.versions ?? null, state.selection.version)
+    ? versionMetadata(
+        dataset,
+        ready?.versions ?? null,
+        state.selection.version,
+        ready?.inspection,
+      )
     : null;
   const version = meta?.version;
   const schema = meta?.schema;
@@ -619,10 +527,10 @@ function PreviewContent({
   schema: LogicalSchemaV1 | null;
 }) {
   const ready = state.kind === "ready" ? state.value : null;
-  const [columns, setColumns] = useState<readonly string[]>(
-    () => schema?.fields.slice(0, 12).map((item) => item.name) ?? [],
+  const columns = useMemo(
+    () => schema?.fields.map((column) => column.name) ?? [],
+    [schema],
   );
-  const [columnSearch, setColumnSearch] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
   const [result, setResult] = useState<{
     key: string;
@@ -641,7 +549,7 @@ function PreviewContent({
     columns,
   ]);
   useEffect(() => {
-    if (!dataset || !version || !columns.length) return;
+    if (!dataset || !version || !columns.length || columns.length > 128) return;
     const request = new AbortController();
     void workspace
       .preview(
@@ -680,211 +588,172 @@ function PreviewContent({
     return () => request.abort();
   }, [workspace, key, cursor, dataset, version, columns, retry]);
   const page = result?.key === key ? result.page : null;
-  const shown = useMemo(
-    () =>
-      schema?.fields.filter((item) =>
-        item.name.toLowerCase().includes(columnSearch.toLowerCase()),
-      ) ?? [],
-    [schema, columnSearch],
-  );
-  const toggle = (name: string) => {
-    setColumns((old) =>
-      old.includes(name) ? old.filter((item) => item !== name) : [...old, name],
-    );
-    setCursor(null);
-    setResult(null);
-    setCopy(null);
-  };
   if (!dataset)
     return (
       <div className="preview-empty">
         Select a dataset to preview an exact published version.
       </div>
     );
+  const resolved =
+    page?.resolved_branch ??
+    field(dataset.head, "resolved_branch") ??
+    meta?.originBranch;
+  const published = page?.published_us ?? meta?.published;
   return (
     <div className="preview-inspector">
       <div className="preview-toolbar">
-        <div>
-          <h2>{dataset.path}</h2>
-          <p>Preview · {version ?? "No version selected"}</p>
+        <h2>{dataset.path}</h2>
+        <div className="preview-toolbar-details">
+          {resolved && resolved !== state.selection.branch && (
+            <span>
+              Resolved branch <strong>{resolved}</strong>
+            </span>
+          )}
+          {published && (
+            <span>
+              Published <strong>{date(published)}</strong>
+            </span>
+          )}
+          {page && (
+            <span>
+              Showing {page.rows.length}
+              {page.next_cursor ? "+" : ""}
+              {meta?.rows !== undefined ? ` of ${meta.rows}` : ""} rows
+            </span>
+          )}
+          {schema && <span>{schema.fields.length} columns</span>}
         </div>
-        <span>
-          {page
-            ? `Showing ${page.rows.length}${page.next_cursor ? "+" : ""}${meta?.rows !== undefined ? ` of ${meta.rows}` : ""} rows`
-            : "Physical row preview"}
-        </span>
-      </div>
-      <div className="preview-context">
-        Requested branch <strong>{state.selection.branch}</strong>
-        <span>·</span> Resolved branch{" "}
-        <strong>
-          {page?.resolved_branch ??
-            field(dataset.head, "resolved_branch") ??
-            "Unknown"}
-        </strong>
-        <span>·</span> Published{" "}
-        <strong>{date(page?.published_us ?? meta?.published)}</strong>
-        <span>·</span> Source{" "}
-        <strong>{page?.source ?? meta?.source ?? "Unknown"}</strong>
       </div>
       {!version ? (
-        <p className="muted">
-          Choose a retained version in Properties to enable preview.
-        </p>
+        <p className="preview-empty">No published version is available.</p>
       ) : !schema ? (
-        <p className="muted">
-          Schema metadata is unavailable for this version. Select a version with
-          a known schema.
+        <p className="preview-empty">
+          Schema metadata is unavailable for this version.
+        </p>
+      ) : columns.length > 128 ? (
+        <p className="preview-empty">
+          This dataset has more than the 128 columns supported by one preview
+          request.
+        </p>
+      ) : !columns.length ? (
+        <p className="preview-empty">
+          This version has no previewable columns.
         </p>
       ) : (
-        <>
-          <div className="preview-column-tools">
-            <label>
-              Search columns
-              <input
-                type="search"
-                value={columnSearch}
-                onChange={(event) => setColumnSearch(event.target.value)}
-                placeholder="Search columns…"
-              />
-            </label>
-            <details>
-              <summary>
-                Columns ({columns.length} of {schema.fields.length})
-              </summary>
-              <div className="preview-column-menu">
-                {shown.map((item) => (
-                  <label key={item.name}>
-                    <input
-                      type="checkbox"
-                      checked={columns.includes(item.name)}
-                      onChange={() => toggle(item.name)}
-                    />
-                    {item.name}
-                    <small>{typeName(item.logical_type)}</small>
-                  </label>
-                ))}
-              </div>
-            </details>
-            <span>Physical order · exact version</span>
-          </div>
-          {!columns.length ? (
-            <p className="muted">Select at least one column to preview rows.</p>
-          ) : (
+        <div className="preview-table-wrap">
+          {message && (
+            <div role="alert" className="preview-error">
+              {message}{" "}
+              <Button
+                onClick={() => {
+                  setMessage("");
+                  setResult(null);
+                  setCursor(null);
+                  setRetry((value) => value + 1);
+                }}
+              >
+                Restart preview
+              </Button>
+            </div>
+          )}
+          {!page && !message && (
+            <p role="status" className="preview-empty">
+              Loading bounded preview…
+            </p>
+          )}
+          {page && (
             <>
-              {message && (
-                <div role="alert" className="preview-error">
-                  {message}{" "}
-                  <Button
-                    onClick={() => {
-                      setMessage("");
-                      setResult(null);
-                      setCursor(null);
-                      setRetry((value) => value + 1);
-                    }}
-                  >
-                    Restart preview
+              <table
+                className="preview-table"
+                aria-label={`${dataset.path} preview`}
+              >
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    {page.schema.fields.map((column) => (
+                      <th
+                        key={column.name}
+                        scope="col"
+                        title={`${typeName(column.logical_type)}${column.nullable ? " · nullable" : ""}`}
+                      >
+                        {column.name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {page.rows.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      <th scope="row">{rowIndex + 1}</th>
+                      {row.map((cell, columnIndex) => (
+                        <td
+                          key={columnIndex}
+                          className={
+                            cell.truncated
+                              ? "truncated-cell"
+                              : cell.value?.type === "null"
+                                ? "null-cell"
+                                : ""
+                          }
+                        >
+                          <button
+                            title="Select cell to copy"
+                            onClick={() =>
+                              setCopy({ row: rowIndex, column: columnIndex })
+                            }
+                          >
+                            {cell.truncated
+                              ? "Truncated · value unavailable"
+                              : wire(cell.value)}
+                          </button>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {page.rows.length === 0 && (
+                <p className="preview-empty">This version contains no rows.</p>
+              )}
+              {page.next_cursor && (
+                <div className="preview-load-more">
+                  <Button onClick={() => setCursor(page.next_cursor)}>
+                    Load next 100 rows
                   </Button>
                 </div>
               )}
-              {!page && !message && (
-                <p role="status" className="muted">
-                  Loading bounded preview…
-                </p>
-              )}
-              {page && (
-                <>
-                  <div className="preview-table-wrap">
-                    <table className="preview-table">
-                      <thead>
-                        <tr>
-                          <th scope="col">#</th>
-                          {page.schema.fields.map((item) => (
-                            <th key={item.name} scope="col">
-                              <strong>{item.name}</strong>
-                              <small>
-                                {typeName(item.logical_type)}
-                                {item.nullable ? " · nullable" : ""}
-                              </small>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {page.rows.map((row, rowIndex) => (
-                          <tr key={rowIndex}>
-                            <th scope="row">{rowIndex + 1}</th>
-                            {row.map((cell, columnIndex) => (
-                              <td
-                                key={columnIndex}
-                                className={
-                                  cell.truncated
-                                    ? "truncated-cell"
-                                    : cell.value?.type === "null"
-                                      ? "null-cell"
-                                      : ""
-                                }
-                              >
-                                <button
-                                  title="Select cell to copy"
-                                  onClick={() =>
-                                    setCopy({
-                                      row: rowIndex,
-                                      column: columnIndex,
-                                    })
-                                  }
-                                >
-                                  {cell.truncated
-                                    ? "Truncated · value unavailable"
-                                    : wire(cell.value)}
-                                </button>
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {page.rows.length === 0 && (
-                    <p className="muted">This version contains no rows.</p>
-                  )}
-                  <div className="preview-footer">
-                    {page.next_cursor && (
-                      <Button onClick={() => setCursor(page.next_cursor)}>
-                        Load next 100 rows
-                      </Button>
-                    )}
-                    {copy && (
-                      <span>
-                        Selected row {copy.row + 1}, column{" "}
-                        {page.schema.fields[copy.column]?.name}. Copying may
-                        expose sensitive data.{" "}
-                        <Button
-                          onClick={() => {
-                            const cell = page.rows[copy.row]?.[copy.column];
-                            if (cell && !cell.truncated)
-                              void navigator.clipboard.writeText(
-                                wire(cell.value),
-                              );
-                            setCopy(null);
-                          }}
-                        >
-                          Copy selected cell
-                        </Button>
-                      </span>
-                    )}
-                  </div>
-                </>
-              )}
             </>
           )}
-        </>
+        </div>
       )}
-      <p className="preview-caveat">
-        A preview checks only projected bytes. It does not verify full
-        integrity, data health or freshness. External data stays with its
-        provider.
-      </p>
+      {copy && page && (
+        <div
+          role="dialog"
+          aria-label="Copy preview cell"
+          className="preview-copy-dialog"
+        >
+          <p>
+            Copy row {copy.row + 1}, column{" "}
+            {page.schema.fields[copy.column]?.name}? This may expose sensitive
+            data.
+          </p>
+          <div>
+            <Button onClick={() => setCopy(null)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                const cell = page.rows[copy.row]?.[copy.column];
+                if (cell && !cell.truncated)
+                  void navigator.clipboard.writeText(wire(cell.value)).then(
+                    () => setCopy(null),
+                    () => setMessage("The selected cell could not be copied."),
+                  );
+              }}
+            >
+              Copy cell
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

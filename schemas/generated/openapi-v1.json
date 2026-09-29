@@ -1063,6 +1063,149 @@
         ]
       }
     },
+    "/api/v1/datasets/{dataset}/inspection": {
+      "get": {
+        "operationId": "get_api_v1_datasets_dataset_inspection",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiDatasetInspectionV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "branch": "example",
+                    "source": null,
+                    "registry": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "runtime_revision": "example",
+                    "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "selection": {
+                      "kind": "retained_current",
+                      "id": null,
+                      "digest": null
+                    },
+                    "graph": null,
+                    "freshness": "unknown",
+                    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "fallback_policy": []
+                  },
+                  "data": {
+                    "origin_workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "created_us": null,
+                    "suggested_head": null
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ]
+      }
+    },
     "/api/v1/lineage": {
       "get": {
         "operationId": "get_api_v1_lineage",
@@ -12402,6 +12545,74 @@
           "tags",
           "head",
           "freshness"
+        ],
+        "additionalProperties": false
+      },
+      "ApiDatasetInspectionV1": {
+        "type": "object",
+        "properties": {
+          "origin_workspace": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "created_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "suggested_head": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "$ref": "#/components/schemas/Uuid"
+                  },
+                  "branch": {
+                    "type": "string"
+                  },
+                  "published_us": {
+                    "$ref": "#/components/schemas/Count"
+                  },
+                  "schema": {
+                    "$ref": "#/components/schemas/LogicalSchemaV1"
+                  },
+                  "row_count": {
+                    "$ref": "#/components/schemas/Count"
+                  },
+                  "file_count": {
+                    "$ref": "#/components/schemas/Count"
+                  },
+                  "byte_count": {
+                    "$ref": "#/components/schemas/Count"
+                  }
+                },
+                "required": [
+                  "version",
+                  "branch",
+                  "published_us",
+                  "schema"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "origin_workspace",
+          "dataset",
+          "created_us",
+          "suggested_head"
         ],
         "additionalProperties": false
       },

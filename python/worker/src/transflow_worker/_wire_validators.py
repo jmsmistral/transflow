@@ -358,6 +358,11 @@ def validate_ApiDatasetV1(value: object) -> None:
     validate_document("ApiDatasetV1", value)
 
 
+def validate_ApiDatasetInspectionV1(value: object) -> None:
+    """Assert the ApiDatasetInspectionV1 contract, including custom formats."""
+    validate_document("ApiDatasetInspectionV1", value)
+
+
 def validate_ApiDatasetsV1(value: object) -> None:
     """Assert the ApiDatasetsV1 contract, including custom formats."""
     validate_document("ApiDatasetsV1", value)

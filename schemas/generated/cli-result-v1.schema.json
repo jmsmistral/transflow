@@ -6225,6 +6225,74 @@
       ],
       "additionalProperties": false
     },
+    "ApiDatasetInspectionV1": {
+      "type": "object",
+      "properties": {
+        "origin_workspace": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "dataset": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "created_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "suggested_head": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "$ref": "#/$defs/Uuid"
+                },
+                "branch": {
+                  "type": "string"
+                },
+                "published_us": {
+                  "$ref": "#/$defs/Count"
+                },
+                "schema": {
+                  "$ref": "#/$defs/LogicalSchemaV1"
+                },
+                "row_count": {
+                  "$ref": "#/$defs/Count"
+                },
+                "file_count": {
+                  "$ref": "#/$defs/Count"
+                },
+                "byte_count": {
+                  "$ref": "#/$defs/Count"
+                }
+              },
+              "required": [
+                "version",
+                "branch",
+                "published_us",
+                "schema"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "origin_workspace",
+        "dataset",
+        "created_us",
+        "suggested_head"
+      ],
+      "additionalProperties": false
+    },
     "ApiDatasetsV1": {
       "type": "object",
       "properties": {

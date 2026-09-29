@@ -1,0 +1,28 @@
+{
+  "task": "T085 owner-reviewed Preview and Properties refinement",
+  "date": "2026-09-30",
+  "platform": "macOS arm64 / Python 3.14 / Node 24",
+  "base_implementation": "586c325",
+  "base_specification": "e2e6211",
+  "changes": [
+    "Preview has a compact dataset row directly above a full-width table; requested branch, version/source identifiers, controls and explanatory caveats are removed.",
+    "Resolved branch is shown only when different from the selected branch. After selected and ordered fallback branches, a retained head on another branch can be used for browsing without changing build policy.",
+    "Properties removes internal version/source details, empty Tags, unavailable Schedules and detail dividers, while displaying recorded local creation time from an additive authenticated inspection read.",
+    "Preview pages remain bound to an immutable exact version and foreign bytes remain provider-owned under leases."
+  ],
+  "checks": {
+    "focused": "cargo test -p tf-store --test api --locked --offline passed (2 tests); web typecheck and focused inspector/workspace tests passed (20 tests).",
+    "comprehensive": "PYTHON=target/python/py314/bin/python bash tools/check.sh passed outside the restricted sandbox: 403 Rust test reports, 975 Python tests, 448 web tests, 58 installed CLI/API integration tests, specification checker with 44 regressions, safety checks, typecheck, lint, formatting and reproducible 5-asset production build."
+  },
+  "browser": {
+    "tool": "Codex internal Browser against a temporary cloned synthetic workspace and current contributor assets",
+    "observed": [
+      "Local raw/root Preview displayed one compact dataset row with publication time and exact two-row table; matching master branch was omitted from the row.",
+      "Properties displayed recorded creation time, publication time and physical counts without the removed metadata or row dividers.",
+      "Foreign external/provider/example Preview read two provider rows; on master it displayed Resolved branch main, and on main it omitted that label."
+    ],
+    "method": "The user's original /tmp/transflow-t083-browser coordinator on port 54062 was left untouched. Current binary and UI assets were served from a temporary cloned workspace on port 54064.",
+    "limits": "The synthetic workspace has a head for each of its local branches; browse-only alternate-head selection is covered by a component regression rather than a real-browser journey."
+  },
+  "limits": "T086 owns code/history/timeline detail, T087 build actions and T088 overlays. Creation time is unavailable for foreign datasets without provider metadata. GitHub CI is owner-monitored and pending."
+}

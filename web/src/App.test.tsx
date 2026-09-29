@@ -128,15 +128,16 @@ test("dataset selection clears old labels immediately and renders names only as 
     expect(workspace.snapshot().selection.dataset).toBe(datasetId),
   );
   fireEvent.click(screen.getByRole("button", { name: "Properties" }));
-  expect(screen.getByText("public")).toBeTruthy();
-  expect(
-    screen.getByText("Not pinned — browsing retained metadata"),
-  ).toBeTruthy();
+  expect(screen.getByText("Created").nextSibling?.textContent).toMatch(
+    /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/,
+  );
+  expect(screen.queryByText("Resolved head branch")).toBeNull();
+  expect(screen.queryByText("Version context")).toBeNull();
   expect(screen.queryByRole("table")).toBeNull();
   workspace.dispose();
 });
 
-test("historical context never labels unqueried current head as missing data", async () => {
+test("historical context omits current-head details from the compact properties panel", async () => {
   const { Workspace } = await import("./workspace");
   const { Client } = await import("./api/client");
   const { fixtureTransport, datasetId, workspaceId, versionId } =
@@ -151,9 +152,9 @@ test("historical context never labels unqueried current head as missing data", a
   });
   render(<App workspace={workspace} />);
   fireEvent.click(screen.getByRole("button", { name: "Properties" }));
-  expect(screen.getByText("Not queried in historical context")).toBeTruthy();
+  expect(screen.queryByText("Published head")).toBeNull();
   expect(screen.queryByText("No published head")).toBeNull();
-  expect(screen.getByText("Producing source capture")).toBeTruthy();
+  expect(screen.queryByText("Producing source capture")).toBeNull();
   workspace.dispose();
 });
 

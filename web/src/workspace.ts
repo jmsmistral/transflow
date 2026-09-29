@@ -2,6 +2,7 @@ import type {
   ApiCapabilitiesV1,
   ApiContextV1,
   ApiDatasetV1,
+  ApiDatasetInspectionV1,
   ApiDatasetsV1,
   ApiMetadataPageV1,
   ApiVersionsV1,
@@ -28,6 +29,7 @@ export interface Snapshot {
   branches: ApiMetadataPageV1;
   dataset: ApiDatasetV1 | null;
   versions: ApiVersionsV1 | null;
+  inspection: ApiDatasetInspectionV1 | null;
 }
 export type WorkspaceState =
   | { kind: "disconnected"; message: string; selection: Selection }
@@ -138,12 +140,13 @@ export class Workspace {
       const query = {
         origin_workspace: selection.origin ?? initial.value.context.workspace,
       };
-      const [dataset, versions] = await Promise.all([
+      const [dataset, versions, inspection] = await Promise.all([
         this.read("ApiDatasetV1", base, query),
         this.read("ApiVersionsV1", `${base}/versions`, {
           ...query,
           limit: "50",
         }),
+        this.read("ApiDatasetInspectionV1", `${base}/inspection`, query),
       ]);
       if (
         generation !== this.inspection ||
@@ -153,7 +156,9 @@ export class Workspace {
         return;
       if (
         dataset.dataset_id !== selection.dataset ||
-        dataset.workspace_id !== query.origin_workspace
+        dataset.workspace_id !== query.origin_workspace ||
+        inspection.dataset !== selection.dataset ||
+        inspection.origin_workspace !== query.origin_workspace
       )
         throw new ApiFailure(
           "conflict",
@@ -162,7 +167,7 @@ export class Workspace {
       this.set({
         kind: "ready",
         selection: { ...selection },
-        value: { ...this.state.value, dataset, versions },
+        value: { ...this.state.value, dataset, versions, inspection },
       });
     } catch (error) {
       if (generation === this.inspection && epoch === this.epoch)
@@ -212,51 +217,64 @@ export class Workspace {
           this.capabilities.limits.page_max,
         ),
       );
-      const [datasets, branches, dataset, versions] = await Promise.all([
-        this.client.read(
-          "ApiDatasetsV1",
-          "/api/v1/datasets",
-          {
-            ...query,
-            limit,
-            ...(selection.cursor ? { cursor: selection.cursor } : {}),
-          },
-          request.signal,
-          context,
-        ),
-        this.client.read(
-          "ApiMetadataPageV1",
-          "/api/v1/branches",
-          { ...query, limit },
-          request.signal,
-          context,
-        ),
-        selection.dataset
-          ? this.client.read(
-              "ApiDatasetV1",
-              `/api/v1/datasets/${encodeURIComponent(selection.dataset)}`,
-              {
-                ...query,
-                origin_workspace: selection.origin ?? context.workspace,
-              },
-              request.signal,
-              context,
-            )
-          : null,
-        selection.dataset
-          ? this.client.read(
-              "ApiVersionsV1",
-              `/api/v1/datasets/${encodeURIComponent(selection.dataset)}/versions`,
-              {
-                ...query,
-                origin_workspace: selection.origin ?? context.workspace,
-                limit,
-              },
-              request.signal,
-              context,
-            )
-          : null,
-      ]);
+      const [datasets, branches, dataset, versions, inspection] =
+        await Promise.all([
+          this.client.read(
+            "ApiDatasetsV1",
+            "/api/v1/datasets",
+            {
+              ...query,
+              limit,
+              ...(selection.cursor ? { cursor: selection.cursor } : {}),
+            },
+            request.signal,
+            context,
+          ),
+          this.client.read(
+            "ApiMetadataPageV1",
+            "/api/v1/branches",
+            { ...query, limit },
+            request.signal,
+            context,
+          ),
+          selection.dataset
+            ? this.client.read(
+                "ApiDatasetV1",
+                `/api/v1/datasets/${encodeURIComponent(selection.dataset)}`,
+                {
+                  ...query,
+                  origin_workspace: selection.origin ?? context.workspace,
+                },
+                request.signal,
+                context,
+              )
+            : null,
+          selection.dataset
+            ? this.client.read(
+                "ApiVersionsV1",
+                `/api/v1/datasets/${encodeURIComponent(selection.dataset)}/versions`,
+                {
+                  ...query,
+                  origin_workspace: selection.origin ?? context.workspace,
+                  limit,
+                },
+                request.signal,
+                context,
+              )
+            : null,
+          selection.dataset
+            ? this.client.read(
+                "ApiDatasetInspectionV1",
+                `/api/v1/datasets/${encodeURIComponent(selection.dataset)}/inspection`,
+                {
+                  ...query,
+                  origin_workspace: selection.origin ?? context.workspace,
+                },
+                request.signal,
+                context,
+              )
+            : null,
+        ]);
       if (!current()) return;
       if (
         dataset &&
@@ -284,6 +302,15 @@ export class Workspace {
         allBranches.push(...page.data.entries);
         branchCursor = page.data.next_cursor;
       }
+      if (
+        inspection &&
+        (inspection.data.dataset !== selection.dataset ||
+          inspection.data.origin_workspace !== selection.origin)
+      )
+        throw new ApiFailure(
+          "conflict",
+          "Dataset inspection does not match the selection.",
+        );
       this.set({
         kind: "ready",
         selection: { ...selection },
@@ -293,6 +320,7 @@ export class Workspace {
           branches: { entries: allBranches, next_cursor: null },
           dataset: dataset?.data ?? null,
           versions: versions?.data ?? null,
+          inspection: inspection?.data ?? null,
         },
       });
     } catch (error) {

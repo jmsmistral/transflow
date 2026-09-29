@@ -213,6 +213,9 @@ export type ApiCanceledV1 = { readonly "build": Uuid; readonly "disposition": ("
 export type ApiDatasetV1 = { readonly "workspace_id": Uuid; readonly "dataset_id": Uuid; readonly "path": RelativePath; readonly "kind": ("transform" | "source" | "imported" | "external"); readonly "origin": ("local" | "external"); readonly "tombstone": boolean; readonly "aliases": ReadonlyArray<RelativePath>; readonly "alias_count": Count; readonly "producer": ExecutionJsonV1; readonly "tags": ExecutionJsonV1; readonly "head": ExecutionJsonV1; readonly "freshness": "unknown" };
 
 // prettier-ignore
+export type ApiDatasetInspectionV1 = { readonly "origin_workspace": Uuid; readonly "dataset": Uuid; readonly "created_us": (null | Count); readonly "suggested_head": (null | { readonly "version": Uuid; readonly "branch": string; readonly "published_us": Count; readonly "schema": LogicalSchemaV1; readonly "row_count"?: Count; readonly "file_count"?: Count; readonly "byte_count"?: Count }) };
+
+// prettier-ignore
 export type ApiDatasetsV1 = { readonly "entries": ReadonlyArray<ApiDatasetV1>; readonly "total": Count; readonly "next_cursor": (null | string); readonly "schema": null; readonly "freshness": "unknown" };
 
 // prettier-ignore

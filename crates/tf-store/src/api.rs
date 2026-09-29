@@ -98,6 +98,51 @@ impl Reader {
         }
         Ok(plan)
     }
+    /// Creation time and a browse-only head from another branch. This never
+    /// changes the requested branch or build fallback policy.
+    pub async fn api_dataset_inspection(
+        &mut self,
+        workspace: WorkspaceId,
+        dataset: DatasetId,
+        foreign: bool,
+    ) -> Result<Value> {
+        if foreign {
+            let metadata: Option<String> = sqlx::query_scalar("SELECT CASE WHEN length(provenance_json)<=1048576 THEN provenance_json END FROM foreign_versions WHERE workspace_id=? AND dataset_id=? ORDER BY CAST(json_extract(provenance_json,'$.published_us') AS INTEGER) DESC, version_id DESC LIMIT 1")
+                .bind(workspace.to_string()).bind(dataset.to_string()).fetch_optional(&mut self.db).await?;
+            let suggested = metadata.map(|raw| -> Result<Value> {
+                let value: Value = serde_json::from_str(&raw).map_err(|_| StoreError::InvalidRequest)?;
+                let files = value["manifest"]["files"].as_array();
+                let sum = |key: &str| -> Option<String> {
+                    files?.iter().try_fold(0_u64, |total, file| {
+                        total.checked_add(file[key].as_str()?.parse::<u64>().ok()?)
+                    }).map(|total| total.to_string())
+                };
+                let mut head = json!({"version":value["version"],"branch":value["origin_branch"]["name"],"published_us":value["published_us"],"schema":value["manifest"]["logical_schema"]});
+                if let Some(rows) = sum("row_count") { head["row_count"] = json!(rows); }
+                if let Some(bytes) = sum("byte_length") { head["byte_count"] = json!(bytes); }
+                if let Some(files) = files { head["file_count"] = json!(files.len().to_string()); }
+                Ok(head)
+            }).transpose()?;
+            return Ok(
+                json!({"origin_workspace":workspace.to_string(),"dataset":dataset.to_string(),"created_us":null,"suggested_head":suggested}),
+            );
+        }
+        let created: Option<i64> =
+            sqlx::query_scalar("SELECT created_at_us FROM datasets WHERE workspace_id=? AND id=?")
+                .bind(workspace.to_string())
+                .bind(dataset.to_string())
+                .fetch_optional(&mut self.db)
+                .await?;
+        let row = sqlx::query("SELECT b.name,h.version_id,v.published_at_us,CASE WHEN length(a.schema_json)<=1048576 THEN a.schema_json END,a.row_count,a.file_count,a.byte_count FROM dataset_heads h JOIN data_branches b ON b.id=h.branch_id JOIN dataset_versions v ON v.id=h.version_id JOIN artifacts a ON a.digest=v.artifact_digest WHERE b.workspace_id=? AND b.deleted_at_us IS NULL AND h.dataset_id=? ORDER BY b.name LIMIT 1")
+            .bind(workspace.to_string()).bind(dataset.to_string()).fetch_optional(&mut self.db).await?;
+        let suggested = row.map(|r| -> Result<Value> {
+            let schema: String = r.try_get(3)?;
+            Ok(json!({"branch":r.try_get::<String,_>(0)?,"version":r.try_get::<String,_>(1)?,"published_us":r.try_get::<i64,_>(2)?.to_string(),"schema":serde_json::from_str::<Value>(&schema).map_err(|_| StoreError::InvalidRequest)?,"row_count":r.try_get::<i64,_>(4)?.to_string(),"file_count":r.try_get::<i64,_>(5)?.to_string(),"byte_count":r.try_get::<i64,_>(6)?.to_string()}))
+        }).transpose()?;
+        Ok(
+            json!({"origin_workspace":workspace.to_string(),"dataset":dataset.to_string(),"created_us":created.map(|value| value.to_string()),"suggested_head":suggested}),
+        )
+    }
     /// Retained versions, ordered by immutable UUID with a caller-bound context cursor.
     pub async fn api_versions(
         &mut self,

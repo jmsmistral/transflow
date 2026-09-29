@@ -108,7 +108,10 @@ label and metadata choices; legacy local
 view links require the same coordinator and authentication. T085 adds the
 [properties, columns and version-pinned preview inspectors](web/README.md#dataset-inspection-t085).
 They show exact physical counts when metadata exists, keep missing values unknown,
-and read foreign preview bytes directly from the provider. Code, history, build,
+show recorded creation time, and place a compact dataset row directly above the
+full-width table. If the selected branch has no head, Preview tries configured
+fallbacks before offering an available retained branch for browsing. Foreign
+preview bytes are read directly from the provider. Code, history, build,
 schedule and health actions follow later.
 
 The Python distribution is named **transflow**, containing both `transflow` (SDK) and `transflow_worker` (worker). See [local wheel installation and checks](python/README.md). The intended public install is `pip install transflow` after publication; no package has been published yet. The Rust binary remains a separate native artifact.

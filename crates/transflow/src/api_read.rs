@@ -395,6 +395,31 @@ pub(crate) fn read(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Reply> 
             None
         };
         json!({"entries":entries,"next_cursor":next})
+    } else if path.starts_with("datasets/") && path.ends_with("/inspection") {
+        keys(r, &["origin_workspace"])?;
+        let id = path
+            .trim_start_matches("datasets/")
+            .trim_end_matches("/inspection");
+        let id: tf_domain::DatasetId = id.parse().map_err(|_| E::invalid())?;
+        let origin: WorkspaceId = r
+            .query
+            .get("origin_workspace")
+            .map(|s| s.parse().map_err(|_| E::invalid()))
+            .transpose()?
+            .unwrap_or(wid);
+        if !tf_catalog::browse::entries(&c.registry)
+            .iter()
+            .any(|e| e["dataset_id"] == id.to_string() && e["workspace_id"] == origin.to_string())
+        {
+            return Err(E::missing());
+        }
+        let rt = runtime()?;
+        let mut rd = rt.block_on(reader(root))?;
+        let result = rt
+            .block_on(rd.api_dataset_inspection(origin, id, origin != wid))
+            .map_err(bad)?;
+        rt.block_on(rd.close()).map_err(bad)?;
+        result
     } else if let Some(rest) = path.strip_prefix("datasets/") {
         keys(r, &["limit", "cursor", "origin_workspace"])?;
         let (id, versions) = rest

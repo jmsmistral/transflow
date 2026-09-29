@@ -114,7 +114,11 @@ test("properties and preview show exact metadata, typed cells and zero byte coun
   fireEvent.click(screen.getByRole("button", { name: "Properties" }));
   expect(screen.getByText("0", { selector: "dd" })).toBeTruthy();
   expect(screen.getByText("2", { selector: "dd" })).toBeTruthy();
-  expect(screen.getByText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)).toBeTruthy();
+  expect(screen.getByText("Created").nextSibling?.textContent).toMatch(
+    /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/,
+  );
+  expect(screen.queryByText("Engine")).toBeNull();
+  expect(screen.queryByText("Version context")).toBeNull();
   fireEvent.click(screen.getByRole("tab", { name: "Columns" }));
   expect(screen.getByText("decimal(20, 2)")).toBeTruthy();
   fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
@@ -122,6 +126,10 @@ test("properties and preview show exact metadata, typed cells and zero byte coun
   expect(screen.getByText(/123456789012345678.90/)).toBeTruthy();
   expect(screen.getByText("NULL")).toBeTruthy();
   expect(screen.getByText("Truncated · value unavailable")).toBeTruthy();
+  expect(screen.getByText("Resolved branch")).toBeTruthy();
+  expect(screen.queryByText("Search columns")).toBeNull();
+  expect(screen.queryByText("Physical order · exact version")).toBeNull();
+  expect(screen.getByRole("columnheader", { name: "amount" })).toBeTruthy();
   const call = fetcher.mock.calls.find(([url]) =>
     String(url).startsWith("/api/v1/previews?"),
   );
@@ -132,6 +140,80 @@ test("properties and preview show exact metadata, typed cells and zero byte coun
     version: versionId,
     columns: ["amount", "note"],
   });
+  workspace.dispose();
+});
+
+test("preview uses a browse-only available head when requested and fallback branches have none", async () => {
+  const base = fixtureTransport((path, query) => {
+    if (path === `/api/v1/datasets/${datasetId}`)
+      return Promise.resolve(
+        json({ ...dataset, head: null }, context(query.branch)),
+      );
+    if (path.endsWith("/versions"))
+      return Promise.resolve(
+        json({ entries: [], next_cursor: null }, context(query.branch)),
+      );
+    if (path.endsWith("/inspection"))
+      return Promise.resolve(
+        json(
+          {
+            dataset: datasetId,
+            origin_workspace: workspaceId,
+            created_us: "1700000000000000",
+            suggested_head: {
+              version: versionId,
+              branch: "feature",
+              published_us: "1700000000000000",
+              schema,
+            },
+          },
+          context(query.branch),
+        ),
+      );
+  });
+  const fetcher = vi.fn((url: RequestInfo | URL, init?: RequestInit) =>
+    String(url).startsWith("/api/v1/previews?")
+      ? Promise.resolve(json({ ...preview, resolved_branch: "feature" }, exact))
+      : base(url, init),
+  );
+  const workspace = new Workspace(new Client(fetcher));
+  await workspace.connect("launch");
+  await workspace.select({
+    branch: "master",
+    dataset: datasetId,
+    origin: workspaceId,
+  });
+  render(<App workspace={workspace} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+  await waitFor(() => expect(screen.getByRole("table")).toBeTruthy());
+  expect(screen.getByText("Resolved branch").textContent).toContain("feature");
+  expect(screen.getByText("Published").textContent).toMatch(/^Published/);
+  expect(screen.queryByText("Requested branch")).toBeNull();
+  expect(screen.queryByText("Source")).toBeNull();
+  const call = fetcher.mock.calls.find(([url]) =>
+    String(url).startsWith("/api/v1/previews?"),
+  );
+  expect(JSON.parse(String(call?.[1]?.body))).toMatchObject({
+    version: versionId,
+    columns: ["amount", "note"],
+  });
+  workspace.dispose();
+});
+
+test("preview omits resolved branch when it matches the selected branch", async () => {
+  const workspace = new Workspace(
+    new Client(transport({ ...preview, resolved_branch: "master" })),
+  );
+  await workspace.connect("launch");
+  await workspace.select({
+    branch: "master",
+    dataset: datasetId,
+    origin: workspaceId,
+  });
+  render(<App workspace={workspace} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+  await waitFor(() => expect(screen.getByRole("table")).toBeTruthy());
+  expect(screen.queryByText("Resolved branch")).toBeNull();
   workspace.dispose();
 });
 

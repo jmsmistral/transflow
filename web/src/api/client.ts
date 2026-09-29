@@ -3,6 +3,7 @@ import type {
   ApiCapabilitiesV1,
   ApiContextV1,
   ApiDatasetV1,
+  ApiDatasetInspectionV1,
   ApiDatasetsV1,
   ApiMetadataPageV1,
   ApiVersionsV1,
@@ -26,6 +27,7 @@ export interface Contracts {
   ApiCapabilitiesV1: ApiCapabilitiesV1;
   ApiContextV1: ApiContextV1;
   ApiDatasetV1: ApiDatasetV1;
+  ApiDatasetInspectionV1: ApiDatasetInspectionV1;
   ApiDatasetsV1: ApiDatasetsV1;
   ApiMetadataPageV1: ApiMetadataPageV1;
   ApiVersionsV1: ApiVersionsV1;
