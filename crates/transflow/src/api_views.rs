@@ -5,7 +5,7 @@ use std::path::Path;
 use tf_api::{ApiError as E, Reply, Request};
 use tf_exec::ownership::RuntimeOwner;
 pub(crate) fn read(root: &Path, r: &Request) -> Result<Reply> {
-    if r.query.keys().any(|k| k != "after") {
+    if r.query.keys().any(|k| k != "after" && k != "search") {
         return Err(E::invalid());
     }
     let rt = api_read::runtime()?;
@@ -18,7 +18,11 @@ pub(crate) fn read(root: &Path, r: &Request) -> Result<Reply> {
                     .parse::<tf_domain::RequestId>()
                     .map_err(|_| E::invalid())?;
             }
-            rd.views(after).await.map_err(bad)
+            let search = r.query.get("search").map(String::as_str).unwrap_or("");
+            if search.chars().count() > 200 {
+                return Err(E::invalid());
+            }
+            rd.views(after, search).await.map_err(bad)
         } else {
             if !r.query.is_empty() {
                 return Err(E::invalid());

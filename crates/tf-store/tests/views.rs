@@ -49,7 +49,7 @@ async fn save_reopen_conflicts_and_audit_leave_execution_context_unchanged()
         updated
     );
     assert_eq!(
-        reader.views("").await?["views"]
+        reader.views("", "").await?["views"]
             .as_array()
             .ok_or("missing fixture value")?
             .len(),
@@ -99,6 +99,7 @@ async fn legacy_views_reopen_without_retired_features_and_keep_cas_revision()
     let current = example()?;
     let mut old = current.clone();
     old["revision"] = json!(7);
+    old["viewport"] = json!({"x":500,"y":900,"zoom":0.1});
     old["groups"] = json!([]);
     old["annotations"] = json!([]);
     old["filters"] = json!({"path":"raw"});
@@ -118,7 +119,7 @@ async fn legacy_views_reopen_without_retired_features_and_keep_cas_revision()
     assert_eq!(reopened["revision"], 7);
     assert_eq!(reopened["selector"], current["selector"]);
     assert_eq!(reopened["description"], "Old description");
-    for key in ["groups", "annotations", "filters"] {
+    for key in ["groups", "annotations", "filters", "viewport"] {
         assert!(reopened.get(key).is_none());
     }
     let bytes: String = sqlx::query_scalar("SELECT view_json FROM graph_views")
@@ -145,6 +146,46 @@ async fn legacy_views_reopen_without_retired_features_and_keep_cas_revision()
             .is_err()
     );
     db.close().await?;
+    reader.close().await?;
+    store.close().await?;
+    std::fs::remove_dir_all(root)?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn saved_lineage_search_crosses_pages_and_reports_committed_save_time()
+-> Result<(), Box<dyn std::error::Error>> {
+    let root = std::env::temp_dir().join(format!("tf-view-search-{}", std::process::id()));
+    std::fs::create_dir_all(&root)?;
+    let path = root.join("catalog.sqlite");
+    let mut store = Store::open(&path).await?;
+    let mut reader = Reader::open_existing(&path).await?;
+    for index in 1..=205 {
+        let mut v = example()?;
+        v["id"] = json!(format!("aaaaaaaa-aaaa-4aaa-8aaa-{index:012x}"));
+        v["name"] = json!(if index < 105 {
+            "Other"
+        } else {
+            "Review Ånalysis"
+        });
+        store.save_view(&v, index).await?.ok_or("save failed")?;
+    }
+    let page = reader.views("", "RVÅ").await?;
+    tf_protocol::validate_document("ApiViewsV1", &page)?;
+    assert_eq!(page["views"].as_array().ok_or("no views")?.len(), 100);
+    assert_eq!(page["views"][0]["saved_at_us"], "105");
+    let next = reader
+        .views(page["next_cursor"].as_str().ok_or("no cursor")?, "RVÅ")
+        .await?;
+    assert_eq!(next["views"].as_array().ok_or("no views")?.len(), 1);
+    assert_eq!(next["views"][0]["saved_at_us"], "205");
+    assert!(next["next_cursor"].is_null());
+    assert!(
+        reader.views("", "absent").await?["views"]
+            .as_array()
+            .ok_or("no views")?
+            .is_empty()
+    );
     reader.close().await?;
     store.close().await?;
     std::fs::remove_dir_all(root)?;

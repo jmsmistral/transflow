@@ -125,7 +125,9 @@ Progress/messages are centred at the bottom; no startup text covers the graph to
 ## Saved lineages (T084)
 
 The header's **Save** button is disabled until the lineage changes, including node
-movement, membership, camera, colour, description or branch settings. Its adjacent
+movement, membership, colour, description or branch settings. Camera pan/zoom is
+transient and never enables Save or appears in saved documents. Opening a lineage
+centres its saved node bounds at 100% zoom. Its adjacent
 menu offers **Save as**, **Open lineage** and separate **Export SVG/PNG/JSON** actions.
 Save as creates an independent document with a new name; cancelling leaves the
 current document untouched. The saved name appears beside the transflow logo;
@@ -162,3 +164,9 @@ or seamless live-build preview updates: full inspector/build UI remains later wo
 UI focus and node selection use thin, muted teal outlines (with a lighter dark-theme
 variant). Custom menu rows separate icons, labels and checkmarks, with consistent
 height and inset focus styling that cannot overlap adjacent rows.
+
+The Open lineage dialog has fuzzy name search across bounded saved-lineage pages,
+highlighted matches, version labels and committed last-save timestamps. UI dates
+use `YYYY-MM-DD HH:mm:ss` in the browser's local time. Legend rows select matching
+visible nodes; dependency edges share one colour regardless of origin or role.
+Pointer-down on a node dismisses its tooltip until a fresh hover/focus.

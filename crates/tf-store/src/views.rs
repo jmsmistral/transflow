@@ -92,10 +92,33 @@ impl Store {
 }
 impl Reader {
     /// Page summaries only; never silently truncate saved-view lists.
-    pub async fn views(&mut self, after: &str) -> Result<Value> {
-        let rows = sqlx::query("SELECT id,revision,json_extract(view_json,'$.name') FROM graph_views WHERE id>? ORDER BY id LIMIT 101").bind(after).fetch_all(&mut self.db).await?;
-        let more = rows.len() > 100;
-        let views = rows.iter().take(100).map(|r| Ok(json!({"id":r.try_get::<String,_>(0)?,"revision":r.try_get::<i64,_>(1)?,"name":r.try_get::<String,_>(2)?}))).collect::<Result<Vec<_>>>()?;
+    pub async fn views(&mut self, after: &str, search: &str) -> Result<Value> {
+        // Scan in bounded batches: search covers all saved lineages, not just the first page.
+        let mut cursor = after.to_owned();
+        let mut views = Vec::new();
+        let query = search.to_lowercase();
+        loop {
+            let rows = sqlx::query("SELECT id,revision,json_extract(view_json,'$.name'),saved_at_us FROM graph_views WHERE id>? ORDER BY id LIMIT 100")
+                .bind(&cursor).fetch_all(&mut self.db).await?;
+            let exhausted = rows.len() < 100;
+            for row in rows {
+                cursor = row.try_get::<String, _>(0)?;
+                let name: String = row.try_get(2)?;
+                let lowered = name.to_lowercase();
+                let mut chars = lowered.chars();
+                if query.chars().all(|wanted| chars.any(|c| c == wanted)) {
+                    views.push(json!({"id":cursor,"revision":row.try_get::<i64,_>(1)?,"name":name,"saved_at_us":row.try_get::<i64,_>(3)?.to_string()}));
+                    if views.len() > 100 {
+                        break;
+                    }
+                }
+            }
+            if exhausted || views.len() > 100 {
+                break;
+            }
+        }
+        let more = views.len() > 100;
+        views.truncate(100);
         Ok(
             json!({"next_cursor":if more {views.last().map(|v|v["id"].clone())}else{None},"views":views}),
         )
@@ -113,7 +136,7 @@ impl Reader {
         // Compatibility is read-only: old bytes and revision remain intact until an explicit save.
         // Unknown fields still fail the closed schema; only retired presentation fields are dropped.
         if let Some(object) = value.as_object_mut() {
-            for key in ["groups", "annotations", "filters"] {
+            for key in ["groups", "annotations", "filters", "viewport"] {
                 object.remove(key);
             }
         }

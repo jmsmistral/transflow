@@ -755,3 +755,84 @@ test("rapid uncached additions both appear, while removal cancels unfinished add
   stop();
   workspace.dispose();
 });
+
+test("legend rows select exactly matching visible nodes in each mode", async () => {
+  const local = {
+    ...node("a"),
+    resource_type: "polars_transform" as const,
+    publication: "published" as const,
+  };
+  const foreign = {
+    ...node("foreign", true),
+    resource_type: "external" as const,
+  };
+  const missing = { ...node("missing"), publication: "missing" as const };
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path) =>
+        path.endsWith("/lineage")
+          ? Promise.resolve(
+              json(
+                page(
+                  [local, foreign, missing],
+                  [
+                    edge("a", "missing"),
+                    edge("foreign", "missing", "check", "validation"),
+                  ],
+                ),
+                context(),
+              ),
+            )
+          : undefined,
+      ),
+    ),
+  );
+  await workspace.connect("launch");
+  const view = render(
+    <GraphExplorer
+      workspace={workspace}
+      focusRequest={{ path: "data/a", revision: 1 }}
+    />,
+  );
+  await waitFor(() =>
+    expect(view.container.querySelectorAll(".dataset-node")).toHaveLength(3),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Toggle legend" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Select External Dataset nodes" }),
+  );
+  await waitFor(() =>
+    expect(
+      view.container
+        .querySelector(".react-flow__node.selected")
+        ?.getAttribute("data-id"),
+    ).toBe("foreign"),
+  );
+  expect(screen.queryByText(/Counts show visible datasets/)).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Node colouring" }));
+  fireEvent.click(screen.getByRole("menuitemradio", { name: "Publication" }));
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Select Not built on these branches nodes",
+    }),
+  );
+  await waitFor(() =>
+    expect(
+      view.container
+        .querySelector(".react-flow__node.selected")
+        ?.getAttribute("data-id"),
+    ).toBe("missing"),
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: "Select Published nodes" }),
+  );
+  await waitFor(() =>
+    expect(
+      view.container
+        .querySelector(".react-flow__node.selected")
+        ?.getAttribute("data-id"),
+    ).toBe("a"),
+  );
+  view.unmount();
+  workspace.dispose();
+});

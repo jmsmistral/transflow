@@ -41,7 +41,7 @@ import {
 import { DatasetTooltip } from "./Tooltip";
 import { Menu } from "./Menu";
 import { ViewEditor } from "./ViewEditor";
-import { ViewHistory, type Visual } from "./view";
+import { ViewHistory, openingViewport, type Visual } from "./view";
 import { same } from "../api/validate";
 import { queryFor } from "../workspace";
 import { Positions } from "./positions";
@@ -64,7 +64,8 @@ type DatasetNode = Node<
   },
   "dataset"
 >;
-function Dataset({ data }: NodeProps<DatasetNode>) {
+function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
+  const pointerDown = useRef(false);
   const [hovered, setHovered] = useState(false);
   const parents = data.value.parent_count !== "0" && !data.value.external;
   const children = data.value.child_count !== "0";
@@ -102,6 +103,10 @@ function Dataset({ data }: NodeProps<DatasetNode>) {
   );
   return (
     <div
+      onPointerDownCapture={() => {
+        pointerDown.current = true;
+        setHovered(false);
+      }}
       className={`dataset-node colour-${data.colour === "resource" ? data.value.resource_type : data.value.publication} ${data.value.publication === "missing" ? "unbuilt-node" : ""}`}
     >
       <Handle type="target" position={Position.Left} isConnectable={false} />
@@ -110,17 +115,26 @@ function Dataset({ data }: NodeProps<DatasetNode>) {
       <button
         className="node-label"
         aria-label={`Details for ${label(data.value)}`}
-        onMouseEnter={() => setHovered(true)}
+        onMouseEnter={(event) => {
+          if (event.buttons === 0) {
+            pointerDown.current = false;
+            setHovered(true);
+          }
+        }}
         onMouseLeave={() => setHovered(false)}
-        onFocus={() => setHovered(true)}
-        onBlur={() => setHovered(false)}
+        onFocus={() => {
+          if (!pointerDown.current) setHovered(true);
+        }}
+        onBlur={() => {
+          pointerDown.current = false;
+          setHovered(false);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
             setHovered(false);
             e.stopPropagation();
           }
         }}
-        onClick={() => setHovered(true)}
       >
         <span
           className={`resource-icon ${data.value.external ? "external-icon" : ""}`}
@@ -137,8 +151,14 @@ function Dataset({ data }: NodeProps<DatasetNode>) {
       {children &&
         arrow("downstream", data.childrenExpanded, data.value.child_count)}
       <Handle type="source" position={Position.Right} isConnectable={false} />
-      <NodeToolbar isVisible={hovered} position={Position.Top} offset={12}>
-        <DatasetTooltip node={data.value} workspace={data.workspace} />
+      <NodeToolbar
+        isVisible={hovered && !dragging}
+        position={Position.Top}
+        offset={12}
+      >
+        {hovered && !dragging && (
+          <DatasetTooltip node={data.value} workspace={data.workspace} />
+        )}
       </NodeToolbar>
     </div>
   );
@@ -373,13 +393,17 @@ function GraphView({
         opened.datasets.map((n) => [n.identity, n.position]),
       ),
       selected: [],
-      viewport: opened.viewport,
+      viewport: openingViewport(
+        opened.datasets,
+        flowStore.getState().width,
+        flowStore.getState().height,
+      ),
       colour: opened.colour,
     };
     apply(v);
     history.reset(v);
     refreshHistory((n) => n + 1);
-  }, [opened, apply, history]);
+  }, [opened, apply, history, flowStore]);
   useEffect(() => {
     if (
       graph.busy ||
@@ -483,7 +507,7 @@ function GraphView({
         label: `${edge.alias} · ${edge.role}`,
         ariaLabel: `${edge.alias}: ${edge.role} dependency, branch ${edge.declared_branch.name ?? edge.declared_branch.kind}, ${edge.stop_branch_fallback ? "fallback blocked" : "fallback permitted"}, ${edge.checks.length} checks`,
         style: {
-          ...(edge.role === "validation" ? { stroke: "var(--accent)" } : {}),
+          stroke: "var(--xy-edge-stroke, #b1b1b7)",
           strokeWidth:
             graph.pathNodes?.has(edge.parent) &&
             graph.pathNodes.has(edge.consumer)
@@ -796,7 +820,24 @@ function GraphView({
           <div className="graph-colour-legend" aria-label="Graph legend">
             {(colour === "resource" ? resourceLabels : publicationLabels).map(
               ([key, name]) => (
-                <div key={key}>
+                <Button
+                  key={key}
+                  onClick={() =>
+                    selectNodes(
+                      new Set(
+                        graph.nodes
+                          .filter(
+                            (n) =>
+                              (colour === "resource"
+                                ? n.resource_type
+                                : n.publication) === key,
+                          )
+                          .map((n) => n.identity),
+                      ),
+                    )
+                  }
+                  aria-label={`Select ${name} nodes`}
+                >
                   <span className={`legend-swatch colour-${key}`} />
                   {name}
                   <span className="muted">
@@ -809,14 +850,9 @@ function GraphView({
                       ).length
                     }
                   </span>
-                </div>
+                </Button>
               ),
             )}
-            <p>
-              Counts show visible datasets. Dashed border: no publication on
-              this branch or its fallbacks. Unknown is not missing. Publication
-              does not verify freshness or dataset files.
-            </p>
           </div>
         )}
       </div>

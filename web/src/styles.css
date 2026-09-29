@@ -1233,11 +1233,15 @@ summary {
   box-shadow: 0 6px 24px #142d4630;
   font-size: 12px;
 }
-.graph-colour-legend > div {
+.graph-colour-legend > button {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 0;
+  padding: 7px 6px;
+  width: 100%;
+  border: 0;
+  text-align: left;
+  background: transparent;
 }
 .graph-colour-legend .muted {
   margin-left: auto;
@@ -1494,4 +1498,54 @@ summary {
 }
 .view-editor::backdrop {
   background: #10203060;
+}
+
+.graph-colour-legend > button:hover {
+  background: var(--soft);
+}
+.open-lineage {
+  width: min(580px, calc(100vw - 40px));
+}
+.saved-lineages {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 50vh;
+  overflow: auto;
+}
+.saved-lineages li + li {
+  border-top: 1px solid var(--line);
+}
+.saved-lineages .button {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 14px 10px;
+  text-align: left;
+}
+.saved-lineages button:hover {
+  background: var(--soft);
+}
+.saved-lineage-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.saved-lineage-title strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.lineage-version {
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+.saved-lineages small {
+  color: var(--muted);
+  padding-left: 28px;
 }

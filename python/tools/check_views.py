@@ -39,7 +39,6 @@ def exercise(client: Client, root: Path) -> dict[str, Any]:
             {"identity": identity, "position": {"x": i * 300.5, "y": 90}}
             for i, identity in enumerate(ids)
         ],
-        "viewport": {"x": -10, "y": 20, "zoom": 0.8},
         "colour": "resource",
         "selector": {
             "branch": "main",
@@ -54,6 +53,14 @@ def exercise(client: Client, root: Path) -> dict[str, Any]:
     assert client.context()["context"]["fingerprint"] == context["context"]["fingerprint"]
     assert client.call("GET", f"/api/v1/views/{view['id']}")["data"] == saved
     assert saved["id"] in [v["id"] for v in client.call("GET", "/api/v1/views")["data"]["views"]]
+    summaries = client.call("GET", "/api/v1/views", query={"search": "SSl"})["data"]["views"]
+    summary = next(v for v in summaries if v["id"] == saved["id"])
+    assert int(summary["saved_at_us"]) > 0
+    assert summary["revision"] == 1
+    assert not client.call("GET", "/api/v1/views", query={"search": "no such lineage"})["data"][
+        "views"
+    ]
+    client.call("GET", "/api/v1/views", query={"search": "x" * 201}, status=400)
     reopened = client.call(
         "GET", "/api/v1/lineage", query={"branch": "main", "lookup": json.dumps(ids)}
     )["data"]
@@ -61,7 +68,7 @@ def exercise(client: Client, root: Path) -> dict[str, Any]:
     client.call(
         "GET", "/api/v1/context", query={"branch": "main", "source_graph": "a" * 64}, status=400
     )
-    for obsolete in ("groups", "annotations", "filters"):
+    for obsolete in ("groups", "annotations", "filters", "viewport"):
         client.mutate("/api/v1/views", {**saved, obsolete: []}, status=400)
     client.mutate(
         "/api/v1/views",

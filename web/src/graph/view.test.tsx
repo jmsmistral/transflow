@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
-import { ViewHistory, type Visual } from "./view";
+import { ViewHistory, openingViewport, type Visual } from "./view";
 import { exportJson, exportSvg } from "./exports";
 import { decode, Client } from "../api/client";
 import { Workspace } from "../workspace";
@@ -101,7 +101,14 @@ test("saved view controls preserve edits on conflict and only issue a view mutat
       return Promise.resolve(
         json({
           views: saved
-            ? [{ id: saved.id, revision: saved.revision, name: saved.name }]
+            ? [
+                {
+                  id: saved.id,
+                  revision: saved.revision,
+                  name: saved.name,
+                  saved_at_us: "1700000000000000",
+                },
+              ]
             : [],
           next_cursor: null,
         }),
@@ -144,6 +151,7 @@ test("saved view controls preserve edits on conflict and only issue a view mutat
   expect(
     screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
   ).toBe(true);
+  expect(saved).not.toHaveProperty("viewport");
   expect(saved).not.toHaveProperty("groups");
   expect(saved).not.toHaveProperty("annotations");
   expect(saved).not.toHaveProperty("filters");
@@ -172,7 +180,7 @@ test("saved view controls preserve edits on conflict and only issue a view mutat
   fireEvent.click(screen.getByRole("button", { name: "Lineage actions" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "Open lineage" }));
   fireEvent.click(
-    await screen.findByRole("button", { name: "Analysis · revision 1" }),
+    await screen.findByRole("button", { name: "Open Analysis, version 1" }),
   );
   await waitFor(() => expect(confirm).toHaveBeenCalled());
   expect(screen.getByText("My analysis")).toBeTruthy();
@@ -278,7 +286,6 @@ test("moving a saved node enables Save; restoring its position returns to clean 
       identity: n.identity,
       position: v.positions[n.identity] ?? { x: 0, y: 0 },
     })),
-    viewport: v.viewport,
     selector: { branch: "master", fallback: ["public"] },
   };
   const props = {
@@ -290,6 +297,12 @@ test("moving a saved node enables Save; restoring its position returns to clean 
     actionsHost: null,
   };
   const view = render(<ViewEditor {...props} visual={v} />);
+  view.rerender(
+    <ViewEditor
+      {...props}
+      visual={{ ...v, viewport: { x: 900, y: -700, zoom: 0.3 } }}
+    />,
+  );
   expect(
     screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
   ).toBe(true);
@@ -320,5 +333,93 @@ test("moving a saved node enables Save; restoring its position returns to clean 
     screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
   ).toBe(true);
   view.unmount();
+  workspace.dispose();
+});
+
+test("opening camera uses the node bounds at fixed zoom, independently of prior pan/zoom", () => {
+  expect(openingViewport([], 1000, 600)).toEqual({ x: 0, y: 0, zoom: 1 });
+  expect(
+    openingViewport(
+      [
+        { identity: "a", position: { x: -200, y: 80 } },
+        { identity: "b", position: { x: 400, y: 180 } },
+      ],
+      1000,
+      600,
+    ),
+  ).toEqual({ x: 275, y: 150, zoom: 1 });
+});
+
+test("lineage picker searches all pages, formats versions/timestamps and fences stale replies", async () => {
+  let resolveOld!: (response: Response) => void;
+  const requested: Record<string, string>[] = [];
+  const summary = {
+    id: doc().id,
+    name: "Review workspace",
+    revision: 4,
+    saved_at_us: "1700000000000000",
+  };
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path, q) => {
+        if (path === "/api/v1/views") {
+          requested.push(q);
+          if (q.search === "old")
+            return new Promise((r) => {
+              resolveOld = r;
+            });
+          if (q.search === "fail")
+            return Promise.resolve(new Response("{}", { status: 500 }));
+          return Promise.resolve(
+            json({
+              views: q.search === "absent" ? [] : [summary],
+              next_cursor: q.after ? null : summary.id,
+            }),
+          );
+        }
+        return;
+      }),
+    ),
+  );
+  await workspace.connect("launch");
+  const rendered = render(
+    <ViewEditor
+      workspace={workspace}
+      visual={visual()}
+      opened={null}
+      onOpen={async () => {}}
+      onMessage={() => {}}
+      titleHost={null}
+      actionsHost={null}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Lineage actions" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "Open lineage" }));
+  await screen.findByRole("button", {
+    name: "Open Review workspace, version 4",
+  });
+  expect(screen.getByText(/Last saved/).textContent).toMatch(
+    /Last saved \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/u,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+  await waitFor(() => expect(requested.at(-1)?.after).toBe(summary.id));
+  const input = screen.getByRole("searchbox", { name: "Search lineages" });
+  fireEvent.change(input, { target: { value: "RVW" } });
+  await waitFor(() => expect(requested.at(-1)).toEqual({ search: "RVW" }));
+  await waitFor(() =>
+    expect(rendered.container.querySelectorAll("mark")).toHaveLength(3),
+  );
+  fireEvent.change(input, { target: { value: "old" } });
+  await waitFor(() => expect(resolveOld).toBeDefined());
+  fireEvent.change(input, { target: { value: "absent" } });
+  await screen.findByText("No lineages match this search.");
+  resolveOld(json({ views: [summary], next_cursor: null }));
+  await waitFor(() =>
+    expect(screen.queryByText("Review workspace")).toBeNull(),
+  );
+  fireEvent.change(input, { target: { value: "fail" } });
+  await screen.findByRole("alert");
+  expect(screen.queryByText("Review workspace")).toBeNull();
+  rendered.unmount();
   workspace.dispose();
 });

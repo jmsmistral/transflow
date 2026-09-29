@@ -5903,6 +5903,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ]
       },
@@ -5966,11 +5974,6 @@
                     "name": "x",
                     "description": "example",
                     "datasets": [],
-                    "viewport": {
-                      "x": -1000000,
-                      "y": -1000000,
-                      "zoom": 0.05
-                    },
                     "colour": "resource",
                     "selector": {
                       "branch": "x",
@@ -6089,11 +6092,6 @@
                 "name": "x",
                 "description": "example",
                 "datasets": [],
-                "viewport": {
-                  "x": -1000000,
-                  "y": -1000000,
-                  "zoom": 0.05
-                },
                 "colour": "resource",
                 "selector": {
                   "branch": "x",
@@ -6150,11 +6148,6 @@
                     "name": "x",
                     "description": "example",
                     "datasets": [],
-                    "viewport": {
-                      "x": -1000000,
-                      "y": -1000000,
-                      "zoom": 0.05
-                    },
                     "colour": "resource",
                     "selector": {
                       "branch": "x",
@@ -14579,7 +14572,6 @@
           "name",
           "description",
           "datasets",
-          "viewport",
           "colour",
           "selector"
         ],
@@ -14616,32 +14608,6 @@
             "maxItems": 500,
             "minItems": 0
           },
-          "viewport": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "x",
-              "y",
-              "zoom"
-            ],
-            "properties": {
-              "x": {
-                "type": "number",
-                "minimum": -1000000,
-                "maximum": 1000000
-              },
-              "y": {
-                "type": "number",
-                "minimum": -1000000,
-                "maximum": 1000000
-              },
-              "zoom": {
-                "type": "number",
-                "minimum": 0.05,
-                "maximum": 2
-              }
-            }
-          },
           "colour": {
             "type": "string",
             "enum": [
@@ -14671,7 +14637,8 @@
               "required": [
                 "id",
                 "revision",
-                "name"
+                "name",
+                "saved_at_us"
               ],
               "properties": {
                 "id": {
@@ -14686,6 +14653,10 @@
                 "name": {
                   "type": "string",
                   "maxLength": 200
+                },
+                "saved_at_us": {
+                  "type": "string",
+                  "format": "transflow-i64"
                 }
               }
             },

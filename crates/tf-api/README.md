@@ -342,9 +342,10 @@ lineage/connection reads on each addition; cache hits do not perform a new live-
 
 ## Saved presentation views (T084)
 
-Authenticated `GET /api/v1/views` pages 100 summaries (`after` UUID), and
+Authenticated `GET /api/v1/views` pages 100 summaries (`after` UUID, optional `search` name subsequence up to 200 characters), and
 `GET /api/v1/views/{uuid}` returns a closed `GraphViewV1` document. These are
-presentation metadata reads. Contextual `POST /api/v1/views` uses the existing
+presentation metadata reads. Each summary includes committed `saved_at_us` (decimal
+microseconds); search is case-insensitive across all pages. Contextual `POST /api/v1/views` uses the existing
 session/CSRF, `If-Match` context and idempotency guards, plus the document revision
 (0 creates; updates compare and increment). Revision conflicts return 409.
 The owner serializes a view write and its audit fact in one SQLite transaction.
@@ -354,7 +355,7 @@ No dataset, schedule, build or publication is mutated by a view save.
 Saved lineages always follow retained branch browsing metadata and ordered
 fallbacks. The `source_graph` query and `fixed_source` discriminator are removed;
 unknown query keys and retired fields in new save requests are rejected. The reader
-normalizes older pre-release documents by dropping groups, annotations, filters and
+normalizes older pre-release documents by dropping viewport, groups, annotations, filters and
 source-mode fields, preserving their revision and original bytes until explicit save.
 View-only source retention roots are removed; build/version/pin roots are unaffected.
 Lookup accepts `dataset:<workspace-uuid>:<dataset-uuid>` stable identities.

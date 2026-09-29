@@ -416,7 +416,8 @@
     "response": "ApiViewsV1",
     "request": null,
     "query": [
-      "after"
+      "after",
+      "search"
     ],
     "mutation": false,
     "context": false

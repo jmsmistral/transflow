@@ -39,7 +39,6 @@ export function exportJson(
     {
       format_version: 1,
       datasets: view.datasets,
-      viewport: view.viewport,
       colour: view.colour,
       edges: visual.edges
         .filter(

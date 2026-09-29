@@ -9,6 +9,8 @@ import { Icon } from "../Icons";
 import type { Visual } from "./view";
 import { createExport, exportDataUrl } from "./exports";
 import { Menu } from "./Menu";
+import { matchPositions } from "./Search";
+import { formatTimestamp } from "../date";
 
 type Panel = "save" | "copy" | "open" | "json" | "svg" | "png" | null;
 export function ViewEditor({
@@ -50,7 +52,56 @@ export function ViewEditor({
     };
   }, [panel]);
   const [name, setName] = useState("");
-  const [page, setPage] = useState<ApiViewsV1 | null>(null);
+  const [search, setSearch] = useState("");
+  const [cursor, setCursor] = useState("");
+  const [listing, setListing] = useState<{
+    key: string;
+    page: ApiViewsV1;
+  } | null>(null);
+  const [listError, setListError] = useState<{
+    key: string;
+    message: string;
+  } | null>(null);
+  const listKey = JSON.stringify([search, cursor]);
+  const page = listing?.key === listKey ? listing.page : null;
+  useEffect(() => {
+    if (panel !== "open") return;
+    const request = new AbortController();
+    const timer = setTimeout(
+      () => {
+        void workspace.client
+          .read(
+            "ApiViewsV1",
+            "/api/v1/views",
+            { search, ...(cursor ? { after: cursor } : {}) },
+            request.signal,
+          )
+          .then(
+            (result) => {
+              if (!request.signal.aborted) {
+                setListing({ key: listKey, page: result.data });
+                setListError(null);
+              }
+            },
+            (error: unknown) => {
+              if (!request.signal.aborted)
+                setListError({
+                  key: listKey,
+                  message:
+                    error instanceof Error
+                      ? error.message
+                      : "Lineage search failed.",
+                });
+            },
+          );
+      },
+      search ? 150 : 0,
+    );
+    return () => {
+      clearTimeout(timer);
+      request.abort();
+    };
+  }, [workspace, panel, search, cursor, listKey]);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const [labels, setLabels] = useState(true),
@@ -94,7 +145,6 @@ export function ViewEditor({
       identity: n.identity,
       position: visual.positions[n.identity] ?? { x: 0, y: 0 },
     })),
-    viewport: visual.viewport,
     colour: visual.colour,
     selector: {
       branch: state.selection.branch,
@@ -130,15 +180,6 @@ export function ViewEditor({
       if (!lifetime.current.signal.aborted) setBusy(false);
     }
   };
-  const list = async (after = "") => {
-    const result = await workspace.client.read(
-      "ApiViewsV1",
-      "/api/v1/views",
-      after ? { after } : {},
-      lifetime.current.signal,
-    );
-    setPage(result.data);
-  };
   const save = async (copy = false) => {
     if (!context) return;
     const value = {
@@ -172,7 +213,12 @@ export function ViewEditor({
       );
       setCopyId(crypto.randomUUID());
     }
-    if (next === "open") void run(() => list());
+    if (next === "open") {
+      setSearch("");
+      setCursor("");
+      setListing(null);
+      setListError(null);
+    }
   };
   const heading = record && (
     <>
@@ -272,7 +318,7 @@ export function ViewEditor({
         <div className="lineage-dialog-backdrop">
           <dialog
             ref={dialog}
-            className="view-editor"
+            className={`view-editor ${panel === "open" ? "open-lineage" : ""}`}
             onCancel={(event) => {
               event.preventDefault();
               if (!busy) setPanel(null);
@@ -373,46 +419,91 @@ export function ViewEditor({
             )}
             {panel === "open" && (
               <>
-                {!page?.views.length && !busy && <p>No saved lineages.</p>}
-                {page?.views.map((view) => (
-                  <Button
-                    key={view.id}
-                    disabled={busy}
-                    onClick={() =>
-                      void run(async () => {
-                        if (
-                          dirty &&
-                          !window.confirm(
-                            "Discard unsaved changes and open this lineage?",
-                          )
-                        )
-                          return;
-                        const result = await workspace.client.read(
-                          "GraphViewV1",
-                          `/api/v1/views/${encodeURIComponent(view.id)}`,
-                          {},
-                          lifetime.current.signal,
-                        );
-                        await onOpen(result.data);
-                        setPanel(null);
-                      })
-                    }
-                  >
-                    {view.name} · revision {view.revision}
-                  </Button>
-                ))}
+                <input
+                  type="search"
+                  aria-label="Search lineages"
+                  placeholder="Search saved lineages…"
+                  maxLength={200}
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setCursor("");
+                  }}
+                />
+                {listError?.key === listKey && (
+                  <p role="alert">{listError.message}</p>
+                )}
+                {!page && listError?.key !== listKey && (
+                  <p role="status">Loading lineages…</p>
+                )}
+                {page?.views.length === 0 && (
+                  <p>
+                    {search
+                      ? "No lineages match this search."
+                      : "No saved lineages."}
+                  </p>
+                )}
+                <ul className="saved-lineages">
+                  {page?.views.map((view) => {
+                    const matches = matchPositions(view.name, search);
+                    return (
+                      <li key={view.id}>
+                        <Button
+                          disabled={busy}
+                          aria-label={`Open ${view.name}, version ${view.revision}`}
+                          onClick={() =>
+                            void run(async () => {
+                              if (
+                                dirty &&
+                                !window.confirm(
+                                  "Discard unsaved changes and open this lineage?",
+                                )
+                              )
+                                return;
+                              const result = await workspace.client.read(
+                                "GraphViewV1",
+                                `/api/v1/views/${encodeURIComponent(view.id)}`,
+                                {},
+                                lifetime.current.signal,
+                              );
+                              await onOpen(result.data);
+                              setPanel(null);
+                            })
+                          }
+                        >
+                          <span className="saved-lineage-title">
+                            <Icon name="branch" />
+                            <strong>
+                              {[...view.name].map((char, index) =>
+                                matches.has(index) ? (
+                                  <mark key={index}>{char}</mark>
+                                ) : (
+                                  char
+                                ),
+                              )}
+                            </strong>
+                            <span className="lineage-version">
+                              version {view.revision}
+                            </span>
+                          </span>
+                          <small>
+                            Last saved {formatTimestamp(view.saved_at_us)}
+                          </small>
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
                 <div className="view-row">
                   <Button
-                    disabled={busy}
-                    onClick={() => void run(() => list())}
+                    disabled={busy || !cursor}
+                    onClick={() => setCursor("")}
                   >
                     First page
                   </Button>
                   <Button
                     disabled={busy || !page?.next_cursor}
-                    onClick={() =>
-                      void run(() => list(page?.next_cursor ?? ""))
-                    }
+                    onClick={() => setCursor(page?.next_cursor ?? "")}
                   >
                     Next page
                   </Button>

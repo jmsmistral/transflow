@@ -7584,11 +7584,6 @@
           }
         }
       ],
-      "viewport": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
-      },
       "colour": "resource",
       "selector": {
         "branch": "master",
@@ -7615,11 +7610,6 @@
           }
         }
       ],
-      "viewport": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
-      },
       "colour": "resource",
       "selector": {
         "branch": "master",
@@ -7629,7 +7619,7 @@
     "valid": false
   },
   {
-    "name": "view-zoom-out-of-range",
+    "name": "view-retired-viewport",
     "schema": "GraphViewV1",
     "value": {
       "format_version": 1,
@@ -7649,7 +7639,7 @@
       "viewport": {
         "x": 0,
         "y": 0,
-        "zoom": 0
+        "zoom": 1
       },
       "colour": "resource",
       "selector": {
@@ -7677,11 +7667,6 @@
           }
         }
       ],
-      "viewport": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
-      },
       "colour": "resource",
       "selector": {
         "branch": "master",
@@ -7708,11 +7693,6 @@
           }
         }
       ],
-      "viewport": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
-      },
       "colour": "resource",
       "selector": {
         "branch": "master",
@@ -7751,11 +7731,6 @@
           }
         }
       ],
-      "viewport": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
-      },
       "colour": "resource",
       "selector": {
         "branch": "master",
@@ -7783,11 +7758,6 @@
           }
         }
       ],
-      "viewport": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
-      },
       "colour": "resource",
       "selector": {
         "branch": "master",
@@ -7815,11 +7785,6 @@
           }
         }
       ],
-      "viewport": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
-      },
       "colour": "resource",
       "selector": {
         "branch": "master",
@@ -7847,11 +7812,6 @@
           }
         }
       ],
-      "viewport": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
-      },
       "colour": "resource",
       "selector": {
         "branch": "master",
@@ -7879,11 +7839,6 @@
           }
         }
       ],
-      "viewport": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
-      },
       "colour": "resource",
       "selector": {
         "branch": "master",

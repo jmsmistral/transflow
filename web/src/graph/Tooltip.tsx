@@ -6,6 +6,7 @@ import type {
 } from "../generated/contracts";
 import type { Workspace } from "../workspace";
 import { label } from "./model";
+import { formatTimestamp } from "../date";
 function field(
   value: ExecutionJsonV1 | undefined,
   key: string,
@@ -57,10 +58,6 @@ export function DatasetTooltip({
   if (!detail) return null;
   const head = detail.head;
   const published = field(head, "published_at_us");
-  const timestamp =
-    typeof published === "string"
-      ? new Date(Number(BigInt(published) / 1000n))
-      : null;
   const fields = field(field(head, "schema"), "fields");
   return (
     <div className="dataset-tooltip" role="tooltip">
@@ -81,11 +78,7 @@ export function DatasetTooltip({
         <dt>Resolved branch</dt>
         <dd>{scalar(field(head, "resolved_branch"))}</dd>
         <dt>Last published</dt>
-        <dd>
-          {timestamp && !Number.isNaN(timestamp.getTime())
-            ? timestamp.toLocaleString()
-            : "Not available"}
-        </dd>
+        <dd>{formatTimestamp(published)}</dd>
         <dt>Rows / size</dt>
         <dd>
           {scalar(field(head, "row_count"))} rows ·{" "}

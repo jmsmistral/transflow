@@ -108,3 +108,73 @@ test("catalogue filters automatically, highlights fuzzy matches and identifies v
   expect(matchPositions("raw/example", "zz")).toEqual(new Set());
   workspace.dispose();
 });
+
+test("node pointer drag dismisses the tooltip until a fresh hover, including pending metadata", async () => {
+  let resolve!: (response: Response) => void;
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path) => {
+        if (path.endsWith(`/datasets/${datasetId}`))
+          return new Promise((r) => {
+            resolve = r;
+          });
+        if (path.endsWith("/lineage"))
+          return Promise.resolve(
+            json(
+              {
+                nodes: [node],
+                edges: [],
+                total_nodes: 1,
+                total_edges: 0,
+                next_cursor: null,
+                remaining_nodes: 0,
+                remaining_edges: 0,
+                omitted_nodes: 0,
+                omitted_edges: 0,
+                scope_complete: true,
+                external_expanded: false,
+              },
+              context(),
+            ),
+          );
+        return;
+      }),
+    ),
+  );
+  await workspace.connect("launch");
+  const { GraphExplorer } = await import("./Graph");
+  const view = render(
+    <GraphExplorer
+      workspace={workspace}
+      focusRequest={{ path: dataset.path, revision: 1 }}
+    />,
+  );
+  const label = await screen.findByLabelText(`Details for ${dataset.path}`);
+  fireEvent.mouseEnter(label);
+  await waitFor(() => expect(resolve).toBeDefined());
+  await act(async () => resolve(json(dataset, context())));
+  expect(screen.getByRole("tooltip")).toBeTruthy();
+  fireEvent.pointerDown(label);
+  fireEvent.focus(label);
+  fireEvent.mouseEnter(label, { buttons: 1 });
+  expect(screen.queryByRole("tooltip")).toBeNull();
+  fireEvent.mouseLeave(label);
+  fireEvent.mouseEnter(label, { buttons: 0 });
+  await act(async () => resolve(json(dataset, context())));
+  expect(screen.getByRole("tooltip")).toBeTruthy();
+  const wrapper = label.closest(".dataset-node");
+  if (!wrapper) throw new Error("Missing node");
+  fireEvent.pointerDown(wrapper);
+  expect(screen.queryByRole("tooltip")).toBeNull();
+  fireEvent.mouseLeave(label);
+  fireEvent.mouseEnter(label);
+  fireEvent.pointerDown(label);
+  await act(async () => resolve(json(dataset, context())));
+  expect(screen.queryByRole("tooltip")).toBeNull();
+  fireEvent.blur(label);
+  fireEvent.focus(label);
+  await act(async () => resolve(json(dataset, context())));
+  expect(screen.getByRole("tooltip")).toBeTruthy();
+  view.unmount();
+  workspace.dispose();
+});

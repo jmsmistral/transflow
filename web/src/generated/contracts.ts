@@ -339,7 +339,7 @@ export type ViewDatasetV1 = { readonly "identity": string; readonly "position": 
 export type ViewSelectorV1 = { readonly "branch": string; readonly "fallback": ReadonlyArray<string> };
 
 // prettier-ignore
-export type GraphViewV1 = { readonly "format_version": 1; readonly "id": string; readonly "revision": number; readonly "name": string; readonly "description": string; readonly "datasets": ReadonlyArray<ViewDatasetV1>; readonly "viewport": { readonly "x": number; readonly "y": number; readonly "zoom": number }; readonly "colour": ("resource" | "publication"); readonly "selector": ViewSelectorV1 };
+export type GraphViewV1 = { readonly "format_version": 1; readonly "id": string; readonly "revision": number; readonly "name": string; readonly "description": string; readonly "datasets": ReadonlyArray<ViewDatasetV1>; readonly "colour": ("resource" | "publication"); readonly "selector": ViewSelectorV1 };
 
 // prettier-ignore
-export type ApiViewsV1 = { readonly "views": ReadonlyArray<{ readonly "id": string; readonly "revision": number; readonly "name": string }>; readonly "next_cursor": (string | null) };
+export type ApiViewsV1 = { readonly "views": ReadonlyArray<{ readonly "id": string; readonly "revision": number; readonly "name": string; readonly "saved_at_us": string }>; readonly "next_cursor": (string | null) };

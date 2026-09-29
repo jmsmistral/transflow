@@ -15,6 +15,11 @@ Package installation and workspace environment checks reject other minors.
 
 Lineage review now includes directional parent/child placement, focus-scoped Cmd/Ctrl+A, a Resource Type colour legend and bounded metadata caching for immediate cached additions. Uncached metadata still requires a coordinator read. Existing positions and the camera stay unchanged. A newer canvas selection takes precedence over delayed catalogue selection.
 
+Saved lineages retain node positions and membership, while pan/zoom stays transient.
+Opening a lineage centres its node bounds at 100% zoom. The lineage picker supports
+live fuzzy name search and shows versions with last-save dates in `YYYY-MM-DD`
+format. Legend rows select matching visible nodes.
+
 ## Intended experience
 
 Write Python transforms, declare their input and output datasets, and build a target without managing a separate catalogue namespace for every source directory. Transflow is designed to validate the dependency graph, resolve exact input versions, run checks, preserve the previous successful output when a build fails, and explain what needs rebuilding.

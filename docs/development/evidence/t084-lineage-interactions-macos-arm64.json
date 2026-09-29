@@ -1,0 +1,44 @@
+{
+  "task": "T084 lineage interaction follow-up",
+  "date": "2026-09-29",
+  "platform": "macOS arm64",
+  "specification": "1.1.3",
+  "base_implementation": "4db5ccd",
+  "base_specification": "f9e04ea",
+  "changes": [
+    "Tooltip dismissal/cancel on pointer-down/drag, fresh hover/focus required to reopen",
+    "Transient camera omitted from saves and exports; each open centres saved node bounds at zoom 1",
+    "Uniform dependency edge colour for local/external and data/validation roles",
+    "Fuzzy saved-lineage name search across bounded pages; formatted rows with version and committed save time",
+    "YYYY-MM-DD HH:mm:ss browser-local timestamps",
+    "Selectable legend categories with no explanatory paragraph"
+  ],
+  "checks": {
+    "rust": "402 tests, formatting, clippy, boundary/checker and standalone-storage gates passed",
+    "python": "966 tests, environment, Ruff and mypy passed",
+    "web": "431 tests, typecheck, lint, formatting, production worker probes and matching five-asset builds passed",
+    "native_api": "17 authenticated journeys passed, including saved-list search/date/limits, camera rejection, reopen/conflict/retry and unchanged execution",
+    "safety": "27 regressions and dependency/contract/privacy baseline passed"
+  },
+  "browser": {
+    "tool": "Codex internal Browser",
+    "observed": [
+      "Saved picker rows aligned with highlighted fuzzy matches, version and committed local timestamp",
+      "Reopen centred node bounds at scale 1 with Save disabled",
+      "Pan and zoom left Save disabled; node keyboard movement and pointer drag enabled Save",
+      "Visible tooltip with YYYY-MM-DD time dismissed on actual pointer drag",
+      "Legend selection changed selected nodes without enabling Save",
+      "External validation and local data edges have identical computed colour; browser reports no errors/warnings"
+    ],
+    "not_claimed": [
+      "Firefox automation",
+      "Full screen-reader audit"
+    ]
+  },
+  "compatibility": "Old viewport omitted on read; stored bytes/revision untouched until explicit save; new writes reject viewport. No runtime migration; matched pre-release API/document major 1.",
+  "iteration_notes": [
+    "Initial restricted Python/Rust socket/process checks were blocked by sandbox and passed when run with required permissions.",
+    "Initial web lint rejected a non-null assertion in a new test; fixed. Browser review found inherited centre alignment; corrected and final web gate repeated."
+  ],
+  "ci": "Pending owner monitoring after push; not polled."
+}

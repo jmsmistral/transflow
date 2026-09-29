@@ -9,7 +9,7 @@ export interface Visual {
   edges: readonly GraphEdgeV1[];
   positions: Record<string, { x: number; y: number }>;
   selected: readonly string[];
-  viewport: GraphViewV1["viewport"];
+  viewport: { x: number; y: number; zoom: number };
   colour: GraphViewV1["colour"];
 }
 /** Bounded visual snapshots only: no service, build, schedule or catalogue mutation handle. */
@@ -48,4 +48,20 @@ export class ViewHistory {
     this.current = next;
     return next;
   }
+}
+
+/** Reopening always centres the saved node bounds at 100%; camera movement is transient. */
+export function openingViewport(
+  datasets: GraphViewV1["datasets"],
+  width: number,
+  height: number,
+) {
+  if (!datasets.length) return { x: 0, y: 0, zoom: 1 };
+  const xs = datasets.map((n) => n.position.x),
+    ys = datasets.map((n) => n.position.y);
+  return {
+    x: width / 2 - (Math.min(...xs) + Math.max(...xs) + 250) / 2,
+    y: height / 2 - (Math.min(...ys) + Math.max(...ys) + 40) / 2,
+    zoom: 1,
+  };
 }
