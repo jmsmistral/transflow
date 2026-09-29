@@ -864,43 +864,176 @@ summary {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 24px;
-  width: min(600px, 95vw);
+  padding: 0;
+  width: min(640px, calc(100vw - 32px));
   max-height: 85dvh;
+  box-shadow: 0 20px 60px #142d4640;
 }
 .fallback-dialog::backdrop {
-  background: #15233399;
+  background: #152333b0;
 }
 .fallback-dialog header,
-.fallback-dialog footer,
-.fallback-list li {
+.fallback-dialog footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
 }
 .fallback-dialog header {
-  margin-bottom: 24px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
 }
 .fallback-dialog h2 {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 650;
+}
+.fallback-dialog h2 .icon {
+  color: var(--muted);
+}
+.fallback-close {
+  border: 0;
+  padding: 5px;
+}
+.fallback-body {
+  padding: 20px 30px 24px;
+  min-height: 278px;
+  background: var(--bg);
+}
+.fallback-add {
+  display: block;
+  width: min(290px, 100%);
+  margin: 0 auto;
+}
+.fallback-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+}
+.fallback-select .icon:first-child {
+  margin-left: 12px;
+}
+.fallback-select .icon:last-child {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+}
+.fallback-select select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 34px 8px 8px;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  color: var(--ink);
+}
+.fallback-select:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.fallback-select select:focus-visible {
+  outline: none;
+}
+.fallback-order {
+  margin: 20px 0 10px;
+  color: var(--muted);
+  font-size: 13px;
 }
 .fallback-dialog footer {
-  margin-top: 28px;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+}
+.fallback-dialog footer .button:first-child {
+  margin-right: auto;
+}
+.fallback-dialog .button-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+}
+.fallback-dialog .button-primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.12);
 }
 .fallback-list {
-  padding-left: 24px;
-  min-height: 120px;
+  margin: 0;
+  padding: 0 0 0 28px;
+  list-style: decimal;
 }
 .fallback-list li {
   display: list-item;
-  padding: 10px 0;
+  padding: 6px 0;
+  min-height: 42px;
 }
-.fallback-list li > div {
+.fallback-list li::marker {
+  color: var(--muted);
+}
+.fallback-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+}
+.fallback-row-actions {
   float: right;
   display: flex;
-  gap: 5px;
+  align-items: center;
+  gap: 2px;
+}
+.fallback-grip {
+  display: inline-flex;
+  padding: 5px;
+  color: var(--muted);
+  cursor: grab;
+}
+.fallback-row-actions .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+}
+.fallback-row-actions .button:last-child {
+  color: #b43d49;
+}
+.fallback-row-actions .button .icon {
+  width: 16px;
+  height: 16px;
+}
+.fallback-empty,
+.fallback-note {
+  color: var(--muted);
+  font-size: 12px;
+}
+.fallback-empty {
+  margin: 22px 0;
+}
+.fallback-note {
+  margin: 16px 0 0;
+}
+@media (max-width: 540px) {
+  .fallback-body {
+    padding: 16px;
+  }
+  .fallback-dialog footer {
+    flex-wrap: wrap;
+  }
+  .fallback-dialog footer .button:first-child {
+    width: 100%;
+    margin: 0;
+  }
 }
 .inspector-rail {
   flex-shrink: 0;
@@ -1081,6 +1214,11 @@ summary {
   font-size: 13px;
   white-space: nowrap;
   list-style: none;
+}
+.graph-floating-tools > button[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--soft);
+  border-color: var(--accent);
 }
 .graph-floating-tools summary::-webkit-details-marker {
   display: none;

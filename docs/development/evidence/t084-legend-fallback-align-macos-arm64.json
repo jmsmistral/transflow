@@ -1,0 +1,30 @@
+{
+  "task": "T084 lineage legend, fallback dialog and Align refinement",
+  "date": "2026-09-29",
+  "platform": "macOS arm64 / Python 3.14.7",
+  "base_implementation": "90348c5",
+  "base_specification": "a831a70",
+  "changes": [
+    "Resource Type and Publication legends omit zero-count categories and show an empty state when the canvas has no nodes.",
+    "Fallback branches use a compact modal with local SVG icons, a centred add selector, numbered reorderable rows, accessible move/remove actions and right-aligned save/cancel actions.",
+    "Align is an off-by-default transient toolbar toggle. React Flow snaps manual movement to the visible 20-unit grid while it is on and preserves existing positions when toggled."
+  ],
+  "checks": {
+    "focused": "App and graph component tests passed (31 tests before the new movement regression); final graph focus passed with the movement regression.",
+    "web": "438 tests in 11 files, typecheck, lint and formatting passed; /tmp/t084-align-web-test-final.log, /tmp/t084-align-web-types-final.log, /tmp/t084-align-web-lint-final.log, /tmp/t084-align-web-format-final.log.",
+    "build": "Production Vite build and build:verify passed with five local assets and worker probes; /tmp/t084-align-web-build-verify.log.",
+    "specification": "Document/link checker passed after the receipt was added; 44 checker tests passed earlier during this change. Logs: /tmp/t084-align-spec-final.log, /tmp/t084-align-spec-tests.log.",
+    "safety": "27 safety regressions and public candidate/dependency/generated-contract baseline passed; /tmp/t084-align-safety-final.log.",
+    "regressions": "Legend tests cover absent resource categories and empty canvas; fallback tests cover ordered row controls; a real React Flow keyboard journey asserts 5-unit free movement, 20-unit snapping, and unchanged position on toggle."
+  },
+  "browser": {
+    "tool": "Codex internal Browser",
+    "observed": [
+      "An isolated real-coordinator preview displayed the updated top-left Align control off by default.",
+      "The fallback modal rendered the compact header, centered branch selector, empty ordered-list state, explanatory policy text and footer actions without overflow at the default viewport."
+    ],
+    "limits": "The isolated copy had a fresh runtime and no visible nodes; populated legend rows and pointer dragging were not browser-observed. The original user-owned coordinator had preloaded the previous UI assets. Component tests covered those states. Rebuilding the copied environment did not finish and was cancelled.",
+    "cleanup": "The agent-created coordinator on port 54063 was stopped with exit 0, its isolated workspace copy was removed, and internal Browser tabs were closed. The original user-owned coordinator on port 54062 was not stopped. Original workspace: /tmp/transflow-t083-browser."
+  },
+  "limits": "No Rust, Python or native API behavior changed, so their broader suites were not rerun for this UI-only refinement. GitHub CI remains pending owner monitoring."
+}

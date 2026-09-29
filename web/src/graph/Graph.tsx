@@ -365,6 +365,7 @@ function GraphView({
   const flowStore = useStoreApi();
   const [legendOpen, setLegendOpen] = useState(false);
   const [colour, setColour] = useState<"resource" | "publication">("resource");
+  const [align, setAlign] = useState(false);
   const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 1 });
   const [notice, setNotice] = useState("");
   const [history] = useState(() => new ViewHistory());
@@ -606,6 +607,13 @@ function GraphView({
         <Button disabled title="Layout options are coming in a later iteration">
           <Icon name="layout" /> Layout
         </Button>
+        <Button
+          aria-pressed={align}
+          title={align ? "Snap node movement to grid" : "Move nodes freely"}
+          onClick={() => setAlign((value) => !value)}
+        >
+          <Icon name="align" /> Align
+        </Button>
         <details className="graph-options">
           <summary>
             <Icon name="select" /> Select
@@ -771,12 +779,14 @@ function GraphView({
           selectionOnDrag={false}
           selectionKeyCode="Shift"
           panOnDrag={true}
+          snapToGrid={align}
+          snapGrid={[20, 20]}
           minZoom={0.05}
           maxZoom={2}
           aria-label="Dataset lineage diagram"
           colorMode={dark ? "dark" : "light"}
         >
-          <Background />
+          <Background gap={20} />
           <Controls showInteractive={false} showFitView={false}>
             <ControlButton
               title="Fit view"
@@ -833,8 +843,17 @@ function GraphView({
         </Menu>
         {legendOpen && (
           <div className="graph-colour-legend" aria-label="Graph legend">
-            {(colour === "resource" ? resourceLabels : publicationLabels).map(
-              ([key, name]) => (
+            {graph.nodes.length === 0 && <p>No visible nodes.</p>}
+            {(colour === "resource" ? resourceLabels : publicationLabels)
+              .filter(([key]) =>
+                graph.nodes.some(
+                  (node) =>
+                    (colour === "resource"
+                      ? node.resource_type
+                      : node.publication) === key,
+                ),
+              )
+              .map(([key, name]) => (
                 <Button
                   key={key}
                   onClick={() =>
@@ -866,8 +885,7 @@ function GraphView({
                     }
                   </span>
                 </Button>
-              ),
-            )}
+              ))}
           </div>
         )}
       </div>

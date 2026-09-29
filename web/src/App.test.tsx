@@ -170,10 +170,16 @@ test("panels default closed and fallback order saves a view-local override", asy
   expect(screen.getByRole("button", { name: "Branch: master" })).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Apply branch" })).toBeNull();
   await user.click(screen.getByRole("button", { name: "Fallback branches" }));
+  const fallbackDialog = screen.getByRole("dialog", {
+    name: "Fallback branches",
+  });
+  expect(fallbackDialog.querySelectorAll(".fallback-list li")).toHaveLength(1);
+  expect(fallbackDialog.querySelector(".fallback-name .icon")).toBeTruthy();
   await user.selectOptions(
     screen.getByLabelText("Add fallback branch"),
     "feature",
   );
+  expect(fallbackDialog.querySelectorAll(".fallback-list li")).toHaveLength(2);
   await user.click(screen.getByRole("button", { name: "Move feature up" }));
   await user.click(screen.getByRole("button", { name: "Save and close" }));
   await vi.waitFor(() => expect(workspace.snapshot().kind).toBe("ready"));

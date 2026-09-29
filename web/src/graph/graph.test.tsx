@@ -709,8 +709,17 @@ test.each(["before", "after"] as const)(
       expect(screen.queryByText(/Open the catalogue/)).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "Toggle legend" }));
       expect(screen.getByLabelText("Graph legend").textContent).toContain(
-        "Polars Transform",
+        "No visible nodes.",
       );
+      expect(
+        screen.queryByRole("button", { name: "Select SQL Transform nodes" }),
+      ).toBeNull();
+      const align = screen.getByRole("button", { name: "Align" });
+      expect(align.getAttribute("aria-pressed")).toBe("false");
+      fireEvent.click(align);
+      expect(align.getAttribute("aria-pressed")).toBe("true");
+      fireEvent.click(align);
+      expect(align.getAttribute("aria-pressed")).toBe("false");
       workspace.dispose();
     } finally {
       vi.useRealTimers();
@@ -798,6 +807,12 @@ test("legend rows select exactly matching visible nodes in each mode", async () 
     expect(view.container.querySelectorAll(".dataset-node")).toHaveLength(3),
   );
   fireEvent.click(screen.getByRole("button", { name: "Toggle legend" }));
+  expect(
+    screen.queryByRole("button", { name: "Select SQL Transform nodes" }),
+  ).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Select Dataset nodes" }),
+  ).toBeNull();
   fireEvent.click(
     screen.getByRole("button", { name: "Select External Dataset nodes" }),
   );
@@ -833,6 +848,55 @@ test("legend rows select exactly matching visible nodes in each mode", async () 
         ?.getAttribute("data-id"),
     ).toBe("a"),
   );
+  view.unmount();
+  workspace.dispose();
+});
+
+test("Align snaps keyboard node moves to the grid and leaves existing positions alone", async () => {
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path) =>
+        path.endsWith("/lineage")
+          ? Promise.resolve(json(page([node("a")]), context()))
+          : undefined,
+      ),
+    ),
+  );
+  await workspace.connect("launch");
+  const view = render(
+    <GraphExplorer
+      workspace={workspace}
+      focusRequest={{ path: "data/a", revision: 1 }}
+    />,
+  );
+  const wrapper = await waitFor(() => {
+    const element = view.container.querySelector<HTMLElement>(
+      '.react-flow__node[data-id="a"]',
+    );
+    if (!element) throw new Error("Lineage node was not rendered");
+    return element;
+  });
+  const x = () => {
+    const match = wrapper.style.transform.match(/translate\(([-\d.]+)px,/);
+    if (!match) throw new Error("Node has no canvas position");
+    return Number(match[1]);
+  };
+  fireEvent.click(wrapper);
+  expect(screen.getByRole("button", { name: "1 node selected" })).toBeTruthy();
+  const start = x();
+  fireEvent.keyDown(wrapper, { key: "ArrowRight" });
+  await waitFor(() => expect(x()).toBe(start + 5));
+  const align = screen.getByRole("button", { name: "Align" });
+  fireEvent.click(align);
+  expect(align.getAttribute("aria-pressed")).toBe("true");
+  expect(x()).toBe(start + 5);
+  fireEvent.keyDown(wrapper, { key: "ArrowRight" });
+  await waitFor(() => expect(x() % 20).toBe(0));
+  const snapped = x();
+  fireEvent.click(align);
+  expect(x()).toBe(snapped);
+  fireEvent.keyDown(wrapper, { key: "ArrowRight" });
+  await waitFor(() => expect(x()).toBe(snapped + 5));
   view.unmount();
   workspace.dispose();
 });

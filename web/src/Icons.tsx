@@ -24,6 +24,10 @@ const paths = {
   layout: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",
   select: "M4 3l16 8-7 2-2 7z",
   expand: "M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4",
+  align:
+    "M3 3h4v4H3zM10 3h4v4h-4zM17 3h4v4h-4zM3 10h4v4H3zM10 10h4v4h-4zM17 10h4v4h-4zM3 17h4v4H3zM10 17h4v4h-4zM17 17h4v4h-4z",
+  grip: "M5 5h14M5 10h14M5 15h14M5 20h14",
+  remove: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM7 12h10",
   fit: "M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5",
   external: "M8 3h13v13M21 3L3 21",
   table: "M3 3h18v18H3zM3 9h18M9 9v12",

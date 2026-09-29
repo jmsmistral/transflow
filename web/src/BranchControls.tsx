@@ -227,85 +227,109 @@ export function BranchControls({
         aria-labelledby="fallback-title"
       >
         <header>
-          <h2 id="fallback-title">⑂ Fallback branches</h2>
-          <Button aria-label="Close fallback branches" onClick={close}>
-            ×
+          <h2 id="fallback-title">
+            <Icon name="branch" /> Fallback branches
+          </h2>
+          <Button
+            className="fallback-close"
+            aria-label="Close fallback branches"
+            onClick={close}
+          >
+            <Icon name="close" />
           </Button>
         </header>
-        <p>
-          Try <strong>{branch}</strong> first, then these branches from top to
-          bottom.
-        </p>
-        <label>
-          Add fallback branch
-          <select
-            value={add}
-            onChange={(e) => {
-              const name = e.target.value;
-              if (name) {
-                setTail([...tail, name]);
-                setAdd("");
-              }
-            }}
-          >
-            <option value="">Choose a branch…</option>
-            {names
-              .filter((n) => n !== branch && !tail.includes(n))
-              .map((n) => (
-                <option key={n}>{n}</option>
-              ))}
-          </select>
-        </label>
-        <ol className="fallback-list">
-          {tail.map((name, i) => (
-            <li
-              key={name}
-              draggable
-              onDragStart={() => {
-                drag.current = i;
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (drag.current !== null) reorder(drag.current, i);
-                drag.current = null;
-              }}
-            >
-              <span>⑂ {name}</span>
-              <div>
-                <Button
-                  aria-label={`Move ${name} up`}
-                  disabled={i === 0}
-                  onClick={() => reorder(i, i - 1)}
-                >
-                  ↑
-                </Button>
-                <Button
-                  aria-label={`Move ${name} down`}
-                  disabled={i === tail.length - 1}
-                  onClick={() => reorder(i, i + 1)}
-                >
-                  ↓
-                </Button>
-                <Button
-                  aria-label={`Remove ${name} fallback`}
-                  onClick={() => setTail(tail.filter((n) => n !== name))}
-                >
-                  ⊖
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ol>
-        {!tail.length && (
-          <p className="muted">
-            No fallback: only {branch} will be considered.
+        <div className="fallback-body">
+          <label className="fallback-add">
+            <span className="sr-only">Add fallback branch</span>
+            <span className="fallback-select">
+              <Icon name="branch" />
+              <select
+                aria-label="Add fallback branch"
+                value={add}
+                onChange={(e) => {
+                  const name = e.target.value;
+                  if (name) {
+                    setTail([...tail, name]);
+                    setAdd("");
+                  }
+                }}
+              >
+                <option value="">Choose a branch…</option>
+                {names
+                  .filter((n) => n !== branch && !tail.includes(n))
+                  .map((n) => (
+                    <option key={n}>{n}</option>
+                  ))}
+              </select>
+              <Icon name="down" />
+            </span>
+          </label>
+          <p className="fallback-order">
+            Try <strong>{branch}</strong> first, then these branches from top to
+            bottom.
           </p>
-        )}
-        <p className="muted">
-          Applies to this view. Workspace defaults and independent named or
-          external input policies stay unchanged.
-        </p>
+          <ol className="fallback-list">
+            {tail.map((name, i) => (
+              <li
+                key={name}
+                draggable
+                onDragStart={() => {
+                  drag.current = i;
+                }}
+                onDragEnd={() => {
+                  drag.current = null;
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (drag.current !== null) reorder(drag.current, i);
+                  drag.current = null;
+                }}
+              >
+                <span className="fallback-name">
+                  <Icon name="branch" /> {name}
+                </span>
+                <div className="fallback-row-actions">
+                  <span className="fallback-grip" title="Drag to reorder">
+                    <Icon name="grip" />
+                  </span>
+                  <Button
+                    aria-label={`Move ${name} up`}
+                    title="Move up"
+                    disabled={i === 0}
+                    onClick={() => reorder(i, i - 1)}
+                  >
+                    <Icon name="up" />
+                  </Button>
+                  <Button
+                    aria-label={`Move ${name} down`}
+                    title="Move down"
+                    disabled={i === tail.length - 1}
+                    onClick={() => reorder(i, i + 1)}
+                  >
+                    <Icon name="down" />
+                  </Button>
+                  <Button
+                    aria-label={`Remove ${name} fallback`}
+                    title="Remove fallback"
+                    onClick={() => setTail(tail.filter((n) => n !== name))}
+                  >
+                    <Icon name="remove" />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ol>
+          {!tail.length && (
+            <p className="fallback-empty">
+              No fallback branches. Only {branch} will be considered.
+            </p>
+          )}
+          <p className="fallback-note">
+            Applies to this view. Workspace defaults and independent named or
+            external input policies stay unchanged.
+          </p>
+        </div>
         <footer>
           <Button
             onClick={() => {
@@ -315,8 +339,8 @@ export function BranchControls({
           >
             Use workspace defaults
           </Button>
-          <Button onClick={close}>Cancel</Button>
           <Button
+            className="button-primary"
             onClick={() => {
               close();
               void workspace.select({ branch, fallback: tail });
@@ -324,6 +348,7 @@ export function BranchControls({
           >
             Save and close
           </Button>
+          <Button onClick={close}>Cancel</Button>
         </footer>
       </dialog>
     </div>
