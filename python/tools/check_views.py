@@ -56,6 +56,7 @@ def exercise(client: Client, root: Path) -> dict[str, Any]:
     summaries = client.call("GET", "/api/v1/views", query={"search": "SSl"})["data"]["views"]
     summary = next(v for v in summaries if v["id"] == saved["id"])
     assert int(summary["saved_at_us"]) > 0
+    assert summary["branch"] == saved["selector"]["branch"]
     assert summary["revision"] == 1
     assert not client.call("GET", "/api/v1/views", query={"search": "no such lineage"})["data"][
         "views"

@@ -7849,5 +7849,55 @@
       }
     },
     "valid": false
+  },
+  {
+    "name": "saved-lineage-summary-branch",
+    "schema": "ApiViewsV1",
+    "value": {
+      "views": [
+        {
+          "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "revision": 2,
+          "name": "Example lineage",
+          "saved_at_us": "1700000000000000",
+          "branch": "review"
+        }
+      ],
+      "next_cursor": null
+    },
+    "valid": true
+  },
+  {
+    "name": "saved-lineage-summary-missing-branch",
+    "schema": "ApiViewsV1",
+    "value": {
+      "views": [
+        {
+          "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "revision": 2,
+          "name": "Example lineage",
+          "saved_at_us": "1700000000000000"
+        }
+      ],
+      "next_cursor": null
+    },
+    "valid": false
+  },
+  {
+    "name": "saved-lineage-summary-empty-branch",
+    "schema": "ApiViewsV1",
+    "value": {
+      "views": [
+        {
+          "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "revision": 2,
+          "name": "Example lineage",
+          "saved_at_us": "1700000000000000",
+          "branch": ""
+        }
+      ],
+      "next_cursor": null
+    },
+    "valid": false
   }
 ]

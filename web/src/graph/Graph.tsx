@@ -43,7 +43,7 @@ import { Menu } from "./Menu";
 import { ViewEditor } from "./ViewEditor";
 import { ViewHistory, openingViewport, type Visual } from "./view";
 import { same } from "../api/validate";
-import { queryFor } from "../workspace";
+import type { WorkspaceState } from "../workspace";
 import { Positions } from "./positions";
 import "@xyflow/react/dist/style.css";
 
@@ -203,23 +203,34 @@ export function GraphExplorer({
     view: GraphViewV1;
     context: string;
   } | null>(null);
+  const [generation, setGeneration] = useState(0);
+  const newView = () => {
+    model.restore({ nodes: [], edges: [] });
+    setOpened(null);
+    setGeneration((n) => n + 1);
+  };
   const openView = useCallback(
     async (view: GraphViewV1) => {
       const selector = {
         branch: view.selector.branch,
         fallback: view.selector.fallback,
       };
-      if (!same(queryFor(workspace.snapshot().selection), queryFor(selector)))
-        await workspace.select(selector);
+      const matches = (state: WorkspaceState) =>
+        state.kind === "ready" &&
+        !state.selection.plan &&
+        !state.selection.version &&
+        state.value.context.branch === selector.branch &&
+        same(state.value.context.fallback_policy, [
+          selector.branch,
+          ...selector.fallback,
+        ]);
+      if (!matches(workspace.snapshot())) await workspace.select(selector);
       await workspace.settled();
       if (workspace.snapshot().kind !== "ready")
         throw new Error("The saved source context is unavailable.");
       while (true) {
         const context = workspace.snapshot();
-        if (
-          context.kind !== "ready" ||
-          !same(queryFor(context.selection), queryFor(selector))
-        )
+        if (context.kind !== "ready" || !matches(context))
           throw new Error("The context changed while opening the view.");
         try {
           await model.reopen(view.datasets.map((n) => n.identity));
@@ -291,12 +302,13 @@ export function GraphExplorer({
     state.kind === "ready" && state.value.context.fingerprint === graph.context;
   return graph.context ? (
     <div className="graph-explorer" hidden={!ready}>
-      <ReactFlowProvider key={graph.context}>
+      <ReactFlowProvider key={`${graph.context}:${generation}`}>
         <GraphView
           titleHost={titleHost ?? null}
           actionsHost={actionsHost ?? null}
           opened={opened?.context === fingerprint ? opened.view : null}
           onOpen={openView}
+          onNew={newView}
           dark={dark}
           model={model}
           graph={graph}
@@ -313,6 +325,7 @@ function GraphView({
   actionsHost,
   opened,
   onOpen,
+  onNew,
   dark,
   model,
   graph,
@@ -324,6 +337,7 @@ function GraphView({
   actionsHost: HTMLElement | null;
   opened: GraphViewV1 | null;
   onOpen: (view: GraphViewV1) => Promise<void>;
+  onNew: () => void;
   dark: boolean;
   model: GraphModel;
   graph: GraphState;
@@ -572,6 +586,7 @@ function GraphView({
           visual={visual}
           opened={opened}
           onOpen={onOpen}
+          onNew={onNew}
           onMessage={setNotice}
         />
         <Button

@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { ViewHistory, openingViewport, type Visual } from "./view";
 import { exportJson, exportSvg } from "./exports";
@@ -107,6 +113,7 @@ test("saved view controls preserve edits on conflict and only issue a view mutat
                   revision: saved.revision,
                   name: saved.name,
                   saved_at_us: "1700000000000000",
+                  branch: "review",
                 },
               ]
             : [],
@@ -176,15 +183,14 @@ test("saved view controls preserve edits on conflict and only issue a view mutat
   await screen.findByRole("alert");
   expect(screen.getByText("My analysis")).toBeTruthy();
   expect(mutations).toHaveLength(2);
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
   fireEvent.click(screen.getByRole("button", { name: "Lineage actions" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "Open lineage" }));
   fireEvent.click(
     await screen.findByRole("button", { name: "Open Analysis, version 1" }),
   );
-  await waitFor(() => expect(confirm).toHaveBeenCalled());
+  await screen.findByRole("dialog", { name: "Discard unsaved changes?" });
+  fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
   expect(screen.getByText("My analysis")).toBeTruthy();
-  confirm.mockRestore();
   fireEvent.click(screen.getByRole("button", { name: "Close lineage panel" }));
   conflict = false;
   const originalId = (saved as GraphViewV1 | null)?.id;
@@ -216,7 +222,10 @@ test("saved view controls preserve edits on conflict and only issue a view mutat
 });
 
 test("a shared view reopens membership after a superseded prefetch abort", async () => {
-  const document = doc();
+  const document = {
+    ...doc(),
+    selector: { branch: "master", fallback: ["public"] },
+  };
   window.history.replaceState(null, "", `/?view=${document.id}`);
   let interrupted = 0;
   const transport = fixtureTransport((path, query) => {
@@ -292,6 +301,7 @@ test("moving a saved node enables Save; restoring its position returns to clean 
     workspace,
     opened: saved,
     onOpen: async () => {},
+    onNew: () => {},
     onMessage: () => {},
     titleHost: null,
     actionsHost: null,
@@ -358,6 +368,7 @@ test("lineage picker searches all pages, formats versions/timestamps and fences 
     name: "Review workspace",
     revision: 4,
     saved_at_us: "1700000000000000",
+    branch: "review",
   };
   const workspace = new Workspace(
     new Client(
@@ -388,6 +399,7 @@ test("lineage picker searches all pages, formats versions/timestamps and fences 
       visual={visual()}
       opened={null}
       onOpen={async () => {}}
+      onNew={() => {}}
       onMessage={() => {}}
       titleHost={null}
       actionsHost={null}
@@ -399,8 +411,10 @@ test("lineage picker searches all pages, formats versions/timestamps and fences 
     name: "Open Review workspace, version 4",
   });
   expect(screen.getByText(/Last saved/).textContent).toMatch(
-    /Last saved \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/u,
+    /Last saved \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/u,
   );
+  expect(screen.getByText("v4")).toBeTruthy();
+  expect(screen.getByTitle("Branch review").textContent).toContain("review");
   fireEvent.click(screen.getByRole("button", { name: "Next page" }));
   await waitFor(() => expect(requested.at(-1)?.after).toBe(summary.id));
   const input = screen.getByRole("searchbox", { name: "Search lineages" });
@@ -423,3 +437,142 @@ test("lineage picker searches all pages, formats versions/timestamps and fences 
   rendered.unmount();
   workspace.dispose();
 });
+
+test("first open keeps the picker mounted and avoids reloading equivalent implicit context; New resets saved state", async () => {
+  const saved = {
+    ...doc(),
+    revision: 2,
+    selector: { branch: "master", fallback: ["public"] },
+  };
+  let resolveMembership!: (response: Response) => void;
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path) => {
+        if (path === "/api/v1/views")
+          return Promise.resolve(
+            json({
+              views: [
+                {
+                  id: saved.id,
+                  name: saved.name,
+                  revision: 2,
+                  branch: "master",
+                  saved_at_us: "1700000000000000",
+                },
+              ],
+              next_cursor: null,
+            }),
+          );
+        if (path.startsWith("/api/v1/views/"))
+          return Promise.resolve(json(saved));
+        if (path === "/api/v1/lineage")
+          return new Promise((resolve) => {
+            resolveMembership = resolve;
+          });
+        return;
+      }),
+    ),
+  );
+  await workspace.connect("launch");
+  const states: string[] = [];
+  const unsubscribe = workspace.subscribe(() =>
+    states.push(workspace.snapshot().kind),
+  );
+  const view = render(<GraphExplorer workspace={workspace} />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Lineage actions" }),
+  );
+  fireEvent.click(screen.getByRole("menuitem", { name: "Open lineage" }));
+  const picker = await screen.findByRole("dialog", { name: "Open lineage" });
+  fireEvent.click(
+    await screen.findByRole("button", {
+      name: "Open Synthetic view, version 2",
+    }),
+  );
+  await waitFor(() => expect(resolveMembership).toBeDefined());
+  expect(screen.getByRole("dialog", { name: "Open lineage" })).toBe(picker);
+  expect(states).not.toContain("loading");
+  await act(async () =>
+    resolveMembership(
+      json(
+        {
+          nodes: [node],
+          edges: [],
+          next_cursor: null,
+          total_nodes: 1,
+          total_edges: 0,
+          remaining_nodes: 0,
+          remaining_edges: 0,
+          omitted_nodes: 0,
+          omitted_edges: 0,
+          scope_complete: true,
+          external_expanded: false,
+        },
+        context(),
+      ),
+    ),
+  );
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  await screen.findByText("Synthetic view");
+  expect(
+    screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
+  ).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Lineage actions" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "New" }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(view.container.querySelectorAll(".react-flow__node")).toHaveLength(0);
+  expect(screen.queryByText("Synthetic view")).toBeNull();
+  expect(
+    screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
+  ).toBe(true);
+  expect(
+    screen
+      .getByRole("button", { name: "Undo view change" })
+      .hasAttribute("disabled"),
+  ).toBe(true);
+  expect(states).not.toContain("loading");
+  unsubscribe();
+  view.unmount();
+  workspace.dispose();
+});
+
+test.each([false, true])(
+  "New protects dirty %s saved state with a custom cancellable dialog",
+  async (persisted) => {
+    const workspace = new Workspace(new Client(fixtureTransport()));
+    await workspace.connect("launch");
+    const onNew = vi.fn();
+    const props = {
+      workspace,
+      visual: visual(),
+      opened: persisted ? doc() : null,
+      onNew,
+      onOpen: async () => {},
+      onMessage: () => {},
+      titleHost: null,
+      actionsHost: null,
+    };
+    const view = render(<ViewEditor {...props} />);
+    const chooseNew = () => {
+      fireEvent.click(screen.getByRole("button", { name: "Lineage actions" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "New" }));
+    };
+    chooseNew();
+    expect(
+      screen.getByRole("dialog", { name: "Discard unsaved changes?" }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+    expect(onNew).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
+    ).toBe(false);
+    chooseNew();
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(onNew).not.toHaveBeenCalled();
+    chooseNew();
+    fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
+    expect(onNew).toHaveBeenCalledOnce();
+    view.unmount();
+    workspace.dispose();
+  },
+);

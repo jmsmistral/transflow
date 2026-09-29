@@ -1539,6 +1539,21 @@ summary {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.saved-lineage-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 12px;
+}
+.saved-lineage-branch .icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
 .lineage-version {
   margin-left: auto;
   white-space: nowrap;
@@ -1547,5 +1562,4 @@ summary {
 }
 .saved-lineages small {
   color: var(--muted);
-  padding-left: 28px;
 }

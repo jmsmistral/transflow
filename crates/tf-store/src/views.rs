@@ -98,7 +98,7 @@ impl Reader {
         let mut views = Vec::new();
         let query = search.to_lowercase();
         loop {
-            let rows = sqlx::query("SELECT id,revision,json_extract(view_json,'$.name'),saved_at_us FROM graph_views WHERE id>? ORDER BY id LIMIT 100")
+            let rows = sqlx::query("SELECT id,revision,json_extract(view_json,'$.name'),saved_at_us,json_extract(view_json,'$.selector.branch') FROM graph_views WHERE id>? ORDER BY id LIMIT 100")
                 .bind(&cursor).fetch_all(&mut self.db).await?;
             let exhausted = rows.len() < 100;
             for row in rows {
@@ -107,7 +107,7 @@ impl Reader {
                 let lowered = name.to_lowercase();
                 let mut chars = lowered.chars();
                 if query.chars().all(|wanted| chars.any(|c| c == wanted)) {
-                    views.push(json!({"id":cursor,"revision":row.try_get::<i64,_>(1)?,"name":name,"saved_at_us":row.try_get::<i64,_>(3)?.to_string()}));
+                    views.push(json!({"id":cursor,"revision":row.try_get::<i64,_>(1)?,"name":name,"branch":row.try_get::<String,_>(4)?,"saved_at_us":row.try_get::<i64,_>(3)?.to_string()}));
                     if views.len() > 100 {
                         break;
                     }

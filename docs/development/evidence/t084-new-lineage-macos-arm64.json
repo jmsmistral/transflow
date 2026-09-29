@@ -1,0 +1,37 @@
+{
+  "task": "T084 New lineage and first-open refinement",
+  "date": "2026-09-29",
+  "platform": "macOS arm64 / Python 3.14.7",
+  "base_implementation": "b710dc2",
+  "base_specification": "7cbbee5",
+  "changes": [
+    "Open picker shows a smaller branch icon/name to the right of the lineage title, vN and YYYY-MM-DD HH:mm local save time.",
+    "New resets membership, title, positions, camera, selection and visual undo history; custom discard confirmation protects saved and unsaved edits.",
+    "Open reuses the verified effective branch/fallback context when implicit and explicit selectors are equivalent, keeping picker/canvas mounted until membership resolves.",
+    "API list summaries return the persisted branch from existing saved JSON; no migration or saved-document change."
+  ],
+  "checks": {
+    "web": "437 tests, typecheck, lint, formatting and reproducible five-asset production build passed; /tmp/lineage-new-web.log",
+    "python": "975 tests, Ruff, mypy and environment gates passed; /tmp/lineage-new-python.log",
+    "native_api": "17 authenticated real-coordinator journey groups passed, including saved branch summary; /tmp/lineage-new-api.json",
+    "shared_contract": "327 fixtures; new branch summary positive/missing/empty cases",
+    "regressions": "Deferred first-open membership keeps the same dialog and never emits loading state for equivalent implicit context; New resets saved view and undo; dirty saved/unsaved dialogs cancel or discard; store summaries retain per-view branches across pagination.",
+    "safety": "27 regressions and dependency/privacy/generated-contract baseline passed; /tmp/lineage-new-safety.log",
+    "rust": "401 unit/integration tests plus one doc test; formatting, clippy, compilation and boundary gates passed; /tmp/lineage-new-rust-final.log"
+  },
+  "browser": {
+    "tool": "Codex internal Browser",
+    "observed": [
+      "Real saved-list formatting and branch names verified visually.",
+      "Keyboard activation from blank canvas kept picker open during membership loading, then opened with Save disabled.",
+      "Temporary description edit survived Keep editing; Discard cleared title/nodes and disabled Save/undo.",
+      "New also requested confirmation after a colour-mode change on an unsaved empty canvas.",
+      "Reopened list retained original versions/timestamps; no saved record mutated.",
+      "No browser warnings/errors observed."
+    ],
+    "screenshot": "/tmp/transflow-lineage-open-refined.png",
+    "cleanup": "Temporary tab closed and preview coordinator stopped with exit 0; workspace remains /tmp/transflow-t083-browser."
+  },
+  "corrections": "An existing shared-fixture count assertion was updated from 324 to 327 for the three new cases; final Rust gate rerun. An older shared-open test fixture now supplies the fallback policy actually returned by its mock coordinator.",
+  "limits": "GitHub CI pending owner confirmation; no workflow polling. Different branch or source selections still require a verified context load. UI/coordinator must be updated together for the unreleased matched major-1 summary field."
+}

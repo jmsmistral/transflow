@@ -8458,7 +8458,8 @@
               "id",
               "revision",
               "name",
-              "saved_at_us"
+              "saved_at_us",
+              "branch"
             ],
             "properties": {
               "id": {
@@ -8477,6 +8478,11 @@
               "saved_at_us": {
                 "type": "string",
                 "format": "transflow-i64"
+              },
+              "branch": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
               }
             }
           },

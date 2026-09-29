@@ -12,12 +12,14 @@ import { Menu } from "./Menu";
 import { matchPositions } from "./Search";
 import { formatTimestamp } from "../date";
 
-type Panel = "save" | "copy" | "open" | "json" | "svg" | "png" | null;
+type Panel =
+  "save" | "copy" | "open" | "discard" | "json" | "svg" | "png" | null;
 export function ViewEditor({
   workspace,
   visual,
   opened,
   onOpen,
+  onNew,
   onMessage,
   titleHost,
   actionsHost,
@@ -26,6 +28,7 @@ export function ViewEditor({
   visual: Visual;
   opened: GraphViewV1 | null;
   onOpen: (v: GraphViewV1) => Promise<void>;
+  onNew: () => void;
   onMessage: (message: string) => void;
   titleHost: HTMLElement | null;
   actionsHost: HTMLElement | null;
@@ -35,6 +38,7 @@ export function ViewEditor({
   const [editing, setEditing] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState("");
   const [panel, setPanel] = useState<Panel>(null);
+  const [pendingOpen, setPendingOpen] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (!panel) return;
@@ -159,7 +163,7 @@ export function ViewEditor({
   });
   const dirty = record
     ? !same(ordered(document), ordered(record))
-    : visual.nodes.length > 0;
+    : visual.nodes.length > 0 || visual.colour !== "resource" || !!description;
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => event.preventDefault();
@@ -220,6 +224,26 @@ export function ViewEditor({
       setListError(null);
     }
   };
+  const open = async (viewId: string) => {
+    const result = await workspace.client.read(
+      "GraphViewV1",
+      `/api/v1/views/${encodeURIComponent(viewId)}`,
+      {},
+      lifetime.current.signal,
+    );
+    await onOpen(result.data);
+    setPanel(null);
+  };
+  const panelTitle =
+    panel === "discard"
+      ? "Discard unsaved changes?"
+      : panel === "open"
+        ? "Open lineage"
+        : panel === "save"
+          ? "Save lineage"
+          : panel === "copy"
+            ? "Save as"
+            : `Export ${panel?.toUpperCase()}`;
   const heading = record && (
     <>
       <strong className="lineage-name" title={record.name}>
@@ -282,6 +306,17 @@ export function ViewEditor({
             action: () => show("copy"),
           },
           {
+            label: "New",
+            icon: <Icon name="new" />,
+            action: () => {
+              if (busy) return;
+              if (dirty) {
+                setPendingOpen(null);
+                show("discard");
+              } else onNew();
+            },
+          },
+          {
             label: "Open lineage",
             icon: <Icon name="open" />,
             action: () => show("open"),
@@ -324,15 +359,7 @@ export function ViewEditor({
               if (!busy) setPanel(null);
             }}
             aria-modal="true"
-            aria-label={
-              panel === "open"
-                ? "Open lineage"
-                : panel === "save"
-                  ? "Save lineage"
-                  : panel === "copy"
-                    ? "Save as"
-                    : `Export ${panel.toUpperCase()}`
-            }
+            aria-label={panelTitle}
             onKeyDown={(event) => {
               if (event.key === "Escape" && !busy) {
                 setPanel(null);
@@ -360,15 +387,7 @@ export function ViewEditor({
             }}
           >
             <header>
-              <strong>
-                {panel === "open"
-                  ? "Open lineage"
-                  : panel === "copy"
-                    ? "Save as"
-                    : panel === "save"
-                      ? "Save lineage"
-                      : `Export ${panel.toUpperCase()}`}
-              </strong>
+              <strong>{panelTitle}</strong>
               <Button
                 aria-label="Close lineage panel"
                 disabled={busy}
@@ -378,6 +397,31 @@ export function ViewEditor({
               </Button>
             </header>
             {error && <p role="alert">{error}</p>}
+            {panel === "discard" && (
+              <>
+                <p>
+                  Your unsaved changes will be lost. Saved lineages and datasets
+                  will remain unchanged.
+                </p>
+                <div className="view-row">
+                  <Button
+                    disabled={busy}
+                    onClick={() => setPanel(pendingOpen ? "open" : null)}
+                  >
+                    Keep editing
+                  </Button>
+                  <Button
+                    disabled={busy}
+                    onClick={() => {
+                      if (pendingOpen) void run(() => open(pendingOpen));
+                      else onNew();
+                    }}
+                  >
+                    Discard changes
+                  </Button>
+                </div>
+              </>
+            )}
             {(panel === "save" || panel === "copy") && (
               <>
                 <label>
@@ -451,28 +495,14 @@ export function ViewEditor({
                         <Button
                           disabled={busy}
                           aria-label={`Open ${view.name}, version ${view.revision}`}
-                          onClick={() =>
-                            void run(async () => {
-                              if (
-                                dirty &&
-                                !window.confirm(
-                                  "Discard unsaved changes and open this lineage?",
-                                )
-                              )
-                                return;
-                              const result = await workspace.client.read(
-                                "GraphViewV1",
-                                `/api/v1/views/${encodeURIComponent(view.id)}`,
-                                {},
-                                lifetime.current.signal,
-                              );
-                              await onOpen(result.data);
-                              setPanel(null);
-                            })
-                          }
+                          onClick={() => {
+                            if (dirty) {
+                              setPendingOpen(view.id);
+                              show("discard");
+                            } else void run(() => open(view.id));
+                          }}
                         >
                           <span className="saved-lineage-title">
-                            <Icon name="branch" />
                             <strong>
                               {[...view.name].map((char, index) =>
                                 matches.has(index) ? (
@@ -482,12 +512,19 @@ export function ViewEditor({
                                 ),
                               )}
                             </strong>
+                            <span
+                              className="saved-lineage-branch"
+                              title={`Branch ${view.branch}`}
+                            >
+                              <Icon name="branch" /> {view.branch}
+                            </span>
                             <span className="lineage-version">
-                              version {view.revision}
+                              v{view.revision}
                             </span>
                           </span>
                           <small>
-                            Last saved {formatTimestamp(view.saved_at_us)}
+                            Last saved{" "}
+                            {formatTimestamp(view.saved_at_us, "minute")}
                           </small>
                         </Button>
                       </li>

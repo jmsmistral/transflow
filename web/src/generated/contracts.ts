@@ -342,4 +342,4 @@ export type ViewSelectorV1 = { readonly "branch": string; readonly "fallback": R
 export type GraphViewV1 = { readonly "format_version": 1; readonly "id": string; readonly "revision": number; readonly "name": string; readonly "description": string; readonly "datasets": ReadonlyArray<ViewDatasetV1>; readonly "colour": ("resource" | "publication"); readonly "selector": ViewSelectorV1 };
 
 // prettier-ignore
-export type ApiViewsV1 = { readonly "views": ReadonlyArray<{ readonly "id": string; readonly "revision": number; readonly "name": string; readonly "saved_at_us": string }>; readonly "next_cursor": (string | null) };
+export type ApiViewsV1 = { readonly "views": ReadonlyArray<{ readonly "id": string; readonly "revision": number; readonly "name": string; readonly "saved_at_us": string; readonly "branch": string }>; readonly "next_cursor": (string | null) };

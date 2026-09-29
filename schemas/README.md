@@ -257,11 +257,11 @@ pre-release documents are normalized on read by tf-store without changing their
 revision or original bytes until explicit save. API/document major 1 remains the
 matched pre-release contract; update UI and coordinator together.
 
-The shared corpus has 324 conformance cases, including rejection of retired fields.
+The shared corpus has 327 conformance cases, including rejection of retired fields.
 View positions/zoom use bounded finite fractional numbers. This presentation-only
 exception does not relax integer-only canonical execution fingerprint encodings.
 
 Saved-lineage camera coordinates are retired: new documents reject `viewport`,
 legacy reads omit it, and UI opening uses centred node bounds at fixed zoom.
-`ApiViewsV1` summaries include `saved_at_us` as decimal microseconds; list search is
+`ApiViewsV1` summaries include the persisted `branch` and `saved_at_us` as decimal microseconds; list search is
 an optional case-insensitive ordered subsequence of the name (maximum 200 characters).

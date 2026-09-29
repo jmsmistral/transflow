@@ -168,12 +168,14 @@ async fn saved_lineage_search_crosses_pages_and_reports_committed_save_time()
         } else {
             "Review Ånalysis"
         });
+        v["selector"]["branch"] = json!(format!("branch-{index}"));
         store.save_view(&v, index).await?.ok_or("save failed")?;
     }
     let page = reader.views("", "RVÅ").await?;
     tf_protocol::validate_document("ApiViewsV1", &page)?;
     assert_eq!(page["views"].as_array().ok_or("no views")?.len(), 100);
     assert_eq!(page["views"][0]["saved_at_us"], "105");
+    assert_eq!(page["views"][0]["branch"], "branch-105");
     let next = reader
         .views(page["next_cursor"].as_str().ok_or("no cursor")?, "RVÅ")
         .await?;

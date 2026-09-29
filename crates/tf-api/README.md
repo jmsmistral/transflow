@@ -344,7 +344,7 @@ lineage/connection reads on each addition; cache hits do not perform a new live-
 
 Authenticated `GET /api/v1/views` pages 100 summaries (`after` UUID, optional `search` name subsequence up to 200 characters), and
 `GET /api/v1/views/{uuid}` returns a closed `GraphViewV1` document. These are
-presentation metadata reads. Each summary includes committed `saved_at_us` (decimal
+presentation metadata reads. Each summary includes its persisted `branch` and committed `saved_at_us` (decimal
 microseconds); search is case-insensitive across all pages. Contextual `POST /api/v1/views` uses the existing
 session/CSRF, `If-Match` context and idempotency guards, plus the document revision
 (0 creates; updates compare and increment). Revision conflicts return 409.

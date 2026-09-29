@@ -1,5 +1,6 @@
 /** Local SVG icon set: fixed metrics, currentColor, and no font/CDN dependency. */
 const paths = {
+  new: "M14 2H4v20h16V8zM14 2v6h6M8 15h8M12 11v8",
   save: "M4 3h13l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8",
   edit: "M4 16L16 4l4 4L8 20H4zM14 6l4 4",
   open: "M3 7h7l2 3h9l-3 11H3zM3 7V3h7l2 3h8v4",

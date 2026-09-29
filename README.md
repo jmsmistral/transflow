@@ -17,8 +17,11 @@ Lineage review now includes directional parent/child placement, focus-scoped Cmd
 
 Saved lineages retain node positions and membership, while pan/zoom stays transient.
 Opening a lineage centres its node bounds at 100% zoom. The lineage picker supports
-live fuzzy name search and shows versions with last-save dates in `YYYY-MM-DD`
-format. Legend rows select matching visible nodes.
+live fuzzy name search and shows each saved branch, compact version label and
+last-save time in `YYYY-MM-DD HH:mm` format. New starts an empty lineage, with a
+custom discard dialog protecting unsaved changes. Opening in the same effective
+branch context preserves the picker and canvas until membership is ready.
+Legend rows select matching visible nodes.
 
 ## Intended experience
 
