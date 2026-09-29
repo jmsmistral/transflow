@@ -185,6 +185,7 @@ export function GraphExplorer({
   workspace,
   dark = false,
   onVisible,
+  onSelection,
   focusRequest,
   cataloguePaths,
   titleHost,
@@ -196,6 +197,7 @@ export function GraphExplorer({
   dark?: boolean;
   cataloguePaths?: readonly string[];
   onVisible?: (identities: readonly string[]) => void;
+  onSelection?: (nodes: readonly ApiLineageNodeV1[], context: string) => void;
   focusRequest?: { path: string; revision: number } | null;
 }) {
   const [model] = useState(() => new GraphModel(workspace));
@@ -261,6 +263,7 @@ export function GraphExplorer({
   useEffect(() => model.connect(), [model]);
   const fingerprint =
     state.kind === "ready" ? state.value.context.fingerprint : "";
+  const canExplore = state.kind === "ready" && !!state.value.context.graph;
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("view");
     if (!fingerprint || !id || shared.current) return;
@@ -288,11 +291,11 @@ export function GraphExplorer({
       });
   }, [fingerprint, workspace, openView]);
   useEffect(() => {
-    if (fingerprint && cataloguePaths?.length) model.prefetch(cataloguePaths);
-  }, [model, fingerprint, cataloguePaths]);
+    if (canExplore && cataloguePaths?.length) model.prefetch(cataloguePaths);
+  }, [model, fingerprint, canExplore, cataloguePaths]);
   useEffect(() => {
-    if (fingerprint && focusRequest) void model.add(focusRequest.path);
-  }, [model, fingerprint, focusRequest]);
+    if (canExplore && focusRequest) void model.add(focusRequest.path);
+  }, [model, fingerprint, canExplore, focusRequest]);
 
   useEffect(
     () => onVisible?.(graph.nodes.map((n) => n.identity)),
@@ -315,6 +318,7 @@ export function GraphExplorer({
           workspace={workspace}
           active={ready}
           focusRequest={focusRequest ?? null}
+          {...(onSelection ? { onSelection } : {})}
         />
       </ReactFlowProvider>
     </div>
@@ -332,6 +336,7 @@ function GraphView({
   workspace,
   active,
   focusRequest,
+  onSelection,
 }: {
   titleHost: HTMLElement | null;
   actionsHost: HTMLElement | null;
@@ -344,6 +349,7 @@ function GraphView({
   workspace: Workspace;
   active: boolean;
   focusRequest: { path: string; revision: number } | null;
+  onSelection?: (nodes: readonly ApiLineageNodeV1[], context: string) => void;
 }) {
   const [positions] = useState(() => new Positions());
   const layout = useSyncExternalStore(positions.subscribe, positions.snapshot);
@@ -456,6 +462,14 @@ function GraphView({
   const chosen = [...selected].flatMap((id) =>
     graph.nodes.filter((node) => node.identity === id),
   );
+  useEffect(() => {
+    onSelection?.(
+      [...selected].flatMap((id) =>
+        graph.nodes.filter((node) => node.identity === id),
+      ),
+      graph.context,
+    );
+  }, [onSelection, selected, graph.nodes, graph.context]);
   const expand = useCallback(
     (node: ApiLineageNodeV1, side: Exploration["direction"]) => {
       void model.toggle(node, side).then((ids) => {

@@ -31,6 +31,18 @@ the bearer token.
 
 Keep private reference screenshots and credentials out of committed evidence.
 
+## Dataset inspection (T085)
+
+On a real synthetic coordinator, select a published local dataset and open the
+right Properties and bottom Preview panels. Check stable identity, branch, source,
+schema, exact physical counts and returned rows. Pin a retained version and confirm
+the preview header and page request keep that version. Select a registered foreign
+dataset: metadata counts come from its retained manifest, while provider byte
+availability and freshness remain distinct; a preview reads the provider under
+its lease. Exercise a missing head, unavailable schema/read and multi-selection
+unknown counts. Record actual browser observations separately from deterministic
+component tests; no private reference images enter the repository.
+
 ## Graph journeys (T083)
 
 Use a synthetic diamond, validation-only foreign boundary and a fan-out above 500

@@ -1,0 +1,29 @@
+{
+  "task": "T085 catalogue, properties and exact-version preview inspectors",
+  "date": "2026-09-30",
+  "platform": "macOS arm64 / Python 3.14.7 / Node 24.4.1",
+  "base_implementation": "f225fba50f27bcb7441b1c5c3f6fc73741e47cee",
+  "base_specification": "b7ee699adc67ec012811ee9e239f3e3b7ca60d8f",
+  "changes": [
+    "The right About/Columns inspector displays stable identity, origin, producer, branch, retained version/schema and physical counts without a Project ownership field.",
+    "Multi-selection deduplicates identities, distributes origin/type/publication and sums known physical counts while reporting unknown members separately; detail reads are bounded to 50 selected datasets.",
+    "The bottom Preview tab projects selected columns from an immutable local or foreign version in bounded physical pages, with exact context/identity checks, typed cell presentation and an explicit copy notice.",
+    "Foreign physical counts derive from retained manifest metadata. Provider byte availability, provider freshness, preview projected-read integrity and output health remain independent."
+  ],
+  "checks": {
+    "focused": "TypeScript and 40 focused App/graph/inspector tests passed after the historical graph guard.",
+    "comprehensive": "bash tools/check.sh passed outside the restricted sandbox: 402 Rust tests, 975 Python tests, 58 installed CLI/API integration tests, 443 web tests, specification checker and its 44 regressions, safety/boundary checks, formatting, lint and builds. The three child-process/signal tests failed only under the restricted sandbox with Operation not permitted; the unrestricted complete rerun passed. After the final UI/graph change, bash tools/check-web.sh passed with 446 web tests in 12 files, typecheck, ESLint, Prettier, production build and reproducible 5-asset build verification."
+  },
+  "browser": {
+    "tool": "Codex internal Browser against the real synthetic coordinator at /tmp/transflow-t083-browser",
+    "observed": [
+      "Current UI assets displayed the Properties panel with local dataset ID, source, master head, schema and nonzero physical counts.",
+      "The local exact-version preview returned four rows with requested/resolved master and the producing source.",
+      "A pinned external version returned two rows directly from its provider, with requested master and recorded provider branch main.",
+      "Selecting a provider exact version after catalogue focus showed no graph error following the graph-availability guard; Properties and Preview remained accessible."
+    ],
+    "method": "The user-owned coordinator on port 54062 had preloaded older assets. A temporary local UI proxy served the current dist while forwarding authenticated API requests to that unchanged coordinator. The proxy on port 54063 was stopped after the check; the user-owned coordinator was left running.",
+    "limits": "Internal Browser pointer automation did not activate some viewport tabs/buttons; keyboard activation loaded and displayed the preview. Component tests exercise pointer click handlers."
+  },
+  "limits": "T086 owns code/history/timeline detail, T087 build actions and T088 overlays. Description and created-time metadata are not exposed by this API; health and schedules remain explicit placeholders. GitHub CI is owner-monitored and pending."
+}

@@ -1,4 +1,4 @@
-import { useState, useSyncExternalStore } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { Button, Status } from "./components";
 import { Icon, type IconName } from "./Icons";
@@ -7,7 +7,8 @@ import { BranchControls } from "./BranchControls";
 import { CatalogueSearch } from "./graph/Search";
 import { GraphExplorer } from "./graph/Graph";
 import { Workspace } from "./workspace";
-import type { ExecutionJsonV1 } from "./generated/contracts";
+import type { ApiLineageNodeV1 } from "./generated/contracts";
+import { PreviewInspector, PropertiesInspector } from "./inspectors";
 
 const tabs = [
   "Preview",
@@ -24,18 +25,6 @@ const modes = [
   "Schedules",
   "Health",
 ] as const;
-function text(value: ExecutionJsonV1, field: string): string | undefined {
-  if (
-    value !== null &&
-    typeof value === "object" &&
-    !Array.isArray(value) &&
-    field in value
-  ) {
-    const item: unknown = Reflect.get(value, field);
-    if (typeof item === "string") return item;
-  }
-  return undefined;
-}
 function moveTab(
   event: KeyboardEvent,
   names: readonly string[],
@@ -72,6 +61,36 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
   const [actionsHost, setActionsHost] = useState<HTMLDivElement | null>(null);
   const [cataloguePaths, setCataloguePaths] = useState<readonly string[]>([]);
   const [visible, setVisible] = useState<readonly string[]>([]);
+  const [graphSelection, setGraphSelection] = useState<{
+    context: string;
+    nodes: readonly ApiLineageNodeV1[];
+  }>({ context: "", nodes: [] });
+  const handleSelection = useCallback(
+    (nodes: readonly ApiLineageNodeV1[], context: string) => {
+      setGraphSelection({ context, nodes });
+      if (nodes.length === 1) {
+        const [, origin, id] = nodes[0]?.identity.split(":") ?? [];
+        const current = workspace.snapshot();
+        if (
+          id &&
+          origin &&
+          current.kind === "ready" &&
+          current.value.context.fingerprint === context &&
+          (current.selection.dataset !== id ||
+            current.selection.origin !== origin)
+        )
+          void workspace.select({
+            branch: current.selection.branch,
+            dataset: id,
+            origin,
+            ...(current.selection.fallback
+              ? { fallback: current.selection.fallback }
+              : {}),
+          });
+      }
+    },
+    [workspace],
+  );
   const [dark, setDark] = useState(false);
   const [right, setRight] = useState(26),
     [bottom, setBottom] = useState(32);
@@ -80,6 +99,10 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
   const [mode, setMode] = useState<string>("Catalogue"),
     [tab, setTab] = useState<string>("Preview");
   const ready = state.kind === "ready" ? state.value : null;
+  const selectedNodes =
+    graphSelection.context === ready?.context.fingerprint
+      ? graphSelection.nodes
+      : [];
   const dataset = ready?.dataset;
   const requested = state.selection.branch;
   const title =
@@ -138,6 +161,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 workspace={workspace}
                 dark={dark}
                 onVisible={setVisible}
+                onSelection={handleSelection}
                 focusRequest={focusRequest}
                 cataloguePaths={cataloguePaths}
                 titleHost={titleHost}
@@ -251,7 +275,11 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                     />
                   </>
                 ) : mode === "Properties" ? (
-                  <h2>Selected context</h2>
+                  <PropertiesInspector
+                    workspace={workspace}
+                    state={state}
+                    selected={selectedNodes}
+                  />
                 ) : (
                   <>
                     <h2>{mode}</h2>
@@ -259,92 +287,6 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                       This inspector is not available yet.
                     </p>
                   </>
-                )}
-                {mode === "Properties" && (
-                  <section
-                    className="selection-details"
-                    aria-label="Selected dataset context"
-                  >
-                    <h3>{dataset?.path ?? "No dataset selected"}</h3>
-                    {dataset && ready && (
-                      <>
-                        <dl>
-                          <dt>Requested branch</dt>
-                          <dd>{requested}</dd>
-                          <dt>Resolved head branch</dt>
-                          <dd>
-                            {text(dataset.head, "resolved_branch") ??
-                              (state.selection.version
-                                ? "Not queried for an exact version"
-                                : "Unavailable")}
-                          </dd>
-                          <dt>
-                            {state.selection.version
-                              ? "Producing source capture"
-                              : "Retained definition source"}
-                          </dt>
-                          <dd>
-                            {ready.context.source ??
-                              (dataset.origin === "external"
-                                ? "Foreign source metadata only"
-                                : "Unavailable")}
-                          </dd>
-                          <dt>Exact version</dt>
-                          <dd>
-                            {state.selection.version ??
-                              "Not pinned — browsing retained metadata"}
-                          </dd>
-                          <dt>Published head</dt>
-                          <dd>
-                            {text(dataset.head, "version") ??
-                              (state.selection.version
-                                ? "Not queried in historical context"
-                                : dataset.origin === "external"
-                                  ? "Foreign head not loaded"
-                                  : "No published head")}
-                          </dd>
-                        </dl>
-                        <label>
-                          Version context
-                          <select
-                            value={state.selection.version ?? ""}
-                            onChange={(event) => {
-                              void workspace.select({
-                                branch: requested,
-                                dataset: dataset.dataset_id,
-                                origin: dataset.workspace_id,
-                                ...(event.target.value
-                                  ? { version: event.target.value }
-                                  : {}),
-                              });
-                            }}
-                          >
-                            <option value="">
-                              Current retained definition
-                            </option>
-                            {ready.versions?.entries.map((version) => (
-                              <option
-                                key={version.version}
-                                value={version.version}
-                              >
-                                {version.version}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        {ready.versions?.next_cursor && (
-                          <p className="muted">
-                            More versions exist; the full history inspector is
-                            coming later.
-                          </p>
-                        )}
-                        <p className="muted">
-                          Metadata availability does not verify dataset bytes or
-                          freshness.
-                        </p>
-                      </>
-                    )}
-                  </section>
                 )}
               </aside>
             </>
@@ -406,22 +348,22 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
               aria-labelledby={`tab-${tabs.findIndex((name) => name === tab)}`}
               tabIndex={0}
             >
-              <p className="eyebrow">
-                {title} · {requested}
-              </p>
-              <h2>{tab}</h2>
-              <p>
-                {!ready
-                  ? "Content is unavailable until this context is loaded."
-                  : !dataset
-                    ? "Select a dataset to establish inspector context."
-                    : `${tab} content will be available in a later inspector task.`}
-              </p>
-              {dataset && (
-                <p className="muted">
-                  This panel is bound to the selected context. No rows or source
-                  code have been fetched.
-                </p>
+              {tab === "Preview" && bottomOpen ? (
+                <PreviewInspector workspace={workspace} state={state} />
+              ) : (
+                <>
+                  <p className="eyebrow">
+                    {title} · {requested}
+                  </p>
+                  <h2>{tab}</h2>
+                  <p>
+                    {!ready
+                      ? "Content is unavailable until this context is loaded."
+                      : !dataset
+                        ? "Select a dataset to establish inspector context."
+                        : `${tab} content will be available in a later inspector task.`}
+                  </p>
+                </>
               )}
             </div>
           </section>

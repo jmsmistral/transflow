@@ -8,6 +8,8 @@ import type {
   ApiVersionsV1,
   ApiSourceV1,
   ApiPreviewV1,
+  ApiPreviewRequestV1,
+  LogicalSchemaV1,
   ApiSessionV1,
   ApiVerifiedV1,
   ApiEventV1,
@@ -29,6 +31,7 @@ export interface Contracts {
   ApiVersionsV1: ApiVersionsV1;
   ApiSourceV1: ApiSourceV1;
   ApiPreviewV1: ApiPreviewV1;
+  LogicalSchemaV1: LogicalSchemaV1;
   ApiSessionV1: ApiSessionV1;
   ApiVerifiedV1: ApiVerifiedV1;
   ApiEventV1: ApiEventV1;
@@ -134,6 +137,40 @@ export class Client {
       "Idempotency-Key": key,
     });
     return this.envelope("GraphViewV1", value, context).data;
+  }
+  async preview(
+    request: ApiPreviewRequestV1,
+    query: Query,
+    context: ApiContextV1,
+    signal: AbortSignal,
+  ): Promise<ApiPreviewV1> {
+    const url = `/api/v1/previews?${new URLSearchParams({ ...query, context: context.fingerprint })}`;
+    const value = await this.post(url, request, signal);
+    const responseContext = decode("ApiContextV1", value.context);
+    const data = decode("ApiPreviewV1", value.data);
+    if (
+      responseContext.workspace !== context.workspace ||
+      responseContext.branch !== context.branch ||
+      responseContext.registry !== context.registry ||
+      responseContext.configuration !== context.configuration ||
+      responseContext.runtime_revision !== context.runtime_revision ||
+      !same(responseContext.fallback_policy, context.fallback_policy) ||
+      responseContext.selection.id !== request.version ||
+      responseContext.selection.kind !==
+        (request.origin_workspace === context.workspace
+          ? "local_version"
+          : "foreign_version") ||
+      data.workspace !== context.workspace ||
+      data.requested_branch !== context.branch ||
+      data.dataset !== request.dataset ||
+      data.origin_workspace !== request.origin_workspace ||
+      data.version !== request.version
+    )
+      throw new ApiFailure(
+        "conflict",
+        "The preview does not match the selected version.",
+      );
+    return data;
   }
   async response(
     path: string,

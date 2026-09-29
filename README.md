@@ -105,8 +105,11 @@ visual exploration. T084 adds a header Save/Save as menu, named branch-following
 single-line descriptions, revision conflicts and visual undo/redo. Groups, notes,
 saved filters and fixed-source view modes are removed. JSON/SVG/PNG exports offer
 label and metadata choices; legacy local
-view links require the same coordinator and authentication. Full inspectors and
-build controls follow later.
+view links require the same coordinator and authentication. T085 adds the
+[properties, columns and version-pinned preview inspectors](web/README.md#dataset-inspection-t085).
+They show exact physical counts when metadata exists, keep missing values unknown,
+and read foreign preview bytes directly from the provider. Code, history, build,
+schedule and health actions follow later.
 
 The Python distribution is named **transflow**, containing both `transflow` (SDK) and `transflow_worker` (worker). See [local wheel installation and checks](python/README.md). The intended public install is `pip install transflow` after publication; no package has been published yet. The Rust binary remains a separate native artifact.
 
@@ -176,7 +179,7 @@ transflow --workspace /path/to/workspace serve --ui-dir "$PWD/web/dist" --open
 ```
 
 Use the local `target/debug/transflow` binary when it is not installed on PATH.
-Graph rendering, full inspectors and build controls are later tasks. The Vite dev
+Code/history and build/schedule/health inspectors remain later tasks. The Vite dev
 preview remains disconnected; connected browsing uses the coordinator's same-origin
 session. Browser verification uses Codex’s internal Browser. Native embedded UI
 packaging remains T117.

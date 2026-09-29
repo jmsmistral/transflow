@@ -5,6 +5,8 @@ import type {
   ApiDatasetsV1,
   ApiMetadataPageV1,
   ApiVersionsV1,
+  ApiPreviewRequestV1,
+  ApiPreviewV1,
 } from "./generated/contracts";
 import { ApiFailure, Client, type Contracts, type Query } from "./api/client";
 import { EventCursor } from "./api/events";
@@ -327,6 +329,46 @@ export class Workspace {
     if (epoch !== this.epoch || signal.aborted)
       throw new DOMException("The inspector context changed", "AbortError");
     return result.data;
+  }
+  /** Preview responses describe an exact-version context, distinct from the browsing context. */
+  async preview(
+    request: ApiPreviewRequestV1,
+    cancellation?: AbortSignal,
+  ): Promise<ApiPreviewV1> {
+    if (this.state.kind !== "ready" || !this.request)
+      throw new ApiFailure(
+        "conflict",
+        "Select a dataset before previewing it.",
+      );
+    const epoch = this.epoch;
+    const inspection = this.inspection;
+    const selected = this.state.selection;
+    if (
+      selected.dataset !== request.dataset ||
+      (selected.version && selected.version !== request.version) ||
+      (selected.origin ?? this.state.value.context.workspace) !==
+        request.origin_workspace
+    )
+      throw new ApiFailure("conflict", "The preview dataset changed.");
+    const signal = cancellation
+      ? AbortSignal.any([this.request.signal, cancellation])
+      : this.request.signal;
+    const { context } = this.state.value;
+    const result = await this.client.preview(
+      request,
+      queryFor(selected),
+      context,
+      signal,
+    );
+    if (
+      epoch !== this.epoch ||
+      inspection !== this.inspection ||
+      signal.aborted ||
+      this.state.kind !== "ready" ||
+      this.state.value.context.fingerprint !== context.fingerprint
+    )
+      throw new DOMException("The preview context changed", "AbortError");
+    return result;
   }
   private fail(error: unknown): void {
     this.set({

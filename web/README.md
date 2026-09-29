@@ -8,9 +8,7 @@ work by keyboard. Narrow screens stack panels; layout survives context changes
 within the page session.
 
 T083 adds the React Flow dataset graph, keyboard graph controls, typed data/validation
-edges, foreign boundaries and stable manual positioning. An off-thread ELK layout foundation is retained for future explicit layout. T084 adds saved views (below). Full
-preview/code/history inspectors and build/schedule actions remain later tasks. The shell does not fetch rows or source
-text for display. Selecting a version cannot run a build or change dataset heads.
+edges, foreign boundaries and stable manual positioning. An off-thread ELK layout foundation is retained for future explicit layout. T084 adds saved views (below). T085 adds properties, columns and exact-version preview (below). Code/history and build/schedule actions remain later tasks. Selecting a version cannot run a build or change dataset heads.
 Metadata availability is not byte verification or freshness evidence.
 
 ## Build and connect
@@ -159,7 +157,33 @@ Documents are bounded to 500 datasets, finite coordinates within ±1,000,000,
 zoom 0.05–2 and 1 MiB. Lists page 100 summaries; reopening resolves stable dataset
 identities in bounded context-owned reads. Missing identities fail explicitly;
 there is no silent truncation. Branch following does not promise historical bytes
-or seamless live-build preview updates: full inspector/build UI remains later work.
+or seamless live-build preview updates: code/history and build/schedule/health
+inspectors remain later work.
+
+## Dataset inspection (T085)
+
+The right **Properties** panel follows the selected graph or catalogue dataset.
+About displays stable ID, logical path, origin/workspace, producer location,
+requested/resolved branch and fallback rank, published head, exact version,
+source capture, publication time and physical row/file/byte counts. Columns lists
+the selected version's logical schema with types and nullability. Missing metadata
+is labelled unknown or unavailable; a real zero stays zero. Description, created
+time, data-health and schedules are labelled unavailable until their APIs or
+inspectors exist. For multiple graph selections, the panel deduplicates identities,
+shows origin/type/publication distributions, sums known physical counts and reports
+unknown members separately. It inspects up to 50 selected datasets to bound reads.
+
+The bottom **Preview** tab projects up to 12 columns by default from the selected
+immutable head or an explicitly chosen retained version. Search and checkboxes
+change the projected columns; pages are bounded to 100 physical rows, with the
+coordinator's cursor, limits and provider leases. The header identifies requested
+and resolved branches, exact version, publication time and producing source. Typed
+null, truncated cells, decimal precision, timestamp units and nested values remain
+distinct. Selecting a cell offers an explicit sensitive-data notice before copying.
+An unavailable version, missing schema or failed read produces an explicit state;
+no current-head substitution occurs. Foreign manifests supply metadata counts,
+while provider byte availability and freshness remain separate and unverified.
+The preview does not claim full artifact integrity or data-health PASS.
 
 UI focus and node selection use thin, muted teal outlines (with a lighter dark-theme
 variant). Custom menu rows separate icons, labels and checkmarks, with consistent

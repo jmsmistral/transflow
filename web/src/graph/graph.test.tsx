@@ -64,6 +64,44 @@ const page = (
 });
 const query = { start: "data/a", direction: "downstream", depth: "" } as const;
 
+test("a stale catalogue focus does not query lineage when the selected context has no graph", async () => {
+  const base = fixtureTransport();
+  const reads: string[] = [];
+  const transport: typeof fetch = vi.fn(async (url, init) => {
+    const body = JSON.parse(String(init?.body)) as { path?: string };
+    if (body.path) reads.push(body.path);
+    const response = await base(url, init);
+    const envelope = (await response.json()) as {
+      context: ReturnType<typeof context> | null;
+      data: unknown;
+    };
+    const withoutGraph = (value: ReturnType<typeof context>) => ({
+      ...value,
+      graph: null,
+    });
+    return json(
+      body.path === "/api/v1/context" && envelope.data
+        ? withoutGraph(envelope.data as ReturnType<typeof context>)
+        : envelope.data,
+      envelope.context ? withoutGraph(envelope.context) : null,
+    );
+  });
+  const workspace = new Workspace(new Client(transport));
+  await workspace.connect("launch");
+  const view = render(
+    <GraphExplorer
+      workspace={workspace}
+      focusRequest={{ path: "data/a", revision: 1 }}
+      cataloguePaths={["data/a"]}
+    />,
+  );
+  expect(workspace.snapshot().kind).toBe("ready");
+  expect(reads.filter((path) => path.endsWith("/lineage"))).toEqual([]);
+  expect(view.container.querySelector(".graph-explorer")).toBeTruthy();
+  view.unmount();
+  workspace.dispose();
+});
+
 test("depth zero, unlimited and invalid depths keep distinct semantics", () => {
   expect(depthQuery("")).toEqual({});
   expect(depthQuery("0")).toEqual({ depth: "0" });
