@@ -60,7 +60,7 @@ def example(node, definitions):
         formats = {"transflow-uuid": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "transflow-sha256": "a" * 64,
                    "transflow-u64": "0", "transflow-i64": "0", "transflow-relative-path": "raw/example"}
         return formats.get(node.get("format"), "x" * node["minLength"] if node.get("minLength") else "example")
-    return {"integer": node.get("minimum", 0), "number": 0, "boolean": False, "null": None}[kind]
+    return {"integer": node.get("minimum", 0), "number": node.get("minimum", 0), "boolean": False, "null": None}[kind]
 
 
 def openapi(source):
@@ -83,7 +83,7 @@ def openapi(source):
             operation["security"] = []
         elif route["path"] == "/api/v1/sessions/launch":
             operation["security"] = [{"bearer": []}]
-        for name in dict.fromkeys((['branch', 'fallback', 'plan', 'context', 'version', 'dataset', 'origin_workspace'] if route['context'] else []) + route['query']):
+        for name in dict.fromkeys((['branch', 'fallback', 'source_graph', 'plan', 'context', 'version', 'dataset', 'origin_workspace'] if route['context'] else []) + route['query']):
             operation['parameters'].append({"name": name, "in": "query", "required": name == "branch", "schema": {"type": "string"}})
         for segment in route['path'].split('/'):
             if segment.startswith('{'):

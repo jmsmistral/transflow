@@ -1,5 +1,7 @@
 /** Local SVG icon set: fixed metrics, currentColor, and no font/CDN dependency. */
 const paths = {
+  undo: "M3 10h10a7 7 0 0 1 7 7M3 10l6-6M3 10l6 6",
+  redo: "M21 10H11a7 7 0 0 0-7 7M21 10l-6-6M21 10l-6 6",
   legend: "M3 4h4v4H3zM3 10h4v4H3zM3 16h4v4H3zM11 6h10M11 12h10M11 18h10",
   search: "M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
   list: "M9 5h12M9 12h12M9 19h12M3 5h1M3 12h1M3 19h1",

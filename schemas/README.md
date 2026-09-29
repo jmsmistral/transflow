@@ -247,3 +247,12 @@ T082 aligns `ApiCapabilitiesV1` with existing advertised event/preview/query lim
 and boolean contributor-UI availability. Two cases bring the shared corpus to 312.
 The browser now uses the same authored schema for runtime response validation;
 API v1, worker protocol 1.0 and runtime schema 12 remain unchanged.
+
+
+T084 adds `GraphViewV1`, saved-view pages/routes and `fixed_source` read contexts.
+Six conformance cases bring the corpus to 320. View positions and zoom use bounded
+finite fractional numbers; validators and generated examples enforce their bounds.
+This presentation-only exception does not alter execution canonical JSON rules.
+Closed documents reject executable/unknown fields and unknown format versions.
+API v1, worker protocol 1.0 and runtime schema 12 remain unchanged; the existing
+`graph_views` table is used without a migration.

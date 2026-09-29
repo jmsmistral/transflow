@@ -2,6 +2,8 @@
 pub mod catalog_mutations;
 mod migrations;
 mod path;
+/// Explicit, revisioned presentation state; never execution authority.
+pub mod views;
 use sqlx::{
     Connection, Row, SqliteConnection,
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},

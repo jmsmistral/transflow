@@ -1,0 +1,78 @@
+{
+  "task": "T084",
+  "date": "2026-09-29",
+  "platform": {
+    "os": "macOS",
+    "architecture": "arm64"
+  },
+  "implementation": "Saved GraphViewV1 state, optimistic persistence, branch/fixed-source contexts, presentation groups, safe notes, visual history and selective exports.",
+  "verification": [
+    {
+      "command": "bash tools/check-rust.sh",
+      "result": "Passed: formatting, workspace check, clippy and 400 Rust tests. Final UI-entry routing changes additionally passed cargo test -p tf-api and workspace all-target clippy."
+    },
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "Passed: Ruff, mypy and 958 tests."
+    },
+    {
+      "command": "bash tools/check-web.sh",
+      "result": "Passed: strict types, lint/accessibility, formatting, 422 tests, production worker probes and two identical five-asset builds."
+    },
+    {
+      "command": "python python/tools/check_api.py <binary> <wheel> <wheelhouse> --output <receipt>",
+      "result": "Passed: 17 native authenticated journeys, including save/retry/revision conflict, fixed source identity resolution, no operational mutation and coordinator restart."
+    },
+    {
+      "command": "PYTHON=target/python/py314/bin/python bash tools/check-safety.sh",
+      "result": "Passed: 27 regressions and baseline; 641 locked versions, two existing exceptions; generated contract hashes refreshed."
+    },
+    {
+      "command": "python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .; git diff --check in both repositories",
+      "result": "Passed: specification 1.1.3 document/link/syntax checks and whitespace checks. No application tests are attributed to the document validator."
+    }
+  ],
+  "contracts": {
+    "shared_fixtures": 320,
+    "runtime_migration": "none; existing graph_views table",
+    "http_api": 1,
+    "worker_protocol": "1.0"
+  },
+  "api_cases": [
+    "new HTTP build survives client disconnect and retry creates one build/publication",
+    "history/timeline/metrics retain measured phases, exact statistics and captured source after edits",
+    "local version context binds exact source/lineage/schema/row-count metadata",
+    "path query shares retained lineage context and rejects ambiguous depth/direction",
+    "bounded connection-only lineage reads reject ambiguous queries; catalogue fuzzy matching is case-insensitive and ordered",
+    "view fallback ordering resolves exact branch metadata; frozen versions reject overrides; visible-dataset branches and neighbour counts are authoritative",
+    "projected preview physical cursors, lossless nulls, labelled truncation and explicit bounded cell inspection",
+    "authenticated SSE matches committed replay and resumes without duplicate facts",
+    "cache reuse adds history without duration samples; history cursors reject branch changes",
+    "saved-plan acceptance is explicit and cannot be accepted twice",
+    "batched lineage lookup pages and binds cursors; ambiguous requests fail; incoming edges include hidden parents; resource types use retained producers",
+    "foreign preview uses a renewable provider query lease without producer imports or replication",
+    "foreign API registration/build uses provider-owned bytes; retained reads import no provider code",
+    "saved views preserve visual state, reject stale revisions, replay retries and resolve fixed source graphs without execution",
+    "active HTTP cancellation is replayable and preserves every last-good head",
+    "saved view survives coordinator restart",
+    "cancellation receipt survives coordinator restart"
+  ],
+  "browser": {
+    "environment": "Codex internal Browser against a real loopback coordinator and synthetic workspace",
+    "observations": [
+      "Explicit save persisted fractional geometry, groups, notes and context in SQLite.",
+      "Safe Markdown rendered bold text and literal script-looking text without executing it.",
+      "Note undo/redo changed presentation only.",
+      "Saved picker restored groups, notes, positions and camera after coordinator restart.",
+      "PNG prepared and rendered under unchanged coordinator CSP; observed 720 by 328 pixels.",
+      "Fresh authenticated local share link restored the fixed-source context, saved filter, groups, note and viewport with Saved status after startup event resynchronizations.",
+      "Deterministic regression reproduces two consecutive context-refresh cancellations during shared-view membership loading."
+    ],
+    "limitations": [
+      "Internal browser download-event and downloadMedia hooks timed out for the generated file link. Browser image decoding/rendering passed; automated JSON/SVG field selection and escaping passed. OS download completion is not claimed.",
+      "No external browser or cross-platform qualification in this local run."
+    ],
+    "cleanup": "Temporary coordinator stopped and verification tabs closed after completion."
+  },
+  "ci": "Pending owner monitoring; no workflow polling."
+}

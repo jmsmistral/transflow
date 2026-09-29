@@ -40,6 +40,10 @@ export class Positions {
     this.state = { ...this.state, ...patch };
     for (const listener of this.listeners) listener();
   }
+  restore(positions: Record<string, Position>): void {
+    this.stop();
+    this.set({ positions, busy: false, error: "" });
+  }
   move(id: string, position: Position): void {
     this.stop();
     this.set({

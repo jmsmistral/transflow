@@ -276,8 +276,11 @@ async fn dispatch(
     if method == "GET"
         && let Some(asset) = s.assets.as_ref().and_then(|a| a.get(path))
     {
-        if parts.uri.query().is_some() {
-            return Err(ApiError::invalid());
+        if let Some(query) = parts.uri.query() {
+            let view = query.strip_prefix("view=").filter(|_| path == "/");
+            if !view.is_some_and(|id| id.parse::<RequestId>().is_ok()) {
+                return Err(ApiError::invalid());
+            }
         }
         return Ok(([("content-type", asset.0)], asset.1).into_response());
     }

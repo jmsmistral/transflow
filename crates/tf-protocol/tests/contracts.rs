@@ -405,7 +405,11 @@ fn validate(schema: &Value, value: &Value, defs: &Value, depth: usize) -> bool {
                 && n >= schema["minimum"].as_f64().unwrap()
                 && n <= schema["maximum"].as_f64().unwrap()
         }),
-        Some("number") => value.as_f64().is_some_and(f64::is_finite),
+        Some("number") => value.as_f64().is_some_and(|n| {
+            n.is_finite()
+                && schema["minimum"].as_f64().is_none_or(|min| n >= min)
+                && schema["maximum"].as_f64().is_none_or(|max| n <= max)
+        }),
         Some("boolean") => value.is_boolean(),
         Some("null") => value.is_null(),
         Some("array") => value.as_array().is_some_and(|items| {

@@ -551,3 +551,38 @@ def validate_ApiExecutionMetricsV1(value: object) -> None:
 def validate_ApiLineageNodeV1(value: object) -> None:
     """Assert the ApiLineageNodeV1 contract, including custom formats."""
     validate_document("ApiLineageNodeV1", value)
+
+
+def validate_ViewPositionV1(value: object) -> None:
+    """Assert the ViewPositionV1 contract, including custom formats."""
+    validate_document("ViewPositionV1", value)
+
+
+def validate_ViewDatasetV1(value: object) -> None:
+    """Assert the ViewDatasetV1 contract, including custom formats."""
+    validate_document("ViewDatasetV1", value)
+
+
+def validate_ViewGroupV1(value: object) -> None:
+    """Assert the ViewGroupV1 contract, including custom formats."""
+    validate_document("ViewGroupV1", value)
+
+
+def validate_ViewNoteV1(value: object) -> None:
+    """Assert the ViewNoteV1 contract, including custom formats."""
+    validate_document("ViewNoteV1", value)
+
+
+def validate_ViewSelectorV1(value: object) -> None:
+    """Assert the ViewSelectorV1 contract, including custom formats."""
+    validate_document("ViewSelectorV1", value)
+
+
+def validate_GraphViewV1(value: object) -> None:
+    """Assert the GraphViewV1 contract, including custom formats."""
+    validate_document("GraphViewV1", value)
+
+
+def validate_ApiViewsV1(value: object) -> None:
+    """Assert the ApiViewsV1 contract, including custom formats."""
+    validate_document("ApiViewsV1", value)

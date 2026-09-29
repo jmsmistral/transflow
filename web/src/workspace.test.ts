@@ -329,3 +329,31 @@ test("dataset-only selection preserves ready context while metadata loads", asyn
   expect(reads).toContain("/api/v1/datasets");
   workspace.dispose();
 });
+
+test("saved-view opening waits for an event refresh that supersedes its context load", async () => {
+  const held = deferred<Response>();
+  let hold = false;
+  const model = new Workspace(
+    new Client(
+      fixtureTransport((path) => {
+        if (hold && path === "/api/v1/context") return held.promise;
+        return undefined;
+      }),
+    ),
+  );
+  await model.connect("launch");
+  hold = true;
+  const pending = model.refresh();
+  let settled = false;
+  const opening = model.settled().then(() => {
+    settled = true;
+  });
+  await Promise.resolve();
+  expect(settled).toBe(false);
+  held.resolve(json(context(), context()));
+  await pending;
+  await opening;
+  expect(model.snapshot().kind).toBe("ready");
+  expect(settled).toBe(true);
+  model.dispose();
+});

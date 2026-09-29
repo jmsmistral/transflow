@@ -189,7 +189,7 @@ export type ExternalResultV1 = { readonly "kind": "external"; readonly "operatio
 export type ImportPublicationResultV1 = { readonly "kind": "import_publication"; readonly "status": "published"; readonly "published": true; readonly "import_id": Uuid; readonly "workspace_id": Uuid; readonly "dataset_id": Uuid; readonly "path": RelativePath; readonly "branch": string; readonly "source_snapshot_id": Uuid; readonly "schema_normalization": "complete"; readonly "source_snapshot_limitation": true; readonly "registered": boolean; readonly "file_count": Count; readonly "row_count": Count; readonly "byte_count": Count; readonly "version_id": Uuid; readonly "artifact_digest": Sha256; readonly "generation": Count };
 
 // prettier-ignore
-export type ApiContextV1 = { readonly "workspace": Uuid; readonly "branch": string; readonly "source": (null | Uuid); readonly "registry": Sha256; readonly "runtime_revision": string; readonly "configuration": Sha256; readonly "selection": { readonly "kind": ("retained_current" | "plan" | "local_version" | "foreign_version"); readonly "id": (null | Uuid); readonly "digest": (null | Sha256) }; readonly "graph": (null | Sha256); readonly "freshness": "unknown"; readonly "fingerprint": Sha256; readonly "fallback_policy": ReadonlyArray<string> };
+export type ApiContextV1 = { readonly "workspace": Uuid; readonly "branch": string; readonly "source": (null | Uuid); readonly "registry": Sha256; readonly "runtime_revision": string; readonly "configuration": Sha256; readonly "selection": { readonly "kind": ("retained_current" | "plan" | "local_version" | "foreign_version" | "fixed_source"); readonly "id": (null | Uuid); readonly "digest": (null | Sha256) }; readonly "graph": (null | Sha256); readonly "freshness": "unknown"; readonly "fingerprint": Sha256; readonly "fallback_policy": ReadonlyArray<string> };
 
 // prettier-ignore
 export type ApiErrorV1 = { readonly "request_id": Uuid; readonly "error": { readonly "code": string; readonly "message": string; readonly "details": { readonly [key: string]: ExecutionJsonV1 }; readonly "retryable": boolean; readonly "request_id": Uuid } };
@@ -328,3 +328,24 @@ export type ApiExecutionMetricsV1 = { readonly "from_us": Count; readonly "to_us
 
 // prettier-ignore
 export type ApiLineageNodeV1 = { readonly "identity": string; readonly "paths": ReadonlyArray<string>; readonly "depth": Count; readonly "external": boolean; readonly "producer": boolean; readonly "parent_count": Count; readonly "child_count": Count; readonly "publication": ("published" | "missing" | "unknown"); readonly "resource_type": ("polars_transform" | "sql_transform" | "external" | "dataset" | "unknown") };
+
+// prettier-ignore
+export type ViewPositionV1 = { readonly "x": number; readonly "y": number };
+
+// prettier-ignore
+export type ViewDatasetV1 = { readonly "identity": string; readonly "position": ViewPositionV1 };
+
+// prettier-ignore
+export type ViewGroupV1 = { readonly "id": string; readonly "name": string; readonly "members": ReadonlyArray<string>; readonly "collapsed": boolean; readonly "position": ViewPositionV1 };
+
+// prettier-ignore
+export type ViewNoteV1 = { readonly "id": string; readonly "text": string; readonly "format": ("text" | "markdown"); readonly "position": ViewPositionV1 };
+
+// prettier-ignore
+export type ViewSelectorV1 = { readonly "branch": string; readonly "fallback": ReadonlyArray<string>; readonly "mode": ("branch" | "snapshot"); readonly "source": (string | null); readonly "graph": (string | null) };
+
+// prettier-ignore
+export type GraphViewV1 = { readonly "format_version": 1; readonly "id": string; readonly "revision": number; readonly "name": string; readonly "description": string; readonly "datasets": ReadonlyArray<ViewDatasetV1>; readonly "groups": ReadonlyArray<ViewGroupV1>; readonly "annotations": ReadonlyArray<ViewNoteV1>; readonly "viewport": { readonly "x": number; readonly "y": number; readonly "zoom": number }; readonly "colour": ("resource" | "publication"); readonly "filters": { readonly "path": string }; readonly "selector": ViewSelectorV1 };
+
+// prettier-ignore
+export type ApiViewsV1 = { readonly "views": ReadonlyArray<{ readonly "id": string; readonly "revision": number; readonly "name": string }>; readonly "next_cursor": (string | null) };

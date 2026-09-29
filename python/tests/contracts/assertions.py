@@ -270,6 +270,10 @@ def validate(
         need(schema["minimum"] <= value <= schema["maximum"], "integer range")
     elif kind == "number":
         need(number(value), "finite number")
+        if "minimum" in schema:
+            need(value >= schema["minimum"], "number minimum")
+        if "maximum" in schema:
+            need(value <= schema["maximum"], "number maximum")
     elif kind == "boolean":
         need(type(value) is bool, "boolean")
     elif kind == "null":

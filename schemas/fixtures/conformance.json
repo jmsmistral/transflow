@@ -7565,5 +7565,301 @@
       "producer": true,
       "child_count": "0"
     }
+  },
+  {
+    "name": "graph-view-v1",
+    "schema": "GraphViewV1",
+    "value": {
+      "format_version": 1,
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "revision": 0,
+      "name": "Synthetic view",
+      "description": "",
+      "datasets": [
+        {
+          "identity": "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "position": {
+            "x": 50.5,
+            "y": -10
+          }
+        }
+      ],
+      "groups": [],
+      "annotations": [
+        {
+          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
+          "format": "markdown",
+          "position": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "colour": "resource",
+      "filters": {
+        "path": ""
+      },
+      "selector": {
+        "branch": "master",
+        "fallback": [],
+        "mode": "branch",
+        "source": null,
+        "graph": null
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "view-unsupported-version",
+    "schema": "GraphViewV1",
+    "value": {
+      "format_version": 2,
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "revision": 0,
+      "name": "Synthetic view",
+      "description": "",
+      "datasets": [
+        {
+          "identity": "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "position": {
+            "x": 50.5,
+            "y": -10
+          }
+        }
+      ],
+      "groups": [],
+      "annotations": [
+        {
+          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
+          "format": "markdown",
+          "position": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "colour": "resource",
+      "filters": {
+        "path": ""
+      },
+      "selector": {
+        "branch": "master",
+        "fallback": [],
+        "mode": "branch",
+        "source": null,
+        "graph": null
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "view-zoom-out-of-range",
+    "schema": "GraphViewV1",
+    "value": {
+      "format_version": 1,
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "revision": 0,
+      "name": "Synthetic view",
+      "description": "",
+      "datasets": [
+        {
+          "identity": "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "position": {
+            "x": 50.5,
+            "y": -10
+          }
+        }
+      ],
+      "groups": [],
+      "annotations": [
+        {
+          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
+          "format": "markdown",
+          "position": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 0
+      },
+      "colour": "resource",
+      "filters": {
+        "path": ""
+      },
+      "selector": {
+        "branch": "master",
+        "fallback": [],
+        "mode": "branch",
+        "source": null,
+        "graph": null
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "view-position-out-of-range",
+    "schema": "GraphViewV1",
+    "value": {
+      "format_version": 1,
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "revision": 0,
+      "name": "Synthetic view",
+      "description": "",
+      "datasets": [
+        {
+          "identity": "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "position": {
+            "x": 1000001,
+            "y": -10
+          }
+        }
+      ],
+      "groups": [],
+      "annotations": [
+        {
+          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
+          "format": "markdown",
+          "position": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "colour": "resource",
+      "filters": {
+        "path": ""
+      },
+      "selector": {
+        "branch": "master",
+        "fallback": [],
+        "mode": "branch",
+        "source": null,
+        "graph": null
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "view-note-script-field",
+    "schema": "GraphViewV1",
+    "value": {
+      "format_version": 1,
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "revision": 0,
+      "name": "Synthetic view",
+      "description": "",
+      "datasets": [
+        {
+          "identity": "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "position": {
+            "x": 50.5,
+            "y": -10
+          }
+        }
+      ],
+      "groups": [],
+      "annotations": [
+        {
+          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
+          "format": "markdown",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "html": "<script/>"
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "colour": "resource",
+      "filters": {
+        "path": ""
+      },
+      "selector": {
+        "branch": "master",
+        "fallback": [],
+        "mode": "branch",
+        "source": null,
+        "graph": null
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "view-unknown-member",
+    "schema": "GraphViewV1",
+    "value": {
+      "format_version": 1,
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "revision": 0,
+      "name": "Synthetic view",
+      "description": "",
+      "datasets": [
+        {
+          "identity": "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "position": {
+            "x": 50.5,
+            "y": -10
+          }
+        }
+      ],
+      "groups": [],
+      "annotations": [
+        {
+          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
+          "format": "markdown",
+          "position": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "colour": "resource",
+      "filters": {
+        "path": ""
+      },
+      "selector": {
+        "branch": "master",
+        "fallback": [],
+        "mode": "branch",
+        "source": null,
+        "graph": null
+      },
+      "build": "do-not-execute"
+    },
+    "valid": false
   }
 ]

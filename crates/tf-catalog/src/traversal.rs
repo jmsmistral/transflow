@@ -283,6 +283,18 @@ impl Graph {
         if let Some(id) = self.names.get(reference) {
             return Ok(id.clone());
         }
+        if let Some((workspace, dataset)) = reference
+            .strip_prefix("dataset:")
+            .and_then(|s| s.split_once(':'))
+        {
+            let key = Id::Registered(DatasetKey::new(
+                workspace.parse().map_err(|_| Error::Missing)?,
+                dataset.parse().map_err(|_| Error::Missing)?,
+            ));
+            if self.nodes.contains_key(&key) {
+                return Ok(key);
+            }
+        }
         if let Some(id) = reference
             .strip_prefix("dataset:")
             .and_then(|s| s.parse::<DatasetId>().ok())

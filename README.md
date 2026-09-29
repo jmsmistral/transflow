@@ -93,7 +93,11 @@ Compact toolbars and collapsed inspector rails leave more room for lineage.
 Internal node arrows expand/retract neighbours without changing zoom. The searchable
 Branch picker defaults to master; its adjacent editor sets view-local fallbacks.
 Use the contributor UI bundle through `serve --ui-dir`; graph actions change only
-visual exploration. Saved views, full inspectors and build controls follow later.
+visual exploration. T084 adds explicit saved views, revision conflicts, branch-following
+or fixed-source reopening, presentation groups, safe notes and visual undo/redo.
+JSON/SVG/PNG exports have explicit label, metadata and annotation options; local
+view links require the same coordinator and authentication. Full inspectors and
+build controls follow later.
 
 The Python distribution is named **transflow**, containing both `transflow` (SDK) and `transflow_worker` (worker). See [local wheel installation and checks](python/README.md). The intended public install is `pip install transflow` after publication; no package has been published yet. The Rust binary remains a separate native artifact.
 

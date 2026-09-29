@@ -338,3 +338,28 @@ Nodes also carry `resource_type`: `polars_transform`, `sql_transform`, `external
 This describes resource type only; `publication` and freshness retain separate meanings.
 The matched web client uses bounded context-owned metadata caching to avoid serial
 lineage/connection reads on each addition; cache hits do not perform a new live-state check.
+
+
+## Saved presentation views (T084)
+
+Authenticated `GET /api/v1/views` pages 100 summaries (`after` UUID), and
+`GET /api/v1/views/{uuid}` returns a closed `GraphViewV1` document. These are
+presentation metadata reads. Contextual `POST /api/v1/views` uses the existing
+session/CSRF, `If-Match` context and idempotency guards, plus the document revision
+(0 creates; updates compare and increment). Revision conflicts return 409.
+The owner serializes a view write and its audit fact in one SQLite transaction.
+View-only audit facts do not invalidate execution/catalogue context fingerprints.
+No dataset, schedule, build or publication is mutated by a view save.
+
+`source_graph=<retained-graph-digest>` opens immutable captured source/catalogue
+metadata and reports `selection.kind=fixed_source`. It rejects mixed version/plan
+selectors and operational mutations; only a presentation view save is permitted.
+Lookup also accepts `dataset:<workspace-uuid>:<dataset-uuid>` stable identities.
+Snapshot views root the captured source in retention; absence/corruption fails
+explicitly instead of substituting the latest source. Branch views follow retained
+branch browsing metadata. Neither mode promises historical physical data retention.
+
+View geometry permits bounded fractional JSON numbers. Its retry digest uses the
+parsed JSON encoding; execution fingerprint canonicalization remains integer-only.
+The UI entry allows only `/?view=<uuid>` as a saved-view link, with authentication
+still required for API reads. Asset queries and other entry query fields fail closed.

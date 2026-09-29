@@ -45,8 +45,9 @@ export class GraphCache {
   known(paths: readonly string[]): Scope | null {
     const nodes = paths.map(
       (path) =>
-        [...this.records.values()].find((r) => r.node.paths.includes(path))
-          ?.node,
+        [...this.records.values()].find(
+          (r) => r.node.identity === path || r.node.paths.includes(path),
+        )?.node,
     );
     if (nodes.some((n) => !n)) return null;
     return this.scope(nodes.filter((n): n is ApiLineageNodeV1 => !!n));
@@ -142,8 +143,10 @@ export class GraphCache {
       const batchPaths: string[] = JSON.parse(batch);
       if (paths.every((path) => batchPaths.includes(path)))
         return work.then((scope) => {
-          const nodes = scope.nodes.filter((n) =>
-            n.paths.some((p) => paths.includes(p)),
+          const nodes = scope.nodes.filter(
+            (n) =>
+              paths.includes(n.identity) ||
+              n.paths.some((p) => paths.includes(p)),
           );
           const ids = new Set(nodes.map((n) => n.identity));
           return {

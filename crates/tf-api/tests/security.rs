@@ -308,6 +308,10 @@ async fn contributor_assets_are_frozen_bounded_and_keep_transport_security()
     )?;
     for (path, status) in [
         ("/", 200),
+        ("/?view=00000000-0000-4000-8000-000000000001", 200),
+        ("/?view=invalid", 400),
+        ("/?view=00000000-0000-4000-8000-000000000001&token=x", 400),
+        ("/?token=x", 400),
         ("/assets/app.js", 200),
         ("/assets/app.css", 200),
         ("/private.txt", 401),

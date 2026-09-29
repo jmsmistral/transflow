@@ -136,6 +136,19 @@ pub fn latest(workspace: &Path) -> Result<Option<Value>, EditorError> {
     };
     let name = target.to_str().map_err(|_| EditorError::Conflict)?;
     let digest = name.strip_suffix(".json").ok_or(EditorError::Conflict)?;
+    read_retained(&cache, digest)
+}
+
+/// Open one immutable graph generation by digest, without following the current pointer.
+pub fn retained(workspace: &Path, digest: &str) -> Result<Option<Value>, EditorError> {
+    let base = root(workspace)?;
+    let a = dir_at(&base, ".transflow", false)?;
+    let r = dir_at(&a, "runtime", false)?;
+    let cache = dir_at(&r, "graphs", false)?;
+    read_retained(&cache, digest)
+}
+fn read_retained(cache: &File, digest: &str) -> Result<Option<Value>, EditorError> {
+    let name = format!("{digest}.json");
     tf_protocol::canonical::ContentDigest::from_hex(
         tf_protocol::canonical::DigestKind::File,
         digest,
@@ -143,8 +156,8 @@ pub fn latest(workspace: &Path) -> Result<Option<Value>, EditorError> {
     .map_err(|_| EditorError::Conflict)?;
     let file = File::from(
         rustix::fs::openat(
-            &cache,
-            name,
+            cache,
+            name.as_str(),
             OFlags::RDONLY | OFlags::NONBLOCK | OFlags::NOFOLLOW | OFlags::CLOEXEC,
             Mode::empty(),
         )

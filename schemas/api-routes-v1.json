@@ -409,5 +409,34 @@
     "query": [],
     "mutation": false,
     "context": true
+  },
+  {
+    "path": "/api/v1/views",
+    "method": "GET",
+    "response": "ApiViewsV1",
+    "request": null,
+    "query": [
+      "after"
+    ],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/views/{view}",
+    "method": "GET",
+    "response": "GraphViewV1",
+    "request": null,
+    "query": [],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/views",
+    "method": "POST",
+    "response": "GraphViewV1",
+    "request": "GraphViewV1",
+    "query": [],
+    "mutation": true,
+    "context": true
   }
 ]

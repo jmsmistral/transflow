@@ -5840,7 +5840,8 @@
                 "retained_current",
                 "plan",
                 "local_version",
-                "foreign_version"
+                "foreign_version",
+                "fixed_source"
               ]
             },
             "id": {
@@ -8318,6 +8319,335 @@
         "resource_type"
       ],
       "additionalProperties": false
+    },
+    "ViewPositionV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": -1000000,
+          "maximum": 1000000
+        },
+        "y": {
+          "type": "number",
+          "minimum": -1000000,
+          "maximum": 1000000
+        }
+      }
+    },
+    "ViewDatasetV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "position"
+      ],
+      "properties": {
+        "identity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "position": {
+          "$ref": "#/$defs/ViewPositionV1"
+        }
+      }
+    },
+    "ViewGroupV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "members",
+        "collapsed",
+        "position"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "transflow-uuid"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "maxItems": 500,
+          "minItems": 0
+        },
+        "collapsed": {
+          "type": "boolean"
+        },
+        "position": {
+          "$ref": "#/$defs/ViewPositionV1"
+        }
+      }
+    },
+    "ViewNoteV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text",
+        "format",
+        "position"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "transflow-uuid"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 8000
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "text",
+            "markdown"
+          ]
+        },
+        "position": {
+          "$ref": "#/$defs/ViewPositionV1"
+        }
+      }
+    },
+    "ViewSelectorV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch",
+        "fallback",
+        "mode",
+        "source",
+        "graph"
+      ],
+      "properties": {
+        "branch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "fallback": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "maxItems": 100,
+          "minItems": 0
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "branch",
+            "snapshot"
+          ]
+        },
+        "source": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "transflow-uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "graph": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "transflow-sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "GraphViewV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format_version",
+        "id",
+        "revision",
+        "name",
+        "description",
+        "datasets",
+        "groups",
+        "annotations",
+        "viewport",
+        "colour",
+        "filters",
+        "selector"
+      ],
+      "properties": {
+        "format_version": {
+          "type": "integer",
+          "const": 1,
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "id": {
+          "type": "string",
+          "format": "transflow-uuid"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "datasets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ViewDatasetV1"
+          },
+          "maxItems": 500,
+          "minItems": 0
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ViewGroupV1"
+          },
+          "maxItems": 100,
+          "minItems": 0
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ViewNoteV1"
+          },
+          "maxItems": 100,
+          "minItems": 0
+        },
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y",
+            "zoom"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": -1000000,
+              "maximum": 1000000
+            },
+            "y": {
+              "type": "number",
+              "minimum": -1000000,
+              "maximum": 1000000
+            },
+            "zoom": {
+              "type": "number",
+              "minimum": 0.05,
+              "maximum": 2
+            }
+          }
+        },
+        "colour": {
+          "type": "string",
+          "enum": [
+            "resource",
+            "publication"
+          ]
+        },
+        "filters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "maxLength": 500
+            }
+          }
+        },
+        "selector": {
+          "$ref": "#/$defs/ViewSelectorV1"
+        }
+      }
+    },
+    "ApiViewsV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "views",
+        "next_cursor"
+      ],
+      "properties": {
+        "views": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "revision",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "transflow-uuid"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2147483647
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 200
+              }
+            }
+          },
+          "minItems": 0
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "transflow-uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
     }
   },
   "$ref": "#/$defs/CliEnvelopeV1"

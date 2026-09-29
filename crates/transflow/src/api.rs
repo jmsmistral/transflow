@@ -55,7 +55,16 @@ pub(crate) fn service(
     )
 }
 fn request_digest(r: &Request) -> Result<String> {
-    api_read::digest(&json!([r.method, r.path, r.query, r.body, r.if_match]))
+    let value = json!([r.method, r.path, r.query, r.body, r.if_match]);
+    if r.path == "/api/v1/views" {
+        // Visual coordinates are finite JSON floats, outside the integer-only execution
+        // canonical format. Serde's sorted object keys bind exact parsed view retries.
+        let bytes = serde_json::to_vec(&value).map_err(bad)?;
+        return Ok(tf_protocol::canonical::file_digest(&mut bytes.as_slice())
+            .map_err(bad)?
+            .hex());
+    }
+    api_read::digest(&value)
 }
 fn replay(v: Value) -> Result<Reply> {
     if let Some(status) = v["error_status"].as_u64() {
@@ -73,7 +82,7 @@ fn replay(v: Value) -> Result<Reply> {
 }
 impl Application for Service {
     fn capabilities(&self) -> Value {
-        let mut value = json!({"api_version":1,"protocol_major":1,"workspace":self.workspace.to_string(),"operations":["context","datasets","versions","lineage","source","validation","catalog_diff","plan","catalog_sync","build_accept","build_cancel","catalog_lifecycle","branch_lifecycle","external_lifecycle","events","preview"],"engines":["polars"],"limits":{"body_bytes":tf_api::BODY_LIMIT,"in_flight":tf_api::IN_FLIGHT_LIMIT,"page_default":50,"page_max":200,"graph_default":100,"graph_max":500,"graph_expansion_threshold":500,"source_bytes":65536,"event_replay":10000,"event_streams":4,"preview_rows":1000,"preview_bytes":2097152,"preview_cell_bytes":4096},"metadata_reads_import_code":false,"external_reads":"provider_owned_leased","schedules":false,"ui":false});
+        let mut value = json!({"api_version":1,"protocol_major":1,"workspace":self.workspace.to_string(),"operations":["context","datasets","versions","lineage","source","validation","catalog_diff","plan","catalog_sync","build_accept","build_cancel","catalog_lifecycle","branch_lifecycle","external_lifecycle","events","preview","views"],"engines":["polars"],"limits":{"body_bytes":tf_api::BODY_LIMIT,"in_flight":tf_api::IN_FLIGHT_LIMIT,"page_default":50,"page_max":200,"graph_default":100,"graph_max":500,"graph_expansion_threshold":500,"source_bytes":65536,"event_replay":10000,"event_streams":4,"preview_rows":1000,"preview_bytes":2097152,"preview_cell_bytes":4096},"metadata_reads_import_code":false,"external_reads":"provider_owned_leased","schedules":false,"ui":false});
         if self.queries.available() {
             if let Some(operations) = value["operations"].as_array_mut() {
                 operations.extend([
@@ -119,6 +128,10 @@ impl Application for Service {
                 .map_err(bad)?;
             rt.block_on(rd.close()).map_err(bad)?;
             return Ok(Reply::metadata(page));
+        }
+        if r.method == "GET" && (r.path == "/api/v1/views" || r.path.starts_with("/api/v1/views/"))
+        {
+            return crate::api_views::read(&self.root, &r);
         }
         if r.method == "GET" {
             return api_read::read(&self.root, self.workspace, &r);
@@ -332,6 +345,9 @@ pub(crate) fn drain(
 fn execute(owner: &mut RuntimeOwner, r: &Request) -> Result<Reply> {
     let root = owner.workspace_root().to_owned();
     let wid = owner.workspace_id().map_err(bad)?;
+    if r.query.contains_key("source_graph") && r.path != "/api/v1/views" {
+        return Err(E::conflict());
+    }
     if (r.query.contains_key("plan") && r.path != "/api/v1/builds")
         || r.query.contains_key("version")
     {
@@ -379,6 +395,7 @@ fn execute(owner: &mut RuntimeOwner, r: &Request) -> Result<Reply> {
 fn mutate(owner: &mut RuntimeOwner, r: &Request, rt: &tokio::runtime::Runtime) -> Result<Value> {
     let root = owner.workspace_root().to_string_lossy().into_owned();
     match r.path.as_str() {
+        "/api/v1/views" => crate::api_views::save(owner, r, rt),
         "/api/v1/plans" => {
             let selection: Selection =
                 serde_json::from_value(r.body.clone()).map_err(|_| E::invalid())?;

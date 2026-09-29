@@ -12,10 +12,14 @@ import type {
   ApiVerifiedV1,
   ApiEventV1,
   ApiLineageV1,
+  GraphViewV1,
+  ApiViewsV1,
 } from "../generated/contracts";
 import { obj, same, validate } from "./validate";
 
 export interface Contracts {
+  GraphViewV1: GraphViewV1;
+  ApiViewsV1: ApiViewsV1;
   ApiLineageV1: ApiLineageV1;
   ApiCapabilitiesV1: ApiCapabilitiesV1;
   ApiContextV1: ApiContextV1;
@@ -117,10 +121,25 @@ export class Client {
     }
     return { context, data: decode(name, value.data) };
   }
+  async saveView(
+    view: GraphViewV1,
+    query: Query,
+    context: ApiContextV1,
+    key: string,
+    signal: AbortSignal,
+  ): Promise<GraphViewV1> {
+    const url = `/api/v1/views?${new URLSearchParams({ ...query, context: context.fingerprint })}`;
+    const value = await this.post(url, view, signal, {
+      "If-Match": `"${context.fingerprint}"`,
+      "Idempotency-Key": key,
+    });
+    return this.envelope("GraphViewV1", value, context).data;
+  }
   async response(
     path: string,
     body: unknown,
     signal: AbortSignal,
+    headers: Record<string, string> = {},
   ): Promise<Response> {
     let response: Response;
     try {
@@ -130,6 +149,7 @@ export class Client {
         cache: "no-store",
         redirect: "error",
         headers: {
+          ...headers,
           "Content-Type": "application/json",
           ...(this.csrf ? { "X-Transflow-CSRF": this.csrf } : {}),
         },
@@ -162,8 +182,9 @@ export class Client {
     path: string,
     body: unknown,
     signal: AbortSignal,
+    headers: Record<string, string> = {},
   ): Promise<Record<string, unknown>> {
-    const response = await this.response(path, body, signal);
+    const response = await this.response(path, body, signal, headers);
     if (!response.headers.get("content-type")?.startsWith("application/json"))
       throw new ApiFailure(
         "failed",

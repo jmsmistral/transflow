@@ -67,6 +67,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     path: string;
     revision: number;
   } | null>(null);
+  const [catalogueFilter, setCatalogueFilter] = useState("");
   const [cataloguePaths, setCataloguePaths] = useState<readonly string[]>([]);
   const [visible, setVisible] = useState<readonly string[]>([]);
   const [dark, setDark] = useState(false);
@@ -112,6 +113,11 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
             visible={visible}
           />
           <Status>{status}</Status>
+          {ready?.context.selection.kind === "fixed_source" && (
+            <span title={ready.context.source ?? undefined}>
+              Fixed source snapshot
+            </span>
+          )}
           <Button aria-pressed={dark} onClick={() => setDark(!dark)}>
             Dark theme
           </Button>
@@ -135,6 +141,8 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 onVisible={setVisible}
                 focusRequest={focusRequest}
                 cataloguePaths={cataloguePaths}
+                catalogueFilter={catalogueFilter}
+                onFilter={setCatalogueFilter}
               />
               {!ready && (
                 <div className="canvas-message" role="status">
@@ -221,6 +229,8 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 {mode === "Catalogue" ? (
                   <>
                     <CatalogueSearch
+                      query={catalogueFilter}
+                      onQuery={setCatalogueFilter}
                       workspace={workspace}
                       active={!!ready}
                       visible={visible}

@@ -22,7 +22,11 @@ export function CatalogueSearch({
   visible,
   select,
   onPage,
+  query,
+  onQuery,
 }: {
+  query?: string;
+  onQuery?: (query: string) => void;
   workspace: Workspace;
   active: boolean;
   visible: readonly string[];
@@ -32,7 +36,12 @@ export function CatalogueSearch({
   const state = useSyncExternalStore(workspace.subscribe, workspace.snapshot);
   const fingerprint =
     state.kind === "ready" ? state.value.context.fingerprint : "";
-  const [filter, setFilter] = useState("");
+  const [localFilter, setLocalFilter] = useState("");
+  const filter = query ?? localFilter;
+  const setFilter = (value: string) => {
+    setLocalFilter(value);
+    onQuery?.(value);
+  };
   const [cursor, setCursor] = useState<string | null>(null);
   const [result, setResult] = useState<{
     key: string;

@@ -370,9 +370,12 @@ export function validate(
       );
       break;
     }
-    case "number":
-      num(value);
+    case "number": {
+      const n = num(value);
+      if ("minimum" in schema) need(n >= num(schema.minimum), "number minimum");
+      if ("maximum" in schema) need(n <= num(schema.maximum), "number maximum");
       break;
+    }
     case "boolean":
       need(typeof value === "boolean", "boolean");
       break;

@@ -115,6 +115,40 @@ export class GraphModel {
       this.cache.reset();
     };
   };
+  /** Restore visual membership only; metadata always comes from the selected coordinator context. */
+  async reopen(ids: readonly string[]): Promise<void> {
+    this.cancel();
+    const generation = this.generation;
+    const nodes: ApiLineageNodeV1[] = [],
+      edges = new Map<string, GraphEdgeV1>();
+    for (let offset = 0; offset < ids.length; offset += 100) {
+      const scope = await this.cache.lookup(ids.slice(offset, offset + 100));
+      if (generation !== this.generation)
+        throw new Error("The graph context changed while opening the view.");
+      nodes.push(...scope.nodes);
+      for (const edge of scope.edges) edges.set(edgeId(edge), edge);
+    }
+    if (ids.some((id) => !nodes.some((n) => n.identity === id)))
+      throw new Error(
+        "A saved dataset is unavailable in this context; the current view was preserved.",
+      );
+    this.restore({ nodes, edges: [...edges.values()] });
+  }
+  restore(scope: {
+    nodes: readonly ApiLineageNodeV1[];
+    edges: readonly GraphEdgeV1[];
+  }): void {
+    this.cancel();
+    this.set({
+      nodes: scope.nodes,
+      edges: scope.edges,
+      placement: null,
+      busy: false,
+      message: "",
+      pathNodes: null,
+      queryNodes: new Set(),
+    });
+  }
   prefetch(paths: readonly string[]): void {
     void this.cache.warm(paths).catch(() => {});
   }

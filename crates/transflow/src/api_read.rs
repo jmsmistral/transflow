@@ -141,6 +141,29 @@ pub(crate) fn context(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Cont
             json!({"kind":"retained_current","id":null,"digest":null}),
         )
     };
+    if let Some(digest) = r.query.get("source_graph") {
+        if r.query.contains_key("plan") || r.query.contains_key("version") {
+            return Err(E::invalid());
+        }
+        let retained = tf_catalog::graph_cache::retained(root, digest)
+            .map_err(|_| E::missing())?
+            .ok_or_else(E::missing)?;
+        let id: tf_domain::SourceSnapshotId = retained["source_snapshot_id"]
+            .as_str()
+            .ok_or_else(E::internal)?
+            .parse()
+            .map_err(bad)?;
+        let capture = SourceSnapshot::open(&root.join(".transflow/runtime/source-snapshots"), id)
+            .map_err(|_| E::missing())?;
+        let bytes = capture
+            .read(Path::new(".transflow/catalog.toml"), 16 * 1024 * 1024)
+            .map_err(bad)?;
+        registry =
+            RegistrySnapshot::parse(wid, std::str::from_utf8(&bytes).map_err(bad)?).map_err(bad)?;
+        source = Some(id);
+        graph = Some(retained);
+        selection = json!({"kind":"fixed_source","id":id.to_string(),"digest":digest});
+    }
     if let Some(version) = r.query.get("version") {
         if r.query.contains_key("plan") {
             return Err(E::invalid());
@@ -247,7 +270,14 @@ pub(crate) fn keys(r: &Request, extra: &[&str]) -> Result<()> {
     if r.query.keys().any(|k| {
         !matches!(
             k.as_str(),
-            "branch" | "fallback" | "plan" | "context" | "version" | "dataset" | "origin_workspace"
+            "branch"
+                | "fallback"
+                | "source_graph"
+                | "plan"
+                | "context"
+                | "version"
+                | "dataset"
+                | "origin_workspace"
         ) && !extra.contains(&k.as_str())
     }) {
         return Err(E::invalid());

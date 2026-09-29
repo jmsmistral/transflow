@@ -23,6 +23,7 @@ sys.path[:0] = [
     str(REPO / "python/tools"),
 ]
 from api_client import Client, coordinator  # noqa: E402
+from check_views import exercise as exercise_views  # noqa: E402
 from transflow_worker.environment import lock_environment, sync_environment  # noqa: E402
 
 
@@ -598,6 +599,11 @@ def main() -> None:
                 "foreign API registration/build uses provider-owned bytes; "
                 "retained reads import no provider code"
             )
+            saved_view = exercise_views(client, root)
+            cases.append(
+                "saved views preserve visual state, reject stale revisions, replay retries "
+                "and resolve fixed source graphs without execution"
+            )
             # Synchronize cancellation against an observable producer marker, not a sleep guess.
             marker = base / "running"
             release = base / "release"
@@ -659,11 +665,14 @@ def main() -> None:
                 )["data"]
                 == canceled["data"]
             )
+            assert client.call("GET", f"/api/v1/views/{saved_view['id']}")["data"] == saved_view
+            cases.append("saved view survives coordinator restart")
             cases.append("cancellation receipt survives coordinator restart")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(
-            {"tasks": ["T074", "T075", "T076", "T077", "T078", "T081"], "cases": cases}, indent=2
+            {"tasks": ["T074", "T075", "T076", "T077", "T078", "T081", "T084"], "cases": cases},
+            indent=2,
         )
         + "\n"
     )

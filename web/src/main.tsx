@@ -6,7 +6,11 @@ import "./styles.css";
 import { Workspace } from "./workspace";
 const workspace = new Workspace();
 const launchCode = window.location.hash.slice(1);
-window.history.replaceState(null, "", window.location.pathname);
+window.history.replaceState(
+  null,
+  "",
+  window.location.pathname + window.location.search,
+);
 if (launchCode) void workspace.connect(launchCode);
 window.addEventListener("pagehide", () => workspace.dispose(), { once: true });
 
