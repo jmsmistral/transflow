@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
-import { ViewHistory, groupsFor, rollup, type Visual } from "./view";
-import { NoteText } from "./Note";
+import { ViewHistory, type Visual } from "./view";
 import { exportJson, exportSvg } from "./exports";
 import { decode, Client } from "../api/client";
 import { Workspace } from "../workspace";
 import { fixtureTransport, context, json } from "../test-fixtures";
+import { ViewEditor } from "./ViewEditor";
 import { GraphExplorer } from "./Graph";
 import fixtures from "../../../schemas/fixtures/conformance.json";
 import type { ApiLineageNodeV1, GraphViewV1 } from "../generated/contracts";
@@ -30,72 +30,34 @@ const visual = (): Visual => ({
   edges: [],
   positions: { [node.identity]: { x: 40, y: 80 } },
   selected: [],
-  groups: [],
-  annotations: doc().annotations,
   viewport: { x: 5, y: 6, zoom: 1.2 },
   colour: "resource",
 });
-test("visual undo restores hidden membership, positions, annotations, grouping and camera without operational handles", () => {
+test("visual undo restores membership, positions and camera without operational handles", () => {
   const h = new ViewHistory(),
     first = visual();
   h.reset(first);
-  const groups = groupsFor(first.nodes, first.positions, () => "Inputs");
   const second = {
     ...first,
-    groups,
     selected: [node.identity],
     positions: { [node.identity]: { x: 100, y: 20 } },
     viewport: { x: 70, y: 10, zoom: 0.8 },
   };
   h.observe(second);
-  h.observe({
-    ...second,
-    nodes: [],
-    annotations: [],
-    selected: [],
-    groups: [],
-  });
+  h.observe({ ...second, nodes: [], selected: [] });
   expect(h.undo()).toEqual(second);
   expect(h.undo()).toEqual(first);
   expect(h.redo()).toEqual(second);
   h.observe({ ...second, colour: "publication" });
   expect(h.canRedo).toBe(false);
-  const group = groups[0];
-  if (!group) throw new Error("Expected group");
-  expect(rollup(group, first.nodes)).toContain(
-    "1 published · 0 not built · 0 unknown",
-  );
 });
-test("restricted markdown renders markup and URLs as text, with no executable or remote elements", () => {
-  const view = render(
-    <NoteText
-      markdown
-      text={
-        "**Bold** *emphasis* `code` <script>alert(1)</script> ![x](https://example.invalid/x) [bad](javascript:alert(1))"
-      }
-    />,
-  );
-  expect(
-    view.container.querySelectorAll("script,img,iframe,a,svg"),
-  ).toHaveLength(0);
-  expect(view.container.querySelector("strong")?.textContent).toBe("Bold");
-  expect(view.container.textContent).toContain("<script>");
-});
-test("exports honour explicit label, metadata and note inclusion and escape SVG markup", () => {
-  const annotation = doc().annotations[0];
-  if (!annotation) throw new Error("Expected note");
+test("exports honour explicit labels and metadata, and escape SVG markup", () => {
   const v = {
     ...doc(),
     name: "Private title",
-    description: "Private description",
-    annotations: [
-      {
-        ...annotation,
-        text: "<script>not executed</script> & remote",
-      },
-    ],
+    description: "<script>not executed</script>",
   };
-  const hidden = { labels: false, metadata: false, notes: false };
+  const hidden = { labels: false, metadata: false };
   for (const output of [
     exportJson(v, visual(), hidden),
     exportSvg(v, visual(), hidden),
@@ -104,12 +66,10 @@ test("exports honour explicit label, metadata and note inclusion and escape SVG 
     expect(output).not.toContain("raw/items");
     expect(output).not.toContain("not executed");
     expect(output).not.toContain("<image");
+    expect(output).not.toContain("annotations");
+    expect(output).not.toContain("groups");
   }
-  const svg = exportSvg(v, visual(), {
-    labels: true,
-    metadata: true,
-    notes: true,
-  });
+  const svg = exportSvg(v, visual(), { labels: true, metadata: true });
   expect(svg).toContain("&lt;script&gt;");
   expect(svg).not.toContain("<script>");
   expect(svg).toContain("Private title");
@@ -174,37 +134,75 @@ test("saved view controls preserve edits on conflict and only issue a view mutat
       view.container.querySelector('[aria-label="Details for raw/items"]'),
     ).not.toBeNull(),
   );
-  fireEvent.click(screen.getByRole("button", { name: /^Views/u }));
-  fireEvent.change(screen.getByLabelText("View name"), {
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  expect(screen.queryByLabelText("Description")).toBeNull();
+  fireEvent.change(screen.getByLabelText("Lineage name"), {
     target: { value: "Analysis" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Save view" }));
-  await screen.findByText("Analysis · Saved");
-  fireEvent.click(screen.getByRole("button", { name: "Notes" }));
-  fireEvent.change(screen.getByLabelText("Annotation"), {
-    target: { value: "**Analysis**" },
+  fireEvent.click(screen.getByRole("button", { name: "Save lineage" }));
+  await screen.findByText("Analysis");
+  expect(
+    screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
+  ).toBe(true);
+  expect(saved).not.toHaveProperty("groups");
+  expect(saved).not.toHaveProperty("annotations");
+  expect(saved).not.toHaveProperty("filters");
+  expect(saved).toHaveProperty("selector", {
+    branch: "master",
+    fallback: ["public"],
   });
-  fireEvent.click(screen.getByRole("button", { name: "Add note" }));
-  await waitFor(() =>
-    expect(view.container.querySelector(".view-note")).not.toBeNull(),
+  fireEvent.click(
+    screen.getByRole("button", { name: "Edit lineage description" }),
   );
-  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  fireEvent.change(screen.getByLabelText("Lineage description"), {
+    target: { value: "My analysis" },
+  });
+  fireEvent.keyDown(screen.getByLabelText("Lineage description"), {
+    key: "Enter",
+  });
+  expect(
+    screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
+  ).toBe(false);
   conflict = true;
-  fireEvent.click(screen.getByRole("button", { name: "Save view" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await screen.findByRole("alert");
-  expect((screen.getByLabelText("View name") as HTMLInputElement).value).toBe(
-    "Analysis",
-  );
-  expect(view.container.querySelector(".view-note")).not.toBeNull();
+  expect(screen.getByText("My analysis")).toBeTruthy();
   expect(mutations).toHaveLength(2);
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-  fireEvent.click(screen.getByRole("button", { name: "Open" }));
+  fireEvent.click(screen.getByRole("button", { name: "Lineage actions" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "Open lineage" }));
   fireEvent.click(
     await screen.findByRole("button", { name: "Analysis · revision 1" }),
   );
   await waitFor(() => expect(confirm).toHaveBeenCalled());
-  expect(view.container.querySelector(".view-note")).not.toBeNull();
+  expect(screen.getByText("My analysis")).toBeTruthy();
   confirm.mockRestore();
+  fireEvent.click(screen.getByRole("button", { name: "Close lineage panel" }));
+  conflict = false;
+  const originalId = (saved as GraphViewV1 | null)?.id;
+  fireEvent.click(screen.getByRole("button", { name: "Lineage actions" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "Save as" }));
+  expect(screen.queryByLabelText("Description")).toBeNull();
+  fireEvent.change(screen.getByLabelText("Lineage name"), {
+    target: { value: "Copy" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save lineage" }));
+  await screen.findByText("Copy");
+  expect((saved as GraphViewV1 | null)?.id).not.toBe(originalId);
+  expect(saved).toHaveProperty("revision", 1);
+  expect(saved).toHaveProperty("description", "My analysis");
+  fireEvent.click(screen.getByRole("button", { name: "Node colouring" }));
+  fireEvent.keyDown(screen.getByRole("menu", { name: "Node colouring" }), {
+    key: "ArrowDown",
+  });
+  expect(document.activeElement?.textContent).toContain("Publication");
+  fireEvent.click(screen.getByRole("menuitemradio", { name: "Publication" }));
+  expect(
+    screen.getByRole("button", { name: "Node colouring" }).textContent,
+  ).toContain("Publication");
+  expect(
+    screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
+  ).toBe(false);
   view.unmount();
   workspace.dispose();
 });
@@ -259,4 +257,68 @@ test("a shared view reopens membership after a superseded prefetch abort", async
   workspace.dispose();
   window.history.replaceState(null, "", "/");
   alert.mockRestore();
+});
+
+test("moving a saved node enables Save; restoring its position returns to clean state", async () => {
+  const workspace = new Workspace(new Client(fixtureTransport()));
+  await workspace.connect("launch");
+  const second = {
+    ...node,
+    identity:
+      "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  };
+  const v = {
+    ...visual(),
+    nodes: [node, second],
+    positions: { ...visual().positions, [second.identity]: { x: 300, y: 80 } },
+  };
+  const saved = {
+    ...doc(),
+    datasets: [...v.nodes].reverse().map((n) => ({
+      identity: n.identity,
+      position: v.positions[n.identity] ?? { x: 0, y: 0 },
+    })),
+    viewport: v.viewport,
+    selector: { branch: "master", fallback: ["public"] },
+  };
+  const props = {
+    workspace,
+    opened: saved,
+    onOpen: async () => {},
+    onMessage: () => {},
+    titleHost: null,
+    actionsHost: null,
+  };
+  const view = render(<ViewEditor {...props} visual={v} />);
+  expect(
+    screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
+  ).toBe(true);
+  view.rerender(
+    <ViewEditor
+      {...props}
+      visual={{
+        ...v,
+        positions: { ...v.positions, [node.identity]: { x: 500, y: 80 } },
+      }}
+    />,
+  );
+  expect(
+    screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
+  ).toBe(false);
+  view.rerender(<ViewEditor {...props} visual={v} />);
+  expect(
+    screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
+  ).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Lineage actions" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "Save as" }));
+  fireEvent.change(screen.getByLabelText("Lineage name"), {
+    target: { value: "Cancelled copy" },
+  });
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(
+    screen.getByRole("button", { name: "Save" }).hasAttribute("disabled"),
+  ).toBe(true);
+  view.unmount();
+  workspace.dispose();
 });

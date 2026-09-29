@@ -602,7 +602,7 @@ def main() -> None:
             saved_view = exercise_views(client, root)
             cases.append(
                 "saved views preserve visual state, reject stale revisions, replay retries "
-                "and resolve fixed source graphs without execution"
+                "and reopen branch-following lineages without execution"
             )
             # Synchronize cancellation against an observable producer marker, not a sleep guess.
             marker = base / "running"

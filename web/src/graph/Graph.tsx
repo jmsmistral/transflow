@@ -39,9 +39,9 @@ import {
   type Exploration,
 } from "./model";
 import { DatasetTooltip } from "./Tooltip";
+import { Menu } from "./Menu";
 import { ViewEditor } from "./ViewEditor";
-import { ViewHistory, rollup, type Visual } from "./view";
-import { NoteText } from "./Note";
+import { ViewHistory, type Visual } from "./view";
 import { same } from "../api/validate";
 import { queryFor } from "../workspace";
 import { Positions } from "./positions";
@@ -143,36 +143,8 @@ function Dataset({ data }: NodeProps<DatasetNode>) {
     </div>
   );
 }
-type NoteNode = Node<{ text: string; markdown: boolean }, "note">;
-type GroupNode = Node<
-  { name: string; summary: string; collapsed: boolean; toggle: () => void },
-  "viewGroup"
->;
-type CanvasNode = DatasetNode | NoteNode | GroupNode;
-function Annotation({ data }: NodeProps<NoteNode>) {
-  return (
-    <div className="view-note">
-      <NoteText text={data.text} markdown={data.markdown} />
-    </div>
-  );
-}
-function PresentationGroup({ data }: NodeProps<GroupNode>) {
-  return (
-    <div className={`view-group ${data.collapsed ? "collapsed" : ""}`}>
-      <Handle type="target" position={Position.Left} isConnectable={false} />
-      <button className="nodrag nopan" onClick={data.toggle}>
-        {data.collapsed ? "Expand" : "Collapse"} {data.name}
-      </button>
-      <small>{data.summary}</small>
-      <Handle type="source" position={Position.Right} isConnectable={false} />
-    </div>
-  );
-}
-const nodeTypes = {
-  dataset: Dataset,
-  note: Annotation,
-  viewGroup: PresentationGroup,
-};
+type CanvasNode = DatasetNode;
+const nodeTypes = { dataset: Dataset };
 function Dependency(props: EdgeProps) {
   const [path] = getBezierPath(props);
   return (
@@ -195,11 +167,11 @@ export function GraphExplorer({
   onVisible,
   focusRequest,
   cataloguePaths,
-  catalogueFilter = "",
-  onFilter,
+  titleHost,
+  actionsHost,
 }: {
-  catalogueFilter?: string;
-  onFilter?: (filter: string) => void;
+  titleHost?: HTMLElement | null;
+  actionsHost?: HTMLElement | null;
   workspace: Workspace;
   dark?: boolean;
   cataloguePaths?: readonly string[];
@@ -216,9 +188,6 @@ export function GraphExplorer({
       const selector = {
         branch: view.selector.branch,
         fallback: view.selector.fallback,
-        ...(view.selector.mode === "snapshot" && view.selector.graph
-          ? { sourceGraph: view.selector.graph }
-          : {}),
       };
       if (!same(queryFor(workspace.snapshot().selection), queryFor(selector)))
         await workspace.select(selector);
@@ -251,9 +220,8 @@ export function GraphExplorer({
       const ready = workspace.snapshot();
       if (ready.kind !== "ready") throw new Error("The context changed.");
       setOpened({ view, context: ready.value.context.fingerprint });
-      onFilter?.(view.filters.path);
     },
-    [model, workspace, onFilter],
+    [model, workspace],
   );
   const shared = useRef(false);
 
@@ -305,8 +273,8 @@ export function GraphExplorer({
     <div className="graph-explorer" hidden={!ready}>
       <ReactFlowProvider key={graph.context}>
         <GraphView
-          catalogueFilter={catalogueFilter}
-          onFilter={onFilter}
+          titleHost={titleHost ?? null}
+          actionsHost={actionsHost ?? null}
           opened={opened?.context === fingerprint ? opened.view : null}
           onOpen={openView}
           dark={dark}
@@ -321,8 +289,8 @@ export function GraphExplorer({
   ) : null;
 }
 function GraphView({
-  catalogueFilter,
-  onFilter,
+  titleHost,
+  actionsHost,
   opened,
   onOpen,
   dark,
@@ -332,8 +300,8 @@ function GraphView({
   active,
   focusRequest,
 }: {
-  catalogueFilter: string;
-  onFilter: ((filter: string) => void) | undefined;
+  titleHost: HTMLElement | null;
+  actionsHost: HTMLElement | null;
   opened: GraphViewV1 | null;
   onOpen: (view: GraphViewV1) => Promise<void>;
   dark: boolean;
@@ -363,10 +331,6 @@ function GraphView({
   const flowStore = useStoreApi();
   const [legendOpen, setLegendOpen] = useState(false);
   const [colour, setColour] = useState<"resource" | "publication">("resource");
-  const [groups, setGroups] = useState<GraphViewV1["groups"]>([]);
-  const [annotations, setAnnotations] = useState<GraphViewV1["annotations"]>(
-    [],
-  );
   const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 1 });
   const [notice, setNotice] = useState("");
   const [history] = useState(() => new ViewHistory());
@@ -374,18 +338,6 @@ function GraphView({
   const dragging = useRef(false);
   const restoring = useRef(false);
   const openedRef = useRef<GraphViewV1 | null>(null);
-  const validGroups = useMemo(
-    () =>
-      groups
-        .map((g) => ({
-          ...g,
-          members: g.members.filter((id) =>
-            graph.nodes.some((n) => n.identity === id),
-          ),
-        }))
-        .filter((g) => g.members.length),
-    [groups, graph.nodes],
-  );
   const visual: Visual = {
     nodes: graph.nodes,
     edges: graph.edges,
@@ -393,8 +345,6 @@ function GraphView({
     selected: [...selected].filter((id) =>
       graph.nodes.some((n) => n.identity === id),
     ),
-    groups: validGroups,
-    annotations,
     viewport,
     colour,
   };
@@ -408,8 +358,6 @@ function GraphView({
       model.restore(v);
       positions.restore(v.positions);
       selectNodes(new Set(v.selected));
-      setGroups(v.groups);
-      setAnnotations(v.annotations);
       setColour(v.colour);
       setViewport(v.viewport);
       void flow.setViewport(v.viewport);
@@ -425,8 +373,6 @@ function GraphView({
         opened.datasets.map((n) => [n.identity, n.position]),
       ),
       selected: [],
-      groups: opened.groups,
-      annotations: opened.annotations,
       viewport: opened.viewport,
       colour: opened.colour,
     };
@@ -456,8 +402,6 @@ function GraphView({
     graph.busy,
     layout.positions,
     selected,
-    validGroups,
-    annotations,
     viewport,
     colour,
     history,
@@ -468,11 +412,6 @@ function GraphView({
     if (next) apply(next);
     refreshHistory((n) => n + 1);
   };
-  const collapsed = new Map(
-    validGroups
-      .filter((g) => g.collapsed)
-      .flatMap((g) => g.members.map((id) => [id, g.id] as const)),
-  );
   const workspaceState = workspace.snapshot();
   const ready = workspaceState.kind === "ready" ? workspaceState.value : null;
   const chosen = [...selected].flatMap((id) =>
@@ -530,54 +469,7 @@ function GraphView({
       ready,
     ],
   );
-  const nodes: CanvasNode[] = [
-    ...validGroups.map((g): GroupNode => {
-      const members = g.members.map(
-        (id) => layout.positions[id] ?? { x: 0, y: 0 },
-      );
-      const x = g.collapsed
-        ? g.position.x
-        : Math.min(...members.map((p) => p.x)) - 16;
-      const y = g.collapsed
-        ? g.position.y
-        : Math.min(...members.map((p) => p.y)) - 52;
-      return {
-        id: g.id,
-        type: "viewGroup",
-        position: { x, y },
-        style: {
-          width: g.collapsed
-            ? 280
-            : Math.max(...members.map((p) => p.x)) + 276 - x,
-          height: g.collapsed
-            ? 80
-            : Math.max(...members.map((p) => p.y)) + 64 - y,
-        },
-        zIndex: -1,
-        selectable: g.collapsed,
-        selected: g.collapsed && g.members.every((id) => selected.has(id)),
-        data: {
-          name: g.name,
-          summary: rollup(g, graph.nodes),
-          collapsed: g.collapsed,
-          toggle: () =>
-            setGroups((old) =>
-              old.map((v) =>
-                v.id === g.id ? { ...v, collapsed: !v.collapsed } : v,
-              ),
-            ),
-        },
-      };
-    }),
-    ...datasetNodes.filter((n) => !collapsed.has(n.id)),
-    ...annotations.map((n): NoteNode => ({
-      id: n.id,
-      type: "note",
-      position: n.position,
-      selectable: false,
-      data: { text: n.text, markdown: n.format === "markdown" },
-    })),
-  ];
+  const nodes = datasetNodes;
   const rawEdges: Edge[] = useMemo(() => {
     const ids = new Set(graph.nodes.map((node) => node.identity));
     return graph.edges
@@ -602,11 +494,7 @@ function GraphView({
         focusable: true,
       }));
   }, [graph.nodes, graph.edges, graph.pathNodes]);
-  const edges = rawEdges.flatMap((edge) => {
-    const source = collapsed.get(edge.source) ?? edge.source,
-      target = collapsed.get(edge.target) ?? edge.target;
-    return source === target ? [] : [{ ...edge, source, target }];
-  });
+  const edges = rawEdges;
   useEffect(() => {
     if (active) positions.sync(graph.nodes, graph.edges, graph.placement);
     return positions.stop;
@@ -615,35 +503,14 @@ function GraphView({
     for (const change of updates)
       if (change.type === "position" && change.position) {
         const position = change.position;
-        const note = annotations.find((n) => n.id === change.id),
-          group = validGroups.find((g) => g.id === change.id);
-        if (note)
-          setAnnotations((old) =>
-            old.map((n) => (n.id === change.id ? { ...n, position } : n)),
-          );
-        else if (group) {
-          const old =
-            nodes.find((n) => n.id === group.id)?.position ?? group.position;
-          for (const id of group.members) {
-            const p = layout.positions[id];
-            if (p)
-              positions.move(id, {
-                x: p.x + position.x - old.x,
-                y: p.y + position.y - old.y,
-              });
-          }
-          setGroups((old) =>
-            old.map((g) => (g.id === group.id ? { ...g, position } : g)),
-          );
-        } else positions.move(change.id, position);
+        positions.move(change.id, position);
       }
     const selection = updates.filter((change) => change.type === "select");
     if (selection.length)
       selectNodes((old) => {
         const next = new Set(old);
         for (const change of selection) {
-          const members = validGroups.find((g) => g.id === change.id)
-            ?.members ?? [change.id];
+          const members = [change.id];
           for (const id of members) {
             if (change.selected) next.add(id);
             else next.delete(id);
@@ -675,14 +542,12 @@ function GraphView({
     <>
       <div className="graph-floating-tools">
         <ViewEditor
-          filter={catalogueFilter}
-          onFilter={onFilter}
+          titleHost={titleHost}
+          actionsHost={actionsHost}
           workspace={workspace}
           visual={visual}
           opened={opened}
           onOpen={onOpen}
-          onGroups={setGroups}
-          onNotes={setAnnotations}
           onMessage={setNotice}
         />
         <Button
@@ -776,9 +641,7 @@ function GraphView({
         title="Centre selection"
         onClick={() => {
           const bounds = flow.getNodesBounds([
-            ...new Set(
-              chosen.map((n) => collapsed.get(n.identity) ?? n.identity),
-            ),
+            ...new Set(chosen.map((n) => n.identity)),
           ]);
           void flow.setCenter(
             bounds.x + bounds.width / 2,
@@ -891,13 +754,9 @@ function GraphView({
               disabled={!chosen.length}
               onClick={() => {
                 void flow.fitView({
-                  nodes: [
-                    ...new Set(
-                      chosen.map(
-                        (n) => collapsed.get(n.identity) ?? n.identity,
-                      ),
-                    ),
-                  ].map((id) => ({ id })),
+                  nodes: [...new Set(chosen.map((n) => n.identity))].map(
+                    (id) => ({ id }),
+                  ),
                   duration: 200,
                 });
               }}
@@ -916,18 +775,23 @@ function GraphView({
         >
           <Icon name="legend" />
         </Button>
-        <select
-          aria-label="Node colouring"
-          value={colour}
-          onChange={(e) =>
-            setColour(
-              e.target.value === "publication" ? "publication" : "resource",
-            )
-          }
+        <Menu
+          label="Node colouring"
+          items={[
+            {
+              label: "Resource Type",
+              selected: colour === "resource",
+              action: () => setColour("resource"),
+            },
+            {
+              label: "Publication",
+              selected: colour === "publication",
+              action: () => setColour("publication"),
+            },
+          ]}
         >
-          <option value="resource">Resource Type</option>
-          <option value="publication">Publication</option>
-        </select>
+          {colour === "resource" ? "Resource Type" : "Publication"}
+        </Menu>
         {legendOpen && (
           <div className="graph-colour-legend" aria-label="Graph legend">
             {(colour === "resource" ? resourceLabels : publicationLabels).map(

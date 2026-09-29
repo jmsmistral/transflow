@@ -83,7 +83,7 @@ def openapi(source):
             operation["security"] = []
         elif route["path"] == "/api/v1/sessions/launch":
             operation["security"] = [{"bearer": []}]
-        for name in dict.fromkeys((['branch', 'fallback', 'source_graph', 'plan', 'context', 'version', 'dataset', 'origin_workspace'] if route['context'] else []) + route['query']):
+        for name in dict.fromkeys((['branch', 'fallback', 'plan', 'context', 'version', 'dataset', 'origin_workspace'] if route['context'] else []) + route['query']):
             operation['parameters'].append({"name": name, "in": "query", "required": name == "branch", "schema": {"type": "string"}})
         for segment in route['path'].split('/'):
             if segment.startswith('{'):

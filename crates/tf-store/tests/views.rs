@@ -21,7 +21,8 @@ async fn save_reopen_conflicts_and_audit_leave_execution_context_unchanged()
     let mut store = Store::open(&path).await?;
     let mut reader = Reader::open_existing(&path).await?;
     let before = reader.api_revision().await?;
-    let v = example()?;
+    let mut v = example()?;
+    v["description"] = json!("Preserve  intentional spacing");
     let saved = store
         .save_view(&v, 1)
         .await?
@@ -84,5 +85,68 @@ fn view_membership_and_context_invariants_are_fail_closed() -> Result<(), Box<dy
     let mut v = original;
     v["groups"] = json!([{"id":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","name":"bad","members":["missing"],"collapsed":false,"position":{"x":0,"y":0}}]);
     assert!(validate(&v).is_err());
+    Ok(())
+}
+
+#[tokio::test]
+async fn legacy_views_reopen_without_retired_features_and_keep_cas_revision()
+-> Result<(), Box<dyn std::error::Error>> {
+    use sqlx::Connection;
+    let root = std::env::temp_dir().join(format!("tf-legacy-views-{}", std::process::id()));
+    std::fs::create_dir_all(&root)?;
+    let path = root.join("catalog.sqlite");
+    let mut store = Store::open(&path).await?;
+    let current = example()?;
+    let mut old = current.clone();
+    old["revision"] = json!(7);
+    old["groups"] = json!([]);
+    old["annotations"] = json!([]);
+    old["filters"] = json!({"path":"raw"});
+    old["description"] = json!("Old\n description");
+    old["selector"]["mode"] = json!("snapshot");
+    old["selector"]["source"] = json!("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    old["selector"]["graph"] = json!("a".repeat(64));
+    let mut db = sqlx::SqliteConnection::connect(&format!("sqlite:{}", path.display())).await?;
+    sqlx::query("INSERT INTO graph_views VALUES(?,7,1,?,?,1)")
+        .bind(old["id"].as_str().ok_or("missing id")?)
+        .bind(old.to_string())
+        .bind(old["selector"].to_string())
+        .execute(&mut db)
+        .await?;
+    let mut reader = Reader::open_existing(&path).await?;
+    let reopened = reader.view(old["id"].as_str().ok_or("missing id")?).await?;
+    assert_eq!(reopened["revision"], 7);
+    assert_eq!(reopened["selector"], current["selector"]);
+    assert_eq!(reopened["description"], "Old description");
+    for key in ["groups", "annotations", "filters"] {
+        assert!(reopened.get(key).is_none());
+    }
+    let bytes: String = sqlx::query_scalar("SELECT view_json FROM graph_views")
+        .fetch_one(&mut db)
+        .await?;
+    assert_eq!(bytes, old.to_string());
+    assert!(store.save_view(&old, 2).await.is_err());
+    let saved = store
+        .save_view(&reopened, 3)
+        .await?
+        .ok_or("save conflict")?;
+    assert_eq!(saved["revision"], 8);
+    assert_eq!(
+        reader.view(old["id"].as_str().ok_or("missing id")?).await?,
+        saved
+    );
+    sqlx::query("UPDATE graph_views SET view_json='[]'")
+        .execute(&mut db)
+        .await?;
+    assert!(
+        reader
+            .view(old["id"].as_str().ok_or("missing id")?)
+            .await
+            .is_err()
+    );
+    db.close().await?;
+    reader.close().await?;
+    store.close().await?;
+    std::fs::remove_dir_all(root)?;
     Ok(())
 }

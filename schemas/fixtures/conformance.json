@@ -7584,33 +7584,15 @@
           }
         }
       ],
-      "groups": [],
-      "annotations": [
-        {
-          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
-          "format": "markdown",
-          "position": {
-            "x": 0,
-            "y": 0
-          }
-        }
-      ],
       "viewport": {
         "x": 0,
         "y": 0,
         "zoom": 1
       },
       "colour": "resource",
-      "filters": {
-        "path": ""
-      },
       "selector": {
         "branch": "master",
-        "fallback": [],
-        "mode": "branch",
-        "source": null,
-        "graph": null
+        "fallback": []
       }
     },
     "valid": true
@@ -7633,33 +7615,15 @@
           }
         }
       ],
-      "groups": [],
-      "annotations": [
-        {
-          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
-          "format": "markdown",
-          "position": {
-            "x": 0,
-            "y": 0
-          }
-        }
-      ],
       "viewport": {
         "x": 0,
         "y": 0,
         "zoom": 1
       },
       "colour": "resource",
-      "filters": {
-        "path": ""
-      },
       "selector": {
         "branch": "master",
-        "fallback": [],
-        "mode": "branch",
-        "source": null,
-        "graph": null
+        "fallback": []
       }
     },
     "valid": false
@@ -7682,33 +7646,15 @@
           }
         }
       ],
-      "groups": [],
-      "annotations": [
-        {
-          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
-          "format": "markdown",
-          "position": {
-            "x": 0,
-            "y": 0
-          }
-        }
-      ],
       "viewport": {
         "x": 0,
         "y": 0,
         "zoom": 0
       },
       "colour": "resource",
-      "filters": {
-        "path": ""
-      },
       "selector": {
         "branch": "master",
-        "fallback": [],
-        "mode": "branch",
-        "source": null,
-        "graph": null
+        "fallback": []
       }
     },
     "valid": false
@@ -7731,33 +7677,15 @@
           }
         }
       ],
-      "groups": [],
-      "annotations": [
-        {
-          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
-          "format": "markdown",
-          "position": {
-            "x": 0,
-            "y": 0
-          }
-        }
-      ],
       "viewport": {
         "x": 0,
         "y": 0,
         "zoom": 1
       },
       "colour": "resource",
-      "filters": {
-        "path": ""
-      },
       "selector": {
         "branch": "master",
-        "fallback": [],
-        "mode": "branch",
-        "source": null,
-        "graph": null
+        "fallback": []
       }
     },
     "valid": false
@@ -7780,7 +7708,16 @@
           }
         }
       ],
-      "groups": [],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "colour": "resource",
+      "selector": {
+        "branch": "master",
+        "fallback": []
+      },
       "annotations": [
         {
           "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
@@ -7792,23 +7729,7 @@
           },
           "html": "<script/>"
         }
-      ],
-      "viewport": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
-      },
-      "colour": "resource",
-      "filters": {
-        "path": ""
-      },
-      "selector": {
-        "branch": "master",
-        "fallback": [],
-        "mode": "branch",
-        "source": null,
-        "graph": null
-      }
+      ]
     },
     "valid": false
   },
@@ -7830,15 +7751,35 @@
           }
         }
       ],
-      "groups": [],
-      "annotations": [
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "colour": "resource",
+      "selector": {
+        "branch": "master",
+        "fallback": []
+      },
+      "build": "do-not-execute"
+    },
+    "valid": false
+  },
+  {
+    "name": "view-retired-groups",
+    "schema": "GraphViewV1",
+    "value": {
+      "format_version": 1,
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "revision": 0,
+      "name": "Synthetic view",
+      "description": "",
+      "datasets": [
         {
-          "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-          "text": "<script>alert(1)</script> ![x](https://example.invalid/x)",
-          "format": "markdown",
+          "identity": "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
           "position": {
-            "x": 0,
-            "y": 0
+            "x": 50.5,
+            "y": -10
           }
         }
       ],
@@ -7848,17 +7789,109 @@
         "zoom": 1
       },
       "colour": "resource",
-      "filters": {
-        "path": ""
+      "selector": {
+        "branch": "master",
+        "fallback": []
       },
+      "groups": []
+    },
+    "valid": false
+  },
+  {
+    "name": "view-retired-annotations",
+    "schema": "GraphViewV1",
+    "value": {
+      "format_version": 1,
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "revision": 0,
+      "name": "Synthetic view",
+      "description": "",
+      "datasets": [
+        {
+          "identity": "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "position": {
+            "x": 50.5,
+            "y": -10
+          }
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "colour": "resource",
+      "selector": {
+        "branch": "master",
+        "fallback": []
+      },
+      "annotations": []
+    },
+    "valid": false
+  },
+  {
+    "name": "view-retired-filters",
+    "schema": "GraphViewV1",
+    "value": {
+      "format_version": 1,
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "revision": 0,
+      "name": "Synthetic view",
+      "description": "",
+      "datasets": [
+        {
+          "identity": "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "position": {
+            "x": 50.5,
+            "y": -10
+          }
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "colour": "resource",
+      "selector": {
+        "branch": "master",
+        "fallback": []
+      },
+      "filters": []
+    },
+    "valid": false
+  },
+  {
+    "name": "view-retired-fixed-source",
+    "schema": "GraphViewV1",
+    "value": {
+      "format_version": 1,
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "revision": 0,
+      "name": "Synthetic view",
+      "description": "",
+      "datasets": [
+        {
+          "identity": "dataset:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "position": {
+            "x": 50.5,
+            "y": -10
+          }
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "colour": "resource",
       "selector": {
         "branch": "master",
         "fallback": [],
-        "mode": "branch",
+        "mode": "snapshot",
         "source": null,
         "graph": null
-      },
-      "build": "do-not-execute"
+      }
     },
     "valid": false
   }

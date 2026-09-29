@@ -34,7 +34,7 @@ fn runtime_assertions_agree_with_all_shared_schema_cases() {
     let cases: Vec<Value> =
         serde_json::from_str(include_str!("../../../schemas/fixtures/conformance.json")).unwrap();
     // T079 adds seven private scratchpad binding/request/result fixtures.
-    assert_eq!(cases.len(), 320);
+    assert_eq!(cases.len(), 324);
     for case in cases {
         assert_eq!(
             validate_document(case["schema"].as_str().unwrap(), &case["value"]).is_ok(),

@@ -7,6 +7,12 @@ use std::collections::BTreeSet;
 pub fn validate(view: &Value) -> Result<()> {
     tf_protocol::validate_document("GraphViewV1", view).map_err(|_| StoreError::InvalidRequest)?;
     let invalid = || StoreError::InvalidRequest;
+    if view["description"]
+        .as_str()
+        .is_some_and(|s| s.contains(['\n', '\r']))
+    {
+        return Err(invalid());
+    }
     let selector = &view["selector"];
     selector["branch"]
         .as_str()
@@ -23,12 +29,6 @@ pub fn validate(view: &Value) -> Result<()> {
             return Err(invalid());
         }
     }
-    let fixed = selector["mode"] == "snapshot";
-    if fixed == (selector["source"].is_null() || selector["graph"].is_null())
-        || (!fixed && (!selector["source"].is_null() || !selector["graph"].is_null()))
-    {
-        return Err(invalid());
-    }
     let mut ids = BTreeSet::new();
     for node in view["datasets"].as_array().ok_or_else(invalid)? {
         let id = node["identity"].as_str().ok_or_else(invalid)?;
@@ -44,24 +44,6 @@ pub fn validate(view: &Value) -> Result<()> {
             .parse::<tf_domain::DatasetId>()
             .map_err(|_| invalid())?;
         if !ids.insert(id) {
-            return Err(invalid());
-        }
-    }
-    let mut objects = BTreeSet::new();
-    let mut members = BTreeSet::new();
-    for group in view["groups"].as_array().ok_or_else(invalid)? {
-        if !objects.insert(group["id"].as_str().ok_or_else(invalid)?) {
-            return Err(invalid());
-        }
-        for member in group["members"].as_array().ok_or_else(invalid)? {
-            let member = member.as_str().ok_or_else(invalid)?;
-            if !ids.contains(member) || !members.insert(member) {
-                return Err(invalid());
-            }
-        }
-    }
-    for note in view["annotations"].as_array().ok_or_else(invalid)? {
-        if !objects.insert(note["id"].as_str().ok_or_else(invalid)?) {
             return Err(invalid());
         }
     }
@@ -118,7 +100,7 @@ impl Reader {
             json!({"next_cursor":if more {views.last().map(|v|v["id"].clone())}else{None},"views":views}),
         )
     }
-    /// Return the persisted document unchanged, with corruption reported explicitly.
+    /// Read the current presentation document, omitting retired pre-release fields.
     pub async fn view(&mut self, id: &str) -> Result<Value> {
         let text: String = sqlx::query_scalar(
             "SELECT view_json FROM graph_views WHERE id=? AND length(view_json)<=1048576",
@@ -126,7 +108,26 @@ impl Reader {
         .bind(id)
         .fetch_one(&mut self.db)
         .await?;
-        let value: Value = serde_json::from_str(&text).map_err(|_| StoreError::InvalidRequest)?;
+        let mut value: Value =
+            serde_json::from_str(&text).map_err(|_| StoreError::InvalidRequest)?;
+        // Compatibility is read-only: old bytes and revision remain intact until an explicit save.
+        // Unknown fields still fail the closed schema; only retired presentation fields are dropped.
+        if let Some(object) = value.as_object_mut() {
+            for key in ["groups", "annotations", "filters"] {
+                object.remove(key);
+            }
+        }
+        if let Some(selector) = value.get_mut("selector").and_then(Value::as_object_mut) {
+            for key in ["mode", "source", "graph"] {
+                selector.remove(key);
+            }
+        }
+        if let Some(description) = value["description"].as_str()
+            && description.contains(['\n', '\r'])
+        {
+            value["description"] =
+                json!(description.split_whitespace().collect::<Vec<_>>().join(" "));
+        }
         validate(&value)?;
         Ok(value)
     }

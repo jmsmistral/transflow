@@ -18,7 +18,6 @@ export interface Selection {
   origin?: string;
   version?: string;
   plan?: string;
-  sourceGraph?: string;
   cursor?: string;
 }
 export interface Snapshot {
@@ -36,7 +35,6 @@ export type WorkspaceState =
 export function queryFor(selection: Selection): Query {
   return {
     branch: selection.branch,
-    ...(selection.sourceGraph ? { source_graph: selection.sourceGraph } : {}),
     ...(!selection.plan && !selection.version && selection.fallback
       ? { fallback: JSON.stringify(selection.fallback) }
       : {}),
@@ -65,10 +63,7 @@ function matchesSelection(
       : selection.plan
         ? context.selection.kind === "plan" &&
           context.selection.id === selection.plan
-        : selection.sourceGraph
-          ? context.selection.kind === "fixed_source" &&
-            context.selection.digest === selection.sourceGraph
-          : context.selection.kind === "retained_current")
+        : context.selection.kind === "retained_current")
   );
 }
 /** One epoch owns all visible read models. Abort saves work; epoch checks provide correctness. */

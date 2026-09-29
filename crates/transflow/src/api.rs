@@ -345,9 +345,6 @@ pub(crate) fn drain(
 fn execute(owner: &mut RuntimeOwner, r: &Request) -> Result<Reply> {
     let root = owner.workspace_root().to_owned();
     let wid = owner.workspace_id().map_err(bad)?;
-    if r.query.contains_key("source_graph") && r.path != "/api/v1/views" {
-        return Err(E::conflict());
-    }
     if (r.query.contains_key("plan") && r.path != "/api/v1/builds")
         || r.query.contains_key("version")
     {

@@ -351,13 +351,13 @@ The owner serializes a view write and its audit fact in one SQLite transaction.
 View-only audit facts do not invalidate execution/catalogue context fingerprints.
 No dataset, schedule, build or publication is mutated by a view save.
 
-`source_graph=<retained-graph-digest>` opens immutable captured source/catalogue
-metadata and reports `selection.kind=fixed_source`. It rejects mixed version/plan
-selectors and operational mutations; only a presentation view save is permitted.
-Lookup also accepts `dataset:<workspace-uuid>:<dataset-uuid>` stable identities.
-Snapshot views root the captured source in retention; absence/corruption fails
-explicitly instead of substituting the latest source. Branch views follow retained
-branch browsing metadata. Neither mode promises historical physical data retention.
+Saved lineages always follow retained branch browsing metadata and ordered
+fallbacks. The `source_graph` query and `fixed_source` discriminator are removed;
+unknown query keys and retired fields in new save requests are rejected. The reader
+normalizes older pre-release documents by dropping groups, annotations, filters and
+source-mode fields, preserving their revision and original bytes until explicit save.
+View-only source retention roots are removed; build/version/pin roots are unaffected.
+Lookup accepts `dataset:<workspace-uuid>:<dataset-uuid>` stable identities.
 
 View geometry permits bounded fractional JSON numbers. Its retry digest uses the
 parsed JSON encoding; execution fingerprint canonicalization remains integer-only.

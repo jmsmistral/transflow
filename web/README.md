@@ -91,7 +91,7 @@ The server normalizes it and binds it into read context fingerprints. Frozen
 versions/plans reject overrides. Workspace configuration is unchanged. Build controls
 are still a later task; they must pass this override explicitly when implemented.
 
-Drag the canvas to pan, Shift-drag for box selection, and Shift/Cmd/Ctrl-click to select multiple nodes. Drag nodes or use their arrow keys to change positions. There is no pin/unpin state. Delete/Backspace removes only focused graph selections from the view. Groups, persisted positions, annotations and undo/redo remain T084. Context fingerprints fence requests and reset the graph when the context changes. The worker foundation remains bundled and production-tested; it is not invoked by graph membership changes.
+Drag the canvas to pan, Shift-drag for box selection, and Shift/Cmd/Ctrl-click to select multiple nodes. Drag nodes or use their arrow keys to change positions. There is no pin/unpin state. Delete/Backspace removes only focused graph selections from the view. Persisted positions and visual undo/redo are delivered in T084. Context fingerprints fence requests and reset the graph when the context changes. The worker foundation remains bundled and production-tested; it is not invoked by graph membership changes.
 
 ### UI review iteration: catalogue and canvas navigation
 
@@ -122,41 +122,43 @@ use the ƒ symbol; external nodes use a compact arrow. The React Flow attributio
 is hidden through its supported option; its MIT license remains in the dependency.
 Progress/messages are centred at the bottom; no startup text covers the graph toolbar.
 
-## Saved views (T084)
+## Saved lineages (T084)
 
-Use **Views** to explicitly save or reopen a named view. The dirty indicator tracks
-membership, positions, groups, notes, camera, colour mode and catalogue filter.
-Saved documents use stable dataset identities, so catalogue path changes do not
-change membership. Each save compares the stored revision; a conflict preserves
-the draft instead of overwriting another save. Opening another view asks before
-discarding unsaved changes. A local share link identifies a view on this coordinator;
-it grants no access and needs a fresh authenticated launch on the same instance.
+The header's **Save** button is disabled until the lineage changes, including node
+movement, membership, camera, colour, description or branch settings. Its adjacent
+menu offers **Save as**, **Open lineage** and separate **Export SVG/PNG/JSON** actions.
+Save as creates an independent document with a new name; cancelling leaves the
+current document untouched. The saved name appears beside the transflow logo;
+a pencil edits its single-line description below. Description is absent from save
+panels. Revision conflicts preserve the draft; opening another lineage asks before
+discarding unsaved changes. The legend uses a keyboard-operable custom menu below
+its trigger, aligned with the legend toggle.
 
-A view can follow a named branch's current retained graph or retain a fixed source
-snapshot/graph. Fixed-source browsing is metadata-only and does not check out code,
-run producers or bind a historical data head. Unavailable/deleted identities and
-missing retained contexts fail explicitly. It is not an offline workspace backup.
+Saved lineages always follow the selected branch tip and ordered fallbacks; there
+is no source-mode selector. Groups, notes, saved catalogue filters and fixed-source
+browsing have been removed. Existing pre-release documents remain readable: the
+reader omits these retired fields, converts descriptions to one line, and keeps the
+ID/revision and original stored bytes until an explicit save. Saving rewrites the
+reduced document using the existing revision check. Legacy UUID links still open
+with authentication; the UI does not offer a share-link action.
 
-Groups organize selected members by logical path, source folder, external provider,
-user label or the current resource/publication category. Collapsed groups show
-member counts and published/not-built/unknown counts. They never become datasets
-or execution targets. Notes support plain text and restricted **bold**, _emphasis_
-and `code`; HTML, images and links stay literal text and load no remote resources.
+Undo/redo buttons and graph-focused Cmd/Ctrl+Z (Shift for redo) restore membership,
+selection, positions, colour and camera only, with 50 prior visual snapshots.
+No view action changes builds, publications, catalogue entries or schedules.
+Additions preserve positions/camera; Layout remains a disabled placeholder.
 
-Undo/redo buttons and graph-focused Cmd/Ctrl+Z (Shift for redo) restore visual
-membership, selection, positions, groups, notes, colour and camera only. The history
-keeps 50 prior visual snapshots. Removing/hiding a node, grouping or undoing a view
-cannot change a plan, build, head, catalogue entry or schedule. Existing manual
-positions and the camera survive additions; Layout remains a disabled placeholder.
+Exports use selected model fields, never page screenshots. Labels default on and
+metadata off. JSON/SVG can include metadata; PNG contains rendered content only
+and scales to at most 4096 pixels per side. SVG text is escaped, with no remote
+resources. Previews and download links use locally generated bytes. Prepare again
+after edits to update an export.
 
-Export prepares a JSON, SVG or PNG file from selected model fields, never a page
-screenshot. Labels default on; metadata and annotations default off. JSON/SVG can
-include metadata explicitly; PNG includes rendered content only and scales to at
-most 4096 pixels per side. Generated SVG uses escaped text and no remote resources.
-The prepared file keeps the choices made at preparation; prepare again after edits.
-PNG/SVG previews and the explicit download link use only locally generated bytes.
+Documents are bounded to 500 datasets, finite coordinates within ±1,000,000,
+zoom 0.05–2 and 1 MiB. Lists page 100 summaries; reopening resolves stable dataset
+identities in bounded context-owned reads. Missing identities fail explicitly;
+there is no silent truncation. Branch following does not promise historical bytes
+or seamless live-build preview updates: full inspector/build UI remains later work.
 
-Version 1 bounds are 500 datasets, 100 nonoverlapping groups, 100 notes (8000
-characters each), finite coordinates within ±1,000,000, zoom 0.05–2 and a 1 MiB
-stored document. View lists page 100 summaries; loading membership uses bounded
-context-owned lineage reads. Save rejects overflow; it never silently truncates.
+UI focus and node selection use thin, muted teal outlines (with a lighter dark-theme
+variant). Custom menu rows separate icons, labels and checkmarks, with consistent
+height and inset focus styling that cannot overlap adjacent rows.

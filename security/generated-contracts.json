@@ -4,8 +4,8 @@
     {
       "name": "worker-contract-v1",
       "inputs": {
-        "tools/contracts/generate.py": "7b7feca4d1b6b9ea22293f9dca32cec4f45ab1196950af8f0f3f7bf4a33f10c5",
-        "schemas/contracts-v1.schema.json": "52731357f1a8530ee77ceb52cbf9cdd2cca4aef332c1a06591a6087ebfdb13ee",
+        "tools/contracts/generate.py": "44f2191727c39f3e5a81f51314849313afbfa19f2f95743cfa2e8b6ec169d973",
+        "schemas/contracts-v1.schema.json": "1e3bee041abdc984b5b619b43f502989b5de8b59cf4a720fdf734afe0202252e",
         "schemas/versions.json": "beb4e63198f8a245c2735b23f3fa9890697b166d20cc6812f0b47aa19ec4080f",
         "schemas/api-routes-v1.json": "b56a156847e3177a8f872a34cd27dca9f7d13442c30d71ac30944988678710fd"
       },

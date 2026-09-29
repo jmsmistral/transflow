@@ -1,0 +1,62 @@
+{
+  "task": "T084 owner UI refinement",
+  "date": "2026-09-29",
+  "platform": "macOS arm64",
+  "specification": "1.1.3",
+  "base_implementation": "83a03d7",
+  "base_specification": "e7501b6",
+  "scope": [
+    "Remove groups, notes, saved filters and fixed-source saved-lineage mode",
+    "Always reopen against branch tip and ordered fallbacks; preserve execution source snapshots",
+    "Header Save/Save as, Open lineage and individual JSON/SVG/PNG exports",
+    "Inline saved name and single-line description with pencil editor",
+    "Aligned custom legend menu, separated labels/checkmarks and inset focus styling",
+    "Muted teal focus/selection outlines; top-right order theme, branch, fallback, Save/menu, connection status"
+  ],
+  "verification": [
+    {
+      "command": "bash tools/check-rust.sh",
+      "result": "Passed: formatting, compilation, standalone storage, clippy, boundary/checker regressions and 401 Rust tests."
+    },
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "Passed: environment, dependency consistency, Ruff, mypy and 966 tests."
+    },
+    {
+      "command": "bash tools/check-web.sh",
+      "result": "Passed: typecheck, ESLint, formatting, 426 component/contract tests, production worker probes and matching five-asset builds."
+    },
+    {
+      "command": "python python/tools/check_api.py <binary> <wheel> <wheelhouse> --output <receipt>",
+      "result": "Passed: 17 authenticated native journeys, including branch-following save/reopen, stale revision, retry, retired-field rejection, unchanged execution state and coordinator restart."
+    },
+    {
+      "command": "PYTHON=target/python/py314/bin/python bash tools/check-safety.sh",
+      "result": "Passed: 27 regression tests; locked dependency/advisory baseline and generated-contract drift checks."
+    },
+    {
+      "command": "python ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "Passed: version 1.1.3 documentation, links and syntax; not application tests."
+    }
+  ],
+  "browser": {
+    "tool": "Codex internal Browser",
+    "workspace": "synthetic local preview",
+    "observed": [
+      "Legacy saved lineage opens without groups/notes/fixed-source label; Save initially disabled",
+      "Inline description edit enables Save; saved description survives reopen",
+      "Save as contains name only and creates a separate named lineage",
+      "Custom legend options appear below trigger with distinct rows/checkmarks; light and dark focus styling inspected",
+      "Header follows requested control order",
+      "PNG export preview decodes at 680 by 228 pixels; download link offered",
+      "Export dialog uses native modal focus isolation"
+    ],
+    "not_claimed": [
+      "Firefox automation",
+      "Download transport completion",
+      "Full live-build inspector refresh (later task)"
+    ]
+  },
+  "compatibility": "Stored pre-release documents omit retired fields on read; original bytes/revision preserved until explicit save. New requests reject retired fields. No runtime migration. Existing authenticated UUID links remain readable. Dataset order alone does not make a reopened lineage dirty.",
+  "ci": "Pending owner monitoring after push; not polled."
+}

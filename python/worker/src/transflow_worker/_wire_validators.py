@@ -563,16 +563,6 @@ def validate_ViewDatasetV1(value: object) -> None:
     validate_document("ViewDatasetV1", value)
 
 
-def validate_ViewGroupV1(value: object) -> None:
-    """Assert the ViewGroupV1 contract, including custom formats."""
-    validate_document("ViewGroupV1", value)
-
-
-def validate_ViewNoteV1(value: object) -> None:
-    """Assert the ViewNoteV1 contract, including custom formats."""
-    validate_document("ViewNoteV1", value)
-
-
 def validate_ViewSelectorV1(value: object) -> None:
     """Assert the ViewSelectorV1 contract, including custom formats."""
     validate_document("ViewSelectorV1", value)

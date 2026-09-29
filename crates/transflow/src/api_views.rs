@@ -57,19 +57,6 @@ pub(crate) fn save(
     {
         return Err(E::conflict());
     }
-    if selector["mode"] == "snapshot"
-        && (selector["source"] != c.value["source"]
-            || selector["graph"] != c.value["graph"]
-            || c.value["graph"].is_null())
-    {
-        return Err(E::conflict());
-    }
-    if selector["mode"] == "snapshot" {
-        let digest = selector["graph"].as_str().ok_or_else(E::invalid)?;
-        tf_catalog::graph_cache::retained(owner.workspace_root(), digest)
-            .map_err(|_| E::conflict())?
-            .ok_or_else(E::conflict)?;
-    }
     let entries = tf_catalog::browse::entries(&c.registry);
     for node in r.body["datasets"].as_array().ok_or_else(E::invalid)? {
         let identity = node["identity"].as_str().ok_or_else(E::invalid)?;

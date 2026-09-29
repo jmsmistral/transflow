@@ -23,8 +23,8 @@ button:disabled {
   opacity: 0.5;
 }
 :focus-visible {
-  outline: 3px solid #438ac7;
-  outline-offset: 3px;
+  outline: 2px solid var(--focus, #397569);
+  outline-offset: 2px;
 }
 .app {
   --bg: #f5f7f9;
@@ -34,6 +34,9 @@ button:disabled {
   --line: #dce3e8;
   --accent: #176553;
   --soft: #edf5f2;
+  --focus: #397569;
+  --xy-selection-background-color: #39756912;
+  --xy-selection-border: 1px solid var(--focus);
   background: var(--bg);
   color: var(--ink);
   height: 100dvh;
@@ -48,6 +51,7 @@ button:disabled {
   --muted: #aabac8;
   --line: #344957;
   --accent: #8dddd0;
+  --focus: #9cbeb6;
   --soft: #243b39;
   color-scheme: dark;
 }
@@ -514,7 +518,7 @@ dd {
   height: 84px;
   position: relative;
   padding: 8px 12px;
-  border: 1px solid #7286a4;
+  border: 1px solid #82918f;
   border-radius: 4px;
   background: var(--surface);
   color: var(--ink);
@@ -569,12 +573,12 @@ dd {
   left: calc(100% + 4px);
 }
 .react-flow__node.selected .dataset-node {
-  outline: 3px solid #2163cc;
-  outline-offset: 3px;
+  outline: 1.5px solid var(--focus);
+  outline-offset: 2px;
 }
 .react-flow__node:focus-visible {
-  outline: 3px solid #be5600;
-  outline-offset: 6px;
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 .graph-list {
   overflow: auto;
@@ -1216,11 +1220,6 @@ summary {
   align-items: center;
   justify-content: center;
 }
-.graph-colour-controls > select {
-  height: 34px;
-  padding: 4px 28px 4px 10px;
-  font-size: 13px;
-}
 .graph-colour-legend {
   position: absolute;
   top: 40px;
@@ -1309,90 +1308,190 @@ summary {
   max-width: calc(100% - 300px);
 }
 
-/* Saved-view controls float above the canvas; they never reduce its working area. */
-.view-editor {
-  position: absolute;
-  top: 48px;
-  left: 0;
-  z-index: 20;
-  width: min(460px, calc(100vw - 80px));
-  max-height: calc(100vh - 210px);
-  overflow: auto;
-  padding: 16px;
+/* Saved lineage identity and actions live in the header, leaving the canvas intact. */
+.lineage-heading {
+  min-width: 0;
+  flex: 1;
+  padding-left: 18px;
+}
+.lineage-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.lineage-description {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+}
+.lineage-description small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--muted);
+}
+.lineage-description .button {
+  padding: 2px;
+  border: 0;
+  background: transparent;
+}
+.lineage-description .icon {
+  width: 13px;
+  height: 13px;
+}
+.lineage-description input {
+  width: 100%;
+  padding: 2px 4px;
+  font-size: 12px;
+  margin: 0;
+}
+.lineage-save {
+  display: flex;
+  position: relative;
+}
+.lineage-save > .button {
+  border-radius: 5px 0 0 5px;
+}
+.lineage-save > .lineage-menu > button {
+  border-radius: 0 5px 5px 0;
+  border-left: 0;
+}
+.lineage-menu {
+  position: relative;
+}
+.lineage-menu > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 34px;
+  padding: 5px 10px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
   background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.top-actions .lineage-menu > button {
+  height: 38px;
+}
+.lineage-menu-list {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  min-width: max(100%, 190px);
+  width: max-content;
+  padding: 5px;
+  display: grid;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  box-shadow: 0 6px 24px #142d4630;
+  z-index: 30;
+}
+.lineage-menu-list .button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 3px;
+  text-align: left;
+  width: 100%;
+  border: 0;
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+.lineage-menu-list [aria-checked="true"] {
+  background: var(--soft);
+}
+.lineage-menu-list .menu-label {
+  flex: 1;
+}
+.lineage-menu-list .menu-check {
+  flex: 0 0 16px;
+  text-align: center;
+}
+.lineage-menu-list .icon {
+  flex-shrink: 0;
+}
+.lineage-menu-list .button:focus-visible {
+  outline-width: 1px;
+  outline-offset: -2px;
+}
+.graph-colour-controls {
+  align-items: flex-start;
+}
+.graph-colour-controls .lineage-menu > button {
+  min-width: 160px;
+  font-size: 13px;
+}
+.lineage-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: transparent;
+  display: grid;
+  place-items: center;
+}
+.view-editor {
+  width: min(460px, calc(100vw - 40px));
+  max-height: calc(100vh - 80px);
+  overflow: auto;
+  padding: 20px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
   border-radius: 6px;
   box-shadow: 0 8px 24px #0002;
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 .view-editor header,
-.view-editor nav,
-.view-list-row {
+.view-row {
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: space-between;
 }
-.view-editor header strong,
-.view-list-row span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  flex: 1;
-}
 .view-editor label {
-  display: grid;
-  gap: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
-.view-editor textarea {
-  min-height: 72px;
-  resize: vertical;
+.view-editor input:not([type="checkbox"]) {
+  flex: 1;
+  min-width: 0;
 }
-.view-editor input,
-.view-editor select,
-.view-editor textarea {
-  max-width: 100%;
-}
-.view-editor small,
 .view-editor p {
-  font-size: 12px;
+  font-size: 13px;
 }
-.view-note {
-  width: 250px;
-  padding: 12px;
-  background: #fff3c4;
-  color: #30291b;
-  border: 1px solid #c8ad55;
-  border-radius: 4px;
-  overflow-wrap: anywhere;
-  max-height: 500px;
-  overflow: auto;
-}
-.note-text {
-  white-space: pre-wrap;
-}
-.view-group {
-  width: 100%;
-  height: 100%;
-  background: #8da2b412;
-  border: 1px solid #7c8999;
-  border-radius: 8px;
-  padding: 6px;
-}
-.view-group small {
-  display: block;
-  font-size: 11px;
-}
-.view-group.collapsed {
-  background: var(--surface);
-}
-.view-group .react-flow__handle {
-  opacity: 0;
-}
-
-.view-export-result img {
+.export-preview {
   max-width: 100%;
   height: auto;
   background: white;
+}
+.save-error {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  min-width: 250px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 12px;
+}
+
+.view-editor {
+  position: fixed;
+  margin: auto;
+}
+.view-editor::backdrop {
+  background: #10203060;
 }

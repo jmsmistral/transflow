@@ -39,32 +39,11 @@ def exercise(client: Client, root: Path) -> dict[str, Any]:
             {"identity": identity, "position": {"x": i * 300.5, "y": 90}}
             for i, identity in enumerate(ids)
         ],
-        "groups": [
-            {
-                "id": str(uuid4()),
-                "name": "Inputs",
-                "members": ids,
-                "collapsed": True,
-                "position": {"x": 0, "y": 50},
-            }
-        ],
-        "annotations": [
-            {
-                "id": str(uuid4()),
-                "text": "**Note** <script>alert(1)</script> ![x](https://example.invalid/x)",
-                "format": "markdown",
-                "position": {"x": -50, "y": -50},
-            }
-        ],
         "viewport": {"x": -10, "y": 20, "zoom": 0.8},
         "colour": "resource",
-        "filters": {"path": "external"},
         "selector": {
             "branch": "main",
             "fallback": context["context"]["fallback_policy"][1:],
-            "mode": "snapshot",
-            "source": context["context"]["source"],
-            "graph": context["context"]["graph"],
         },
     }
     key = str(uuid4())
@@ -75,16 +54,19 @@ def exercise(client: Client, root: Path) -> dict[str, Any]:
     assert client.context()["context"]["fingerprint"] == context["context"]["fingerprint"]
     assert client.call("GET", f"/api/v1/views/{view['id']}")["data"] == saved
     assert saved["id"] in [v["id"] for v in client.call("GET", "/api/v1/views")["data"]["views"]]
-    fixed = {"branch": "main", "source_graph": view["selector"]["graph"]}
-    selected = client.call("GET", "/api/v1/context", query=fixed)["data"]
-    assert selected["selection"]["kind"] == "fixed_source"
-    assert selected["source"] == view["selector"]["source"]
-    reopened = client.call("GET", "/api/v1/lineage", query={**fixed, "lookup": json.dumps(ids)})[
-        "data"
-    ]
+    reopened = client.call(
+        "GET", "/api/v1/lineage", query={"branch": "main", "lookup": json.dumps(ids)}
+    )["data"]
     assert sorted(ids) == sorted(n["identity"] for n in reopened["nodes"])
     client.call(
-        "GET", "/api/v1/context", query={"branch": "main", "source_graph": "../bad"}, status=404
+        "GET", "/api/v1/context", query={"branch": "main", "source_graph": "a" * 64}, status=400
+    )
+    for obsolete in ("groups", "annotations", "filters"):
+        client.mutate("/api/v1/views", {**saved, obsolete: []}, status=400)
+    client.mutate(
+        "/api/v1/views",
+        {**saved, "selector": {**saved["selector"], "mode": "snapshot"}},
+        status=400,
     )
     invalid = {**saved, "build": "not an operation"}
     client.mutate("/api/v1/views", invalid, status=400)

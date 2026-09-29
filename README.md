@@ -93,9 +93,10 @@ Compact toolbars and collapsed inspector rails leave more room for lineage.
 Internal node arrows expand/retract neighbours without changing zoom. The searchable
 Branch picker defaults to master; its adjacent editor sets view-local fallbacks.
 Use the contributor UI bundle through `serve --ui-dir`; graph actions change only
-visual exploration. T084 adds explicit saved views, revision conflicts, branch-following
-or fixed-source reopening, presentation groups, safe notes and visual undo/redo.
-JSON/SVG/PNG exports have explicit label, metadata and annotation options; local
+visual exploration. T084 adds a header Save/Save as menu, named branch-following lineages, inline
+single-line descriptions, revision conflicts and visual undo/redo. Groups, notes,
+saved filters and fixed-source view modes are removed. JSON/SVG/PNG exports offer
+label and metadata choices; legacy local
 view links require the same coordinator and authentication. Full inspectors and
 build controls follow later.
 

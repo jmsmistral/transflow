@@ -178,14 +178,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -649,14 +641,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -872,14 +856,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -1014,14 +990,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -1188,14 +1156,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -1403,14 +1363,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -1604,14 +1556,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -1743,14 +1687,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -1908,14 +1844,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -2085,14 +2013,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -2281,14 +2201,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -2457,14 +2369,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -2642,14 +2546,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -2792,14 +2688,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -3000,14 +2888,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -3183,14 +3063,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -3381,14 +3253,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -3567,14 +3431,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -3732,14 +3588,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -3915,14 +3763,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -4219,14 +4059,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -4558,14 +4390,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -4742,14 +4566,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -4960,14 +4776,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -5108,14 +4916,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -5296,14 +5096,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -5511,14 +5303,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -5677,14 +5461,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -5861,14 +5637,6 @@
             }
           },
           {
-            "name": "source_graph",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "plan",
             "in": "query",
             "required": false,
@@ -6013,14 +5781,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -6206,23 +5966,15 @@
                     "name": "x",
                     "description": "example",
                     "datasets": [],
-                    "groups": [],
-                    "annotations": [],
                     "viewport": {
                       "x": -1000000,
                       "y": -1000000,
                       "zoom": 0.05
                     },
                     "colour": "resource",
-                    "filters": {
-                      "path": "example"
-                    },
                     "selector": {
                       "branch": "x",
-                      "fallback": [],
-                      "mode": "branch",
-                      "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-                      "graph": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                      "fallback": []
                     }
                   }
                 }
@@ -6251,14 +6003,6 @@
           },
           {
             "name": "fallback",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "source_graph",
             "in": "query",
             "required": false,
             "schema": {
@@ -6345,23 +6089,15 @@
                 "name": "x",
                 "description": "example",
                 "datasets": [],
-                "groups": [],
-                "annotations": [],
                 "viewport": {
                   "x": -1000000,
                   "y": -1000000,
                   "zoom": 0.05
                 },
                 "colour": "resource",
-                "filters": {
-                  "path": "example"
-                },
                 "selector": {
                   "branch": "x",
-                  "fallback": [],
-                  "mode": "branch",
-                  "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-                  "graph": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                  "fallback": []
                 }
               }
             }
@@ -6414,23 +6150,15 @@
                     "name": "x",
                     "description": "example",
                     "datasets": [],
-                    "groups": [],
-                    "annotations": [],
                     "viewport": {
                       "x": -1000000,
                       "y": -1000000,
                       "zoom": 0.05
                     },
                     "colour": "resource",
-                    "filters": {
-                      "path": "example"
-                    },
                     "selector": {
                       "branch": "x",
-                      "fallback": [],
-                      "mode": "branch",
-                      "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-                      "graph": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                      "fallback": []
                     }
                   }
                 }
@@ -12299,8 +12027,7 @@
                   "retained_current",
                   "plan",
                   "local_version",
-                  "foreign_version",
-                  "fixed_source"
+                  "foreign_version"
                 ]
               },
               "id": {
@@ -14817,82 +14544,12 @@
           }
         }
       },
-      "ViewGroupV1": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "name",
-          "members",
-          "collapsed",
-          "position"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "transflow-uuid"
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "members": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "maxItems": 500,
-            "minItems": 0
-          },
-          "collapsed": {
-            "type": "boolean"
-          },
-          "position": {
-            "$ref": "#/components/schemas/ViewPositionV1"
-          }
-        }
-      },
-      "ViewNoteV1": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "text",
-          "format",
-          "position"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "transflow-uuid"
-          },
-          "text": {
-            "type": "string",
-            "maxLength": 8000
-          },
-          "format": {
-            "type": "string",
-            "enum": [
-              "text",
-              "markdown"
-            ]
-          },
-          "position": {
-            "$ref": "#/components/schemas/ViewPositionV1"
-          }
-        }
-      },
       "ViewSelectorV1": {
         "type": "object",
         "additionalProperties": false,
         "required": [
           "branch",
-          "fallback",
-          "mode",
-          "source",
-          "graph"
+          "fallback"
         ],
         "properties": {
           "branch": {
@@ -14909,35 +14566,6 @@
             },
             "maxItems": 100,
             "minItems": 0
-          },
-          "mode": {
-            "type": "string",
-            "enum": [
-              "branch",
-              "snapshot"
-            ]
-          },
-          "source": {
-            "oneOf": [
-              {
-                "type": "string",
-                "format": "transflow-uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "graph": {
-            "oneOf": [
-              {
-                "type": "string",
-                "format": "transflow-sha256"
-              },
-              {
-                "type": "null"
-              }
-            ]
           }
         }
       },
@@ -14951,11 +14579,8 @@
           "name",
           "description",
           "datasets",
-          "groups",
-          "annotations",
           "viewport",
           "colour",
-          "filters",
           "selector"
         ],
         "properties": {
@@ -14991,22 +14616,6 @@
             "maxItems": 500,
             "minItems": 0
           },
-          "groups": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ViewGroupV1"
-            },
-            "maxItems": 100,
-            "minItems": 0
-          },
-          "annotations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ViewNoteV1"
-            },
-            "maxItems": 100,
-            "minItems": 0
-          },
           "viewport": {
             "type": "object",
             "additionalProperties": false,
@@ -15039,19 +14648,6 @@
               "resource",
               "publication"
             ]
-          },
-          "filters": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "path"
-            ],
-            "properties": {
-              "path": {
-                "type": "string",
-                "maxLength": 500
-              }
-            }
           },
           "selector": {
             "$ref": "#/components/schemas/ViewSelectorV1"

@@ -249,10 +249,14 @@ The browser now uses the same authored schema for runtime response validation;
 API v1, worker protocol 1.0 and runtime schema 12 remain unchanged.
 
 
-T084 adds `GraphViewV1`, saved-view pages/routes and `fixed_source` read contexts.
-Six conformance cases bring the corpus to 320. View positions and zoom use bounded
-finite fractional numbers; validators and generated examples enforce their bounds.
-This presentation-only exception does not alter execution canonical JSON rules.
-Closed documents reject executable/unknown fields and unknown format versions.
-API v1, worker protocol 1.0 and runtime schema 12 remain unchanged; the existing
-`graph_views` table is used without a migration.
+T084 adds `GraphViewV1` and saved-lineage pages/routes. The owner refinement
+removes group/note/filter fields and fixes saved lineage reopening to branch tip;
+`ViewSelectorV1` contains only branch and ordered fallback names. New requests
+reject retired fields and `source_graph` is no longer a query option. Older stored
+pre-release documents are normalized on read by tf-store without changing their
+revision or original bytes until explicit save. API/document major 1 remains the
+matched pre-release contract; update UI and coordinator together.
+
+The shared corpus has 324 conformance cases, including rejection of retired fields.
+View positions/zoom use bounded finite fractional numbers. This presentation-only
+exception does not relax integer-only canonical execution fingerprint encodings.

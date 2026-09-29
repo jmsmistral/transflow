@@ -68,6 +68,8 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     revision: number;
   } | null>(null);
   const [catalogueFilter, setCatalogueFilter] = useState("");
+  const [titleHost, setTitleHost] = useState<HTMLDivElement | null>(null);
+  const [actionsHost, setActionsHost] = useState<HTMLDivElement | null>(null);
   const [cataloguePaths, setCataloguePaths] = useState<readonly string[]>([]);
   const [visible, setVisible] = useState<readonly string[]>([]);
   const [dark, setDark] = useState(false);
@@ -106,21 +108,18 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
         <a className="brand" href="#workspace" aria-label="Transflow workspace">
           <span aria-hidden="true">◈</span> transflow
         </a>
+        <div className="lineage-heading" ref={setTitleHost} />
         <div className="top-actions">
+          <Button aria-pressed={dark} onClick={() => setDark(!dark)}>
+            Dark theme
+          </Button>
           <BranchControls
             workspace={workspace}
             state={state}
             visible={visible}
           />
+          <div ref={setActionsHost} />
           <Status>{status}</Status>
-          {ready?.context.selection.kind === "fixed_source" && (
-            <span title={ready.context.source ?? undefined}>
-              Fixed source snapshot
-            </span>
-          )}
-          <Button aria-pressed={dark} onClick={() => setDark(!dark)}>
-            Dark theme
-          </Button>
         </div>
       </header>
       <main
@@ -141,8 +140,8 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 onVisible={setVisible}
                 focusRequest={focusRequest}
                 cataloguePaths={cataloguePaths}
-                catalogueFilter={catalogueFilter}
-                onFilter={setCatalogueFilter}
+                titleHost={titleHost}
+                actionsHost={actionsHost}
               />
               {!ready && (
                 <div className="canvas-message" role="status">

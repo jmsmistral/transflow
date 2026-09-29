@@ -701,12 +701,8 @@ test.each(["before", "after"] as const)(
       search.focus();
       expect(fireEvent.keyDown(search, { key: "a", metaKey: true })).toBe(true);
       expect(
-        (
-          screen.getByRole("combobox", {
-            name: "Node colouring",
-          }) as HTMLSelectElement
-        ).value,
-      ).toBe("resource");
+        screen.getByRole("button", { name: "Node colouring" }).textContent,
+      ).toContain("Resource Type");
       expect(
         view.container.querySelector(".react-flow__attribution"),
       ).toBeNull();
