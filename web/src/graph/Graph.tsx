@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type SetStateAction,
 } from "react";
 import {
   Background,
@@ -219,6 +220,15 @@ function GraphView({
   const [positions] = useState(() => new Positions());
   const layout = useSyncExternalStore(positions.subscribe, positions.snapshot);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const focused = useRef<object | null>(null);
+  // A direct selection supersedes pending catalogue focus, even before its frame runs.
+  const selectNodes = useCallback(
+    (next: SetStateAction<ReadonlySet<string>>) => {
+      focused.current = focusRequest;
+      setSelected(next);
+    },
+    [focusRequest],
+  );
   const [depth, setDepth] = useState("1");
   const [direction, setDirection] =
     useState<Exploration["direction"]>("upstream");
@@ -235,10 +245,10 @@ function GraphView({
   const expand = useCallback(
     (node: ApiLineageNodeV1, side: Exploration["direction"]) => {
       void model.toggle(node, side).then((ids) => {
-        if (ids) setSelected(ids);
+        if (ids) selectNodes(ids);
       });
     },
-    [model],
+    [model, selectNodes],
   );
   const nodes: DatasetNode[] = useMemo(
     () =>
@@ -319,7 +329,7 @@ function GraphView({
           positions.move(change.id, change.position);
       const selection = updates.filter((change) => change.type === "select");
       if (selection.length)
-        setSelected((old) => {
+        selectNodes((old) => {
           const next = new Set(old);
           for (const change of selection) {
             if (change.selected) next.add(change.id);
@@ -328,9 +338,8 @@ function GraphView({
           return next;
         });
     },
-    [positions],
+    [positions, selectNodes],
   );
-  const focused = useRef<object | null>(null);
   useEffect(() => {
     if (
       !active ||
@@ -344,6 +353,7 @@ function GraphView({
     const position = node && layout.positions[node.identity];
     if (!node || !position) return;
     const frame = requestAnimationFrame(() => {
+      if (focused.current === focusRequest) return;
       focused.current = focusRequest;
       setSelected(new Set([node.identity]));
     });
@@ -362,7 +372,7 @@ function GraphView({
           <div className="graph-actions">
             <Button
               disabled={!chosen.length}
-              onClick={() => setSelected(new Set())}
+              onClick={() => selectNodes(new Set())}
             >
               Clear all
             </Button>
@@ -384,7 +394,7 @@ function GraphView({
               event.preventDefault();
               setToolsOpen(false);
               void model.expand(chosen, direction, depth).then((ids) => {
-                if (ids) setSelected(ids);
+                if (ids) selectNodes(ids);
               });
             }}
           >
@@ -469,7 +479,7 @@ function GraphView({
             ) {
               event.preventDefault();
               event.stopPropagation();
-              setSelected(new Set(graph.nodes.map((n) => n.identity)));
+              selectNodes(new Set(graph.nodes.map((n) => n.identity)));
               return;
             }
             if (!["Delete", "Backspace"].includes(event.key)) return;
@@ -477,7 +487,7 @@ function GraphView({
               event.preventDefault();
               event.stopPropagation();
               model.remove(selected);
-              setSelected(new Set());
+              selectNodes(new Set());
             }
           }}
 

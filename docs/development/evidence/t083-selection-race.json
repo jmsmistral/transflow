@@ -1,0 +1,35 @@
+{
+  "task": "T083 web CI selection-race correction",
+  "date": "2026-09-29",
+  "reported_revision": {
+    "implementation": "f1a55c56773c26cdbb6d403e4c1e12fcbcead330",
+    "specification": "49c903f6cfcb238581eef8b7daae2cb421f30de5"
+  },
+  "reported_failure": "Owner screenshot reports all three web matrix jobs failed; macOS log fails graph.test.tsx box-selection count assertion at line 648.",
+  "cause": "Pending catalogue auto-selection runs in requestAnimationFrame and can replace a newer box selection with a singleton. The test waited for the initial zero-selection button and an empty act, neither of which guaranteed that nodes or the queued focus frame were ready.",
+  "correction": "Direct selection paths consume the current catalogue focus request; its queued callback checks whether it was superseded. Tests wait for node DOM presence and control animation frames explicitly in both orders. No sleeps, raised timeouts, removed assertions or skipped tests.",
+  "verification": [
+    {
+      "command": "npm run test -- src/graph/graph.test.tsx -t \"focus frame after\" (with original Graph.tsx, then restored fixed source)",
+      "result": "Negative control failed at the selected-node count assertion, as expected."
+    },
+    {
+      "command": "npm run test -- src/graph/graph.test.tsx -t \"lineage selection survives\" (10 repetitions)",
+      "result": "Both frame orders passed in all 10 runs: 20 deterministic race checks."
+    },
+    {
+      "command": "bash tools/check-web.sh",
+      "result": "410 tests passed; strict types, lint/accessibility, formatting, production worker probes and byte-identical five-asset builds passed."
+    },
+    {
+      "command": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+      "result": "27 safety regressions and baseline passed; unchanged 641 dependency versions."
+    }
+  ],
+  "scope": "Web selection handling, regression tests and matching documentation only. No backend, generated contract, dependency or storage changes.",
+  "limits": [
+    "Local verification on macOS arm64; corrected GitHub matrix CI remains owner-monitored and pending.",
+    "No new browser qualification claimed for this fix; controlled jsdom pointer/frame tests cover the race.",
+    "UI/coordinator was not restarted; existing stopped-preview state is preserved."
+  ]
+}

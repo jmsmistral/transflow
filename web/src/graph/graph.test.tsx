@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { Client } from "../api/client";
 import type {
@@ -590,84 +596,131 @@ test("catalogue prefetch is bounded and concurrent clicks reuse its request", as
   workspace.dispose();
 });
 
-test("lineage Cmd+A selects visible nodes, leaves search selection alone, and defaults to Resource Type", async () => {
-  const workspace = new Workspace(
-    new Client(
-      fixtureTransport((path) =>
-        path.endsWith("/lineage")
-          ? Promise.resolve(json(page([node("a"), node("b")]), context()))
-          : undefined,
-      ),
-    ),
-  );
-  await workspace.connect("launch");
-  const view = render(
-    <>
-      <input aria-label="Search outside graph" />
-      <GraphExplorer
-        workspace={workspace}
-        focusRequest={{ path: "data/a", revision: 1 }}
-      />
-    </>,
-  );
-  await screen.findByRole("button", { name: "0 nodes selected" });
-  await act(async () => {});
-  const diagram = screen.getByLabelText("Dataset lineage diagram");
-  diagram.focus();
-  const pane = view.container.querySelector(".react-flow__pane");
-  if (!pane) throw new Error("Missing graph pane");
-  fireEvent.keyDown(window, {
-    key: "Shift",
-    code: "ShiftLeft",
-    shiftKey: true,
-  });
-  const pointer = (type: string, x: number, y: number) => {
-    const event = new MouseEvent(type, {
-      bubbles: true,
-      button: 0,
-      clientX: x,
-      clientY: y,
-      shiftKey: true,
+test.each(["before", "after"] as const)(
+  "lineage selection survives catalogue focus frame %s the gesture and preserves keyboard shortcuts",
+  async (focusTiming) => {
+    vi.useFakeTimers({
+      toFake: ["requestAnimationFrame", "cancelAnimationFrame"],
     });
-    Object.defineProperties(event, {
-      isPrimary: { value: true },
-      pointerId: { value: 1 },
-    });
-    fireEvent(pane, event);
-  };
-  pointer("pointerdown", 1, 1);
-  pointer("pointermove", 700, 500);
-  expect(view.container.querySelector(".react-flow__selection")).not.toBeNull();
-  pointer("pointerup", 700, 500);
-  await act(async () => {});
-  fireEvent.keyUp(window, { key: "Shift", code: "ShiftLeft" });
-  expect(view.container.querySelector(".react-flow__selection")).toBeNull();
-  expect(
-    view.container.querySelector(".react-flow__nodesselection"),
-  ).toBeNull();
-  expect(screen.getByRole("button", { name: "2 nodes selected" })).toBeTruthy();
-  fireEvent.keyDown(diagram, { key: "a", metaKey: true });
-  expect(screen.getByRole("button", { name: "2 nodes selected" })).toBeTruthy();
-  fireEvent.keyDown(diagram, { key: "Backspace" });
-  expect(screen.getByRole("button", { name: "0 nodes selected" })).toBeTruthy();
-  const search = screen.getByRole("textbox", { name: "Search outside graph" });
-  search.focus();
-  expect(fireEvent.keyDown(search, { key: "a", metaKey: true })).toBe(true);
-  expect(
-    (
-      screen.getByRole("combobox", {
-        name: "Node colouring",
-      }) as HTMLSelectElement
-    ).value,
-  ).toBe("resource");
-  expect(view.container.querySelector(".react-flow__attribution")).toBeNull();
-  expect(screen.queryByText(/Open the catalogue/)).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Toggle legend" }));
-  expect(screen.getByLabelText("Graph legend").textContent).toContain(
-    "Polars Transform",
-  );
-  workspace.dispose();
-});
+    try {
+      const workspace = new Workspace(
+        new Client(
+          fixtureTransport((path) =>
+            path.endsWith("/lineage")
+              ? Promise.resolve(json(page([node("a"), node("b")]), context()))
+              : undefined,
+          ),
+        ),
+      );
+      await workspace.connect("launch");
+      const view = render(
+        <>
+          <input aria-label="Search outside graph" />
+          <GraphExplorer
+            workspace={workspace}
+            focusRequest={{ path: "data/a", revision: 1 }}
+          />
+        </>,
+      );
+      await waitFor(() =>
+        expect(
+          view.container.querySelectorAll(".react-flow__node"),
+        ).toHaveLength(2),
+      );
+      if (focusTiming === "before") {
+        await act(async () => {
+          vi.advanceTimersToNextFrame();
+        });
+        expect(
+          screen.getByRole("button", { name: "1 node selected" }),
+        ).toBeTruthy();
+        const selectionMenu = view.container.querySelector(
+          ".graph-options > summary",
+        );
+        if (!selectionMenu) throw new Error("Missing selection menu");
+        fireEvent.click(selectionMenu);
+        fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+        expect(
+          screen.getByRole("button", { name: "0 nodes selected" }),
+        ).toBeTruthy();
+      }
+      const diagram = screen.getByLabelText("Dataset lineage diagram");
+      diagram.focus();
+      const pane = view.container.querySelector(".react-flow__pane");
+      if (!pane) throw new Error("Missing graph pane");
+      fireEvent.keyDown(window, {
+        key: "Shift",
+        code: "ShiftLeft",
+        shiftKey: true,
+      });
+      const pointer = (type: string, x: number, y: number) => {
+        const event = new MouseEvent(type, {
+          bubbles: true,
+          button: 0,
+          clientX: x,
+          clientY: y,
+          shiftKey: true,
+        });
+        Object.defineProperties(event, {
+          isPrimary: { value: true },
+          pointerId: { value: 1 },
+        });
+        fireEvent(pane, event);
+      };
+      pointer("pointerdown", 1, 1);
+      pointer("pointermove", 700, 500);
+      expect(
+        view.container.querySelector(".react-flow__selection"),
+      ).not.toBeNull();
+      expect(
+        screen.getByRole("button", { name: "2 nodes selected" }),
+      ).toBeTruthy();
+      pointer("pointerup", 700, 500);
+      await act(async () => {
+        if (focusTiming === "after") vi.advanceTimersToNextFrame();
+      });
+      fireEvent.keyUp(window, { key: "Shift", code: "ShiftLeft" });
+      expect(view.container.querySelector(".react-flow__selection")).toBeNull();
+      expect(
+        view.container.querySelector(".react-flow__nodesselection"),
+      ).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "2 nodes selected" }),
+      ).toBeTruthy();
+      fireEvent.keyDown(diagram, { key: "a", metaKey: true });
+      expect(
+        screen.getByRole("button", { name: "2 nodes selected" }),
+      ).toBeTruthy();
+      fireEvent.keyDown(diagram, { key: "Backspace" });
+      expect(
+        screen.getByRole("button", { name: "0 nodes selected" }),
+      ).toBeTruthy();
+      const search = screen.getByRole("textbox", {
+        name: "Search outside graph",
+      });
+      search.focus();
+      expect(fireEvent.keyDown(search, { key: "a", metaKey: true })).toBe(true);
+      expect(
+        (
+          screen.getByRole("combobox", {
+            name: "Node colouring",
+          }) as HTMLSelectElement
+        ).value,
+      ).toBe("resource");
+      expect(
+        view.container.querySelector(".react-flow__attribution"),
+      ).toBeNull();
+      expect(screen.queryByText(/Open the catalogue/)).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Toggle legend" }));
+      expect(screen.getByLabelText("Graph legend").textContent).toContain(
+        "Polars Transform",
+      );
+      workspace.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
+  },
+);
 
 test("rapid uncached additions both appear, while removal cancels unfinished additions", async () => {
   const pending = new Map<string, (response: Response) => void>();

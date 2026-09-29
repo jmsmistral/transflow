@@ -111,7 +111,8 @@ No producer imports or data copies are needed for these metadata reads.
 New parents are placed to the left and children to the right, including successive
 levels, without moving existing nodes or the camera. Cmd+A (Ctrl+A on Windows/Linux)
 selects all visible nodes when the graph has focus. The box-selection overlay is removed
-on release while node selection remains. Search inputs keep native text shortcuts.
+on release while node selection remains. A direct graph selection supersedes any
+pending catalogue-selection animation frame. Search inputs keep native text shortcuts.
 
 The upper-right icon toggles a legend below it. The adjacent selector defaults to
 **Resource Type** (Polars Transform, SQL Transform, External Dataset, Dataset, Unknown);

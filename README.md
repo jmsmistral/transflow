@@ -13,7 +13,7 @@ A local, code-first build system for dataframe datasets, with versioned Parquet 
 Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
 Package installation and workspace environment checks reject other minors.
 
-Lineage review now includes directional parent/child placement, focus-scoped Cmd/Ctrl+A, a Resource Type colour legend and bounded metadata caching for immediate cached additions. Uncached metadata still requires a coordinator read. Existing positions and the camera stay unchanged.
+Lineage review now includes directional parent/child placement, focus-scoped Cmd/Ctrl+A, a Resource Type colour legend and bounded metadata caching for immediate cached additions. Uncached metadata still requires a coordinator read. Existing positions and the camera stay unchanged. A newer canvas selection takes precedence over delayed catalogue selection.
 
 ## Intended experience
 
