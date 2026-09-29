@@ -1,0 +1,14 @@
+{
+  "task": "T080 native query probe startup correction",
+  "date": "2026-09-29",
+  "platform": "macOS arm64 / Python 3.14.7",
+  "base_implementation": "e57d14424b9d0f89b1d18145fe99d83888a0e88c",
+  "cause": "The probe could read the supervisor's pre-spawn recovery record (pid 0, empty start). os.kill(0, 0) checks the probe's own process group, falsely reporting a surviving helper.",
+  "change": "Both cancellation and shutdown await a positive child PID and nonempty start identity within the existing 15-second deadline. Both retain immediate post-cleanup reap assertions; no product or timeout change.",
+  "checks": {
+    "python": "bash tools/check-python.sh: 969 tests, Ruff formatting/lint, mypy and environment checks passed. Initial new-test import ordering corrected before final gate.",
+    "regressions": "Missing file, pre-spawn placeholder, incomplete identity, ready identity and bounded missing/placeholder deadline covered deterministically by three tests.",
+    "native": "python/tools/check_queries.py with the current CLI, matched local wheel and offline wheelhouse: all eight real query lifecycle groups passed, including cancellation, shutdown reap, lease/temp cleanup, reusable capacity and unchanged dataset heads. Receipt: /tmp/query-startup-native.json. Log: /tmp/query-startup-native.log."
+  },
+  "limits": "Other native platforms await owner CI confirmation; no CI polling. Rust/web product sources unchanged by this correction. Preview remains stopped."
+}

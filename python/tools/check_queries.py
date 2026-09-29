@@ -26,6 +26,23 @@ from api_client import Client, coordinator  # noqa: E402
 from transflow_worker.environment import lock_environment, sync_environment  # noqa: E402
 
 
+def wait_for_helper(helper: Path) -> int:
+    """Wait for the spawned child, not the pre-spawn recovery placeholder."""
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        try:
+            record = json.loads((helper / "recovery.json").read_text())
+        except FileNotFoundError:
+            record = {}
+        # The supervisor atomically replaces PID 0/start "" after spawning.
+        # kill(0, 0) would probe our own process group, not the query helper.
+        pid = record.get("pid")
+        if isinstance(pid, int) and pid > 0 and record.get("start"):
+            return pid
+        time.sleep(0.02)
+    raise AssertionError("Query helper did not publish a spawned process identity")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("cli", type=Path)
@@ -217,11 +234,7 @@ def main() -> None:
             client = Client(registration)
             job = client.mutate("/api/v1/queries", expensive)
             helper = root / ".transflow/runtime/queries" / job["data"]["id"] / "helper"
-            deadline = time.monotonic() + 15
-            while not (helper / "recovery.json").exists() and time.monotonic() < deadline:
-                time.sleep(0.02)
-            assert (helper / "recovery.json").exists(), list(helper.glob("*"))
-            pid = json.loads((helper / "recovery.json").read_text())["pid"]
+            pid = wait_for_helper(helper)
             queued = client.mutate("/api/v1/queries", body)
             assert queued["data"]["state"] == "QUEUED"
             client.mutate(f"/api/v1/queries/{queued['data']['id']}/cancel", {}, context=queued)
@@ -243,10 +256,13 @@ def main() -> None:
             stopping_helper = (
                 root / ".transflow/runtime/queries" / stopping["data"]["id"] / "helper"
             )
-            deadline = time.monotonic() + 15
-            while not (stopping_helper / "recovery.json").exists() and time.monotonic() < deadline:
-                time.sleep(0.02)
-            assert (stopping_helper / "recovery.json").exists()
+            stopping_pid = wait_for_helper(stopping_helper)
+        try:
+            os.kill(stopping_pid, 0)
+        except ProcessLookupError:
+            pass
+        else:
+            raise AssertionError("Shutdown helper has not been reaped")
         with coordinator(root, binary) as registration:
             Client(registration).call(
                 "GET",
