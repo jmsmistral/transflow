@@ -349,7 +349,11 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
               tabIndex={0}
             >
               {tab === "Preview" && bottomOpen ? (
-                <PreviewInspector workspace={workspace} state={state} />
+                <PreviewInspector
+                  workspace={workspace}
+                  state={state}
+                  dark={dark}
+                />
               ) : (
                 <>
                   <p className="eyebrow">

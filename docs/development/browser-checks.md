@@ -36,9 +36,14 @@ Keep private reference screenshots and credentials out of committed evidence.
 On a real synthetic coordinator, select a published local dataset and open the
 right Properties and bottom Preview panels. Check creation/publication times,
 stable identity, producer, schema, exact physical counts and returned rows. The
-Preview has one compact dataset row above the table; it shows resolved branch only
-when different from the selected branch. Exercise an absent selected-branch head:
-ordered fallbacks precede the browse-only retained-branch suggestion. Page requests
+Preview has one compact dataset row above the table; a blue warning names the
+resolved branch only when different from the selected branch. Click and drag cells,
+select the displayed rectangle from the top-left corner, and copy via the
+right-click menu with headers. Check that headers preserve schema field-name case,
+a short table leaves an unruled blank area after its fixed-width columns even
+when all displayed cells are selected, and no more than 1,000 rows can be
+displayed. Exercise an absent selected-branch head: ordered fallbacks precede
+the browse-only retained-branch suggestion. Page requests
 must keep the initially bound exact version. Select a registered foreign dataset:
 metadata counts come from its retained manifest, while provider byte availability
 and freshness remain distinct; a preview reads the provider under its lease.

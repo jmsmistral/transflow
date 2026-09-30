@@ -30,7 +30,7 @@ async function hashes(root, prefix = "") {
     else {
       assert(entry.isFile(), `Unexpected build entry: ${relative}`);
       assert(
-        /^(index\.html|\.vite\/manifest\.json|assets\/[\w-]+\.(js|css))$/.test(
+        /^(index\.html|\.vite\/manifest\.json|assets\/[\w-]+(?:\.[\w-]+)*\.(js|css))$/.test(
           relative,
         ),
         `Unexpected production asset: ${relative}`,

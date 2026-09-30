@@ -174,20 +174,35 @@ shows origin/type/publication distributions, sums known physical counts and repo
 unknown members separately. It inspects up to 50 selected datasets to bound reads.
 
 The bottom **Preview** tab contains a compact dataset row and the table immediately
-below it. The row shows publication time and row/column counts; resolved branch
-appears only when it differs from the selected branch. The preview uses the selected
+below it. The row shows publication time and row/column counts. If the selected
+branch lacks data, a blue warning above the row names the branch supplying it.
+The preview uses the selected
 branch's head, ordered configured fallbacks, then an available retained branch for
 browsing if none has a head. That last choice never changes build fallback policy.
 Each read binds an exact immutable version and requests the available schema columns
 within the coordinator's 128-column limit. Pages are bounded to 100 physical rows,
-with the coordinator's cursor, limits and provider leases. Column types remain in
-tooltips rather than a second header line. Typed null, truncated cells, decimal
-precision, timestamp units and nested values remain distinct. Selecting a cell
-offers an explicit sensitive-data notice before copying. An unavailable version,
+with the coordinator's cursor, limits and provider leases. The UI displays at most
+1,000 rows across those pages. Its MIT-licensed RevoGrid Community component is
+read-only and virtualized; headers preserve schema field-name case and fixed-width
+columns leave an unruled blank area at the right, matching the space below the rows;
+selection highlighting also ends at the final selected cell.
+Click selects a cell, drag selects a rectangular range, and the top-left corner
+selects all displayed cells. Right-click offers **Copy with headers** for the
+selection with a sensitive-data notice; copied TSV escapes separators and leading
+spreadsheet formula characters. Clicking a cell never copies it. Sorting, filtering
+and column statistics await dataset-wide query requirements; the grid does not
+sort or filter only the loaded preview rows. Column types remain in tooltips rather
+than a second header line. Typed null, truncated cells, decimal precision,
+timestamp units and nested values remain distinct. An unavailable version,
 missing schema or failed read produces an explicit state; no page rebinds to a newer
 head. Foreign manifests supply metadata counts, while provider byte availability and
 freshness remain separate and unverified. The preview does not claim full artifact
 integrity or data-health PASS.
+
+The pinned RevoGrid component styles are bundled into the same-origin CSS asset
+for the coordinator's content policy. TypeScript checks application source
+strictly; `skipLibCheck` excludes errors in the grid package's published declaration
+files (`lodash` and `@type` imports).
 
 UI focus and node selection use thin, muted teal outlines (with a lighter dark-theme
 variant). Custom menu rows separate icons, labels and checkmarks, with consistent

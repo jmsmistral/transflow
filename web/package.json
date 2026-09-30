@@ -20,6 +20,7 @@
     "build:verify": "node scripts/check-build.mjs"
   },
   "dependencies": {
+    "@revolist/react-datagrid": "4.28.0",
     "@xyflow/react": "12.11.6",
     "elkjs": "0.12.0",
     "react": "19.3.0",

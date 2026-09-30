@@ -1,7 +1,7 @@
 {
-  "checked_at": "2026-09-23T14:42:02.997935+00:00",
+  "checked_at": "2026-09-30T09:40:58.471569+00:00",
   "findings": [],
-  "inventory_sha256": "68d318c92360d6f64ab77f6f59bda9b8f0ea34203d35376ca6ef0c9372231618",
+  "inventory_sha256": "d4db3ab81b9f19e572407b0a688e0565789f387610e1d62e2ed0945c8eac5b3c",
   "provider": "https://api.osv.dev/v1/querybatch",
   "queried": [
     "PyPI:ast-serialize@0.11.2",
@@ -297,6 +297,8 @@
     "npm:@jridgewell/sourcemap-codec@1.6.0",
     "npm:@jridgewell/trace-mapping@0.3.31",
     "npm:@oxc-project/types@0.150.0",
+    "npm:@revolist/react-datagrid@4.28.0",
+    "npm:@revolist/revogrid@4.28.0",
     "npm:@rolldown/binding-android-arm-eabi@1.2.9",
     "npm:@rolldown/binding-android-arm64@1.2.9",
     "npm:@rolldown/binding-darwin-arm64@1.2.9",

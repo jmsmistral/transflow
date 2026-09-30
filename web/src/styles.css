@@ -1201,6 +1201,20 @@ summary {
   min-height: 0;
   font-size: 12px;
 }
+.preview-fallback-banner {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  background: #2c72ca;
+  color: #fff;
+  font-size: 13px;
+}
+.preview-fallback-banner .icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
 .preview-toolbar {
   display: flex;
   align-items: center;
@@ -1232,60 +1246,105 @@ summary {
 .preview-table-wrap {
   flex: 1;
   min-height: 0;
-  overflow: auto;
-}
-.preview-table {
-  border-collapse: collapse;
-  width: max-content;
-  min-width: 100%;
-  font-size: 12px;
-}
-.preview-table th,
-.preview-table td {
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  text-align: left;
-  padding: 7px 10px;
-  min-width: 135px;
-  max-width: 330px;
-}
-.preview-table th:first-child {
-  min-width: 42px;
-  width: 42px;
-  color: var(--muted);
-}
-.preview-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--soft);
-  white-space: nowrap;
-}
-.preview-table td button {
-  display: block;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: inherit;
 }
-.preview-table .null-cell {
+.preview-grid-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+revo-grid.preview-grid {
+  width: 100%;
+  height: 100%;
+  font-size: 12px;
+  /* Schema field names, including their case, are the visible column labels. */
+  --revo-grid-header-text-transform: none;
+}
+/* Keep RevoGrid's unused space identical above and beside the data rows. */
+revo-grid.preview-grid revogr-viewport-scroll.rgCol revogr-header {
+  background-color: var(--rg-theme-background);
+}
+revo-grid.preview-grid
+  revogr-viewport-scroll.rgCol
+  revogr-header
+  .rgHeaderCell {
+  background-color: var(--rg-theme-header-bg);
+}
+revo-grid.preview-grid revogr-viewport-scroll.rgCol revogr-header .header-rgRow,
+revo-grid.preview-grid revogr-viewport-scroll.rgCol revogr-data .rgRow,
+revo-grid.preview-grid revogr-viewport-scroll.rgCol revogr-data {
+  box-shadow: none;
+}
+revo-grid.preview-grid
+  revogr-viewport-scroll.rgCol
+  revogr-data
+  .rgRow.focused-rgRow {
+  background-color: transparent;
+}
+revo-grid.preview-grid
+  revogr-viewport-scroll.rgCol
+  revogr-data
+  .rgRow.focused-rgRow
+  .rgCell {
+  background-color: var(--rg-theme-focused-bg);
+}
+.preview-grid-null {
   color: var(--muted);
   font-style: italic;
 }
-.preview-table .truncated-cell {
+.preview-grid-truncated {
+  color: var(--muted);
+}
+.preview-grid-select-all {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  /* Cover RevoGrid's 50 × 30 row-header corner, including its outer border. */
+  width: 51px;
+  height: 31px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: var(--soft);
+  color: var(--muted);
+  cursor: pointer;
+}
+.preview-grid-select-all:hover {
+  color: var(--accent);
+}
+.preview-grid-menu {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px #0003;
+}
+.preview-grid-menu button {
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.preview-grid-menu button:hover {
+  background: var(--soft);
+}
+.preview-grid-menu small {
+  padding: 5px 12px 8px;
   color: var(--muted);
 }
 .preview-load-more {
-  position: sticky;
-  bottom: 0;
-  width: max-content;
-  margin: 8px 12px;
-  padding: 4px;
+  flex: none;
+  padding: 5px 12px;
+  border-top: 1px solid var(--line);
   background: var(--surface);
 }
 .preview-error {
@@ -1295,26 +1354,6 @@ summary {
 .preview-empty {
   padding: 16px;
   color: var(--muted);
-}
-.preview-copy-dialog {
-  position: absolute;
-  z-index: 5;
-  right: 12px;
-  bottom: 12px;
-  max-width: 310px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  background: var(--surface);
-  box-shadow: 0 8px 24px #0003;
-}
-.preview-copy-dialog p {
-  margin: 0 0 10px;
-}
-.preview-copy-dialog > div {
-  display: flex;
-  justify-content: flex-end;
-  gap: 7px;
 }
 .panel-toggle {
   border-left: 1px solid var(--line);

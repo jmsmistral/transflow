@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
+import { forwardRef } from "react";
 import { App } from "./App";
 import { PropertiesInspector, versionMetadata } from "./inspectors";
 import { Client } from "./api/client";
@@ -13,6 +14,39 @@ import {
   versionId,
   workspaceId,
 } from "./test-fixtures";
+
+vi.mock("@revolist/react-datagrid", () => ({
+  RevoGrid: forwardRef<
+    HTMLTableElement,
+    {
+      columns: { prop: string; name: string }[];
+      source: Record<string, string>[];
+    }
+  >(function TestGrid({ columns, source }, ref) {
+    return (
+      <table ref={ref}>
+        <thead>
+          <tr>
+            <th>#</th>
+            {columns.map((column) => (
+              <th key={column.prop}>{column.name}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {source.map((row, index) => (
+            <tr key={index}>
+              <th>{index + 1}</th>
+              {columns.map((column) => (
+                <td key={column.prop}>{row[column.prop]}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }),
+}));
 
 const schema = {
   format_version: 1,
@@ -83,7 +117,7 @@ const preview = {
   integrity: "projected_read",
 };
 
-function transport(previewResponse = preview) {
+function transport(previewResponse: unknown = preview) {
   const base = fixtureTransport((path, query) =>
     path.endsWith("/versions")
       ? Promise.resolve(
@@ -126,7 +160,9 @@ test("properties and preview show exact metadata, typed cells and zero byte coun
   expect(screen.getByText(/123456789012345678.90/)).toBeTruthy();
   expect(screen.getByText("NULL")).toBeTruthy();
   expect(screen.getByText("Truncated · value unavailable")).toBeTruthy();
-  expect(screen.getByText("Resolved branch")).toBeTruthy();
+  expect(
+    screen.getByText(/Could not find data on current branch/),
+  ).toBeTruthy();
   expect(screen.queryByText("Search columns")).toBeNull();
   expect(screen.queryByText("Physical order · exact version")).toBeNull();
   expect(screen.getByRole("columnheader", { name: "amount" })).toBeTruthy();
@@ -186,7 +222,9 @@ test("preview uses a browse-only available head when requested and fallback bran
   render(<App workspace={workspace} />);
   fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
   await waitFor(() => expect(screen.getByRole("table")).toBeTruthy());
-  expect(screen.getByText("Resolved branch").textContent).toContain("feature");
+  expect(
+    screen.getByText(/Could not find data on current branch/).textContent,
+  ).toContain("feature");
   expect(screen.getByText("Published").textContent).toMatch(/^Published/);
   expect(screen.queryByText("Requested branch")).toBeNull();
   expect(screen.queryByText("Source")).toBeNull();
@@ -213,7 +251,9 @@ test("preview omits resolved branch when it matches the selected branch", async 
   render(<App workspace={workspace} />);
   fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
   await waitFor(() => expect(screen.getByRole("table")).toBeTruthy());
-  expect(screen.queryByText("Resolved branch")).toBeNull();
+  expect(
+    screen.queryByText(/Could not find data on current branch/),
+  ).toBeNull();
   workspace.dispose();
 });
 
@@ -426,6 +466,34 @@ test("preview cursor keeps the same immutable version and appends bounded rows",
     cursor: "opaque-next",
     version: versionId,
   });
+  workspace.dispose();
+});
+
+test("preview stops offering pages after 1000 displayed rows", async () => {
+  const workspace = new Workspace(
+    new Client(
+      transport({
+        ...preview,
+        rows: Array.from({ length: 1000 }, () => preview.rows[0] ?? []),
+        next_cursor: "more-rows",
+      }),
+    ),
+  );
+  await workspace.connect("launch");
+  await workspace.select({
+    branch: "master",
+    dataset: datasetId,
+    origin: workspaceId,
+  });
+  render(<App workspace={workspace} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+  await waitFor(() =>
+    expect(screen.getByText(/Showing 1000.*preview limit/)).toBeTruthy(),
+  );
+  expect(
+    screen.queryByRole("button", { name: "Load next 100 rows" }),
+  ).toBeNull();
+  expect(screen.getAllByRole("row")).toHaveLength(1001);
   workspace.dispose();
 });
 

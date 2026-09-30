@@ -6,7 +6,7 @@
     "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
     "tools/qualification/rust/Cargo.lock": "5f9a764a0b893a1aefac1495f24c9f2c425bd5c375690ea6f162c8c4e364f632",
     "tools/qualification/web/package-lock.json": "a9105bbe9e499ec2f60b679f0f838cbf7a5bc7bdee19b1b03de8a6c606f49574",
-    "web/package-lock.json": "1f46dfbf5207726bec8021fd9a73e2024ef10cd7631c8b13583a84b125f8bc8d"
+    "web/package-lock.json": "d531ea2a6acbc2b9928b4f65d8ff6406726967ae272841ffe72523a809c41664"
   },
   "packages": [
     {
@@ -4028,6 +4028,32 @@
       ],
       "name": "@oxc-project/types",
       "version": "0.150.0"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "npm",
+      "id": "npm:@revolist/react-datagrid@4.28.0",
+      "licenses": [
+        "MIT"
+      ],
+      "locks": [
+        "web/package-lock.json"
+      ],
+      "name": "@revolist/react-datagrid",
+      "version": "4.28.0"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "npm",
+      "id": "npm:@revolist/revogrid@4.28.0",
+      "licenses": [
+        "MIT"
+      ],
+      "locks": [
+        "web/package-lock.json"
+      ],
+      "name": "@revolist/revogrid",
+      "version": "4.28.0"
     },
     {
       "deprecations": [],

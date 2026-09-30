@@ -12,6 +12,8 @@ import type {
 import type { Workspace, WorkspaceState } from "./workspace";
 import { Button } from "./components";
 import { decode } from "./api/client";
+import { Icon } from "./Icons";
+import { PreviewGrid } from "./PreviewGrid";
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -477,9 +479,11 @@ function wire(value: WireValue | null): string {
 export function PreviewInspector({
   workspace,
   state,
+  dark,
 }: {
   workspace: Workspace;
   state: WorkspaceState;
+  dark: boolean;
 }) {
   const ready = state.kind === "ready" ? state.value : null;
   const dataset = ready?.dataset;
@@ -504,6 +508,7 @@ export function PreviewInspector({
       key={identity}
       workspace={workspace}
       state={state}
+      dark={dark}
       dataset={dataset ?? null}
       meta={meta}
       version={version}
@@ -514,6 +519,7 @@ export function PreviewInspector({
 function PreviewContent({
   workspace,
   state,
+  dark,
   dataset,
   meta,
   version,
@@ -521,6 +527,7 @@ function PreviewContent({
 }: {
   workspace: Workspace;
   state: WorkspaceState;
+  dark: boolean;
   dataset: ApiDatasetV1 | null;
   meta: ReturnType<typeof versionMetadata> | null;
   version: string | undefined;
@@ -537,9 +544,6 @@ function PreviewContent({
     page: ApiPreviewV1;
   } | null>(null);
   const [message, setMessage] = useState("");
-  const [copy, setCopy] = useState<{ row: number; column: number } | null>(
-    null,
-  );
   const [retry, setRetry] = useState(0);
   const key = JSON.stringify([
     ready?.context.fingerprint,
@@ -573,8 +577,8 @@ function PreviewContent({
               ...page,
               rows:
                 cursor && old?.key === key
-                  ? [...old.page.rows, ...page.rows]
-                  : page.rows,
+                  ? [...old.page.rows, ...page.rows].slice(0, 1000)
+                  : page.rows.slice(0, 1000),
             },
           }));
         },
@@ -601,14 +605,16 @@ function PreviewContent({
   const published = page?.published_us ?? meta?.published;
   return (
     <div className="preview-inspector">
+      {resolved && resolved !== state.selection.branch && (
+        <div className="preview-fallback-banner" role="status">
+          <Icon name="branch" />
+          Could not find data on current branch, so showing data from branch{" "}
+          <strong>{resolved}</strong>
+        </div>
+      )}
       <div className="preview-toolbar">
         <h2>{dataset.path}</h2>
         <div className="preview-toolbar-details">
-          {resolved && resolved !== state.selection.branch && (
-            <span>
-              Resolved branch <strong>{resolved}</strong>
-            </span>
-          )}
           {published && (
             <span>
               Published <strong>{date(published)}</strong>
@@ -617,8 +623,11 @@ function PreviewContent({
           {page && (
             <span>
               Showing {page.rows.length}
-              {page.next_cursor ? "+" : ""}
+              {page.next_cursor && page.rows.length < 1000 ? "+" : ""}
               {meta?.rows !== undefined ? ` of ${meta.rows}` : ""} rows
+              {page.next_cursor && page.rows.length === 1000
+                ? " (preview limit)"
+                : ""}
             </span>
           )}
           {schema && <span>{schema.fields.length} columns</span>}
@@ -663,59 +672,23 @@ function PreviewContent({
           )}
           {page && (
             <>
-              <table
-                className="preview-table"
-                aria-label={`${dataset.path} preview`}
-              >
-                <thead>
-                  <tr>
-                    <th scope="col">#</th>
-                    {page.schema.fields.map((column) => (
-                      <th
-                        key={column.name}
-                        scope="col"
-                        title={`${typeName(column.logical_type)}${column.nullable ? " · nullable" : ""}`}
-                      >
-                        {column.name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {page.rows.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      <th scope="row">{rowIndex + 1}</th>
-                      {row.map((cell, columnIndex) => (
-                        <td
-                          key={columnIndex}
-                          className={
-                            cell.truncated
-                              ? "truncated-cell"
-                              : cell.value?.type === "null"
-                                ? "null-cell"
-                                : ""
-                          }
-                        >
-                          <button
-                            title="Select cell to copy"
-                            onClick={() =>
-                              setCopy({ row: rowIndex, column: columnIndex })
-                            }
-                          >
-                            {cell.truncated
-                              ? "Truncated · value unavailable"
-                              : wire(cell.value)}
-                          </button>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <PreviewGrid
+                page={page}
+                path={dataset.path}
+                dark={dark}
+                formatCell={wire}
+                formatType={(index) => {
+                  const column = page.schema.fields[index];
+                  return column
+                    ? `${typeName(column.logical_type)}${column.nullable ? " · nullable" : ""}`
+                    : "";
+                }}
+                onError={setMessage}
+              />
               {page.rows.length === 0 && (
                 <p className="preview-empty">This version contains no rows.</p>
               )}
-              {page.next_cursor && (
+              {page.next_cursor && page.rows.length < 1000 && (
                 <div className="preview-load-more">
                   <Button onClick={() => setCursor(page.next_cursor)}>
                     Load next 100 rows
@@ -724,34 +697,6 @@ function PreviewContent({
               )}
             </>
           )}
-        </div>
-      )}
-      {copy && page && (
-        <div
-          role="dialog"
-          aria-label="Copy preview cell"
-          className="preview-copy-dialog"
-        >
-          <p>
-            Copy row {copy.row + 1}, column{" "}
-            {page.schema.fields[copy.column]?.name}? This may expose sensitive
-            data.
-          </p>
-          <div>
-            <Button onClick={() => setCopy(null)}>Cancel</Button>
-            <Button
-              onClick={() => {
-                const cell = page.rows[copy.row]?.[copy.column];
-                if (cell && !cell.truncated)
-                  void navigator.clipboard.writeText(wire(cell.value)).then(
-                    () => setCopy(null),
-                    () => setMessage("The selected cell could not be copied."),
-                  );
-              }}
-            >
-              Copy cell
-            </Button>
-          </div>
         </div>
       )}
     </div>

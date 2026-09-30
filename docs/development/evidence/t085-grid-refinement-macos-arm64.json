@@ -1,0 +1,36 @@
+{
+  "task": "T085 owner-reviewed preview grid and fallback warning",
+  "date": "2026-09-30",
+  "platform": "macOS arm64 / Python 3.14 / Node 24",
+  "base_implementation": "de9a653",
+  "base_specification": "44b228c",
+  "changes": [
+    "A full-width blue warning identifies the resolved branch whenever the selected branch has no data for the previewed dataset.",
+    "The read-only RevoGrid Community table replaces click-to-copy with native cell/range selection, select-all and a context action that copies selected values with column headers.",
+    "The UI stops at 1000 displayed preview rows across exact-version cursor pages; headers preserve schema field-name case, and fixed-width columns leave an unruled blank area after the last column even when cells are selected.",
+    "Dataset-wide sort, filter and column-statistics behavior remains deferred to dedicated requirements."
+  ],
+  "dependency_review": {
+    "selected": "@revolist/react-datagrid 4.28.0 and @revolist/revogrid 4.28.0, both MIT",
+    "reasons": "React 19-compatible read-only rectangular selection and virtualization are available in the community package; same-origin bundled CSS satisfies the coordinator content policy.",
+    "alternatives": "AG Grid range selection is Enterprise; Glide Data Grid 6.0.3 publishes a React peer range below React 19; TanStack's cell selection is in v9 beta.",
+    "inventory": "643 locked package versions, including the two new MIT packages; refreshed OSV report has zero findings."
+  },
+  "checks": {
+    "focused": "Web TypeScript, lint and formatting passed; 12 focused Preview/inspector tests passed, including header-inclusive range copy and 1000-row display cap. Repeated production builds matched across 16 local assets after accepting dotted RevoGrid chunk names.",
+    "comprehensive": "The final PYTHON=target/python/py314/bin/python bash tools/check.sh passed: specification and safety gates, 403 Rust/doc tests, 975 Python tests, 451 web tests, 58 installed CLI/API tests, TypeScript/lint/format checks, and reproducible production assets (16 files). The first two aggregate attempts exposed an App.tsx formatting mismatch and then a build verifier asset-name pattern that excluded dotted RevoGrid chunks; both were corrected before this passing run."
+  },
+  "browser": {
+    "tool": "Codex internal Browser against a temporary cloned synthetic workspace and current contributor assets",
+    "observed": [
+      "raw/root rendered a two-row read-only grid with the schema's lowercase id header; the blank area after the last column matches the space below the rows.",
+      "Selecting both cells keeps the highlight and cell rules within the single data column; browser-computed focused-row background is transparent while focused-cell background remains visible.",
+      "The select-all control selected both displayed rows; its 51 by 31 CSS-pixel bounds fully covered the grid's 50 by 30 corner plus border after the owner screenshot correction.",
+      "external/provider/example on selected master displayed the blue 'Could not find data on current branch, so showing data from branch main' warning and two provider rows.",
+      "Right-clicking a grid cell displayed Copy with headers and the sensitive-data notice; the grid also rendered in dark theme with matching blank and grid backgrounds."
+    ],
+    "method": "The user's original /tmp/transflow-t083-browser workspace and coordinator were left untouched. A temporary cloned workspace was served on port 54063.",
+    "limits": "The internal Browser's virtual clipboard did not expose clipboard text after the context-menu action; exact TSV content was verified by component tests. The 1000-row cap was verified by component test rather than synthetic browser data."
+  },
+  "limits": "T085 remains unchecked until the owner reports CI. Sorting, filtering and column statistics require dataset-wide behavior requirements."
+}

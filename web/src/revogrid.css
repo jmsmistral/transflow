@@ -1,0 +1,11 @@
+/* RevoGrid 4.28.0 component styles are bundled as an external asset for the
+   coordinator's style-src self policy. Its runtime-injected <style> tags cannot
+   be relied upon in the authenticated UI. */
+@import "../node_modules/@revolist/revogrid/dist/collection/components/revoGrid/revo-grid-style.css";
+@import "../node_modules/@revolist/revogrid/dist/collection/components/header/revogr-header-style.css";
+@import "../node_modules/@revolist/revogrid/dist/collection/components/data/revogr-data-style.css";
+@import "../node_modules/@revolist/revogrid/dist/collection/components/overlay/revogr-overlay-style.css";
+@import "../node_modules/@revolist/revogrid/dist/collection/components/scrollable/revogr-scroll-style.css";
+@import "../node_modules/@revolist/revogrid/dist/collection/components/scroll/revogr-viewport-scroll-style.css";
+@import "../node_modules/@revolist/revogrid/dist/collection/components/selectionFocus/revogr-focus-style.css";
+@import "../node_modules/@revolist/revogrid/dist/collection/components/selectionTempRange/revogr-temp-range-style.css";
