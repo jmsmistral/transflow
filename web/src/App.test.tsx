@@ -137,6 +137,88 @@ test("dataset selection clears old labels immediately and renders names only as 
   workspace.dispose();
 });
 
+test("multiple graph nodes hide every bottom tab and right properties", async () => {
+  const { Workspace } = await import("./workspace");
+  const { Client } = await import("./api/client");
+  const { fixtureTransport, datasetId, versionId, workspaceId, json, context } =
+    await import("./test-fixtures");
+  const nodes = [datasetId, versionId].map((id, index) => ({
+    identity: `dataset:${workspaceId}:${id}`,
+    paths: [index === 0 ? "raw/example" : "raw/other"],
+    depth: "0",
+    external: false,
+    producer: true,
+    resource_type: "polars_transform",
+    publication: "published",
+    parent_count: "0",
+    child_count: "0",
+  }));
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path, query) =>
+        path.endsWith("/lineage")
+          ? Promise.resolve(
+              json(
+                {
+                  nodes,
+                  edges: [],
+                  total_nodes: 2,
+                  total_edges: 0,
+                  next_cursor: null,
+                  remaining_nodes: 0,
+                  remaining_edges: 0,
+                  omitted_nodes: 0,
+                  omitted_edges: 0,
+                  scope_complete: true,
+                  external_expanded: false,
+                },
+                context(query.branch),
+              ),
+            )
+          : undefined,
+      ),
+    ),
+  );
+  await workspace.connect("launch");
+  const view = render(<App workspace={workspace} />);
+  fireEvent.click(screen.getByRole("button", { name: "Catalogue" }));
+  fireEvent.click(await screen.findByRole("button", { name: /raw\/example/ }));
+  await vi.waitFor(() =>
+    expect(view.container.querySelectorAll(".react-flow__node")).toHaveLength(
+      2,
+    ),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Properties" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+  const diagram = screen.getByLabelText("Dataset lineage diagram");
+  diagram.focus();
+  fireEvent.keyDown(diagram, { key: "a", metaKey: true });
+  expect(screen.getByRole("button", { name: "2 nodes selected" })).toBeTruthy();
+  expect(screen.getAllByText("Select a node to view information")).toHaveLength(
+    2,
+  );
+  expect(screen.queryByRole("table")).toBeNull();
+  fireEvent.click(screen.getByRole("tab", { name: "History" }));
+  expect(screen.getAllByText("Select a node to view information")).toHaveLength(
+    2,
+  );
+  expect(
+    screen.queryByText(
+      "History content will be available in a later inspector task.",
+    ),
+  ).toBeNull();
+  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+  const label = view.container.querySelector(
+    `.react-flow__node[data-id="dataset:${workspaceId}:${datasetId}"] .node-label`,
+  );
+  if (!label) throw new Error("Missing selected node label");
+  fireEvent.click(label);
+  expect(screen.getByRole("button", { name: "1 node selected" })).toBeTruthy();
+  expect(screen.queryByText("Select a node to view information")).toBeNull();
+  view.unmount();
+  workspace.dispose();
+});
+
 test("historical context omits current-head details from the compact properties panel", async () => {
   const { Workspace } = await import("./workspace");
   const { Client } = await import("./api/client");

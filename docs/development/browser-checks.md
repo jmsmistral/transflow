@@ -49,7 +49,11 @@ the browse-only retained-branch suggestion. Page requests
 must keep the initially bound exact version. Select a registered foreign dataset:
 metadata counts come from its retained manifest, while provider byte availability
 and freshness remain distinct; a preview reads the provider under its lease.
-Exercise unavailable schema/read and multi-selection unknown counts. Record actual
+Exercise unavailable schema/read. With at least two visible nodes, select both,
+open Properties and Preview, and confirm each shows “Select a node to view
+information” without stale dataset content. Check the other bottom tabs, then
+plain-click an already selected node and confirm it alone is selected and its
+single-node inspectors return. Check modifier-click multi-selection. Record actual
 browser observations separately from deterministic component tests; no private
 reference images enter the repository.
 

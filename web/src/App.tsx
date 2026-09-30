@@ -275,11 +275,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                     />
                   </>
                 ) : mode === "Properties" ? (
-                  <PropertiesInspector
-                    workspace={workspace}
-                    state={state}
-                    selected={selectedNodes}
-                  />
+                  <PropertiesInspector state={state} selected={selectedNodes} />
                 ) : (
                   <>
                     <h2>{mode}</h2>
@@ -348,7 +344,11 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
               aria-labelledby={`tab-${tabs.findIndex((name) => name === tab)}`}
               tabIndex={0}
             >
-              {tab === "Preview" && bottomOpen ? (
+              {selectedNodes.length > 1 ? (
+                <p className="preview-empty">
+                  Select a node to view information
+                </p>
+              ) : tab === "Preview" && bottomOpen ? (
                 <PreviewInspector
                   workspace={workspace}
                   state={state}

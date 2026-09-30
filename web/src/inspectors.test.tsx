@@ -277,70 +277,14 @@ test("mismatched exact preview fails closed without rendering rows", async () =>
   workspace.dispose();
 });
 
-test("multi-selection reports unknown metrics separately", async () => {
+test("properties hide the previous dataset during multi-selection", async () => {
   const workspace = new Workspace(new Client(fixtureTransport()));
   await workspace.connect("launch");
-  const node = (
-    id: string,
-    resource_type: "polars_transform" | "external",
-  ) => ({
-    identity: `dataset:${workspaceId}:${id}`,
-    paths: [id],
-    depth: "0",
-    external: resource_type === "external",
-    producer: resource_type === "polars_transform",
-    parent_count: "0",
-    child_count: "0",
-    publication: "unknown" as const,
-    resource_type,
+  await workspace.select({
+    branch: "master",
+    dataset: datasetId,
+    origin: workspaceId,
   });
-  render(
-    <PropertiesInspector
-      workspace={workspace}
-      state={workspace.snapshot()}
-      selected={[
-        node(datasetId, "polars_transform"),
-        node(versionId, "external"),
-      ]}
-    />,
-  );
-  expect(screen.getByText("2 datasets selected")).toBeTruthy();
-  expect(screen.getByText("Unknown row counts").nextSibling?.textContent).toBe(
-    "2",
-  );
-  workspace.dispose();
-});
-
-test("multi-selection sums known physical counts and preserves real zeros", async () => {
-  const otherId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
-  const workspace = new Workspace(
-    new Client(
-      fixtureTransport((path, query) => {
-        if (path === `/api/v1/datasets/${datasetId}`)
-          return Promise.resolve(
-            json(
-              {
-                ...dataset,
-                head: { ...dataset.head, row_count: "0", byte_count: "10" },
-              },
-              context(query.branch),
-            ),
-          );
-        if (path === `/api/v1/datasets/${otherId}`)
-          return Promise.resolve(
-            json(
-              {
-                ...dataset,
-                dataset_id: otherId,
-                head: { ...dataset.head, row_count: "3", byte_count: "0" },
-              },
-              context(query.branch),
-            ),
-          );
-      }),
-    ),
-  );
-  await workspace.connect("launch");
   const node = (id: string) => ({
     identity: `dataset:${workspaceId}:${id}`,
     paths: [id],
@@ -354,21 +298,13 @@ test("multi-selection sums known physical counts and preserves real zeros", asyn
   });
   render(
     <PropertiesInspector
-      workspace={workspace}
       state={workspace.snapshot()}
-      selected={[node(datasetId), node(otherId)]}
+      selected={[node(datasetId), node(versionId)]}
     />,
   );
-  await waitFor(() =>
-    expect(screen.getByText("Known rows").nextSibling?.textContent).toBe("3"),
-  );
-  expect(screen.getByText("Known bytes").nextSibling?.textContent).toBe("10");
-  expect(screen.getByText("Unknown row counts").nextSibling?.textContent).toBe(
-    "0",
-  );
-  expect(screen.getByText("Unknown byte counts").nextSibling?.textContent).toBe(
-    "0",
-  );
+  expect(screen.getByText("Select a node to view information")).toBeTruthy();
+  expect(screen.queryByText("Logical path")).toBeNull();
+  expect(screen.queryByText("2 datasets selected")).toBeNull();
   workspace.dispose();
 });
 

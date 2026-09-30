@@ -160,170 +160,10 @@ function Columns({ schema }: { schema: LogicalSchemaV1 | null }) {
     </div>
   );
 }
-function tally(values: readonly string[]) {
-  const result = new Map<string, number>();
-  for (const value of values) result.set(value, (result.get(value) ?? 0) + 1);
-  return [...result].sort((a, b) => b[1] - a[1]);
-}
-function MultiSelectionSummary({
-  workspace,
-  state,
-  selected,
-}: {
-  workspace: Workspace;
-  state: WorkspaceState;
-  selected: readonly ApiLineageNodeV1[];
-}) {
-  const ready = state.kind === "ready" ? state.value : null;
-  const identity = JSON.stringify([
-    ready?.context.fingerprint,
-    selected.map((node) => node.identity),
-  ]);
-  const [counts, setCounts] = useState<{
-    key: string;
-    rows: string;
-    bytes: string;
-    rowKnown: number;
-    byteKnown: number;
-  } | null>(null);
-  useEffect(() => {
-    if (!ready) return;
-    const request = new AbortController();
-    const selectedIds = [
-      ...new Set(selected.map((node) => node.identity)),
-    ].slice(0, 50);
-    void (async () => {
-      let rows = 0n,
-        bytes = 0n,
-        rowKnown = 0,
-        byteKnown = 0;
-      for (
-        let index = 0;
-        index < selectedIds.length && !request.signal.aborted;
-        index += 4
-      ) {
-        const group = selectedIds.slice(index, index + 4);
-        const details = await Promise.all(
-          group.map(async (identity) => {
-            const [, origin, id] = identity.split(":");
-            if (!origin || !id) return null;
-            if (
-              ready.dataset?.dataset_id === id &&
-              ready.dataset.workspace_id === origin
-            ) {
-              const meta = versionMetadata(
-                ready.dataset,
-                ready.versions,
-                state.selection.version,
-              );
-              return { rows: meta.rows, bytes: meta.bytes };
-            }
-            try {
-              const dataset = await workspace.read(
-                "ApiDatasetV1",
-                `/api/v1/datasets/${encodeURIComponent(id)}`,
-                { origin_workspace: origin },
-                request.signal,
-              );
-              return {
-                rows: field(dataset.head, "row_count"),
-                bytes: field(dataset.head, "byte_count"),
-              };
-            } catch {
-              return null;
-            }
-          }),
-        );
-        for (const item of details) {
-          if (item?.rows && /^(0|[1-9][0-9]*)$/.test(item.rows)) {
-            rows += BigInt(item.rows);
-            rowKnown++;
-          }
-          if (item?.bytes && /^(0|[1-9][0-9]*)$/.test(item.bytes)) {
-            bytes += BigInt(item.bytes);
-            byteKnown++;
-          }
-        }
-      }
-      if (!request.signal.aborted)
-        setCounts({
-          key: identity,
-          rows: rows.toString(),
-          bytes: bytes.toString(),
-          rowKnown,
-          byteKnown,
-        });
-    })();
-    return () => request.abort();
-  }, [workspace, ready, selected, identity, state.selection.version]);
-  const current = counts?.key === identity ? counts : null;
-  const unique = new Map(selected.map((node) => [node.identity, node]));
-  const nodes = [...unique.values()];
-  return (
-    <section
-      className="properties-body multi-properties"
-      aria-label="Selected datasets summary"
-    >
-      <h3>{nodes.length} datasets selected</h3>
-      <p className="muted">
-        Counts describe unique datasets in the current graph selection.
-      </p>
-      <h4>Origins</h4>
-      <dl>
-        {tally(nodes.map((node) => (node.external ? "external" : "local"))).map(
-          ([name, count]) => (
-            <Detail key={name} name={name} value={String(count)} />
-          ),
-        )}
-      </dl>
-      <h4>Resource types</h4>
-      <dl>
-        {tally(
-          nodes.map((node) => node.resource_type.replaceAll("_", " ")),
-        ).map(([name, count]) => (
-          <Detail key={name} name={name} value={String(count)} />
-        ))}
-      </dl>
-      <h4>Publication</h4>
-      <dl>
-        {tally(nodes.map((node) => node.publication)).map(([name, count]) => (
-          <Detail key={name} name={name} value={String(count)} />
-        ))}
-      </dl>
-      <h4>Physical metrics</h4>
-      <dl>
-        <Detail
-          name="Known rows"
-          value={current?.rowKnown ? current.rows : "Unknown"}
-        />
-        <Detail
-          name="Unknown row counts"
-          value={String(nodes.length - (current?.rowKnown ?? 0))}
-        />
-        <Detail
-          name="Known bytes"
-          value={current?.byteKnown ? current.bytes : "Unknown"}
-        />
-        <Detail
-          name="Unknown byte counts"
-          value={String(nodes.length - (current?.byteKnown ?? 0))}
-        />
-      </dl>
-      {nodes.length > 50 && (
-        <p className="muted">
-          Physical metadata is inspected for the first 50 selected datasets; the
-          rest count as unknown.
-        </p>
-      )}
-    </section>
-  );
-}
 export function PropertiesInspector({
-  workspace,
   state,
   selected,
 }: {
-  workspace: Workspace;
   state: WorkspaceState;
   selected: readonly ApiLineageNodeV1[];
 }) {
@@ -339,13 +179,11 @@ export function PropertiesInspector({
         ready?.inspection,
       )
     : null;
-  if (selected.length > 1 && ready)
+  if (selected.length > 1)
     return (
-      <MultiSelectionSummary
-        workspace={workspace}
-        state={state}
-        selected={selected}
-      />
+      <section className="properties-body">
+        <p className="muted">Select a node to view information</p>
+      </section>
     );
   if (!dataset || !ready)
     return (

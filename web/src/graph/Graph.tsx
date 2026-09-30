@@ -780,6 +780,17 @@ function GraphView({
           }}
           onMoveEnd={(_event, next) => setViewport(next)}
           onNodesChange={changes}
+          onNodeClick={(event, node) => {
+            if (event.shiftKey || event.metaKey || event.ctrlKey) {
+              const next = new Set(selected);
+              if (next.has(node.id)) next.delete(node.id);
+              else next.add(node.id);
+              selectNodes(next);
+              return;
+            }
+            if (selected.size !== 1 || !selected.has(node.id))
+              selectNodes(new Set([node.id]));
+          }}
           onSelectionEnd={() =>
             queueMicrotask(() =>
               flowStore.setState({ nodesSelectionActive: false }),

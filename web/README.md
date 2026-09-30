@@ -169,9 +169,10 @@ The compact detail list has no row dividers. Columns lists the current preview
 version's logical schema with types and nullability. Missing metadata is labelled
 unknown or unavailable; a real zero stays zero. Description and data-health remain
 explicitly unavailable where their metadata is absent. For multiple graph selections,
-the panel deduplicates identities,
-shows origin/type/publication distributions, sums known physical counts and reports
-unknown members separately. It inspects up to 50 selected datasets to bound reads.
+Properties and every bottom inspector tab show “Select a node to view information”
+without retaining the previous single dataset's content. Plain-clicking a node in
+a multi-selection selects that node alone; Shift/Cmd/Ctrl-click can change group
+membership.
 
 The bottom **Preview** tab contains a compact dataset row and the table immediately
 below it. The row shows publication time and row/column counts. If the selected

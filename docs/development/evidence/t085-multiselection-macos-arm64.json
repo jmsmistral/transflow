@@ -1,0 +1,26 @@
+{
+  "task": "T083/T085 owner-reviewed graph selection and inspector refinement",
+  "date": "2026-09-30",
+  "platform": "macOS arm64 / Python 3.14 / Node 24",
+  "base_implementation": "c753152",
+  "base_specification": "3bf4d98",
+  "changes": [
+    "A plain click on a node in a multi-selection selects that node alone; modifier clicks change group membership.",
+    "Properties and every bottom inspector tab replace stale single-node content and the old multi-selection metrics summary with Select a node to view information while multiple nodes are selected."
+  ],
+  "checks": {
+    "focused": "Web TypeScript and lint passed; 44 focused App, inspector and graph tests passed.",
+    "comprehensive": "The final PYTHON=target/python/py314/bin/python bash tools/check.sh passed: specification and safety gates, 403 Rust/doc tests, 975 Python tests, 456 web tests, 58 installed CLI/API tests, TypeScript/lint/format checks and reproducible production assets (16 files)."
+  },
+  "browser": {
+    "tool": "Codex internal Browser against a temporary synthetic coordinator",
+    "workspace": "/tmp/transflow-t085-refine-browser-20260930",
+    "observed": [
+      "With raw/root and curated/left visible and Properties/Preview open, graph-scoped Cmd+A selected two nodes; both inspectors displayed only Select a node to view information.",
+      "Shift-click added raw/root to a curated/left selection; a plain click on already-selected raw/root reduced the selection to one and restored raw/root Preview and Properties after the dataset context resolved.",
+      "Cmd-click also added curated/left to the single-node selection; during multi-selection, History and Code tabs displayed only the notice."
+    ],
+    "limits": "The synthetic browser check used two nodes; broader graph selection and context behavior is covered by component tests."
+  },
+  "limits": "T085 remains unchecked until owner-monitored GitHub CI is reported."
+}

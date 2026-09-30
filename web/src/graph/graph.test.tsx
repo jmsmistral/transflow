@@ -803,6 +803,59 @@ test("rapid uncached additions both appear, while removal cancels unfinished add
   workspace.dispose();
 });
 
+test("plain click narrows an existing multi-node selection", async () => {
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path) =>
+        path.endsWith("/lineage")
+          ? Promise.resolve(json(page([node("a"), node("b")]), context()))
+          : undefined,
+      ),
+    ),
+  );
+  await workspace.connect("launch");
+  const view = render(
+    <GraphExplorer
+      workspace={workspace}
+      focusRequest={{ path: "data/a", revision: 1 }}
+    />,
+  );
+  await waitFor(() =>
+    expect(view.container.querySelectorAll(".react-flow__node")).toHaveLength(
+      2,
+    ),
+  );
+  const diagram = screen.getByLabelText("Dataset lineage diagram");
+  diagram.focus();
+  fireEvent.keyDown(diagram, { key: "a", metaKey: true });
+  expect(screen.getByRole("button", { name: "2 nodes selected" })).toBeTruthy();
+  const nodeLabel = (id: string) => {
+    const label = view.container.querySelector(
+      `.react-flow__node[data-id="${id}"] .node-label`,
+    );
+    if (!label) throw new Error(`Missing ${id} node label`);
+    return label;
+  };
+  fireEvent.click(nodeLabel("a"));
+  expect(screen.getByRole("button", { name: "1 node selected" })).toBeTruthy();
+  expect(
+    view.container
+      .querySelector(".react-flow__node.selected")
+      ?.getAttribute("data-id"),
+  ).toBe("a");
+  fireEvent.click(nodeLabel("b"), { shiftKey: true });
+  expect(screen.getByRole("button", { name: "2 nodes selected" })).toBeTruthy();
+  fireEvent.click(nodeLabel("b"));
+  expect(screen.getByRole("button", { name: "1 node selected" })).toBeTruthy();
+  expect(
+    view.container
+      .querySelector(".react-flow__node.selected")
+      ?.getAttribute("data-id"),
+  ).toBe("b");
+  view.unmount();
+  workspace.dispose();
+});
+
 test("legend rows select exactly matching visible nodes in each mode", async () => {
   const local = {
     ...node("a"),

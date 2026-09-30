@@ -118,6 +118,9 @@ from the keyboard. If the selected branch has no head,
 Preview tries configured fallbacks before offering an available retained branch for browsing. Foreign
 preview bytes are read directly from the provider. Code, history, build,
 schedule and health actions follow later.
+Plain-clicking any selected lineage node narrows a multi-selection to that node.
+While multiple nodes are selected, the bottom tabs and right Properties panel
+show “Select a node to view information” instead of a previous node’s details.
 
 The Python distribution is named **transflow**, containing both `transflow` (SDK) and `transflow_worker` (worker). See [local wheel installation and checks](python/README.md). The intended public install is `pip install transflow` after publication; no package has been published yet. The Rust binary remains a separate native artifact.
 
