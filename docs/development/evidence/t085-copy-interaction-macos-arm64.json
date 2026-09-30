@@ -1,0 +1,27 @@
+{
+  "task": "T085 owner-reviewed preview selection copy interaction",
+  "date": "2026-09-30",
+  "platform": "macOS arm64 / Python 3.14 / Node 24",
+  "base_implementation": "a1f8b4a",
+  "base_specification": "c16f4f2",
+  "changes": [
+    "Right-click preserves the highlighted preview selection and Copy with headers uses its full range even when the pointer is outside it.",
+    "Cmd+C and Ctrl+C copy the selected cell or rectangular range with column headers through the browser copy event or shortcut keydown.",
+    "The context menu no longer shows the May contain sensitive data label."
+  ],
+  "checks": {
+    "focused": "TypeScript, lint, formatting and 6 focused PreviewGrid tests passed.",
+    "comprehensive": "The final PYTHON=target/python/py314/bin/python bash tools/check.sh passed: specification and safety gates, 403 Rust/doc tests, 975 Python tests, 455 web tests, 58 installed CLI/API tests, TypeScript/lint/format checks and reproducible production assets (16 files). The first attempt stopped at the specification link check because this receipt had not yet been created; the receipt was added before the passing run."
+  },
+  "browser": {
+    "tool": "Codex internal Browser against a temporary synthetic workspace and rebuilt contributor assets",
+    "observed": [
+      "Cmd+C and Ctrl+C each copied id\\tlabel\\n1\\talpha\\n2\\tbeta after selecting the displayed two-by-two rectangle.",
+      "Right-clicking beta preserved the two-by-two range; Copy with headers copied that range and the menu showed no sensitive-data label.",
+      "Selecting alpha then right-clicking beta copied label\\nalpha, proving the existing selection won over the cell under the pointer."
+    ],
+    "workspace": "/tmp/transflow-t085-refine-browser-20260930",
+    "limits": "The browser fixture covers two rows; larger ranges and spreadsheet-safe escaping were checked by component tests."
+  },
+  "limits": "T085 remains unchecked until owner-monitored GitHub CI is reported."
+}

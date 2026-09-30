@@ -128,6 +128,26 @@ export function PreviewGrid({
       ref={container}
       className="preview-grid-wrap"
       aria-label={`${path} preview`}
+      onMouseDownCapture={(event) => {
+        // RevoGrid focuses the cell under a right-click on mousedown, which
+        // replaces an existing range before the context menu can copy it.
+        if (event.button === 2) event.preventDefault();
+      }}
+      onKeyDownCapture={(event) => {
+        if (
+          (event.metaKey || event.ctrlKey) &&
+          event.key.toLowerCase() === "c"
+        ) {
+          event.preventDefault();
+          void copySelection();
+        }
+      }}
+      onCopyCapture={(event) => {
+        // Some browsers dispatch their native copy command without exposing the
+        // shortcut keydown to the grid. Keep keyboard copy header-inclusive.
+        event.preventDefault();
+        void copySelection();
+      }}
       onContextMenu={(event) => {
         event.preventDefault();
         const bounds = container.current?.getBoundingClientRect();
@@ -148,39 +168,12 @@ export function PreviewGrid({
               y: Number(target.dataset.rgrow),
             }
           : null;
-        if (clicked)
-          setMenu({
-            x: Math.max(
-              0,
-              Math.min(
-                event.clientX - (bounds?.left ?? 0),
-                (bounds?.width ?? 200) - 200,
-              ),
-            ),
-            y: Math.max(
-              0,
-              Math.min(
-                event.clientY - (bounds?.top ?? 0),
-                (bounds?.height ?? 70) - 70,
-              ),
-            ),
-            area: { ...clicked, x1: clicked.x, y1: clicked.y },
-          });
         void selectedArea().then((selection) => {
-          const containsClicked =
-            clicked &&
-            selection &&
-            clicked.x >= Math.min(selection.x, selection.x1) &&
-            clicked.x <= Math.max(selection.x, selection.x1) &&
-            clicked.y >= Math.min(selection.y, selection.y1) &&
-            clicked.y <= Math.max(selection.y, selection.y1);
-          const area = containsClicked
-            ? selection
-            : clicked
-              ? { ...clicked, x1: clicked.x, y1: clicked.y }
-              : selection;
+          const area =
+            selection ??
+            (clicked ? { ...clicked, x1: clicked.x, y1: clicked.y } : null);
           if (!area) return;
-          if (clicked && !containsClicked)
+          if (!selection && clicked)
             void grid.current?.setCellsFocus(clicked, clicked);
           setMenu({
             x: Math.max(
@@ -221,15 +214,6 @@ export function PreviewGrid({
       <RevoGrid
         ref={grid}
         onClick={() => setMenu(null)}
-        onKeyDown={(event) => {
-          if (
-            (event.metaKey || event.ctrlKey) &&
-            event.key.toLowerCase() === "c"
-          ) {
-            event.preventDefault();
-            void copySelection();
-          }
-        }}
         aria-label={`${path} data grid`}
         className="preview-grid"
         theme={dark ? "dark" : "default"}
@@ -257,7 +241,6 @@ export function PreviewGrid({
           >
             Copy with headers
           </button>
-          <small>May contain sensitive data</small>
         </div>
       )}
     </div>

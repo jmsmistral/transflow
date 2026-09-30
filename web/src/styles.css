@@ -1337,10 +1337,6 @@ revo-grid.preview-grid
 .preview-grid-menu button:hover {
   background: var(--soft);
 }
-.preview-grid-menu small {
-  padding: 5px 12px 8px;
-  color: var(--muted);
-}
 .preview-load-more {
   flex: none;
   padding: 5px 12px;

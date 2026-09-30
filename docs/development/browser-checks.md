@@ -39,7 +39,9 @@ stable identity, producer, schema, exact physical counts and returned rows. The
 Preview has one compact dataset row above the table; a blue warning names the
 resolved branch only when different from the selected branch. Click and drag cells,
 select the displayed rectangle from the top-left corner, and copy via the
-right-click menu with headers. Check that headers preserve schema field-name case,
+right-click menu or Cmd+C/Ctrl+C with headers. Right-click outside a selected
+range and confirm Copy still uses that range; the menu has no sensitive-data
+label. Check that headers preserve schema field-name case,
 a short table leaves an unruled blank area after its fixed-width columns even
 when all displayed cells are selected, and no more than 1,000 rows can be
 displayed. Exercise an absent selected-branch head: ordered fallbacks precede

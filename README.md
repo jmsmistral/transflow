@@ -112,8 +112,9 @@ show recorded creation time, and place a compact dataset row directly above the
 full-width read-only grid. Headers retain the schema's letter case and unused space
 beside the columns matches the blank space below the rows, including when cells
 are selected. Clicking selects cells, dragging selects ranges, and the
-top-left corner selects up to 1,000 displayed rows; right-click copies a range with
-headers after showing a sensitive-data notice. If the selected branch has no head,
+top-left corner selects up to 1,000 displayed rows. Right-click offers a
+header-inclusive copy of the existing selection, and Cmd+C or Ctrl+C copies it
+from the keyboard. If the selected branch has no head,
 Preview tries configured fallbacks before offering an available retained branch for browsing. Foreign
 preview bytes are read directly from the provider. Code, history, build,
 schedule and health actions follow later.

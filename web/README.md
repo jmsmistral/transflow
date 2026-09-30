@@ -188,7 +188,8 @@ columns leave an unruled blank area at the right, matching the space below the r
 selection highlighting also ends at the final selected cell.
 Click selects a cell, drag selects a rectangular range, and the top-left corner
 selects all displayed cells. Right-click offers **Copy with headers** for the
-selection with a sensitive-data notice; copied TSV escapes separators and leading
+existing selection, even when the pointer is outside it; Cmd+C on macOS or
+Ctrl+C elsewhere copies the selection with headers too. Copied TSV escapes separators and leading
 spreadsheet formula characters. Clicking a cell never copies it. Sorting, filtering
 and column statistics await dataset-wide query requirements; the grid does not
 sort or filter only the loaded preview rows. Column types remain in tooltips rather
