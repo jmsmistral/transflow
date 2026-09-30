@@ -1069,12 +1069,44 @@ summary {
 .inspector {
   min-width: 280px;
 }
-.inspector:has(.properties-body) {
+.inspector:has(.properties-body, .inspector-notice) {
   padding: 0;
 }
-.inspector:has(.properties-body) > .inspector-header {
+.inspector:has(.properties-body, .inspector-notice) > .inspector-header {
   margin: 0;
   padding: 12px 18px;
+}
+.inspector:has(> .inspector-notice) {
+  display: flex;
+  flex-direction: column;
+}
+.inspector:has(> .inspector-notice) > .inspector-header {
+  flex-shrink: 0;
+}
+.inspector-notice {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-height: 0;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.inspector-notice p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 320px;
+  margin: 0;
+}
+.inspector-notice .icon {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--accent);
 }
 .properties-body {
   font-size: 12px;
@@ -1176,19 +1208,22 @@ summary {
   grid-column: 1 / -1;
   color: var(--muted);
 }
-.bottom-panel:has(.preview-inspector) {
+.bottom-panel:has(.preview-inspector, .inspector-notice) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
-.bottom-panel:has(.preview-inspector) [role="tablist"] {
+.bottom-panel:has(.preview-inspector, .inspector-notice) [role="tablist"] {
   flex-shrink: 0;
 }
-.bottom-panel:has(.preview-inspector) [role="tabpanel"] {
+.bottom-panel:has(.preview-inspector, .inspector-notice) [role="tabpanel"] {
   flex: 1;
   min-height: 0;
   padding: 0;
   overflow: hidden;
+}
+.bottom-panel:has(.inspector-notice) [role="tabpanel"]:not([hidden]) {
+  display: flex;
 }
 .preview-inspector {
   position: relative;

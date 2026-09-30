@@ -135,6 +135,12 @@ function transport(previewResponse: unknown = preview) {
   );
 }
 
+async function selectGraphDataset() {
+  fireEvent.click(screen.getByRole("button", { name: "Catalogue" }));
+  fireEvent.click(await screen.findByRole("button", { name: /raw\/example/ }));
+  await screen.findByRole("button", { name: "1 node selected" });
+}
+
 test("properties and preview show exact metadata, typed cells and zero byte count", async () => {
   const fetcher = transport();
   const workspace = new Workspace(new Client(fetcher));
@@ -145,8 +151,9 @@ test("properties and preview show exact metadata, typed cells and zero byte coun
     origin: workspaceId,
   });
   render(<App workspace={workspace} />);
+  await selectGraphDataset();
   fireEvent.click(screen.getByRole("button", { name: "Properties" }));
-  expect(screen.getByText("0", { selector: "dd" })).toBeTruthy();
+  expect(screen.getByText("Physical bytes").nextSibling?.textContent).toBe("0");
   expect(screen.getByText("2", { selector: "dd" })).toBeTruthy();
   expect(screen.getByText("Created").nextSibling?.textContent).toMatch(
     /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/,
@@ -176,6 +183,35 @@ test("properties and preview show exact metadata, typed cells and zero byte coun
     version: versionId,
     columns: ["amount", "note"],
   });
+  workspace.dispose();
+});
+
+test("clearing graph selection hides preview rows until a node is selected again", async () => {
+  const workspace = new Workspace(new Client(transport()));
+  await workspace.connect("launch");
+  const view = render(<App workspace={workspace} />);
+  await selectGraphDataset();
+  fireEvent.click(screen.getByRole("button", { name: "Properties" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+  await screen.findByRole("table");
+  expect(screen.getByText("Logical path")).toBeTruthy();
+
+  const pane = view.container.querySelector(".react-flow__pane");
+  if (!pane) throw new Error("Missing graph canvas");
+  fireEvent.click(pane);
+  expect(screen.getByRole("button", { name: "0 nodes selected" })).toBeTruthy();
+  expect(screen.queryByRole("table")).toBeNull();
+  expect(screen.queryByText("Logical path")).toBeNull();
+  expect(screen.getAllByText("Select a node to view information")).toHaveLength(
+    2,
+  );
+
+  const label = view.container.querySelector(".react-flow__node .node-label");
+  if (!label) throw new Error("Missing dataset node label");
+  fireEvent.click(label);
+  await screen.findByRole("table");
+  expect(screen.getByRole("button", { name: "1 node selected" })).toBeTruthy();
+  expect(screen.queryByText("Select a node to view information")).toBeNull();
   workspace.dispose();
 });
 
@@ -220,6 +256,7 @@ test("preview uses a browse-only available head when requested and fallback bran
     origin: workspaceId,
   });
   render(<App workspace={workspace} />);
+  await selectGraphDataset();
   fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
   await waitFor(() => expect(screen.getByRole("table")).toBeTruthy());
   expect(
@@ -249,6 +286,7 @@ test("preview omits resolved branch when it matches the selected branch", async 
     origin: workspaceId,
   });
   render(<App workspace={workspace} />);
+  await selectGraphDataset();
   fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
   await waitFor(() => expect(screen.getByRole("table")).toBeTruthy());
   expect(
@@ -268,6 +306,7 @@ test("mismatched exact preview fails closed without rendering rows", async () =>
     origin: workspaceId,
   });
   render(<App workspace={workspace} />);
+  await selectGraphDataset();
   fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
   expect(await screen.findByRole("alert")).toHaveProperty(
     "textContent",
@@ -390,6 +429,7 @@ test("preview cursor keeps the same immutable version and appends bounded rows",
     origin: workspaceId,
   });
   render(<App workspace={workspace} />);
+  await selectGraphDataset();
   fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
   fireEvent.click(
     await screen.findByRole("button", { name: "Load next 100 rows" }),
@@ -422,6 +462,7 @@ test("preview stops offering pages after 1000 displayed rows", async () => {
     origin: workspaceId,
   });
   render(<App workspace={workspace} />);
+  await selectGraphDataset();
   fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
   await waitFor(() =>
     expect(screen.getByText(/Showing 1000.*preview limit/)).toBeTruthy(),

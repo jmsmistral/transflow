@@ -1,5 +1,17 @@
 import { Component, useEffect, useId, useRef } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { Icon } from "./Icons";
+
+export function InspectorNotice() {
+  return (
+    <div className="inspector-notice">
+      <p>
+        <Icon name="info" />
+        <span>Select a node to view information</span>
+      </p>
+    </div>
+  );
+}
 
 export function Button({
   className = "",

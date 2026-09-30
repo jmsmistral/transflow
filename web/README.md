@@ -168,9 +168,11 @@ creation time when recorded, publication time and physical row/file/byte counts.
 The compact detail list has no row dividers. Columns lists the current preview
 version's logical schema with types and nullability. Missing metadata is labelled
 unknown or unavailable; a real zero stays zero. Description and data-health remain
-explicitly unavailable where their metadata is absent. For multiple graph selections,
-Properties and every bottom inspector tab show “Select a node to view information”
-without retaining the previous single dataset's content. Plain-clicking a node in
+explicitly unavailable where their metadata is absent. With no graph node selected
+or multiple nodes selected, Properties and every bottom inspector tab show a
+centered “Select a node to view information” notice with an info icon, without
+retaining the previous single dataset's content. Clicking empty canvas clears
+Preview's table; selecting a node restores its content. Plain-clicking a node in
 a multi-selection selects that node alone; Shift/Cmd/Ctrl-click can change group
 membership.
 

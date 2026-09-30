@@ -127,8 +127,9 @@ test("dataset selection clears old labels immediately and renders names only as 
   await vi.waitFor(() =>
     expect(workspace.snapshot().selection.dataset).toBe(datasetId),
   );
+  await screen.findByRole("button", { name: "1 node selected" });
   fireEvent.click(screen.getByRole("button", { name: "Properties" }));
-  expect(screen.getByText("Created").nextSibling?.textContent).toMatch(
+  expect((await screen.findByText("Created")).nextSibling?.textContent).toMatch(
     /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/,
   );
   expect(screen.queryByText("Resolved head branch")).toBeNull();

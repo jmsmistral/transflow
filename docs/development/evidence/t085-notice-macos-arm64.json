@@ -1,0 +1,30 @@
+{
+  "task": "T085 owner-reviewed inspector notice and cleared-selection refinement",
+  "date": "2026-10-01",
+  "platform": "macOS arm64 / Python 3.14 / Node 24",
+  "base_implementation": "a05eace",
+  "base_specification": "bd992fa",
+  "changes": [
+    "Properties and every bottom tab center the selection notice in their content area, with a local SVG info icon to its left.",
+    "Zero or multiple graph selections show only the notice. Clicking empty canvas removes the previous Preview table and Properties content; selecting one node restores its inspectors."
+  ],
+  "checks": {
+    "focused": "45 App, inspector and graph tests passed, including a regression that clears selection after Preview rows load and restores content on the next node click.",
+    "web": "bash tools/check-web.sh passed: TypeScript, lint, formatting, 457 component tests, dependency preparation regressions, production worker probes and reproducible builds of 16 assets.",
+    "documentation_safety": "The paired specification checker, 44 checker regressions and safety gate with 27 regressions passed. Both repository diffs passed whitespace checks.",
+    "scope": "The change is confined to frontend selection display and styling. Rust/Python application suites were not rerun."
+  },
+  "browser": {
+    "tool": "Codex internal Browser against a temporary synthetic coordinator",
+    "workspace": "/tmp/transflow-t085-refine-browser-20260930",
+    "observed": [
+      "With raw/root and curated/left selected, Properties and Preview showed the notice and info icon centered in their content areas. DOM measurements found zero horizontal and vertical center offsets in both panels.",
+      "The notice and icon remained visible in light and dark themes; the narrower Properties panel wrapped the text without clipping.",
+      "After raw/root's table and properties loaded, clicking empty canvas cleared selection, removed both dataset views entirely and showed the notices. History also showed only the notice with zero selections.",
+      "Selecting raw/root again restored its Properties and Preview table and removed both notices. No console warnings or errors were observed."
+    ],
+    "cleanup": "The temporary coordinator was stopped and the agent-created tab closed.",
+    "limits": "Browser observations used the synthetic two-node view at the internal Browser's normal viewport; other device sizes were not qualified."
+  },
+  "limits": "T085 remains unchecked until owner-monitored GitHub CI is reported."
+}

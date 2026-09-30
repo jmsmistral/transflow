@@ -1,6 +1,6 @@
 import { useCallback, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
-import { Button, Status } from "./components";
+import { Button, InspectorNotice, Status } from "./components";
 import { Icon, type IconName } from "./Icons";
 import { ResizeHandle } from "./panels";
 import { BranchControls } from "./BranchControls";
@@ -344,10 +344,8 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
               aria-labelledby={`tab-${tabs.findIndex((name) => name === tab)}`}
               tabIndex={0}
             >
-              {selectedNodes.length > 1 ? (
-                <p className="preview-empty">
-                  Select a node to view information
-                </p>
+              {selectedNodes.length !== 1 ? (
+                <InspectorNotice />
               ) : tab === "Preview" && bottomOpen ? (
                 <PreviewInspector
                   workspace={workspace}

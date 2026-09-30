@@ -10,7 +10,7 @@ import type {
   WireValue,
 } from "./generated/contracts";
 import type { Workspace, WorkspaceState } from "./workspace";
-import { Button } from "./components";
+import { Button, InspectorNotice } from "./components";
 import { decode } from "./api/client";
 import { Icon } from "./Icons";
 import { PreviewGrid } from "./PreviewGrid";
@@ -179,12 +179,7 @@ export function PropertiesInspector({
         ready?.inspection,
       )
     : null;
-  if (selected.length > 1)
-    return (
-      <section className="properties-body">
-        <p className="muted">Select a node to view information</p>
-      </section>
-    );
+  if (selected.length !== 1) return <InspectorNotice />;
   if (!dataset || !ready)
     return (
       <section className="properties-body">
