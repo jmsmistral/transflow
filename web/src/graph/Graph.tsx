@@ -40,6 +40,13 @@ import {
 } from "./model";
 import { DatasetTooltip } from "./Tooltip";
 import { Menu } from "./Menu";
+import {
+  paint,
+  basis,
+  colourOptions,
+  type Paint,
+  type Colour,
+} from "./overlays";
 import { ViewEditor } from "./ViewEditor";
 import { ViewHistory, openingViewport, type Visual } from "./view";
 import { same } from "../api/validate";
@@ -56,7 +63,8 @@ type DatasetNode = Node<
     childrenExpanded: boolean;
     busy: boolean;
     onPath: boolean;
-    colour: "resource" | "publication";
+    colour: Colour;
+    paint: Paint;
     expand: (
       node: ApiLineageNodeV1,
       direction: Exploration["direction"],
@@ -107,7 +115,7 @@ function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
         pointerDown.current = true;
         setHovered(false);
       }}
-      className={`dataset-node colour-${data.colour === "resource" ? data.value.resource_type : data.value.publication} ${data.value.publication === "missing" ? "unbuilt-node" : ""}`}
+      className={`dataset-node colour-${data.paint.key} ${data.value.publication === "missing" ? "unbuilt-node" : ""}`}
     >
       <Handle type="target" position={Position.Left} isConnectable={false} />
       {parents &&
@@ -150,6 +158,25 @@ function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
       </button>
       {children &&
         arrow("downstream", data.childrenExpanded, data.value.child_count)}
+      {data.colour !== "resource" && data.colour !== "publication" && (
+        <span className="node-overlay-label" title={data.paint.detail}>
+          {data.paint.label === data.paint.detail
+            ? data.paint.label
+            : data.colour === "freshness"
+              ? data.paint.label
+              : data.paint.detail}
+        </span>
+      )}
+      {data.paint.badges.length > 0 && (
+        <span className="node-overlay-badges">
+          {data.paint.badges.map((b) => (
+            <span key={b} title={b}>
+              <Icon name="info" />
+              <span className="sr-only">{b}</span>
+            </span>
+          ))}
+        </span>
+      )}
       <Handle type="source" position={Position.Right} isConnectable={false} />
       <NodeToolbar
         isVisible={hovered && !dragging}
@@ -407,7 +434,7 @@ function GraphView({
   const flow = useReactFlow<CanvasNode>();
   const flowStore = useStoreApi();
   const [legendOpen, setLegendOpen] = useState(false);
-  const [colour, setColour] = useState<"resource" | "publication">("resource");
+  const [colour, setColour] = useState<Colour>("resource");
   const [align, setAlign] = useState(false);
   const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 1 });
   const [notice, setNotice] = useState("");
@@ -538,6 +565,7 @@ function GraphView({
         data: {
           value: node,
           colour,
+          paint: paint(node, colour, planPreview),
           workspace,
           busy: graph.busy,
           parentsExpanded: model.expanded(node, "upstream"),
@@ -665,6 +693,9 @@ function GraphView({
         >
           <Icon name="redo" />
         </Button>
+        {graph.busy && (
+          <Button onClick={model.cancel}>Cancel graph loading</Button>
+        )}
         <Button disabled title="Layout options are coming in a later iteration">
           <Icon name="layout" /> Layout
         </Button>
@@ -898,66 +929,64 @@ function GraphView({
         </Button>
         <Menu
           label="Node colouring"
-          items={[
-            {
-              label: "Resource Type",
-              selected: colour === "resource",
-              action: () => setColour("resource"),
-            },
-            {
-              label: "Publication",
-              selected: colour === "publication",
-              action: () => setColour("publication"),
-            },
-          ]}
+          items={colourOptions.map(([key, name]) => ({
+            label: name,
+            selected: colour === key,
+            action: () => setColour(key),
+          }))}
         >
-          {colour === "resource" ? "Resource Type" : "Publication"}
+          {colourOptions.find(([key]) => key === colour)?.[1] ??
+            "Resource Type"}
         </Menu>
         {legendOpen && (
           <div className="graph-colour-legend" aria-label="Graph legend">
             {graph.nodes.length === 0 && <p>No visible nodes.</p>}
-            {(colour === "resource" ? resourceLabels : publicationLabels)
-              .filter(([key]) =>
-                graph.nodes.some(
-                  (node) =>
-                    (colour === "resource"
-                      ? node.resource_type
-                      : node.publication) === key,
-                ),
-              )
-              .map(([key, name]) => (
-                <Button
-                  key={key}
-                  onClick={() =>
-                    selectNodes(
-                      new Set(
-                        graph.nodes
-                          .filter(
-                            (n) =>
-                              (colour === "resource"
-                                ? n.resource_type
-                                : n.publication) === key,
-                          )
-                          .map((n) => n.identity),
-                      ),
-                    )
+            {[
+              ...new Map(
+                graph.nodes.map((n) => {
+                  const p = paint(n, colour, planPreview);
+                  return [p.key, p];
+                }),
+              ).values(),
+            ].map((p) => (
+              <Button
+                key={p.key}
+                onClick={() =>
+                  selectNodes(
+                    new Set(
+                      graph.nodes
+                        .filter(
+                          (n) => paint(n, colour, planPreview).key === p.key,
+                        )
+                        .map((n) => n.identity),
+                    ),
+                  )
+                }
+                aria-label={`Select ${p.label} nodes`}
+              >
+                <span className={`legend-swatch colour-${p.key}`} />
+                {p.label}
+                <span className="muted">
+                  {
+                    graph.nodes.filter(
+                      (n) => paint(n, colour, planPreview).key === p.key,
+                    ).length
                   }
-                  aria-label={`Select ${name} nodes`}
-                >
-                  <span className={`legend-swatch colour-${key}`} />
-                  {name}
-                  <span className="muted">
-                    {
-                      graph.nodes.filter(
-                        (n) =>
-                          (colour === "resource"
-                            ? n.resource_type
-                            : n.publication) === key,
-                      ).length
-                    }
-                  </span>
-                </Button>
-              ))}
+                </span>
+              </Button>
+            ))}
+            <p className="sr-only">
+              {basis(colour)} Counts cover {graph.nodes.length} visible nodes.
+              {colour === "roles" && planPreview
+                ? ` Complete plan: ${planPreview.writes.length} jobs, ${planPreview.targets.length} targets.`
+                : ""}
+            </p>
+            <span className="legend-counts" title={basis(colour)}>
+              {graph.nodes.length} visible nodes
+              {colour === "roles" && planPreview
+                ? ` · Plan: ${planPreview.writes.length} jobs, ${planPreview.targets.length} targets`
+                : ""}
+            </span>
           </div>
         )}
       </div>
@@ -978,16 +1007,3 @@ function GraphNotice({ message, busy }: { message: string; busy: boolean }) {
     </div>
   );
 }
-
-const resourceLabels = [
-  ["polars_transform", "Polars Transform"],
-  ["sql_transform", "SQL Transform"],
-  ["external", "External Dataset"],
-  ["dataset", "Dataset"],
-  ["unknown", "Unknown"],
-] as const;
-const publicationLabels = [
-  ["published", "Published"],
-  ["missing", "Not built on these branches"],
-  ["unknown", "Unknown"],
-] as const;

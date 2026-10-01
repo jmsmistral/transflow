@@ -330,7 +330,7 @@ export type ApiAttemptV1 = { readonly "attempt": Uuid; readonly "build": Uuid; r
 export type ApiExecutionMetricsV1 = { readonly "from_us": Count; readonly "to_us": Count; readonly "time_zone": "UTC"; readonly "duration_unit": "ns"; readonly "cohort": "build_accepted"; readonly "branch": string; readonly "dataset": (null | Uuid); readonly "materialized_any": boolean; readonly "builds": Count; readonly "build_states": ReadonlyArray<ApiStateCountV1>; readonly "manual_requests": Count; readonly "scheduled_builds": Count; readonly "schedule_occurrences": null; readonly "jobs": Count; readonly "job_states": ReadonlyArray<ApiStateCountV1>; readonly "jobs_executed": Count; readonly "attempts": Count; readonly "failure_rate": (null | ApiExactRatioV1); readonly "materializations": Count; readonly "duration_samples": Count; readonly "missing_duration_samples": Count; readonly "median_ns": (null | ApiExactRatioV1); readonly "trailing_mean_ns": (null | ApiExactRatioV1); readonly "trailing_window": Count; readonly "trailing_samples": Count };
 
 // prettier-ignore
-export type ApiLineageNodeV1 = { readonly "identity": string; readonly "paths": ReadonlyArray<string>; readonly "depth": Count; readonly "external": boolean; readonly "producer": boolean; readonly "parent_count": Count; readonly "child_count": Count; readonly "publication": ("published" | "missing" | "unknown"); readonly "resource_type": ("polars_transform" | "sql_transform" | "external" | "dataset" | "unknown") };
+export type ApiLineageNodeV1 = { readonly "identity": string; readonly "paths": ReadonlyArray<string>; readonly "depth": Count; readonly "external": boolean; readonly "producer": boolean; readonly "parent_count": Count; readonly "child_count": Count; readonly "publication": ("published" | "missing" | "unknown"); readonly "resource_type": ("polars_transform" | "sql_transform" | "external" | "dataset" | "unknown" | "pandas_transform" | "source" | "imported"); readonly "overlay"?: ApiOverlayFactsV1 };
 
 // prettier-ignore
 export type ViewPositionV1 = { readonly "x": number; readonly "y": number };
@@ -342,7 +342,7 @@ export type ViewDatasetV1 = { readonly "identity": string; readonly "position": 
 export type ViewSelectorV1 = { readonly "branch": string; readonly "fallback": ReadonlyArray<string> };
 
 // prettier-ignore
-export type GraphViewV1 = { readonly "format_version": 1; readonly "id": string; readonly "revision": number; readonly "name": string; readonly "description": string; readonly "datasets": ReadonlyArray<ViewDatasetV1>; readonly "colour": ("resource" | "publication"); readonly "selector": ViewSelectorV1 };
+export type GraphViewV1 = { readonly "format_version": 1; readonly "id": string; readonly "revision": number; readonly "name": string; readonly "description": string; readonly "datasets": ReadonlyArray<ViewDatasetV1>; readonly "colour": ("resource" | "publication" | "status" | "freshness" | "duration" | "duration_median" | "duration_mean" | "rows" | "files" | "bytes" | "health" | "roles"); readonly "selector": ViewSelectorV1 };
 
 // prettier-ignore
 export type ApiViewsV1 = { readonly "views": ReadonlyArray<{ readonly "id": string; readonly "revision": number; readonly "name": string; readonly "saved_at_us": string; readonly "branch": string }>; readonly "next_cursor": (string | null) };
@@ -358,3 +358,12 @@ export type ApiHistoryJobV1 = { readonly "id": Uuid; readonly "build": Uuid; rea
 
 // prettier-ignore
 export type ApiDatasetHistoryV1 = { readonly "entries": ReadonlyArray<ApiHistoryJobV1>; readonly "next_cursor": (null | string) };
+
+// prettier-ignore
+export type ApiOverlayRatioV1 = { readonly "numerator": Count; readonly "denominator": Count };
+
+// prettier-ignore
+export type ApiOverlayDurationsV1 = { readonly "last_ns": (Count | null); readonly "median_ns": (ApiOverlayRatioV1 | null); readonly "mean_ns": (ApiOverlayRatioV1 | null); readonly "samples": Count; readonly "missing": Count };
+
+// prettier-ignore
+export type ApiOverlayFactsV1 = { readonly "version": (Uuid | null); readonly "rows": (Count | null); readonly "files": (Count | null); readonly "bytes": (Count | null); readonly "latest_attempt": (("Running" | "Succeeded" | "Failed" | "Canceled" | "Interrupted") | null); readonly "freshness": ("current" | "data" | "logic" | "ancestor" | "never_built" | "unknown"); readonly "reasons": ReadonlyArray<string>; readonly "health": ("Passed" | "Warning" | "NoChecks" | "Unavailable"); readonly "input_failed": boolean; readonly "durations": (ApiOverlayDurationsV1 | null); readonly "roles"?: ReadonlyArray<("excluded" | "target" | "planned" | "trigger" | "boundary" | "cached")> };

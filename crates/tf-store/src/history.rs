@@ -292,3 +292,53 @@ impl Reader {
         )
     }
 }
+
+impl Reader {
+    /// Last ten successful materializations on this exact branch. Cache adoptions never
+    /// create samples. Missing monotonic phase evidence remains absent, including the latest.
+    pub async fn overlay_durations(
+        &mut self,
+        workspace: WorkspaceId,
+        branch: &BranchName,
+        dataset: DatasetId,
+    ) -> Result<Value> {
+        let mut tx = self.db.begin().await?;
+        let rows = sqlx::query("SELECT a.id FROM dataset_versions v JOIN attempts a ON a.id=v.attempt_id JOIN jobs j ON j.id=a.job_id JOIN data_branches b ON b.id=j.branch_id WHERE b.workspace_id=? AND b.name=? AND b.deleted_at_us IS NULL AND j.dataset_id=? AND a.state='SUCCEEDED' ORDER BY a.finished_at_us DESC,a.id DESC LIMIT 10")
+            .bind(workspace.to_string()).bind(branch.as_str()).bind(dataset.to_string()).fetch_all(&mut *tx).await?;
+        let mut values = vec![];
+        for row in &rows {
+            let phases = sqlx::query("SELECT finished_at_us,duration_ns FROM phase_intervals WHERE attempt_id=? ORDER BY sequence LIMIT 1001")
+                .bind(row.try_get::<String,_>("id")?).fetch_all(&mut *tx).await?;
+            if phases.len() > 1000 {
+                return Err(invalid());
+            }
+            let mut duration = (!phases.is_empty()).then_some(0_u128);
+            for phase in phases {
+                let finished: Option<i64> = phase.try_get("finished_at_us")?;
+                let ns: Option<i64> = phase.try_get("duration_ns")?;
+                duration = duration.and_then(|n| {
+                    finished
+                        .and(ns)
+                        .and_then(|ns| u128::try_from(ns).ok())
+                        .and_then(|ns| n.checked_add(ns))
+                });
+            }
+            values.push(duration);
+        }
+        let last = values.first().copied().flatten();
+        let measured: Vec<_> = values.iter().rev().filter_map(|n| *n).collect();
+        let stats = tf_domain::history::statistics(&measured, 10).ok_or_else(invalid)?;
+        if values.iter().flatten().any(|n| *n > u64::MAX as u128)
+            || [stats.median, stats.trailing_mean]
+                .iter()
+                .flatten()
+                .any(|r| r.numerator > u64::MAX as u128)
+        {
+            return Err(invalid());
+        }
+        tx.commit().await?;
+        Ok(
+            json!({"last_ns":last.map(|n|n.to_string()),"median_ns":ratio(stats.median),"mean_ns":ratio((measured.len() == rows.len()).then_some(stats.trailing_mean).flatten()),"samples":measured.len().to_string(),"missing":(rows.len()-measured.len()).to_string()}),
+        )
+    }
+}

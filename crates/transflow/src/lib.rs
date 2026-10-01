@@ -3,6 +3,7 @@
 mod api;
 mod api_history;
 mod api_logs;
+mod api_overlays;
 mod api_preview;
 mod api_query;
 mod api_read;

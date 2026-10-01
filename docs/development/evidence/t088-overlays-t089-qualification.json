@@ -1,0 +1,69 @@
+{
+  "tasks": [
+    "T088",
+    "T089"
+  ],
+  "date": "2026-10-01",
+  "implementation_base": "58b996a",
+  "specification_base": "0c33e8a",
+  "changes": [
+    "Context-fenced dataset colour facets for status, freshness, last/median/mean durations, rows, files, bytes, health and build roles; unique visible counts and independent badges.",
+    "Shared retained freshness/output-check composition; no producer imports, provider contact or implied byte verification.",
+    "Latest ten successful published attempts ordered by finish time supply exact duration ratios; cache adoption does not invent samples. Missing last duration and an incomplete trailing mean remain unknown; median uses measured samples.",
+    "Keyboard catalogue/save shortcuts, cancel graph reads, fence hover responses and clear old overlay metadata during timing-context refresh.",
+    "Public shallow 500-node/1500-edge generator and opt-in local animation-frame/input measurement panel excluded from production builds."
+  ],
+  "verification": {
+    "rust": "Final check-rust.sh passed: 407 Rust tests including one doc test; formatting, compilation, standalone storage, Clippy and 12 boundary regressions.",
+    "python": "check-python.sh passed 987 tests, formatting, Ruff, mypy and prepared-environment checks.",
+    "web": "Final check-web.sh passed 500 tests in 18 files, type/lint/format, shared contract fixtures, production worker probes and reproducible 16-asset builds. Production assets contain no qualification panel.",
+    "contracts": 333,
+    "browser": [
+      "Actual production coordinator: five-node saved lineage, row counts 2/2/4/2 with external Unknown; health No health checks on four local nodes and Unavailable externally; light/dark rendering.",
+      "Actual qualification coordinator: Cmd+K catalogue search and keyboard root selection; complete parent expansion displays 500 nodes and 1500 edges; legend counts 500 Never built nodes.",
+      "Zoom, colour menu, theme, right/bottom collapse, keyboard right/bottom resizing, multi-selection empty inspector notice and Ctrl+S Save dialog checked. Native Cmd+S is intercepted by the internal Browser host; app handler supports both modifiers and no native Cmd+S qualification is claimed."
+    ],
+    "documentation": "Specification checker, 44 checker regressions, safety baseline and 27 safety regressions passed; both repository whitespace checks passed.",
+    "race": "Final delayed timing-refresh regression proves old row-count overlay becomes Unknown until the matching context response arrives, while selection and camera remain unchanged.",
+    "dense_budget": "Authenticated final coordinator GET /api/v1/lineage returned HTTP 200 for the dense retained graph, with freshness unknown and the causal path safety limit reason. Disposable graph pointer restored immediately."
+  },
+  "measurement": {
+    "hardware": "Apple M4 Max, 128 GiB RAM",
+    "os": "macOS 15.3.1 arm64",
+    "filesystem": "APFS local journaled",
+    "browser": "Codex internal Browser; version not exposed by the automation surface",
+    "viewport": [
+      1280,
+      720
+    ],
+    "method": "Opt-in Vite qualification build of the application. requestAnimationFrame timestamps, bounded at 2000 intervals per sample; trusted click/keydown to second animation frame. Includes concurrent local qualification workload. No main-thread automatic layout is enabled.",
+    "loading_sample": {
+      "frames": 2000,
+      "p95_frame_interval_ms": 9.5,
+      "input_samples": 1,
+      "p95_input_second_frame_ms": 12.6
+    },
+    "mixed_controls_sample": {
+      "frames": 2000,
+      "p95_frame_interval_ms": 9.8,
+      "input_samples": 22,
+      "p95_input_second_frame_ms": 86.6
+    },
+    "zoom_readable_scale_sample": {
+      "frames": 563,
+      "p95_frame_interval_ms": 24.8,
+      "input_samples": 15,
+      "p95_input_second_frame_ms": 23.0
+    },
+    "limits": "Observed desktop samples, not a cross-browser, Linux, 60-fps or cold-install claim. Input timing measures frame presentation, not coordinator completion. Dense long-chain fixture exceeded the existing million-cell causal explanation budget; planning still rejects that scope. Read-only overlays now show Unknown and a reason for that specific limit; unrelated failures still propagate."
+  },
+  "scope": "Separate dataset-list view remains removed by owner decision. Existing accessible catalogue/graph controls qualify that revised acceptance. No groups. Scheduler definitions/recorded schedule-role integration remain T090-T095; target+trigger independence is contract/component-qualified.",
+  "ci": "Pending owner confirmation. No CI polling.",
+  "cleanup": {
+    "coordinators": "Both agent-started coordinators stopped; ports 54063/54064 have no listeners. Temporary internal Browser tabs closed. User port 54062 was not changed.",
+    "workspaces": [
+      "/tmp/transflow-t083-browser",
+      "/tmp/transflow-t089-review"
+    ]
+  }
+}

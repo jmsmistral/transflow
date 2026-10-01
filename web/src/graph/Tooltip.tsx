@@ -6,6 +6,7 @@ import type {
 } from "../generated/contracts";
 import type { Workspace } from "../workspace";
 import { label } from "./model";
+import { paint } from "./overlays";
 import { formatTimestamp } from "../date";
 function field(
   value: ExecutionJsonV1 | undefined,
@@ -25,7 +26,10 @@ export function DatasetTooltip({
   node: ApiLineageNodeV1;
   workspace: Workspace;
 }) {
-  const [detail, setDetail] = useState<ApiDatasetV1 | null>(null);
+  const [detail, setDetail] = useState<{
+    value: ApiDatasetV1;
+    fingerprint: string;
+  } | null>(null);
   const [message, setMessage] = useState("Loading metadata…");
   const state = workspace.snapshot();
   const fingerprint =
@@ -44,7 +48,7 @@ export function DatasetTooltip({
       .then(
         (result) => {
           if (!request.signal.aborted) {
-            setDetail(result);
+            setDetail({ value: result, fingerprint });
             setMessage("");
           }
         },
@@ -55,8 +59,8 @@ export function DatasetTooltip({
       );
     return () => request.abort();
   }, [node.identity, workspace, fingerprint]);
-  if (!detail) return null;
-  const head = detail.head;
+  if (!detail || detail.fingerprint !== fingerprint) return null;
+  const head = detail.value.head;
   const published = field(head, "published_at_us");
   const fields = field(field(head, "schema"), "fields");
   return (
@@ -87,7 +91,14 @@ export function DatasetTooltip({
         <dt>Columns</dt>
         <dd>{Array.isArray(fields) ? fields.length : "Unknown"}</dd>
         <dt>Freshness / quality</dt>
-        <dd>Unknown</dd>
+        <dd>
+          {paint(node, "freshness").label} · {paint(node, "health").label}
+        </dd>
+        <dt>Latest attempt</dt>
+        <dd>
+          {paint(node, "status").label}
+          {node.overlay?.version ? " · Published data available" : ""}
+        </dd>
       </dl>
       {message && (
         <p className="muted">

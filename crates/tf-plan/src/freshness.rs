@@ -456,9 +456,7 @@ pub fn evaluate(
                             let mut next = cause.clone();
                             path_cells += next.path.len() + 1;
                             if path_cells > 1_000_000 {
-                                return Err(
-                                    "Freshness causal paths exceed the supported read-model bound",
-                                );
+                                return Err(CAUSAL_PATH_LIMIT);
                             }
                             next.path.push(id.clone());
                             next.aliases.push(edge.alias.clone());
@@ -516,3 +514,5 @@ pub fn evaluate(
     }
     Ok(result)
 }
+/// Read-only explanation budget failure; callers may display unknown without weakening planning.
+pub const CAUSAL_PATH_LIMIT: &str = "Freshness causal paths exceed the supported read-model bound";

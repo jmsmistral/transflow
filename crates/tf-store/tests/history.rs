@@ -116,6 +116,30 @@ async fn retained_history_metrics_cache_retry_and_context_isolation()
     let mut rd = Reader::open_existing(&path).await?;
     let branch = "main".parse()?;
     let workspace = id(1).parse()?;
+    let overlay = rd
+        .overlay_durations(workspace, &branch, id(2).parse()?)
+        .await?;
+    tf_protocol::validate_document("ApiOverlayDurationsV1", &overlay)?;
+    assert!(
+        overlay["last_ns"].is_null(),
+        "Latest success has missing phase timing; never borrow an older duration"
+    );
+    assert_eq!(overlay["samples"], "3");
+    assert_eq!(overlay["missing"], "1");
+    assert_eq!(
+        overlay["median_ns"],
+        json!({"numerator":"30","denominator":"1"})
+    );
+    assert!(overlay["mean_ns"].is_null());
+    let other = rd
+        .overlay_durations(workspace, &"other".parse()?, id(2).parse()?)
+        .await?;
+    assert_eq!(other["last_ns"], "100");
+    let unknown = rd
+        .overlay_durations(workspace, &"absent".parse()?, id(2).parse()?)
+        .await?;
+    assert_eq!(unknown["samples"], "0");
+    assert!(unknown["median_ns"].is_null());
     let query = |materialized_any| MetricsQuery {
         workspace,
         branch: &branch,

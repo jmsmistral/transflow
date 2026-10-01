@@ -548,6 +548,7 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
             "connections",
             "lookup",
             "incoming",
+            "overlays",
         ],
     )?;
     let g = c.graph.as_ref().ok_or_else(E::missing)?;
@@ -675,6 +676,44 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
         .map_err(|_| E::conflict())?;
     let rt = runtime()?;
     let mut reader = rt.block_on(reader(&c.root))?;
+    let overlays = match r.query.get("overlays").map(String::as_str) {
+        None => false,
+        Some("true") => true,
+        _ => return Err(E::invalid()),
+    };
+    // Frozen metadata only. Missing writer/clock/secret policy and unverified bytes stay unknown.
+    let snapshot = (overlays && c.value["selection"]["kind"] == "retained_current")
+        .then(|| {
+            rt.block_on(reader.freshness_snapshot(c.registry.workspace()))
+                .map_err(bad)
+        })
+        .transpose()?;
+    let report = snapshot
+        .as_ref()
+        .map(|snapshot| {
+            crate::api_overlays::bounded_report(crate::why::explain(
+                &validated,
+                &request,
+                &capture,
+                snapshot,
+                &Default::default(),
+                &crate::why::Request {
+                    python: None,
+                    branch: c.branch.clone(),
+                    fallbacks: Some(c.candidates.iter().skip(1).cloned().collect()),
+                    semantics: Default::default(),
+                    at_us: std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .map_err(bad)?
+                        .as_micros()
+                        .try_into()
+                        .map_err(bad)?,
+                },
+            ))
+            .map_err(bad)
+        })
+        .transpose()?
+        .flatten();
     let mut nodes = Vec::with_capacity(p.nodes.len());
     for n in &p.nodes {
         // Never infer absence from unavailable foreign or historical metadata.
@@ -701,17 +740,37 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
             .iter()
             .find(|d| d.output == n.node.identity)
         {
-            match def.declaration["engine"].as_str() {
-                Some("polars") => "polars_transform",
-                Some("sql") | Some("duckdb") => "sql_transform",
-                _ => "unknown",
+            if def.declaration["source"] == true {
+                "source"
+            } else {
+                match def.declaration["engine"].as_str() {
+                    Some("polars") => "polars_transform",
+                    Some("pandas") => "pandas_transform",
+                    Some("sql") | Some("duckdb") => "sql_transform",
+                    _ => "unknown",
+                }
             }
         } else if n.node.producer {
             "unknown"
+        } else if matches!(&n.node.identity, tf_catalog::candidate::CandidateIdentity::Registered(key) if c.registry.datasets().any(|d|d.key()==*key && d.kind()==tf_catalog::DatasetKind::Imported))
+        {
+            "imported"
         } else {
             "dataset"
         };
-        nodes.push(json!({"identity":crate::why::identity(&n.node.identity),"paths":n.node.paths.iter().map(|p|p.as_str()).collect::<Vec<_>>(),"depth":n.depth.to_string(),"external":n.node.external,"producer":n.node.producer,"parent_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Upstream).to_string(),"child_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Downstream).to_string(),"publication":publication,"resource_type":resource_type}));
+        let mut node = json!({"identity":crate::why::identity(&n.node.identity),"paths":n.node.paths.iter().map(|p|p.as_str()).collect::<Vec<_>>(),"depth":n.depth.to_string(),"external":n.node.external,"producer":n.node.producer,"parent_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Upstream).to_string(),"child_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Downstream).to_string(),"publication":publication,"resource_type":resource_type});
+        if overlays {
+            node["overlay"] = crate::api_overlays::project(
+                c,
+                &mut reader,
+                &rt,
+                &n.node.identity,
+                n.node.external,
+                snapshot.as_ref(),
+                report.as_ref(),
+            )?;
+        }
+        nodes.push(node);
     }
     let edges=p.edges.iter().map(|e|{let branch=match &e.declared_branch{tf_domain::BranchSelector::Omitted=>json!({"kind":"omitted","name":null}),tf_domain::BranchSelector::Current=>json!({"kind":"current","name":null}),tf_domain::BranchSelector::Named(n)=>json!({"kind":"named","name":n.as_str()})};json!({"parent":crate::why::identity(&e.parent),"consumer":crate::why::identity(&e.consumer),"alias":e.alias,"role":e.role.name(),"declared_branch":branch,"stop_branch_fallback":e.stop_branch_fallback,"checks":e.checks})}).collect::<Vec<_>>();
     Ok(

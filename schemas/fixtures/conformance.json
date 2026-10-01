@@ -7938,5 +7938,60 @@
       "next_cursor": null
     },
     "valid": true
+  },
+  {
+    "name": "overlay-unknown-is-not-zero",
+    "schema": "ApiOverlayFactsV1",
+    "valid": true,
+    "value": {
+      "version": null,
+      "rows": null,
+      "files": null,
+      "bytes": null,
+      "latest_attempt": null,
+      "freshness": "unknown",
+      "reasons": [],
+      "health": "Unavailable",
+      "input_failed": false,
+      "durations": null
+    }
+  },
+  {
+    "name": "overlay-failed-job-valid-old-data-zero-rows",
+    "schema": "ApiOverlayFactsV1",
+    "valid": true,
+    "value": {
+      "version": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "rows": "0",
+      "files": null,
+      "bytes": null,
+      "latest_attempt": "Failed",
+      "freshness": "unknown",
+      "reasons": [],
+      "health": "NoChecks",
+      "input_failed": true,
+      "durations": null,
+      "roles": [
+        "target",
+        "trigger"
+      ]
+    }
+  },
+  {
+    "name": "overlay-rejects-invented-health",
+    "schema": "ApiOverlayFactsV1",
+    "valid": false,
+    "value": {
+      "version": null,
+      "rows": null,
+      "files": null,
+      "bytes": null,
+      "latest_attempt": null,
+      "freshness": "unknown",
+      "reasons": [],
+      "health": "SUCCESS",
+      "input_failed": false,
+      "durations": null
+    }
   }
 ]

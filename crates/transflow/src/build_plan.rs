@@ -75,6 +75,9 @@ pub struct Error {
     validation: Option<validation::ValidationError>,
 }
 impl Error {
+    pub(crate) fn causal_path_limit(&self) -> bool {
+        self.validation.is_none() && self.message == tf_plan::freshness::CAUSAL_PATH_LIMIT
+    }
     pub(crate) fn validation(&self) -> Option<&validation::ValidationError> {
         self.validation.as_ref()
     }

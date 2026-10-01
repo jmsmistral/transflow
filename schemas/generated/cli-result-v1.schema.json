@@ -8453,8 +8453,14 @@
             "sql_transform",
             "external",
             "dataset",
-            "unknown"
+            "unknown",
+            "pandas_transform",
+            "source",
+            "imported"
           ]
+        },
+        "overlay": {
+          "$ref": "#/$defs/ApiOverlayFactsV1"
         }
       },
       "required": [
@@ -8583,7 +8589,17 @@
           "type": "string",
           "enum": [
             "resource",
-            "publication"
+            "publication",
+            "status",
+            "freshness",
+            "duration",
+            "duration_median",
+            "duration_mean",
+            "rows",
+            "files",
+            "bytes",
+            "health",
+            "roles"
           ]
         },
         "selector": {
@@ -8884,6 +8900,204 @@
         "next_cursor"
       ],
       "additionalProperties": false
+    },
+    "ApiOverlayRatioV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "properties": {
+        "numerator": {
+          "$ref": "#/$defs/Count"
+        },
+        "denominator": {
+          "$ref": "#/$defs/Count"
+        }
+      }
+    },
+    "ApiOverlayDurationsV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "last_ns",
+        "median_ns",
+        "mean_ns",
+        "samples",
+        "missing"
+      ],
+      "properties": {
+        "last_ns": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Count"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "median_ns": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ApiOverlayRatioV1"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mean_ns": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ApiOverlayRatioV1"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "samples": {
+          "$ref": "#/$defs/Count"
+        },
+        "missing": {
+          "$ref": "#/$defs/Count"
+        }
+      }
+    },
+    "ApiOverlayFactsV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "rows",
+        "files",
+        "bytes",
+        "latest_attempt",
+        "freshness",
+        "reasons",
+        "health",
+        "input_failed",
+        "durations"
+      ],
+      "properties": {
+        "version": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rows": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Count"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "files": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Count"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bytes": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Count"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "latest_attempt": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "Running",
+                "Succeeded",
+                "Failed",
+                "Canceled",
+                "Interrupted"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "freshness": {
+          "type": "string",
+          "enum": [
+            "current",
+            "data",
+            "logic",
+            "ancestor",
+            "never_built",
+            "unknown"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "minItems": 0
+        },
+        "health": {
+          "type": "string",
+          "enum": [
+            "Passed",
+            "Warning",
+            "NoChecks",
+            "Unavailable"
+          ]
+        },
+        "input_failed": {
+          "type": "boolean"
+        },
+        "durations": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ApiOverlayDurationsV1"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "roles": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": "string",
+            "enum": [
+              "excluded",
+              "target",
+              "planned",
+              "trigger",
+              "boundary",
+              "cached"
+            ]
+          },
+          "minItems": 0
+        }
+      }
     }
   },
   "$ref": "#/$defs/CliEnvelopeV1"

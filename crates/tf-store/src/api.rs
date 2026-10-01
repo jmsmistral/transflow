@@ -207,10 +207,10 @@ impl Reader {
         candidates: &[tf_domain::BranchName],
     ) -> Result<Option<Value>> {
         for branch in candidates {
-            let row=sqlx::query("SELECT h.version_id,h.generation,v.source_snapshot_id,v.published_at_us,CASE WHEN length(a.schema_json)<=1048576 THEN a.schema_json END,a.row_count,a.byte_count,a.integrity_state FROM dataset_heads h JOIN data_branches b ON b.id=h.branch_id LEFT JOIN dataset_versions v ON v.id=h.version_id LEFT JOIN artifacts a ON a.digest=v.artifact_digest WHERE b.workspace_id=? AND b.name=? AND b.deleted_at_us IS NULL AND h.dataset_id=?").bind(workspace.to_string()).bind(branch.as_str()).bind(dataset.to_string()).fetch_optional(&mut self.db).await?;
+            let row=sqlx::query("SELECT h.version_id,h.generation,v.source_snapshot_id,v.published_at_us,CASE WHEN length(a.schema_json)<=1048576 THEN a.schema_json END,a.row_count,a.byte_count,a.integrity_state,a.file_count FROM dataset_heads h JOIN data_branches b ON b.id=h.branch_id LEFT JOIN dataset_versions v ON v.id=h.version_id LEFT JOIN artifacts a ON a.digest=v.artifact_digest WHERE b.workspace_id=? AND b.name=? AND b.deleted_at_us IS NULL AND h.dataset_id=?").bind(workspace.to_string()).bind(branch.as_str()).bind(dataset.to_string()).fetch_optional(&mut self.db).await?;
             if let Some(r) = row {
                 return Ok(Some(
-                    json!({"version":r.try_get::<String,_>(0)?,"generation":r.try_get::<i64,_>(1)?.to_string(),"source":r.try_get::<String,_>(2)?,"published_at_us":r.try_get::<i64,_>(3)?.to_string(),"schema":serde_json::from_str::<Value>(&r.try_get::<String,_>(4)?).map_err(|_|StoreError::InvalidRequest)?,"row_count":r.try_get::<i64,_>(5)?.to_string(),"byte_count":r.try_get::<i64,_>(6)?.to_string(),"integrity_state":r.try_get::<String,_>(7)?,"resolved_branch":branch.as_str(),"availability":"not_verified"}),
+                    json!({"version":r.try_get::<String,_>(0)?,"generation":r.try_get::<i64,_>(1)?.to_string(),"source":r.try_get::<String,_>(2)?,"published_at_us":r.try_get::<i64,_>(3)?.to_string(),"schema":serde_json::from_str::<Value>(&r.try_get::<String,_>(4)?).map_err(|_|StoreError::InvalidRequest)?,"row_count":r.try_get::<i64,_>(5)?.to_string(),"byte_count":r.try_get::<i64,_>(6)?.to_string(),"file_count":r.try_get::<i64,_>(8)?.to_string(),"integrity_state":r.try_get::<String,_>(7)?,"resolved_branch":branch.as_str(),"availability":"not_verified"}),
                 ));
             }
         }

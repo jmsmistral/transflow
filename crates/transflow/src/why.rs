@@ -67,7 +67,7 @@ pub struct Report {
     /// Selected graph producer facts.
     pub datasets: BTreeMap<Id, Status>,
 }
-fn attempt_state(a: &Attempt) -> AttemptState {
+pub(crate) fn attempt_state(a: &Attempt) -> AttemptState {
     match a.state.as_str() {
         "SUCCEEDED" => AttemptState::Succeeded,
         "FAILED" => AttemptState::Failed,
@@ -76,7 +76,7 @@ fn attempt_state(a: &Attempt) -> AttemptState {
         _ => AttemptState::Running,
     }
 }
-fn output_quality(head: Option<&Head>) -> Quality {
+pub(crate) fn output_quality(head: Option<&Head>) -> Quality {
     let Some(head) = head else {
         return Quality::Unavailable;
     };
@@ -121,7 +121,7 @@ fn output_quality(head: Option<&Head>) -> Quality {
     }
     quality
 }
-fn input_quality(attempt: Option<&Attempt>) -> BTreeMap<String, InputQuality> {
+pub(crate) fn input_quality(attempt: Option<&Attempt>) -> BTreeMap<String, InputQuality> {
     let mut result = BTreeMap::new();
     let Some(attempt) = attempt else {
         return result;

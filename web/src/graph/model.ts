@@ -108,10 +108,11 @@ export class GraphModel {
         const identities = this.state.nodes.map((node) => node.identity);
         this.set({
           context,
-          nodes: this.state.nodes.map((node) => ({
-            ...node,
-            publication: "unknown",
-          })),
+          nodes: this.state.nodes.map((node) => {
+            const fresh = { ...node };
+            delete fresh.overlay;
+            return { ...fresh, publication: "unknown" };
+          }),
         });
         if (identities.length)
           void this.reopen(identities).catch((error) => {
@@ -346,6 +347,7 @@ export class GraphModel {
           limit: "100",
           // Explicit traversal actions authorize a bounded first batch, never an automatic drain.
           expand: "true",
+          overlays: "true",
           ...(cursor ? { cursor } : {}),
         },
         request.signal,

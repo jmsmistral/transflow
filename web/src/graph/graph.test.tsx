@@ -1002,13 +1002,27 @@ test("timing revisions refresh graph metadata without remounting its selection o
   const root = {
     ...node(`dataset:${workspaceId}:${datasetId}`),
     paths: ["raw/example"],
+    overlay: {
+      version: null,
+      rows: "2",
+      files: "1",
+      bytes: "100",
+      latest_attempt: null,
+      freshness: "unknown" as const,
+      reasons: [],
+      health: "NoChecks" as const,
+      input_failed: false,
+      durations: null,
+    },
   };
   const base = fixtureTransport((path, q) =>
     path.endsWith("/lineage")
       ? Promise.resolve(json(page([root]), context(q.branch)))
       : undefined,
   );
-  let revision = false;
+  let revision = false,
+    hold = true;
+  let release: (() => void) | undefined;
   const transport: typeof fetch = async (url, init) => {
     const response = await base(url, init);
     if (!revision) return response;
@@ -1022,6 +1036,12 @@ test("timing revisions refresh graph metadata without remounting its selection o
       fingerprint: "f".repeat(64),
     };
     const request = JSON.parse(String(init?.body)) as { path?: string };
+    if (request.path === "/api/v1/lineage" && hold) {
+      hold = false;
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+    }
     return json(
       request.path === "/api/v1/context" ? c : value.data,
       value.context === null ? null : c,
@@ -1045,6 +1065,11 @@ test("timing revisions refresh graph metadata without remounting its selection o
   const viewport = view.container
     .querySelector(".react-flow__viewport")
     ?.getAttribute("style");
+  fireEvent.click(screen.getByRole("button", { name: "Node colouring" }));
+  fireEvent.click(screen.getByRole("menuitemradio", { name: "Row count" }));
+  expect(view.container.querySelector(".node-overlay-label")?.textContent).toBe(
+    "2 rows",
+  );
   revision = true;
   await act(async () => workspace.refresh());
   await waitFor(() =>
@@ -1057,6 +1082,16 @@ test("timing revisions refresh graph metadata without remounting its selection o
       .querySelector(".react-flow__viewport")
       ?.getAttribute("style"),
   ).toBe(viewport);
+  await waitFor(() => expect(release).toBeDefined());
+  expect(view.container.querySelector(".node-overlay-label")?.textContent).toBe(
+    "Unknown",
+  );
+  release?.();
+  await waitFor(() =>
+    expect(
+      view.container.querySelector(".node-overlay-label")?.textContent,
+    ).toBe("2 rows"),
+  );
   view.unmount();
   workspace.dispose();
 });

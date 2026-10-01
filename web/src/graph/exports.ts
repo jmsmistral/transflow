@@ -1,6 +1,7 @@
 import type { GraphViewV1 } from "../generated/contracts";
 import { type Visual } from "./view";
 import { label } from "./model";
+import { paint } from "./overlays";
 export interface ExportOptions {
   labels: boolean;
   metadata: boolean;
@@ -83,6 +84,34 @@ export function exportSvg(
     published: "#dcefe2",
     missing: "#f4e6cf",
     unknown: "#e8eaee",
+    source: "#d5e9fb",
+    imported: "#e8d9f7",
+    pandas_transform: "#e8d9f7",
+    zero: "#e5e7eb",
+    NoChecks: "#e5e7eb",
+    Unavailable: "#e5e7eb",
+    Canceled: "#e5e7eb",
+    Interrupted: "#e5e7eb",
+    bin0: "#d7eee0",
+    Succeeded: "#d7eee0",
+    Passed: "#d7eee0",
+    current: "#d7eee0",
+    bin1: "#c5ddf5",
+    Running: "#c5ddf5",
+    target: "#c5ddf5",
+    planned: "#c5ddf5",
+    bin2: "#f7dfb5",
+    Warning: "#f7dfb5",
+    data: "#f7dfb5",
+    ancestor: "#f7dfb5",
+    trigger: "#f7dfb5",
+    bin3: "#f5c9cc",
+    Failed: "#f5c9cc",
+    logic: "#f5c9cc",
+    excluded: "#f5c9cc",
+    never_built: "#e6d9f3",
+    boundary: "#e6d9f3",
+    cached: "#e6d9f3",
   };
   const boxes = visual.nodes.map((n) => ({
     id: n.identity,
@@ -91,9 +120,7 @@ export function exportSvg(
     lines: [label(n)],
     width: 260,
     height: 48,
-    fill:
-      palette[view.colour === "resource" ? n.resource_type : n.publication] ??
-      "#e8eaee",
+    fill: palette[paint(n, view.colour).key] ?? "#e8eaee",
     dashed: n.publication === "missing",
   }));
   const minX = Math.min(0, ...boxes.map((b) => b.position.x)) - 60,

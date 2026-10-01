@@ -147,6 +147,19 @@ including builds where another dataset failed. The header identifies the selecte
 History and Build timestamps omit the timezone suffix while retaining UTC values.
 Live timing updates preserve graph membership, positions, selection and camera;
 historical versions are labelled explicitly rather than as branch fallbacks.
+T088 adds status, freshness, duration, rows, files, physical size, output health and
+build-role colouring with compact node labels and legends counting visible unique
+nodes. Zero, Unknown and No health checks remain distinct; failed jobs do not erase
+published-data availability. Duration modes use the last successful materialization
+or the latest ten successful publications, excluding cache reuse. Median uses
+measured samples; mean remains unknown when any selected timing is missing.
+Metadata-only browsing cannot certify currentness or foreign bytes. Build
+preview roles remain independent badges; schedule roles arrive with scheduling.
+T089 adds Cmd/Ctrl+K catalogue search, Cmd/Ctrl+S view saving and cancelable graph
+loads, with context-fenced hover/overlay refreshes. The separate dataset-list view
+remains removed. A public synthetic fixture and opt-in measurement build document
+observed 500-node/1,500-edge performance in the verification report.
+
 T087 adds the **Build planner** inspector for the current lineage selection. With
 nothing selected it shows a centered build prompt. Choose selected resources only
 (the UI default), transforms connecting selected endpoints, or all eligible ancestors;

@@ -3011,3 +3011,125 @@ revo-grid.preview-grid
 .planner-empty > .icon {
   flex: 0 0 60px;
 }
+
+/* Fixed overlay bins share numeric order; text carries their meaning independently of colour. */
+.colour-source {
+  background: #d5e9fb;
+}
+.colour-imported,
+.colour-pandas_transform {
+  background: #e8d9f7;
+}
+.colour-zero,
+.colour-NoChecks,
+.colour-Canceled,
+.colour-Interrupted,
+.colour-Unavailable {
+  background: #e5e7eb;
+}
+.colour-bin0,
+.colour-Succeeded,
+.colour-Passed,
+.colour-current {
+  background: #d7eee0;
+}
+.colour-bin1,
+.colour-Running,
+.colour-planned,
+.colour-target {
+  background: #c5ddf5;
+}
+.colour-bin2,
+.colour-Warning,
+.colour-data,
+.colour-ancestor,
+.colour-trigger {
+  background: #f7dfb5;
+}
+.colour-bin3,
+.colour-Failed,
+.colour-logic,
+.colour-excluded {
+  background: #f5c9cc;
+}
+.colour-never_built,
+.colour-boundary,
+.colour-cached {
+  background: #e6d9f3;
+}
+.theme-dark .colour-source,
+.theme-dark .colour-bin1,
+.theme-dark .colour-Running,
+.theme-dark .colour-planned,
+.theme-dark .colour-target {
+  background: #274866;
+}
+.theme-dark .colour-bin0,
+.theme-dark .colour-Succeeded,
+.theme-dark .colour-Passed,
+.theme-dark .colour-current {
+  background: #234839;
+}
+.theme-dark .colour-bin2,
+.theme-dark .colour-Warning,
+.theme-dark .colour-data,
+.theme-dark .colour-ancestor,
+.theme-dark .colour-trigger {
+  background: #5b4528;
+}
+.theme-dark .colour-bin3,
+.theme-dark .colour-Failed,
+.theme-dark .colour-logic,
+.theme-dark .colour-excluded {
+  background: #63353d;
+}
+.theme-dark .colour-zero,
+.theme-dark .colour-NoChecks,
+.theme-dark .colour-Canceled,
+.theme-dark .colour-Interrupted,
+.theme-dark .colour-Unavailable {
+  background: #37414e;
+}
+.theme-dark .colour-imported,
+.theme-dark .colour-pandas_transform,
+.theme-dark .colour-never_built,
+.theme-dark .colour-boundary,
+.theme-dark .colour-cached {
+  background: #463854;
+}
+.node-overlay-label {
+  position: absolute;
+  top: 43px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 11px;
+  padding: 2px 5px;
+  background: var(--surface);
+  border-radius: 3px;
+  color: var(--ink);
+}
+.node-overlay-badges {
+  position: absolute;
+  right: -7px;
+  top: -12px;
+  display: flex;
+  gap: 3px;
+}
+.node-overlay-badges > span {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  padding: 2px;
+  display: flex;
+}
+.node-overlay-badges .icon {
+  width: 13px;
+  height: 13px;
+}
+.graph-colour-legend .legend-counts {
+  margin: 8px 0 0;
+  font-size: 11px;
+  max-width: 235px;
+  display: block;
+}

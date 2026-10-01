@@ -114,6 +114,7 @@ export class GraphCache {
         {
           ...query,
           expand: "true",
+          overlays: "true",
           limit: "100",
           ...(cursor ? { cursor } : {}),
         },

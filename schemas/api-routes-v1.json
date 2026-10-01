@@ -120,7 +120,8 @@
       "cursor",
       "expand",
       "end",
-      "connections"
+      "connections",
+      "overlays"
     ],
     "mutation": false,
     "context": true

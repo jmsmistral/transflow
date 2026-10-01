@@ -315,3 +315,25 @@ test("branch dropdown searches the branches with heads for visible datasets", as
   expect(screen.queryByRole("button", { name: "feature" })).toBeNull();
   workspace.dispose();
 });
+
+test("search shortcut focuses the catalogue and leaves editable shortcuts alone", async () => {
+  const { Workspace } = await import("./workspace");
+  const { Client } = await import("./api/client");
+  const { fixtureTransport } = await import("./test-fixtures");
+  const workspace = new Workspace(new Client(fixtureTransport()));
+  await workspace.connect("launch");
+  const user = userEvent.setup();
+  render(<App workspace={workspace} />);
+  screen.getByRole("tab", { name: "Preview" }).focus();
+  await user.keyboard("{Control>}k{/Control}");
+  await vi.waitFor(() =>
+    expect(document.activeElement).toBe(
+      screen.getByRole("searchbox", { name: "Search catalogue" }),
+    ),
+  );
+  const search = screen.getByRole("searchbox", { name: "Search catalogue" });
+  await user.type(search, "typed");
+  await user.keyboard("{Control>}k{/Control}");
+  expect((search as HTMLInputElement).value).toBe("typed");
+  workspace.dispose();
+});

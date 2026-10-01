@@ -4,6 +4,7 @@ import { App } from "./App";
 import { ErrorBoundary } from "./components";
 import "./styles.css";
 import { Workspace } from "./workspace";
+import { Qualification } from "./Qualification";
 const workspace = new Workspace();
 const launchCode = window.location.hash.slice(1);
 window.history.replaceState(
@@ -20,6 +21,7 @@ createRoot(root).render(
   <StrictMode>
     <ErrorBoundary>
       <App workspace={workspace} />
+      {import.meta.env.MODE === "qualification" && <Qualification />}
     </ErrorBoundary>
   </StrictMode>,
 );

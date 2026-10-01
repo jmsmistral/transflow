@@ -1,5 +1,5 @@
 import { BuildPlanner } from "./BuildPlanner";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { Button, InspectorNotice, Status } from "./components";
 import { Icon, type IconName } from "./Icons";
@@ -185,6 +185,39 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     "--inspector": `${right}%`,
     "--bottom": `${bottom}%`,
   } as CSSProperties;
+  useEffect(() => {
+    const shortcut = (event: globalThis.KeyboardEvent) => {
+      if (
+        !(event.metaKey || event.ctrlKey) ||
+        event.altKey ||
+        (event.target instanceof HTMLElement &&
+          event.target.closest(
+            "input,textarea,select,[contenteditable=true],dialog",
+          ))
+      )
+        return;
+      if (event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setMode("Catalogue");
+        setInspectorOpen(true);
+        requestAnimationFrame(() =>
+          window.document
+            .querySelector<HTMLInputElement>(".catalogue-search input")
+            ?.focus(),
+        );
+      } else if (event.key.toLowerCase() === "s") {
+        const save = window.document.querySelector<HTMLButtonElement>(
+          ".lineage-save > button",
+        );
+        if (save) {
+          event.preventDefault();
+          if (!save.disabled) save.click();
+        }
+      }
+    };
+    window.addEventListener("keydown", shortcut);
+    return () => window.removeEventListener("keydown", shortcut);
+  }, []);
   return (
     <div className={`app ${dark ? "theme-dark" : ""}`}>
       <a className="skip-link" href="#workspace">

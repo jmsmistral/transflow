@@ -980,3 +980,35 @@ keyboard movement, directed paths, catalogue search, context switch, 604-node/ed
 paged traversal, 500-node guard, themes and narrow-screen list. Worker startup and
 layout-space issues found during Browser verification were corrected before handoff.
 The owner's T082 CI confirmation is recorded separately; new T083 CI is pending.
+
+## T088 overlays and T089 UI qualification — 2026-10-01
+
+The [measured receipt](evidence/t088-overlays-t089-qualification.json) records the
+final native Rust, Python and web gates, shared contracts and actual internal Browser
+journeys. All 500 nodes and 1,500 declared edges rendered in the synthetic workspace.
+At readable zoom, 563 observed frame intervals had p95 24.80 ms and 15 inputs had
+p95 23.00 ms to the second animation frame. These samples include concurrent local
+checks and do not establish universal 60-fps or cross-browser performance.
+
+The owner removed the separate dataset-list view; keyboard canvas controls and the
+accessible catalogue remain. Existing tests cover canceled/dropped reads, branch
+races, stale workers, escaped content and preserved positions/camera. New contracts
+cover zero versus unknown, no checks versus PASS, failed attempts with old valid heads,
+consumer input failure independence and simultaneous target/trigger badges.
+
+For repeatable local measurement, initialize a disposable workspace with its prepared
+Python 3.14 environment, run `node tools/qualification/web/lineage-fixture.mjs <workspace>`,
+then `transflow --workspace <workspace> catalog sync --python <prepared-python>`.
+Build opt-in assets from `web/` with `npm run build -- --mode qualification --outDir /tmp/transflow-ui-qualification`.
+Serve that directory with a temporary coordinator, obtain a fresh authenticated launch
+link and use the internal Browser. Start measurement before the chosen loading or
+interaction sequence; Stop measurement exposes bounded p95 results. Standard production
+builds omit the measurement panel. The generator never executes producers and refuses
+to overwrite an existing synthetic module directory.
+
+The temporary qualification reused the existing locked managed environment; it was
+not a fresh dependency installation. The first long-chain graph exceeded the existing
+causal-path budget. The final shallow fan-in graph stays inside it; the specific read
+budget failure now degrades freshness to explicit Unknown while planning remains
+fail-closed. Missing policies, unverified bytes and provider facts remain unavailable.
+Scheduler role population is deferred to T090–T095. CI is pending owner confirmation.

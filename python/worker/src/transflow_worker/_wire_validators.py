@@ -601,3 +601,18 @@ def validate_ApiHistoryJobV1(value: object) -> None:
 def validate_ApiDatasetHistoryV1(value: object) -> None:
     """Assert the ApiDatasetHistoryV1 contract, including custom formats."""
     validate_document("ApiDatasetHistoryV1", value)
+
+
+def validate_ApiOverlayRatioV1(value: object) -> None:
+    """Assert the ApiOverlayRatioV1 contract, including custom formats."""
+    validate_document("ApiOverlayRatioV1", value)
+
+
+def validate_ApiOverlayDurationsV1(value: object) -> None:
+    """Assert the ApiOverlayDurationsV1 contract, including custom formats."""
+    validate_document("ApiOverlayDurationsV1", value)
+
+
+def validate_ApiOverlayFactsV1(value: object) -> None:
+    """Assert the ApiOverlayFactsV1 contract, including custom formats."""
+    validate_document("ApiOverlayFactsV1", value)
