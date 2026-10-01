@@ -1,0 +1,28 @@
+{
+  "task": "T086 History UI owner review",
+  "date": "2026-10-01",
+  "specification": "1.1.3",
+  "implementation_base": "3762fa5d9201ea5dffc5fd0b8df820c8beb8bdf5",
+  "specification_base": "41704436c0b29c0a29b0225328feb79fc6ba83a2",
+  "scope": [
+    "Selected lineage branch beside dataset in Runs",
+    "ISO From/To fields with inclusive UTC end date and same-day support",
+    "Remove redundant provenance and time/exclusive chart caption suffixes",
+    "Clarify dataset runs versus committed versions"
+  ],
+  "checks": {
+    "focused": "npm test -- --run src/execution-model.test.ts src/execution-inspectors.test.tsx: 9 tests passed; covers leap day, year boundary, invalid/reversed dates, selected branch and API bounds.",
+    "web": "bash tools/check-web.sh: passed typecheck, lint, format, 471 tests, production worker diamond/error probes and matching 16-asset builds.",
+    "browser": "Internal Codex Browser with production assets: master branch label visible; ISO From/To 2026-09-28 includes the 13:24:32 UTC run (one build, 0.00% failures, 0.635 s mean); invalid 2026-02-30 and reversed range disable Apply. Caption displays dates only and redundant provenance is absent. No console warnings/errors.",
+    "documentation": "Specification 1.1.3 checker passed; 44 checker regressions passed; git diff --check passed in both repositories.",
+    "safety": "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh: passed including 27 regressions."
+  },
+  "corrections": "Initial full web gate caught test-only TypeScript errors (Testing Library exact options and tuple spread); corrected before the passing full gate.",
+  "limits": [
+    "Backend/API unchanged; dates adapt to existing UTC half-open bounds.",
+    "Date controls scope the summary/chart; the Runs list retains all loaded runs on the selected branch.",
+    "Rust/Python/native/CLI suites were not repeated for this frontend-only refinement; baseline evidence remains in t086-macos-arm64.json.",
+    "GitHub CI pending owner confirmation; not polled."
+  ],
+  "cleanup": "Own coordinator on 54063 stopped; no listener remains. Agent browser tab closed. Workspace preserved at /tmp/transflow-t085-refine-browser-20260930; user coordinator on 54062 untouched."
+}

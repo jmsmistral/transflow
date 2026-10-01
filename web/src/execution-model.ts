@@ -1,5 +1,32 @@
 import type { ApiExactRatioV1, ApiHistoryJobV1 } from "./generated/contracts";
 
+/** Inclusive calendar dates map to the API's half-open UTC microsecond range. */
+export function historyDateRange(from: string, to: string) {
+  const parse = (value: string): number | null => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const ms = Date.parse(`${value}T00:00:00Z`);
+    return Number.isFinite(ms) &&
+      ms >= 0 &&
+      new Date(ms).toISOString().slice(0, 10) === value
+      ? ms
+      : null;
+  };
+  const start = parse(from),
+    end = parse(to);
+  if (start === null || end === null || end < start) return null;
+  return {
+    from_us: (BigInt(start) * 1000n).toString(),
+    to_us: (BigInt(end + 86400000) * 1000n).toString(),
+  };
+}
+
+export function historyDate(us: string, inclusiveEnd = false): string {
+  const ms = BigInt(us) / 1000n - (inclusiveEnd ? 86400000n : 0n);
+  if (ms > 8640000000000000n || ms < -8640000000000000n)
+    return "Outside calendar range";
+  return new Date(Number(ms)).toISOString().slice(0, 10);
+}
+
 /** Display rounding uses integer arithmetic; retained nanoseconds remain available in titles. */
 export function seconds(
   value: string | ApiExactRatioV1 | null | undefined,

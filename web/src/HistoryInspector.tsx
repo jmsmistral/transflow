@@ -9,6 +9,8 @@ import { Button } from "./components";
 import { Icon } from "./Icons";
 import { field, versionMetadata } from "./inspectors";
 import {
+  historyDate,
+  historyDateRange,
   percent,
   position,
   seconds,
@@ -53,14 +55,15 @@ export function HistoryInspector({
   const [from, setFrom] = useState(() =>
     new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10),
   );
-  const [to, setTo] = useState(() =>
-    new Date(Date.now() + 86400000).toISOString().slice(0, 10),
-  );
+  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [range, setRange] = useState({ from, to });
   const rangeKey = JSON.stringify(range);
   const metrics = measured?.key === rangeKey ? measured.value : undefined;
+  const validRange = historyDateRange(from, to);
   useEffect(() => {
     if (!dataset || dataset.origin === "external") return;
+    const bounds = historyDateRange(range.from, range.to);
+    if (!bounds) return;
     const abort = new AbortController();
     void (async () => {
       const scope = await workspace.scope(branchSelection(state), abort.signal);
@@ -72,8 +75,7 @@ export function HistoryInspector({
         ),
         scope.read("ApiExecutionMetricsV1", "/api/v1/metrics", {
           dataset: dataset.dataset_id,
-          from_us: String(Date.parse(`${range.from}T00:00:00Z`) * 1000),
-          to_us: String(Date.parse(`${range.to}T00:00:00Z`) * 1000),
+          ...bounds,
           window: "10",
           materialized_any: "false",
         }),
@@ -157,6 +159,11 @@ export function HistoryInspector({
       )}
       <div className="execution-toolbar">
         <strong>{dataset?.path}</strong>
+        {section === "Runs" && (
+          <span className="history-branch" title="History branch">
+            <Icon name="branch" /> {state.selection.branch}
+          </span>
+        )}
         <div className="execution-switches">
           {(["Runs", "Versions"] as const).map((name) => (
             <Button
@@ -284,29 +291,34 @@ export function HistoryInspector({
                   className="metrics-range"
                   onSubmit={(event) => {
                     event.preventDefault();
-                    if (from && to && to > from) setRange({ from, to });
+                    if (validRange) setRange({ from, to });
                   }}
                 >
                   <label>
-                    From (UTC)
+                    From
                     <input
-                      type="date"
+                      type="text"
+                      placeholder="YYYY-MM-DD"
+                      pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
+                      title="YYYY-MM-DD, UTC date"
                       value={from}
                       onChange={(event) => setFrom(event.target.value)}
                       required
                     />
                   </label>
                   <label>
-                    Until, exclusive (UTC)
+                    To
                     <input
-                      type="date"
+                      type="text"
+                      placeholder="YYYY-MM-DD"
+                      pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
+                      title="YYYY-MM-DD, UTC date"
                       value={to}
                       onChange={(event) => setTo(event.target.value)}
-                      min={from}
                       required
                     />
                   </label>
-                  <Button type="submit" disabled={!from || !to || to <= from}>
+                  <Button type="submit" disabled={!validRange}>
                     Apply
                   </Button>
                 </form>
@@ -335,11 +347,6 @@ export function HistoryInspector({
                         label="Measured / missing"
                         value={`${metrics.duration_samples} / ${metrics.missing_duration_samples}`}
                       />
-                    </div>
-                    <div className="source-provenance">
-                      Branch {metrics.branch} · Dataset {short(metrics.dataset)}{" "}
-                      · Build acceptance cohort · All triggers · Cached reuse
-                      excluded from duration samples
                     </div>
                     <DurationChart jobs={jobs} metrics={metrics} />
                     <div className="source-provenance">
@@ -396,10 +403,10 @@ function DurationChart({
     ) || 1n;
   return (
     <div className="duration-chart">
-      <div className="chart-caption">
+      <div className="chart-caption" title="UTC dates; both dates are included">
         Attempt duration (seconds) · {samples.length} measured successes /
-        failures in {jobs.length} loaded runs · {timestamp(metrics.from_us)} to{" "}
-        {timestamp(metrics.to_us)}, exclusive
+        failures in {jobs.length} loaded runs · {historyDate(metrics.from_us)}{" "}
+        to {historyDate(metrics.to_us, true)}
       </div>
       {samples.length ? (
         <svg

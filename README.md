@@ -124,6 +124,8 @@ phase Build timeline with cancellation. Selecting a historical version pins Prev
 Code and Properties without moving the graph. Failed runs leave last-good Preview
 unchanged. History shows UTC acceptance-window metrics and measured duration points;
 reuse has no execution duration. Missing source/timings and ETA remain unavailable.
+The Runs header identifies the selected lineage branch. History dates use
+`YYYY-MM-DD`; both From and To dates are included, with UTC calendar boundaries.
 Live timing updates preserve graph membership, positions, selection and camera;
 historical versions are labelled explicitly rather than as branch fallbacks.
 Schedule, health and build-planning actions remain later tasks.

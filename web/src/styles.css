@@ -2072,6 +2072,12 @@ revo-grid.preview-grid
   gap: 4px;
   margin-left: auto;
 }
+.history-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
 .execution-switches [aria-pressed="true"],
 .history-entry[aria-pressed="true"] {
   background: var(--soft);
@@ -2211,6 +2217,7 @@ revo-grid.preview-grid
   font-size: 11px;
 }
 .metrics-range input {
+  width: 128px;
   padding: 3px 6px;
   min-height: 28px;
 }

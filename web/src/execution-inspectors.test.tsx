@@ -166,7 +166,10 @@ async function fixture(missing = false) {
           return Promise.resolve(
             json({ entries: [job], next_cursor: null }, c),
           );
-        if (path.endsWith("/metrics")) return Promise.resolve(json(metrics, c));
+        if (path.endsWith("/metrics"))
+          return Promise.resolve(
+            json({ ...metrics, from_us: query.from_us, to_us: query.to_us }, c),
+          );
         if (path.endsWith("/timeline"))
           return Promise.resolve(
             json(
@@ -338,6 +341,38 @@ test("history keeps failures separate from published versions and pins only on e
   fireEvent.click(screen.getByRole("button", { name: "Versions" }));
   fireEvent.click(screen.getByRole("button", { name: /Version cccccccc/ }));
   expect(pinned).toEqual([versionId]);
+  model.dispose();
+});
+test("history identifies the selected branch and submits inclusive ISO calendar dates", async () => {
+  const { model, state, calls } = await fixture();
+  render(
+    <HistoryInspector workspace={model} state={state} onVersion={() => {}} />,
+  );
+  expect(await screen.findByText("100.00%")).toBeTruthy();
+  expect(screen.getByTitle("History branch").textContent).toContain("master");
+  const from = screen.getByRole("textbox", { name: "From" });
+  const to = screen.getByRole("textbox", { name: "To" });
+  expect(from).toHaveProperty("placeholder", "YYYY-MM-DD");
+  fireEvent.change(from, { target: { value: "2024-02-29" } });
+  fireEvent.change(to, { target: { value: "2024-02-29" } });
+  const apply = screen.getByRole("button", { name: "Apply" });
+  expect(apply).toHaveProperty("disabled", false);
+  fireEvent.click(apply);
+  await waitFor(() =>
+    expect(
+      calls.filter((c) => c.path.endsWith("/metrics")).at(-1)?.query,
+    ).toMatchObject({
+      branch: "master",
+      from_us: "1709164800000000",
+      to_us: "1709251200000000",
+    }),
+  );
+  expect(await screen.findByText(/2024-02-29 to 2024-02-29/)).toBeTruthy();
+  expect(screen.queryByText(/Build acceptance cohort/)).toBeNull();
+  fireEvent.change(to, { target: { value: "2024-02-28" } });
+  expect(apply).toHaveProperty("disabled", true);
+  fireEvent.click(screen.getByRole("button", { name: "Versions" }));
+  expect(screen.queryByTitle("History branch")).toBeNull();
   model.dispose();
 });
 test("Gantt uses recorded phases and exposes retained failure evidence in the owning plan", async () => {
