@@ -175,6 +175,9 @@ Build report. Selection/context changes and expired plans automatically prepare 
 transient conflicts retry with bounded backoff. Run build stays disabled until ready. Publishing
 builds preserves node positions and camera placement. Schedule and health actions
 remain later tasks.
+The planned scheduling contract stores one current definition snapshot, overwritten
+on Save without definition history. Edit guards prevent conflicting saves; accepted
+work keeps its frozen execution settings. Scheduling implementation remains pending.
 Plain-clicking any selected lineage node narrows a multi-selection to that node.
 With no node selected or multiple nodes selected, the bottom tabs and right
 Properties panel show a centered “Select a node to view information” notice with
