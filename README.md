@@ -119,10 +119,11 @@ Preview tries configured fallbacks before offering an available retained branch 
 preview bytes are read directly from the provider.
 
 T086 adds numbered read-only producing Code, an explicit current retained definition
-and diff, separate published Versions and Runs, bounded attempt logs and a recorded
-phase Build timeline with cancellation. Selecting a historical version pins Preview,
-Code and Properties without moving the graph. Failed runs leave last-good Preview
-unchanged. History shows UTC acceptance-window metrics and measured duration points;
+and diff, dataset runs, bounded attempt logs and a recorded phase Build timeline
+with cancellation. History opens with a duration summary; selecting a run shows its
+details, and the header’s Show summary button returns to the summary. Failed runs
+leave last-good Preview unchanged. History shows UTC acceptance-window metrics and
+measured duration points;
 reuse has no execution duration. Missing source/timings and ETA remain unavailable.
 The Runs header identifies the selected lineage branch. History dates use
 `YYYY-MM-DD`; both From and To dates are included, with UTC calendar boundaries.

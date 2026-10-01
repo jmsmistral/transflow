@@ -318,7 +318,7 @@ test("an explicitly pinned version is labelled as a version, not a missing branc
   expect(screen.getByText(/Branch public/)).toBeTruthy();
   model.dispose();
 });
-test("history keeps failures separate from published versions and pins only on explicit selection", async () => {
+test("history shows run details and returns to the summary without changing version context", async () => {
   const { model, state } = await fixture();
   const pinned: string[] = [];
   render(
@@ -338,9 +338,17 @@ test("history keeps failures separate from published versions and pins only on e
     await screen.findByRole("textbox", { name: "Retained log excerpt" }),
   ).toHaveProperty("textContent", "error");
   expect(pinned).toEqual([]);
-  fireEvent.click(screen.getByRole("button", { name: "Versions" }));
-  fireEvent.click(screen.getByRole("button", { name: /Version cccccccc/ }));
-  expect(pinned).toEqual([versionId]);
+  expect(screen.queryByRole("button", { name: "Versions" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Runs" })).toBeNull();
+  expect(screen.queryByText("Back to duration summary")).toBeNull();
+  const summary = screen.getByRole("button", { name: "Show summary" });
+  expect(summary).toHaveProperty("disabled", false);
+  fireEvent.click(summary);
+  expect(await screen.findByText("100.00%")).toBeTruthy();
+  expect(screen.queryByText("Failure: USER_CODE")).toBeNull();
+  expect(summary).toHaveProperty("disabled", true);
+  expect(failure.getAttribute("aria-pressed")).toBe("false");
+  expect(pinned).toEqual([]);
   model.dispose();
 });
 test("history identifies the selected branch and submits inclusive ISO calendar dates", async () => {
@@ -371,8 +379,6 @@ test("history identifies the selected branch and submits inclusive ISO calendar 
   expect(screen.queryByText(/Build acceptance cohort/)).toBeNull();
   fireEvent.change(to, { target: { value: "2024-02-28" } });
   expect(apply).toHaveProperty("disabled", true);
-  fireEvent.click(screen.getByRole("button", { name: "Versions" }));
-  expect(screen.queryByTitle("History branch")).toBeNull();
   model.dispose();
 });
 test("Gantt uses recorded phases and exposes retained failure evidence in the owning plan", async () => {

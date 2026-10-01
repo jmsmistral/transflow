@@ -1,0 +1,25 @@
+{
+  "task": "T086 History navigation refinement",
+  "date": "2026-10-01",
+  "specification": "1.1.3",
+  "implementation_base": "6fefa23",
+  "specification_base": "dc698b2",
+  "changes": [
+    "Remove Versions list and Runs/Versions switch",
+    "Move summary navigation to header and label Show summary",
+    "Disable summary action when no run is selected"
+  ],
+  "checks": {
+    "focused": "npm test -- --run src/execution-inspectors.test.tsx: 6 tests passed, including run detail, summary return, selection clearing and unchanged version context.",
+    "web": "bash tools/check-web.sh: passed; 471 tests, typecheck/lint/format, production worker probes and matching 16-asset builds.",
+    "browser": "Internal Codex Browser on production assets: header contains Show summary instead of Runs/Versions; opening retained failed run enables it and displays build evidence; clicking restores metrics/chart, clears run highlight and disables the button. No console warnings/errors.",
+    "safety": "Safety baseline and 27 regressions passed.",
+    "documentation": "Specification 1.1.3 validator, 44 checker regressions and both repository diff whitespace checks passed."
+  },
+  "limits": [
+    "Frontend-only change; backend/API suites were not repeated.",
+    "CI pending owner confirmation; no workflow polling."
+  ],
+  "cleanup": "Own preview coordinator on 54063 stopped and listener absent; agent tab closed. Workspace preserved at /tmp/transflow-t085-refine-browser-20260930. User foreground coordinator untouched.",
+  "corrections": "Initial document regressions ran before the newly linked evidence file existed and rejected the broken link; after writing the receipt, the validator and all 44 regressions passed."
+}

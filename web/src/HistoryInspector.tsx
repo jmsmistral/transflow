@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import type {
   ApiExecutionMetricsV1,
   ApiHistoryJobV1,
-  ApiVersionsV1,
 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
 import { Button } from "./components";
@@ -40,11 +39,7 @@ export function HistoryInspector({
   onVersion: (version: Version | null) => void;
 }) {
   const dataset = state.value.dataset;
-  const [section, setSection] = useState<"Runs" | "Versions">("Runs");
   const [history, setHistory] = useState<HistoryResult>();
-  const [versions, setVersions] = useState<ApiVersionsV1 | null>(
-    state.value.versions,
-  );
   const [measured, setMeasured] = useState<{
     key: string;
     value: ApiExecutionMetricsV1;
@@ -101,11 +96,7 @@ export function HistoryInspector({
     const abort = new AbortController();
     try {
       const scope = await workspace.scope(branchSelection(state), abort.signal);
-      if (
-        section === "Runs" &&
-        history?.next &&
-        history.entries.length < 1000
-      ) {
+      if (history?.next && history.entries.length < 1000) {
         const page = await scope.read(
           "ApiDatasetHistoryV1",
           `/api/v1/datasets/${dataset.dataset_id}/history`,
@@ -114,24 +105,6 @@ export function HistoryInspector({
         setHistory({
           entries: [...history.entries, ...page.entries],
           next: page.next_cursor,
-        });
-      } else if (
-        section === "Versions" &&
-        versions?.next_cursor &&
-        versions.entries.length < 1000
-      ) {
-        const page = await scope.read(
-          "ApiVersionsV1",
-          `/api/v1/datasets/${dataset.dataset_id}/versions`,
-          {
-            origin_workspace: dataset.workspace_id,
-            cursor: versions.next_cursor,
-            limit: "50",
-          },
-        );
-        setVersions({
-          entries: [...versions.entries, ...page.entries],
-          next_cursor: page.next_cursor,
         });
       }
     } catch (error) {
@@ -144,7 +117,7 @@ export function HistoryInspector({
   const meta = dataset
     ? versionMetadata(
         dataset,
-        versions,
+        state.value.versions,
         state.selection.version,
         state.value.inspection,
       )
@@ -159,21 +132,13 @@ export function HistoryInspector({
       )}
       <div className="execution-toolbar">
         <strong>{dataset?.path}</strong>
-        {section === "Runs" && (
-          <span className="history-branch" title="History branch">
-            <Icon name="branch" /> {state.selection.branch}
-          </span>
-        )}
+        <span className="history-branch" title="History branch">
+          <Icon name="branch" /> {state.selection.branch}
+        </span>
         <div className="execution-switches">
-          {(["Runs", "Versions"] as const).map((name) => (
-            <Button
-              key={name}
-              aria-pressed={section === name}
-              onClick={() => setSection(name)}
-            >
-              {name}
-            </Button>
-          ))}
+          <Button disabled={!selected} onClick={() => setSelected(undefined)}>
+            Show summary
+          </Button>
         </div>
         {state.selection.version && (
           <Button onClick={() => onVersion(null)}>Return to branch tip</Button>
@@ -198,93 +163,50 @@ export function HistoryInspector({
         </Empty>
       ) : (
         <div className="history-layout">
-          <div
-            className="history-list"
-            aria-label={
-              section === "Runs" ? "Dataset runs" : "Published versions"
-            }
-          >
-            {section === "Runs"
-              ? jobs.map((job) => (
-                  <button
-                    className="history-entry"
-                    key={job.id}
-                    aria-pressed={selected?.id === job.id}
-                    onClick={() => setSelected(job)}
-                  >
-                    <Status state={job.state} />
-                    <span>
-                      <strong>{timestamp(job.created_us)}</strong>
-                      <small title={job.id}>
-                        {job.state} ·{" "}
-                        {job.state === "CACHED"
-                          ? "Reuse (no execution)"
-                          : seconds(job.duration_ns)}{" "}
-                        · {job.attempt_count} attempts
-                      </small>
-                    </span>
-                  </button>
-                ))
-              : versions?.entries.map((version) => (
-                  <button
-                    className="history-entry"
-                    key={version.version}
-                    aria-pressed={meta?.version === version.version}
-                    onClick={() => onVersion(version)}
-                  >
-                    <Icon name="table" />
-                    <span>
-                      <strong>
-                        {version.origin === "local"
-                          ? timestamp(version.published_at_us)
-                          : "Provider version"}
-                      </strong>
-                      <small title={version.version}>
-                        Version {short(version.version)}
-                        {version.origin === "local"
-                          ? ` · ${version.row_count} rows`
-                          : ""}
-                      </small>
-                    </span>
-                  </button>
-                ))}
-            {section === "Runs" && history && !jobs.length && (
+          <div className="history-list" aria-label="Dataset runs">
+            {jobs.map((job) => (
+              <button
+                className="history-entry"
+                key={job.id}
+                aria-pressed={selected?.id === job.id}
+                onClick={() => setSelected(job)}
+              >
+                <Status state={job.state} />
+                <span>
+                  <strong>{timestamp(job.created_us)}</strong>
+                  <small title={job.id}>
+                    {job.state} ·{" "}
+                    {job.state === "CACHED"
+                      ? "Reuse (no execution)"
+                      : seconds(job.duration_ns)}{" "}
+                    · {job.attempt_count} attempts
+                  </small>
+                </span>
+              </button>
+            ))}
+            {history && !jobs.length && (
               <Empty>No retained runs on this branch.</Empty>
             )}
-            {section === "Versions" && !versions?.entries.length && (
-              <Empty>No published versions.</Empty>
-            )}
-            {((section === "Runs" && history?.next) ||
-              (section === "Versions" && versions?.next_cursor)) && (
+            {history?.next && (
               <Button
                 onClick={() => {
                   void more();
                 }}
-                disabled={
-                  busy ||
-                  (section === "Runs"
-                    ? jobs.length
-                    : (versions?.entries.length ?? 0)) >= 1000
-                }
+                disabled={busy || jobs.length >= 1000}
               >
                 {busy ? "Loading…" : "Load more"}
               </Button>
             )}
           </div>
           <div className="history-detail">
-            {selected && dataset && section === "Runs" ? (
-              <>
-                <Button onClick={() => setSelected(undefined)}>
-                  Back to duration summary
-                </Button>
-                <BuildDetail
-                  key={selected.id}
-                  workspace={workspace}
-                  state={state}
-                  job={selected}
-                  dataset={dataset}
-                />
-              </>
+            {selected && dataset ? (
+              <BuildDetail
+                key={selected.id}
+                workspace={workspace}
+                state={state}
+                job={selected}
+                dataset={dataset}
+              />
             ) : (
               <>
                 <form
