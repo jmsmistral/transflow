@@ -2170,6 +2170,20 @@ revo-grid.preview-grid
   background: var(--surface);
   color: var(--ink);
 }
+.history-entry-copy {
+  min-width: 0;
+}
+.history-entry-copy > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-job-duration {
+  margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
 .history-entry:hover {
   background: var(--bg);
 }

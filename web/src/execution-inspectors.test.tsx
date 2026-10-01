@@ -333,7 +333,7 @@ test("history shows job details and returns to the summary without changing vers
     />,
   );
   expect(await screen.findByText("100.00%")).toBeTruthy();
-  const failure = screen.getByRole("button", { name: /FAILED · 1.000 s/ });
+  const failure = screen.getByRole("button", { name: /FAILED · 1 attempts/ });
   fireEvent.click(failure);
   expect(await screen.findByText("Failure: USER_CODE")).toBeTruthy();
   expect(

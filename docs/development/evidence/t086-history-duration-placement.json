@@ -1,0 +1,17 @@
+{
+  "task": "T086 History job duration placement",
+  "date": "2026-10-01",
+  "implementation_base": "64c7dd3",
+  "specification_base": "2544d0e",
+  "change": "Job duration moved from inline metadata to a non-wrapping, right-aligned label centered in each History entry. Cached jobs retain the no-execution text without a duration.",
+  "checks": {
+    "web": "bash tools/check-web.sh passed: 474 tests, typecheck/lint/format, production worker probes and matching 16-asset builds. Existing job-selection assertion updated for the new accessible text order.",
+    "documentation": "Specification checker and 44 regressions passed; both repository diff whitespace checks passed.",
+    "safety": "Safety baseline and 27 regressions passed.",
+    "browser": "Internal Codex Browser using production assets and existing synthetic history: canceled, failed and successful job durations aligned at the right edge and vertically centered; metadata intact; no console warnings/errors."
+  },
+  "ci": "Pending owner confirmation; not polled",
+  "corrections": "A transient editing-script error overwrote the CSS buffer; restored the clean original CSS and applied only the intended styles before the passing gate.",
+  "limits": "Frontend placement only; backend suites were not repeated.",
+  "cleanup": "Own coordinator on 54063 stopped; listener absent and agent tab closed. Workspace preserved at /tmp/transflow-t085-refine-browser-20260930."
+}

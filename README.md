@@ -129,7 +129,8 @@ details, and the header’s Show summary button returns to the summary. Failed j
 leave last-good Preview unchanged. History shows UTC acceptance-window metrics and
 measured duration points;
 reuse has no execution duration. Missing source/timings and ETA remain unavailable.
-Each History entry also shows its overall build status and total job count,
+Each History entry places the dataset job duration at the right edge and shows
+its overall build status and total job count,
 including builds where another dataset failed. The header identifies the selected lineage branch. History dates use
 `YYYY-MM-DD`; both From and To dates are included, with UTC calendar boundaries.
 Live timing updates preserve graph membership, positions, selection and camera;

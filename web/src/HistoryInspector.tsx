@@ -172,14 +172,14 @@ export function HistoryInspector({
                 onClick={() => setSelected(job)}
               >
                 <Status state={job.state} />
-                <span>
-                  <strong>{timestamp(job.created_us)}</strong>
+                <span className="history-entry-copy">
+                  <strong title={timestamp(job.created_us)}>
+                    {timestamp(job.created_us)}
+                  </strong>
                   <small title={job.id}>
                     {job.state} ·{" "}
-                    {job.state === "CACHED"
-                      ? "Reuse (no execution)"
-                      : seconds(job.duration_ns)}{" "}
-                    · {job.attempt_count} attempts
+                    {job.state === "CACHED" && "Reuse (no execution) · "}
+                    {job.attempt_count} attempts
                   </small>
                   <small className="history-build" title={`Build ${job.build}`}>
                     Part of <Status state={job.build_state} />
@@ -189,6 +189,11 @@ export function HistoryInspector({
                     </span>
                   </small>
                 </span>
+                {job.state !== "CACHED" && (
+                  <small className="history-job-duration" title="Job duration">
+                    ({seconds(job.duration_ns)})
+                  </small>
+                )}
               </button>
             ))}
             {history && !jobs.length && (
