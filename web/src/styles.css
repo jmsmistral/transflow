@@ -2707,3 +2707,32 @@ revo-grid.preview-grid
 .build-filters label {
   white-space: nowrap;
 }
+
+.build-filters .execution-switches {
+  flex-wrap: wrap;
+}
+.attempt-evidence-toolbar button {
+  margin-left: auto;
+}
+.syntax-keyword {
+  color: #7543a3;
+}
+.syntax-string {
+  color: #a13d20;
+}
+.syntax-number {
+  color: #176553;
+}
+.syntax-comment {
+  color: var(--muted);
+  font-style: italic;
+}
+.theme-dark .syntax-keyword {
+  color: #d2a7f0;
+}
+.theme-dark .syntax-string {
+  color: #f3b597;
+}
+.theme-dark .syntax-number {
+  color: #91d5b6;
+}

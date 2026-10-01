@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import type { ApiContextV1, ApiSourceV1 } from "./generated/contracts";
+import type { ApiSourceV1 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
 import { Button } from "./components";
+import { SourceLines } from "./SourceLines";
 import { field, versionMetadata } from "./inspectors";
-import { short, sourceDiff } from "./execution-model";
+import { sourceDiff } from "./execution-model";
 import {
   type Ready,
   type Scope,
@@ -56,37 +57,6 @@ async function capturedSource(
   } while (offset < 2000 && text.length < 512 * 1024);
   return { ...last, offset: 0, text, complete: false };
 }
-function Provenance({
-  value,
-  context,
-}: {
-  value: ApiSourceV1;
-  context: ApiContextV1;
-}) {
-  return (
-    <div className="source-provenance">
-      {context.selection.kind === "local_version" && (
-        <span title={context.selection.id ?? undefined}>
-          Version {short(context.selection.id)}
-        </span>
-      )}
-      <span title={value.source}>Snapshot {short(value.source)}</span>
-      <span>{value.path}</span>
-      <span>{context.selection.kind.replaceAll("_", " ")}</span>
-      {value.git ? (
-        <>
-          <span>
-            Git {value.git.branch ?? "detached"} ·{" "}
-            {value.git.commit?.slice(0, 12) ?? "no commit"}
-          </span>
-          <strong>{value.git.dirty ? "Dirty capture" : "Clean capture"}</strong>
-        </>
-      ) : (
-        <span>Git provenance unavailable</span>
-      )}
-    </div>
-  );
-}
 export function CodeInspector({
   workspace,
   state,
@@ -96,14 +66,12 @@ export function CodeInspector({
 }) {
   const dataset = state.value.dataset;
   const [mode, setMode] = useState<
-    "Producing source" | "Current retained definition" | "Diff"
-  >("Producing source");
+    "Data publish version" | "Latest saved version" | "Diff"
+  >("Data publish version");
   const [result, setResult] = useState<{
     key: string;
     producing?: (ApiSourceV1 & { complete: boolean }) | undefined;
     current?: (ApiSourceV1 & { complete: boolean }) | undefined;
-    producingContext?: ApiContextV1 | undefined;
-    currentContext?: ApiContextV1 | undefined;
     error?: string;
   }>();
   const meta = dataset
@@ -128,11 +96,11 @@ export function CodeInspector({
         throw new Error(
           "Producing source is retained by the provider workspace and is unavailable here.",
         );
-      let producing, current, producingContext, currentContext;
-      if (mode !== "Current retained definition") {
+      let producing, current;
+      if (mode !== "Latest saved version") {
         if (!meta?.version)
           throw new Error(
-            "No published version is available. Choose Current retained definition to inspect its captured source.",
+            "No published version is available. Choose Latest saved version to inspect its captured source.",
           );
         const scope = await workspace.scope(
           {
@@ -143,26 +111,24 @@ export function CodeInspector({
           },
           abort.signal,
         );
-        producingContext = scope.context;
         producing = await capturedSource(
           scope,
           dataset.dataset_id,
           dataset.workspace_id,
         );
       }
-      if (mode !== "Producing source") {
+      if (mode !== "Data publish version") {
         const scope = await workspace.scope(
           branchSelection(state),
           abort.signal,
         );
-        currentContext = scope.context;
         current = await capturedSource(
           scope,
           dataset.dataset_id,
           dataset.workspace_id,
         );
       }
-      return { key, producing, current, producingContext, currentContext };
+      return { key, producing, current };
     })().then(
       (value) => {
         if (!abort.signal.aborted) setResult(value);
@@ -175,11 +141,7 @@ export function CodeInspector({
   }, [workspace, state, dataset, key, mode, meta?.version]);
   const shown = result?.key === key ? result : null;
   const source =
-    mode === "Current retained definition" ? shown?.current : shown?.producing;
-  const context =
-    mode === "Current retained definition"
-      ? shown?.currentContext
-      : shown?.producingContext;
+    mode === "Latest saved version" ? shown?.current : shown?.producing;
   const resolved =
     meta?.originBranch ?? field(dataset?.head, "resolved_branch");
   const diff =
@@ -188,18 +150,23 @@ export function CodeInspector({
       : null;
   return (
     <div className="execution-inspector code-inspector">
-      {mode !== "Current retained definition" && !state.selection.version && (
+      {mode !== "Latest saved version" && !state.selection.version && (
         <Fallback branch={resolved} requested={state.selection.branch} />
       )}
       <div className="execution-toolbar">
         <strong>{dataset?.path}</strong>
         <div className="execution-switches" aria-label="Code views">
           {(
-            ["Producing source", "Current retained definition", "Diff"] as const
+            ["Data publish version", "Latest saved version", "Diff"] as const
           ).map((name) => (
             <Button
               key={name}
               aria-pressed={mode === name}
+              title={
+                name === "Latest saved version"
+                  ? "Latest validated source capture; excludes unvalidated working-tree edits"
+                  : undefined
+              }
               onClick={() => setMode(name)}
             >
               {name}
@@ -207,18 +174,7 @@ export function CodeInspector({
           ))}
         </div>
       </div>
-      {meta?.version && mode !== "Current retained definition" && !source && (
-        <div className="source-provenance">
-          <span title={meta.version}>Version {short(meta.version)}</span>
-          <span title={meta.source}>
-            Producing snapshot {short(meta.source)}
-          </span>
-        </div>
-      )}
-      {source && context && <Provenance value={source} context={context} />}
-      {mode === "Diff" && shown?.current && shown.currentContext && (
-        <Provenance value={shown.current} context={shown.currentContext} />
-      )}
+      {source && <div className="source-provenance">{source.path}</div>}
       {shown?.error ? (
         <Empty>Source unavailable: {shown.error}</Empty>
       ) : !shown ? (
@@ -241,26 +197,7 @@ export function CodeInspector({
               : "Read-only captured source"
           }
         >
-          <ol className="source-lines">
-            {diff
-              ? diff.map((line, i) => (
-                  <li key={i} className={`diff-${line.kind}`}>
-                    <code>
-                      {line.kind === "added"
-                        ? "+ "
-                        : line.kind === "removed"
-                          ? "− "
-                          : "  "}
-                      {line.text || " "}
-                    </code>
-                  </li>
-                ))
-              : source?.text.split("\n").map((line, i) => (
-                  <li key={i}>
-                    <code>{line || " "}</code>
-                  </li>
-                ))}
-          </ol>
+          <SourceLines source={source} current={shown?.current} diff={diff} />
           {source && !source.complete && (
             <p className="bounded-notice">
               Showing a bounded excerpt (maximum 2,000 lines / 512 KiB); use the

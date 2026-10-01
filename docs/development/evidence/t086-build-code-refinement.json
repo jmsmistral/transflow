@@ -1,0 +1,24 @@
+{
+  "task": "T086 Build and Code presentation refinement",
+  "date": "2026-10-01",
+  "implementation_base": "e0e9fa7",
+  "specification_base": "d4c4518",
+  "changes": [
+    "Merged chart filters/modes toolbar, accessible refresh glyph, removed targets/provenance and repeated Gantt status subtitles, right-aligned attempt Close.",
+    "Gantt axis excludes initial build queue wait, preserving full-build origin across filters and one-second live elapsed display.",
+    "Code uses Data publish version / Latest saved version labels, source-path-only metadata and escaped Python/SQL syntax highlighting in source and diff. Published source preserves Preview-style branch fallback notice."
+  ],
+  "checks": {
+    "focused": "18 targeted component/lexer tests passed, including multiline source, escaped markup, independent diff token states, fallback identity and initial queue exclusion.",
+    "web": "Full web gate passed: 484 tests, typecheck, lint, formatting, production worker probes and reproducible 16-asset build.",
+    "browser": "Internal Codex Browser with real coordinator/production assets: highlighted Code and Diff, path-only metadata and renamed controls; compact Build toolbar, first-job axis origin, refresh glyph, no repeated status/provenance, and right-aligned Close action. Close removed attempt details; Refresh preserved report; no warning/error console entries.",
+    "documentation": "Specification checker and 44 regressions passed; repository diff checks passed.",
+    "safety": "Safety baseline and 27 regressions passed."
+  },
+  "limits": [
+    "Latest saved version remains the latest validated capture, not unvalidated working-tree contents.",
+    "No source cleanup performed. Reachability policy remains architecture 21.1; full deletion service remains T111.",
+    "Backend unchanged, backend suites not repeated. CI pending owner confirmation."
+  ],
+  "cleanup": "Own coordinator stopped and browser tab closed; /tmp/transflow-t085-refine-browser-20260930 preserved."
+}

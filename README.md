@@ -122,8 +122,8 @@ A **build** contains one or more **jobs**, each responsible for one dataset.
 An **attempt** is one execution try of a job; retries create further attempts.
 Cached jobs reuse a version without executing a new attempt.
 
-T086 adds numbered read-only producing Code, an explicit current retained definition
-and diff, dataset jobs, bounded attempt logs and a recorded phase Build timeline
+T086 adds numbered, syntax-highlighted read-only Code with Data publish version,
+Latest saved version (the latest validated capture) and Diff, dataset jobs, bounded attempt logs and a recorded phase Build timeline
 with cancellation. History opens with a duration summary; selecting a job shows its
 transaction/job overview and Logs, Files, Metadata, Schema and Job spec tabs.
 View build report opens a large overlay with build facts, execution-ordered jobs,

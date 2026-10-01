@@ -237,14 +237,6 @@ function BuildReport({
             <p>Schedule conditions and recent builds are unavailable.</p>
           </section>
         )}
-        <details>
-          <summary>Targets and provenance</summary>
-          <Evidence>
-            {property(property(property(report, "plan"), "context"), "targets")}
-          </Evidence>
-          <p>Plan {timeline.plan}</p>
-          <p>Snapshot {timeline.source}</p>
-        </details>
       </aside>
       <main className="build-progress">
         <div className="execution-toolbar">
@@ -252,7 +244,9 @@ function BuildReport({
           <span className="build-live" role="status">
             {active ? "Live · updates automatically" : "Completed"}
           </span>
-          <Button onClick={refresh}>Refresh</Button>
+          <Button onClick={refresh} aria-label="Refresh" title="Refresh">
+            <Icon name="refresh" />
+          </Button>
           {active && (
             <Button
               disabled={canceling}
@@ -289,8 +283,6 @@ function BuildReport({
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
-        </div>
-        <div className="execution-toolbar">
           <div className="execution-switches">
             {(
               [
@@ -369,11 +361,9 @@ function BuildReport({
         {!jobs.length && <Empty>No jobs match these filters.</Empty>}
         {attempt && (
           <section>
-            <div className="execution-toolbar">
+            <div className="execution-toolbar attempt-evidence-toolbar">
               <h3>Attempt evidence</h3>
-              <Button onClick={() => setAttempt(undefined)}>
-                Close attempt
-              </Button>
+              <Button onClick={() => setAttempt(undefined)}>Close</Button>
             </div>
             <AttemptDetail key={attempt} scope={scope} attempt={attempt} />
           </section>
@@ -401,7 +391,18 @@ export function BuildGantt({
   const phases = timeline.jobs.flatMap((j) =>
     j.attempts.flatMap((a) => a.phases),
   );
-  const start = BigInt(timeline.queued_us);
+  // Exclude initial build queue wait, but keep one axis across all job filters.
+  const starts = timeline.jobs.flatMap((j) =>
+    j.attempts.flatMap((a) => [
+      a.started_us,
+      ...a.phases.map((p) => p.started_us),
+    ]),
+  );
+  const start =
+    starts.reduce<bigint | undefined>((first, value) => {
+      const time = BigInt(value);
+      return first === undefined || time < first ? time : first;
+    }, undefined) ?? BigInt(timeline.queued_us);
   const end = phases.reduce(
     (end, p) => {
       const t = BigInt(p.finished_us ?? p.started_us);
@@ -448,7 +449,6 @@ export function BuildGantt({
         <div className="gantt-row" key={j.job}>
           <div className="gantt-label">
             <strong>{name(j)}</strong>
-            <small>{j.state}</small>
           </div>
           <div>
             {!j.attempts.length ? (

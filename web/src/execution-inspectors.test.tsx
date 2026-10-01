@@ -310,18 +310,27 @@ test("producing source uses the exact version definition, current and diff are e
   render(<CodeInspector workspace={model} state={state} />);
   expect(await screen.findByText("# producing")).toBeTruthy();
   expect(screen.queryByText("# current")).toBeNull();
-  expect(screen.getByText("Dirty capture")).toBeTruthy();
+  expect(screen.queryByText("Dirty capture")).toBeNull();
+  expect(screen.getByText("src/producing.py")).toBeTruthy();
+  expect(
+    screen.getByText(/Could not find data on current branch/),
+  ).toBeTruthy();
+  expect(screen.getByText("def").className).toBe("syntax-keyword");
   expect(calls.find((c) => c.path.includes("/source/"))?.query).toMatchObject({
     version: versionId,
     path: "src/producing.py",
   });
-  fireEvent.click(
-    screen.getByRole("button", { name: "Current retained definition" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Latest saved version" }));
   expect(await screen.findByText("# current")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Diff" }));
-  expect(await screen.findByText("− # producing")).toBeTruthy();
-  expect(screen.getByText("+ # current")).toBeTruthy();
+  await waitFor(() =>
+    expect(document.querySelector(".diff-removed code")?.textContent).toBe(
+      "− # producing",
+    ),
+  );
+  expect(document.querySelector(".diff-added code")?.textContent).toBe(
+    "+ # current",
+  );
   model.dispose();
 });
 test("missing retained producer is unavailable and never replaced with current code", async () => {
@@ -329,7 +338,7 @@ test("missing retained producer is unavailable and never replaced with current c
   render(<CodeInspector workspace={model} state={state} />);
   expect(await screen.findByText(/Source unavailable/)).toBeTruthy();
   expect(calls.some((c) => c.path.includes("/source/"))).toBe(false);
-  expect(screen.getByText(/Producing snapshot/)).toBeTruthy();
+  expect(screen.queryByText(/Producing snapshot/)).toBeNull();
   model.dispose();
 });
 test("an explicitly pinned version is labelled as a version, not a missing branch", async () => {
@@ -493,6 +502,10 @@ test("job overview opens a modal, preserves selection and hides manual schedule 
   const dialog = screen.getByRole("dialog", { name: "Build report" });
   expect(within(dialog).getByText("Build info")).toBeTruthy();
   expect(within(dialog).queryByText("Build schedule")).toBeNull();
+  expect(within(dialog).queryByText("Targets and provenance")).toBeNull();
+  expect(
+    within(dialog).getByRole("button", { name: "Refresh" }).textContent,
+  ).toBe("");
   expect(
     within(dialog).getByRole("button", { name: "Critical path" }),
   ).toHaveProperty("disabled", false);
@@ -602,6 +615,7 @@ test("Gantt orders started jobs first, updates open spans and freezes completed 
     ...base,
     state: "RUNNING",
     finished_us: null,
+    queued_us: "1699999900000000",
     jobs: [later, waiting, early],
   };
   expect(orderedJobs(timeline.jobs).map((j) => j.job)).toEqual([
@@ -625,6 +639,10 @@ test("Gantt orders started jobs first, updates open spans and freezes completed 
   ).toEqual(["early", "later", "waiting"]);
   const bar = screen.getByRole("button", { name: /later attempt/ });
   expect(bar.style.width).toBe("50%");
+  expect(screen.getByRole("button", { name: /early attempt/ }).style.left).toBe(
+    "0%",
+  );
+  expect(view.container.querySelector(".gantt-label small")).toBeNull();
   view.rerender(
     <BuildGantt
       timeline={timeline}
