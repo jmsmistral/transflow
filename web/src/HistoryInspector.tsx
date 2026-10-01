@@ -147,7 +147,7 @@ export function HistoryInspector({
       {state.selection.version && (
         <div className="source-provenance">
           Preview and Code are pinned to version{" "}
-          {short(state.selection.version)}. Runs and metrics below query branch{" "}
+          {short(state.selection.version)}. Jobs and metrics below query branch{" "}
           {state.selection.branch}.
         </div>
       )}
@@ -163,7 +163,7 @@ export function HistoryInspector({
         </Empty>
       ) : (
         <div className="history-layout">
-          <div className="history-list" aria-label="Dataset runs">
+          <div className="history-list" aria-label="Dataset jobs">
             {jobs.map((job) => (
               <button
                 className="history-entry"
@@ -185,14 +185,14 @@ export function HistoryInspector({
                     Part of <Status state={job.build_state} />
                     <span>
                       {job.build_state} build · {job.build_job_count}{" "}
-                      {job.build_job_count === "1" ? "run" : "runs"}
+                      {job.build_job_count === "1" ? "job" : "jobs"}
                     </span>
                   </small>
                 </span>
               </button>
             ))}
             {history && !jobs.length && (
-              <Empty>No retained runs on this branch.</Empty>
+              <Empty>No retained jobs on this branch.</Empty>
             )}
             {history?.next && (
               <Button
@@ -334,7 +334,7 @@ function DurationChart({
     <div className="duration-chart">
       <div className="chart-caption" title="UTC dates; both dates are included">
         Attempt duration (seconds) · {samples.length} measured successes /
-        failures in {jobs.length} loaded runs · {historyDate(metrics.from_us)}{" "}
+        failures in {jobs.length} loaded jobs · {historyDate(metrics.from_us)}{" "}
         to {historyDate(metrics.to_us, true)}
       </div>
       {samples.length ? (
@@ -400,7 +400,7 @@ function DurationChart({
         </svg>
       ) : (
         <Empty>
-          No measured attempt durations in the loaded runs for this range.
+          No measured attempt durations in the loaded jobs for this range.
         </Empty>
       )}
     </div>

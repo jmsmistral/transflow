@@ -6,6 +6,10 @@ scope, executes required checks and waits for publication. No separate trust,
 discovery or catalogue-sync command is required. The initial execution adapter is
 Polars; failed checks or attempts preserve the last successful head.
 
+A build contains one or more jobs. Each job builds one dataset; an attempt is one
+execution try of that job, and retries create additional attempts. Cached jobs reuse
+a retained version without a new execution attempt.
+
 Current-working-tree builds also refresh retained catalogue browsing metadata
 under the same source and registry guards. `catalog show` can report producer
 locations without importing code. A stale plan or invalid graph preserves the

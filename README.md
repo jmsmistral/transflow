@@ -118,14 +118,18 @@ from the keyboard. If the selected branch has no head,
 Preview tries configured fallbacks before offering an available retained branch for browsing. Foreign
 preview bytes are read directly from the provider.
 
+A **build** contains one or more **jobs**, each responsible for one dataset.
+An **attempt** is one execution try of a job; retries create further attempts.
+Cached jobs reuse a version without executing a new attempt.
+
 T086 adds numbered read-only producing Code, an explicit current retained definition
-and diff, dataset runs, bounded attempt logs and a recorded phase Build timeline
-with cancellation. History opens with a duration summary; selecting a run shows its
-details, and the header’s Show summary button returns to the summary. Failed runs
+and diff, dataset jobs, bounded attempt logs and a recorded phase Build timeline
+with cancellation. History opens with a duration summary; selecting a job shows its
+details, and the header’s Show summary button returns to the summary. Failed jobs
 leave last-good Preview unchanged. History shows UTC acceptance-window metrics and
 measured duration points;
 reuse has no execution duration. Missing source/timings and ETA remain unavailable.
-Each History entry also shows its overall build status and total run count,
+Each History entry also shows its overall build status and total job count,
 including builds where another dataset failed. The header identifies the selected lineage branch. History dates use
 `YYYY-MM-DD`; both From and To dates are included, with UTC calendar boundaries.
 Live timing updates preserve graph membership, positions, selection and camera;

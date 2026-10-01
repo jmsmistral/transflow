@@ -320,7 +320,7 @@ test("an explicitly pinned version is labelled as a version, not a missing branc
   expect(screen.getByText(/Branch public/)).toBeTruthy();
   model.dispose();
 });
-test("history shows run details and returns to the summary without changing version context", async () => {
+test("history shows job details and returns to the summary without changing version context", async () => {
   const { model, state } = await fixture();
   const pinned: string[] = [];
   render(
@@ -410,15 +410,15 @@ test("Gantt uses recorded phases and exposes retained failure evidence in the ow
 });
 
 test.each([
-  ["SUCCEEDED", "FAILED", "2", "2 runs"],
-  ["SUCCEEDED", "SUCCEEDED", "1", "1 run"],
-  ["RUNNING", "RUNNING", "3", "3 runs"],
+  ["SUCCEEDED", "FAILED", "2", "2 jobs"],
+  ["SUCCEEDED", "SUCCEEDED", "1", "1 job"],
+  ["RUNNING", "RUNNING", "3", "3 jobs"],
 ])(
-  "history separates run %s from build %s",
-  async (runState, buildState, count, label) => {
+  "history separates job %s from build %s",
+  async (jobState, buildState, count, label) => {
     const { model, state } = await fixture(false, {
       ...job,
-      state: runState,
+      state: jobState,
       build_state: buildState,
       build_job_count: count,
     });
@@ -432,7 +432,7 @@ test.each([
     ).toBeTruthy();
     const entry = line.closest("button");
     expect(
-      entry?.querySelector(`:scope > .status-${runState.toLowerCase()}`),
+      entry?.querySelector(`:scope > .status-${jobState.toLowerCase()}`),
     ).toBeTruthy();
     model.dispose();
   },

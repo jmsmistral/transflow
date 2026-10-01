@@ -29,5 +29,11 @@
     "The successful-dataset/failed-two-job-build case is covered by actual SQLite storage and component tests. An extra forced preview build was rejected by automatic approval review due to persistent synthetic workspace mutations; it was not run. Browser verification used existing history.",
     "No database migration or build execution semantics change."
   ],
-  "cleanup": "Own coordinator on 54063 stopped; listener absent. Browser tab closed. Workspace preserved at /tmp/transflow-t085-refine-browser-20260930; synthetic producer files and user coordinator untouched."
+  "cleanup": "Own coordinator on 54063 stopped; listener absent. Browser tab closed. Workspace preserved at /tmp/transflow-t085-refine-browser-20260930; synthetic producer files and user coordinator untouched.",
+  "terminology_review": {
+    "request": "Use build/job/attempt consistently; a build contains dataset jobs and retries are attempts.",
+    "changes": "History count labels, list accessibility, pinned-context notice, empty states and chart captions use job/jobs. README, public build guide, canonical concepts, architecture, ADRs and screenshot mapping descriptions updated. Historical receipts/former labels and external OpenLineage run terminology retain their meaning.",
+    "verification": "Final full web gate passed 474 tests, types/lints/format and production asset checks. Internal Browser confirmed 1 job, 4 jobs, Dataset jobs and loaded jobs using existing real history. Backend unchanged after the earlier complete gates.",
+    "cleanup": "Final own coordinator stopped, listener absent and browser tab closed."
+  }
 }
