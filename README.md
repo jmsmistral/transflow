@@ -154,10 +154,12 @@ then **Next (View preview)** shows the complete scope, including hidden resource
 The preview has a skipped-resource toggle, a force toggle that recomputes the plan,
 Cancel and **Run build**. Planned resources are coloured on the graph; published read
 boundaries are faded. Deterministic jobs remain pending cache evaluation until their
-actual inputs are resolved. Advanced options and collapsed plan evidence expose
-boundaries, exclusions, pins, parameters, source policy and required checks.
+actual inputs are resolved. The inspector keeps strategy and force controls; advanced
+overrides remain available through CLI/API. Collapsed plan evidence shows read
+boundaries, parameters, source policy and required checks.
 **Run build** accepts exactly the reviewed plan and opens its automatically updating
-Build report. Changed/expired/conflicting plans require a fresh preview. Publishing
+Build report. Selection/context changes and expired plans automatically prepare a fresh preview;
+transient conflicts retry with bounded backoff. Run build stays disabled until ready. Publishing
 builds preserves node positions and camera placement. Schedule and health actions
 remain later tasks.
 Plain-clicking any selected lineage node narrows a multi-selection to that node.

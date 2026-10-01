@@ -66,6 +66,8 @@ export function BuildPlanner({
   const [showSkipped, setShowSkipped] = useState(true);
   const [autoPreview, setAutoPreview] = useState(false);
   const [draft, setDraft] = useState<Draft>();
+  const [failedKey, setFailedKey] = useState<string>();
+  const conflictRetries = useRef(0);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<"preview" | "accept" | null>(null);
   const [uncertain, setUncertain] = useState(false);
@@ -84,7 +86,7 @@ export function BuildPlanner({
   const key = JSON.stringify([options, state.value.context.fingerprint]);
   const latestKey = useRef(key);
   useEffect(() => {
-    if (latestKey.current !== key) setRejected(true);
+    conflictRetries.current = 0;
     latestKey.current = key;
     previewRequest.current?.abort();
   }, [key]);
@@ -96,6 +98,8 @@ export function BuildPlanner({
     previewRequest.current?.abort();
     const abort = new AbortController();
     previewRequest.current = abort;
+    setAutoPreview(false);
+    setFailedKey(undefined);
     setBusy("preview");
     setError("");
     setRejected(false);
@@ -112,12 +116,36 @@ export function BuildPlanner({
         crypto.randomUUID(),
         abort.signal,
       );
-      if (!abort.signal.aborted && latestKey.current === key)
+      if (!abort.signal.aborted && latestKey.current === key) {
+        conflictRetries.current = 0;
         setDraft({ ...result, key, receipt: crypto.randomUUID() });
+      }
     } catch (e) {
       if (!abort.signal.aborted) {
-        setError(message(e));
+        setFailedKey(key);
         setRejected(true);
+        if (
+          e instanceof ApiFailure &&
+          e.kind === "conflict" &&
+          conflictRetries.current < 3
+        ) {
+          conflictRetries.current += 1;
+          await new Promise<void>((resolve) => {
+            const timer = setTimeout(resolve, 500 * conflictRetries.current);
+            abort.signal.addEventListener(
+              "abort",
+              () => {
+                clearTimeout(timer);
+                resolve();
+              },
+              { once: true },
+            );
+          });
+          if (!abort.signal.aborted) await workspace.refresh(true);
+          if (!abort.signal.aborted) setAutoPreview(true);
+        } else {
+          setError(message(e));
+        }
       }
     } finally {
       if (previewRequest.current === abort) setBusy(null);
@@ -131,13 +159,29 @@ export function BuildPlanner({
     key,
   ]);
   useEffect(() => {
-    if (!autoPreview) return;
-    const timer = setTimeout(() => {
-      setAutoPreview(false);
-      void preview();
-    }, 0);
+    if (!reviewing || !targets || locked || busy || state.refreshing) return;
+    if (
+      !autoPreview &&
+      (failedKey === key || (draft && !stale && !expired && !rejected))
+    )
+      return;
+    const timer = setTimeout(() => void preview(), 0);
     return () => clearTimeout(timer);
-  }, [autoPreview, preview]);
+  }, [
+    reviewing,
+    targets,
+    locked,
+    busy,
+    state.refreshing,
+    autoPreview,
+    failedKey,
+    key,
+    draft,
+    stale,
+    expired,
+    rejected,
+    preview,
+  ]);
   async function accept() {
     if (
       !draft ||
@@ -171,7 +215,7 @@ export function BuildPlanner({
       setError(
         ambiguous
           ? "The build response was interrupted. Retry to recover the same build receipt."
-          : `${message(e)} Preview a new plan before building.`,
+          : "",
       );
     } finally {
       setBusy(null);
@@ -181,10 +225,12 @@ export function BuildPlanner({
     previewRequest.current?.abort();
     setDraft(undefined);
     setReviewing(false);
+    setAutoPreview(false);
+    setFailedKey(undefined);
     setError("");
     setRejected(false);
   }
-  const plan = draft?.plan;
+  const plan = !stale && !expired && !rejected ? draft?.plan : undefined;
   useEffect(() => {
     onPlan(
       reviewing && !!targets && plan && !stale && !expired && !rejected && !busy
@@ -268,45 +314,6 @@ export function BuildPlanner({
                   </label>
                 ))}
               </fieldset>
-              <details className="planner-advanced">
-                <summary>Advanced options</summary>
-                <fieldset disabled={locked}>
-                  {(
-                    [
-                      ["boundaries", "Read boundaries"],
-                      ["exclusions", "Excluded datasets"],
-                      ["refresh", "Refresh sources"],
-                      ["pins", "Exact input versions"],
-                      ["parameters", "Parameter overrides (JSON)"],
-                      ["gitRef", "Source Git ref"],
-                    ] as const
-                  ).map(([name, label]) => (
-                    <label className="planner-field" key={name}>
-                      {label}
-                      <textarea
-                        rows={2}
-                        value={settings[name]}
-                        onChange={(e) =>
-                          setSettings((s) => ({ ...s, [name]: e.target.value }))
-                        }
-                      />
-                    </label>
-                  ))}
-                  <label className="planner-check">
-                    <input
-                      type="checkbox"
-                      checked={settings.requireCurrent}
-                      onChange={(e) =>
-                        setSettings((s) => ({
-                          ...s,
-                          requireCurrent: e.target.checked,
-                        }))
-                      }
-                    />
-                    Require current boundary data
-                  </label>
-                </fieldset>
-              </details>
               {selected.length > count && (
                 <p className="muted">
                   {selected.length - count} selected resources have no local
@@ -355,17 +362,6 @@ export function BuildPlanner({
                 </label>
               </fieldset>
               {busy === "preview" && <p role="status">Preparing preview…</p>}
-              {(stale || expired || rejected) &&
-                !uncertain &&
-                busy !== "preview" && (
-                  <p className="planner-notice" role="status">
-                    <Icon name="info" />
-                    {expired
-                      ? "This plan expired."
-                      : "This preview needs to be refreshed."}{" "}
-                    Preview again before building.
-                  </p>
-                )}
               {plan && (
                 <section className="plan-review" aria-label="Plan preview">
                   <h3>Resources to be built</h3>
@@ -598,12 +594,12 @@ export function BuildPlanner({
                 <Button disabled={locked} onClick={cancel}>
                   Cancel
                 </Button>
-                {(stale || expired || rejected || !draft) && !uncertain && (
+                {error && failedKey === key && !uncertain && (
                   <Button
                     disabled={!!busy || !count}
                     onClick={() => void preview()}
                   >
-                    Update preview
+                    Retry preview
                   </Button>
                 )}
                 <Button

@@ -229,12 +229,16 @@ selected endpoints and eligible paths between them in the complete validated gra
 it excludes unrelated side ancestors, respects branch/read/pin barriers, and keeps
 isolated selections as explicit targets. The shared CLI/API mode is `connecting`;
 CLI's omitted mode remains `full`, and explicit `between` read-boundary semantics
-remain available. Advanced options expose read boundaries, exclusions, source refresh,
-exact input pins, JSON parameter overrides, require-current inputs and a source Git ref.
+remain available through CLI/API, along with advanced boundaries, exclusions, source
+refresh, exact pins, parameters, require-current inputs and source refs. These advanced
+fields are not shown in the inspector.
 
 **Next (View preview)** does not execute producers or register outputs. It shows the
 complete planned resource list and faded reused boundaries; toggle their visibility
-with **Show resources that will not be built**. Force prepares a new guarded plan.
+with **Show resources that will not be built**. Force, selection/context changes and
+expiry automatically prepare a new guarded preview; transient conflicts refresh context
+and retry up to three times with backoff. Preparation errors remain visible with an
+explicit retry; builds always require a separate Run build click.
 Deterministic jobs show **Cache evaluation pending** until execution resolves actual
 inputs and verifies retained bytes, so counts describe jobs in scope, not a speculative
 number of materializations. The graph temporarily highlights writes and fades other

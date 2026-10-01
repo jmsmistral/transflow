@@ -2782,7 +2782,6 @@ revo-grid.preview-grid
   resize: vertical;
   min-height: 48px;
 }
-.planner-advanced,
 .plan-review {
   border-top: 1px solid var(--line);
   padding-top: 12px;
@@ -2899,6 +2898,9 @@ revo-grid.preview-grid
 }
 .planner-toggles input[role="switch"] {
   appearance: none;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
   width: 30px;
   height: 18px;
   flex-shrink: 0;

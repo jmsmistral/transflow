@@ -108,6 +108,8 @@ async function setup({
   interrupt = false,
   conflict = false,
   expired = false,
+  previewConflicts = 0,
+  previewFailure = false,
 } = {}) {
   const mutations: { path: string; body: unknown; headers: Headers }[] = [];
   const base = fixtureTransport((path, query) =>
@@ -123,7 +125,11 @@ async function setup({
         body: JSON.parse(String(init?.body)),
         headers: new Headers(init?.headers),
       });
-      return json(expired ? { ...plan, expires_us: "1" } : plan, context());
+      if (previewConflicts-- > 0) return new Response("{}", { status: 409 });
+      if (previewFailure) return new Response("{}", { status: 422 });
+      const result = expired ? { ...plan, expires_us: "1" } : plan;
+      expired = false;
+      return json(result, context());
     }
     if (path.startsWith("/api/v1/builds?")) {
       mutations.push({
@@ -135,7 +141,10 @@ async function setup({
         interrupt = false;
         throw new Error("connection lost");
       }
-      if (conflict) return new Response("{}", { status: 409 });
+      if (conflict) {
+        conflict = false;
+        return new Response("{}", { status: 409 });
+      }
       return json(
         { build: buildId, plan: planId, state: "QUEUED" },
         planContext,
@@ -158,7 +167,8 @@ async function setup({
   };
   const view = render(<BuildPlanner {...props} />);
   fireEvent.click(screen.getByRole("button", { name: "Next (View preview)" }));
-  await screen.findByRole("region", { name: "Plan preview" });
+  if (previewFailure) await screen.findByRole("alert");
+  else await screen.findByRole("region", { name: "Plan preview" });
   return { mutations, props, view, workspace };
 }
 
@@ -224,10 +234,11 @@ describe("guarded build planner", () => {
     );
     workspace.dispose();
   });
-  it("disables acceptance after options or selection change and on a guarded rejection", async () => {
-    const { props, view, workspace } = await setup({ conflict: true });
+  it("automatically replans changed selection and guarded rejection without starting another build", async () => {
+    const { props, view, mutations, workspace } = await setup({
+      conflict: true,
+    });
     const build = screen.getByRole("button", { name: "Run build" });
-    expect(build.matches(":disabled")).toBe(false);
     view.rerender(
       <BuildPlanner
         {...props}
@@ -235,26 +246,35 @@ describe("guarded build planner", () => {
       />,
     );
     expect(build.matches(":disabled")).toBe(true);
-    view.rerender(<BuildPlanner {...props} />);
-    expect(build.matches(":disabled")).toBe(true);
-    fireEvent.click(screen.getByRole("button", { name: "Update preview" }));
     await waitFor(() => expect(build.matches(":disabled")).toBe(false));
+    expect(mutations.at(-1)?.body).toMatchObject({ targets: ["raw/other"] });
     fireEvent.click(build);
-    await screen.findByRole("alert");
-    expect(build.matches(":disabled")).toBe(true);
-    view.rerender(
-      <BuildPlanner
-        {...props}
-        state={{
-          ...props.state,
-          value: {
-            ...props.state.value,
-            context: { ...context(), fingerprint: "c".repeat(64) },
-          },
-        }}
-      />,
+    await waitFor(() =>
+      expect(
+        mutations.filter((m) => m.path.startsWith("/api/v1/plans?")),
+      ).toHaveLength(3),
     );
-    expect(build.matches(":disabled")).toBe(true);
+    await waitFor(() => expect(build.matches(":disabled")).toBe(false));
+    expect(
+      mutations.filter((m) => m.path.startsWith("/api/v1/builds?")),
+    ).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Update preview" })).toBeNull();
+    workspace.dispose();
+  });
+  it("refreshes context and retries transient preview conflicts", async () => {
+    const { mutations, workspace } = await setup({ previewConflicts: 1 });
+    expect(mutations).toHaveLength(2);
+    expect(screen.queryByRole("alert")).toBeNull();
+    workspace.dispose();
+  });
+  it("keeps preparation errors visible without repeatedly retrying deterministic failures", async () => {
+    const { mutations, workspace } = await setup({ previewFailure: true });
+    expect(mutations).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: "Run build" }).matches(":disabled"),
+    ).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Retry preview" }));
+    await waitFor(() => expect(mutations).toHaveLength(2));
     workspace.dispose();
   });
   it("follows graph selection, clears the panel when empty, and replans force", async () => {
@@ -271,6 +291,7 @@ describe("guarded build planner", () => {
       force: true,
     });
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByText("Advanced options")).toBeNull();
     view.rerender(<BuildPlanner {...props} selected={[]} />);
     expect(
       screen.getByText("Select valid resources to begin a build"),
@@ -288,13 +309,17 @@ describe("guarded build planner", () => {
     });
     workspace.dispose();
   });
-  it("cannot accept an expired draft", async () => {
+  it("replaces an expired draft automatically without accepting it", async () => {
     const { workspace, mutations } = await setup({ expired: true });
-    expect(
-      screen.getByRole("button", { name: "Run build" }).matches(":disabled"),
-    ).toBe(true);
-    expect(screen.getByText(/This plan expired/)).toBeTruthy();
-    expect(mutations).toHaveLength(1);
+    await waitFor(() => expect(mutations).toHaveLength(2));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Run build" }).matches(":disabled"),
+      ).toBe(false),
+    );
+    expect(mutations.every((m) => m.path.startsWith("/api/v1/plans?"))).toBe(
+      true,
+    );
     workspace.dispose();
   });
   it("counts distinct hidden resources across reads and writes, preserving provider identities", () => {
