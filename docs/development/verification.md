@@ -17,6 +17,8 @@ and choose the required checks before editing.
    fixes, rerun affected checks and broaden when shared behaviour or unresolved
    failures invalidate previous results. Do not repeat unchanged passing suites
    without a reason, and do not omit required acceptance evidence.
+   Runtime schema changes also require `bash tools/check-cli.sh`: installed-worker
+   CLI/API fixtures are separate from the Rust gate and `python/tests` suite.
 3. Redirect verbose runs to a local temporary log and inspect the exit status,
    summary and failures. Keep the complete log for diagnosis; do not commit
    transient logs. Report actual commands, results and coverage of final changes.

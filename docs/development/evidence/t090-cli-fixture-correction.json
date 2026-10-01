@@ -1,0 +1,32 @@
+{
+  "task": "T090",
+  "date": "2026-10-02",
+  "host": "macOS arm64",
+  "implementation_base": "cb8b453d5137b53bb984631f9b4f6bfff89cf37c",
+  "specification_base": "895db6586e49507ba6f9b8c01b2fd78bb5eb3785",
+  "ci_observation": {
+    "run": "https://github.com/jmsmistral/transflow/actions/runs/36925426705",
+    "failed_step": "Test CLI with the installed matched worker",
+    "platforms": ["macos-15", "ubuntu-24.04", "ubuntu-24.04-arm"],
+    "preceding_rust_gate": "Passed on all three platforms",
+    "log_access": "Unauthenticated GitHub access exposes step outcomes but requires authentication for job logs; the failure below was reproduced locally"
+  },
+  "local_reproduction": {
+    "command": "PYTHON_CHECK=$PWD/target/python/py314/bin/python bash tools/check-cli.sh",
+    "result": "57 passed, 1 failed",
+    "failed_test": "test_lifecycle_active_runtime_references_are_blocking[schedule]",
+    "error": "sqlite3.OperationalError: table schedules has 12 columns but 5 values were supplied"
+  },
+  "correction": "Use explicit schema-13 schedule columns with workspace identity, edit guard, trigger epoch and review state; preserve the catalogue blocker and unchanged catalogue assertions",
+  "local_verification": {
+    "focused": "Three lifecycle reference cases (view, schedule, lease) passed",
+    "cli_gate": "All 58 installed-worker CLI/API tests passed in 134.81 seconds; locked offline binary/example build passed",
+    "ruff": "Affected integration test lint and formatting passed",
+    "specification_and_safety": "Document/link validation, 44 specification regressions, 27 safety regressions, offline dependency/generated-contract/public artifact checks and both repository diff checks passed"
+  },
+  "boundaries": [
+    "Test fixture and contributor documentation changes only; no runtime, migration or shared-contract change",
+    "Previous Rust/Python/web evidence is retained; unchanged full suites were not repeated",
+    "No preview coordinator started; corrected-push CI is left to the owner"
+  ]
+}

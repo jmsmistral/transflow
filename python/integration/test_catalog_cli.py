@@ -360,8 +360,14 @@ def test_lifecycle_active_runtime_references_are_blocking(
         if runtime_reference == "view":
             db.execute("INSERT INTO graph_views VALUES(?,1,1,'{}','{}',1)", (str(uuid4()),))
         elif runtime_reference == "schedule":
+            # A migrated schedule awaiting review still blocks catalogue changes.
             db.execute(
-                "INSERT INTO schedules VALUES(?,'synthetic schedule',NULL,0,NULL)", (str(uuid4()),)
+                "INSERT INTO schedules "
+                "(id,workspace_id,name,definition_json,etag,trigger_epoch,paused,needs_review,"
+                "saved_at_us,saved_by,event_cursor) "
+                "VALUES(?,(SELECT id FROM workspaces),'synthetic schedule','{}',?,?,0,1,"
+                "1,'fixture',0)",
+                (str(uuid4()), str(uuid4()), str(uuid4())),
             )
         else:
             db.execute("INSERT INTO artifacts VALUES(?,'{}','[]',0,0,0,'VERIFIED')", ("e" * 64,))
