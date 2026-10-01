@@ -1,0 +1,20 @@
+{
+  "task": "T086 timestamp label refinement",
+  "date": "2026-10-01",
+  "implementation_base": "9b7d117",
+  "specification_base": "6b93fa9",
+  "changes": [
+    "Removed UTC suffix from History, job details, Build report and timeline timestamps/tooltips; UTC values and date-filter semantics unchanged."
+  ],
+  "checks": {
+    "web": "Focused 19 tests passed; full web gate passed: 482 tests, typecheck, lint, formatting, production worker probes and reproducible 16-asset build.",
+    "browser": "Internal Codex Browser using production assets confirmed History, job overview and Build report timestamps without UTC suffix; no warning/error console entries.",
+    "documentation": "Specification checker and 44 regressions passed; both repository diff checks passed.",
+    "safety": "Safety baseline and 27 regressions passed."
+  },
+  "limits": [
+    "Automatic active-build polling remains unchanged: sequential reads with 1.5-second delay and one-second elapsed clock; terminal evidence stops polling. No new live build was needed for this display-only change.",
+    "Backend suites not repeated; CI pending owner confirmation."
+  ],
+  "cleanup": "Own preview coordinator stopped and browser tab closed; workspace /tmp/transflow-t085-refine-browser-20260930 preserved."
+}

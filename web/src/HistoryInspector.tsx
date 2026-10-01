@@ -234,7 +234,7 @@ export function HistoryInspector({
                       type="text"
                       placeholder="YYYY-MM-DD"
                       pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
-                      title="YYYY-MM-DD, UTC date"
+                      title="YYYY-MM-DD"
                       value={from}
                       onChange={(event) => setFrom(event.target.value)}
                       required
@@ -246,7 +246,7 @@ export function HistoryInspector({
                       type="text"
                       placeholder="YYYY-MM-DD"
                       pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
-                      title="YYYY-MM-DD, UTC date"
+                      title="YYYY-MM-DD"
                       value={to}
                       onChange={(event) => setTo(event.target.value)}
                       required
@@ -337,7 +337,7 @@ function DurationChart({
     ) || 1n;
   return (
     <div className="duration-chart">
-      <div className="chart-caption" title="UTC dates; both dates are included">
+      <div className="chart-caption" title="Both dates are included">
         Attempt duration (seconds) · {samples.length} measured successes /
         failures in {jobs.length} loaded jobs · {historyDate(metrics.from_us)}{" "}
         to {historyDate(metrics.to_us, true)}

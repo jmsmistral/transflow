@@ -48,12 +48,10 @@ export function timestamp(us: string | null | undefined): string {
   const milliseconds = BigInt(us) / 1000n;
   if (milliseconds > 8640000000000000n || milliseconds < -8640000000000000n)
     return "Outside calendar range";
-  return (
-    new Date(Number(milliseconds))
-      .toISOString()
-      .replace("T", " ")
-      .slice(0, 19) + " UTC"
-  );
+  return new Date(Number(milliseconds))
+    .toISOString()
+    .replace("T", " ")
+    .slice(0, 19);
 }
 export function short(id: string | null | undefined): string {
   return id?.slice(0, 8) ?? "Unavailable";

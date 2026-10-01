@@ -137,6 +137,7 @@ Each History entry places the dataset job duration at the right edge and shows
 its overall build status and total job count,
 including builds where another dataset failed. The header identifies the selected lineage branch. History dates use
 `YYYY-MM-DD`; both From and To dates are included, with UTC calendar boundaries.
+History and Build timestamps omit the timezone suffix while retaining UTC values.
 Live timing updates preserve graph membership, positions, selection and camera;
 historical versions are labelled explicitly rather than as branch fallbacks.
 Schedule, health and build-planning actions remain later tasks.

@@ -40,7 +40,7 @@ test("retained counts and duration ratios preserve precision above the JS intege
   expect(percent({ numerator: "1", denominator: "3" })).toBe("33.33%");
   expect(percent(null)).toBe("Unavailable");
   expect(position(9007199254741000100n, 9007199254741000000n, 1000n)).toBe(10);
-  expect(timestamp("1700000000123456")).toBe("2023-11-14 22:13:20 UTC");
+  expect(timestamp("1700000000123456")).toBe("2023-11-14 22:13:20");
 });
 test("source diff preserves both complete captures, including insertion and identical files", () => {
   expect(sourceDiff("a\nb\nc", "a\nx\nc")).toEqual([
