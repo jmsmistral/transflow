@@ -34,6 +34,8 @@ const phase = {
 const job: ApiHistoryJobV1 = {
   id: jobId,
   build,
+  build_state: "FAILED",
+  build_job_count: "1",
   plan,
   source: workspaceId,
   state: "FAILED",
@@ -104,7 +106,7 @@ const metrics: ApiExecutionMetricsV1 = {
   trailing_window: "10",
   trailing_samples: "0",
 };
-async function fixture(missing = false) {
+async function fixture(missing = false, historyJob: ApiHistoryJobV1 = job) {
   const calls: { path: string; query: Record<string, string> }[] = [];
   const model = new Workspace(
     new Client(
@@ -164,7 +166,7 @@ async function fixture(missing = false) {
           );
         if (path.endsWith("/history"))
           return Promise.resolve(
-            json({ entries: [job], next_cursor: null }, c),
+            json({ entries: [historyJob], next_cursor: null }, c),
           );
         if (path.endsWith("/metrics"))
           return Promise.resolve(
@@ -406,3 +408,32 @@ test("Gantt uses recorded phases and exposes retained failure evidence in the ow
   ).toBe(true);
   model.dispose();
 });
+
+test.each([
+  ["SUCCEEDED", "FAILED", "2", "2 runs"],
+  ["SUCCEEDED", "SUCCEEDED", "1", "1 run"],
+  ["RUNNING", "RUNNING", "3", "3 runs"],
+])(
+  "history separates run %s from build %s",
+  async (runState, buildState, count, label) => {
+    const { model, state } = await fixture(false, {
+      ...job,
+      state: runState,
+      build_state: buildState,
+      build_job_count: count,
+    });
+    render(
+      <HistoryInspector workspace={model} state={state} onVersion={() => {}} />,
+    );
+    const line = await screen.findByTitle(`Build ${build}`);
+    expect(line.textContent).toContain(`${buildState} build · ${label}`);
+    expect(
+      line.querySelector(`.status-${buildState.toLowerCase()}`),
+    ).toBeTruthy();
+    const entry = line.closest("button");
+    expect(
+      entry?.querySelector(`:scope > .status-${runState.toLowerCase()}`),
+    ).toBeTruthy();
+    model.dispose();
+  },
+);

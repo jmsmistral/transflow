@@ -2404,3 +2404,14 @@ revo-grid.preview-grid
     max-width: 250px;
   }
 }
+
+.history-entry .history-build {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+}
+.history-build .execution-status {
+  font-size: 14px;
+  min-width: 14px;
+}

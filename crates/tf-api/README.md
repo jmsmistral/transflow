@@ -258,7 +258,9 @@ use the existing authenticated read facade. Responses carry the frozen context.
 
 - `datasets/{dataset}/history`: keyset pages (`limit` 1–200, `cursor`) of jobs,
   with produced/reused version, original attempt, attempt count, accepted plan,
-  retry timings and measured job duration (`ApiDatasetHistoryV1`).
+  retry timings and measured job duration (`ApiDatasetHistoryV1`). Each entry also
+  carries the owning `build_state` and complete `build_job_count`, independently
+  of the dataset filter and retry count.
   Failed jobs remain visible without a version. `/versions` remains a separate
   retained-version projection and includes committed row, byte and file counts.
 - `builds/{build}/timeline?plan={plan}`: actual phase intervals per attempt,

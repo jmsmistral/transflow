@@ -15292,6 +15292,12 @@
             },
             "maxItems": 10000,
             "minItems": 0
+          },
+          "build_state": {
+            "type": "string"
+          },
+          "build_job_count": {
+            "$ref": "#/components/schemas/Count"
           }
         },
         "required": [
@@ -15307,7 +15313,9 @@
           "reused_version",
           "original_attempt",
           "duration_ns",
-          "attempts"
+          "attempts",
+          "build_state",
+          "build_job_count"
         ],
         "additionalProperties": false
       },

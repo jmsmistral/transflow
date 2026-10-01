@@ -265,3 +265,8 @@ Saved-lineage camera coordinates are retired: new documents reject `viewport`,
 legacy reads omit it, and UI opening uses centred node bounds at fixed zoom.
 `ApiViewsV1` summaries include the persisted `branch` and `saved_at_us` as decimal microseconds; list search is
 an optional case-insensitive ordered subsequence of the name (maximum 200 characters).
+
+T086 History owner review adds required `build_state` and `build_job_count` to
+`ApiHistoryJobV1`. The latter counts all jobs of the owning build, independent of
+the selected dataset, retries and page size. Generated clients and exports are
+updated together; protocol 1.0 and runtime schema 12 remain unchanged.

@@ -125,7 +125,8 @@ details, and the header’s Show summary button returns to the summary. Failed r
 leave last-good Preview unchanged. History shows UTC acceptance-window metrics and
 measured duration points;
 reuse has no execution duration. Missing source/timings and ETA remain unavailable.
-The Runs header identifies the selected lineage branch. History dates use
+Each History entry also shows its overall build status and total run count,
+including builds where another dataset failed. The header identifies the selected lineage branch. History dates use
 `YYYY-MM-DD`; both From and To dates are included, with UTC calendar boundaries.
 Live timing updates preserve graph membership, positions, selection and camera;
 historical versions are labelled explicitly rather than as branch fallbacks.

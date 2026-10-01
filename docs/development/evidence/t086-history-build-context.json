@@ -1,0 +1,33 @@
+{
+  "task": "T086 History overall build context",
+  "date": "2026-10-01",
+  "specification": "1.1.3",
+  "implementation_base": "2c82aec",
+  "specification_base": "ac68f82",
+  "changes": [
+    "History rows show owning build state and total job count, including 1 run",
+    "Same-transaction build_state/build_job_count in the bounded dataset history response; no per-row build requests",
+    "Build and dataset outcomes stay independent; retries count as attempts, not additional runs"
+  ],
+  "checks": {
+    "focused": "3 retained-history Rust tests and 9 execution inspector tests passed, including successful dataset in failed two-job build, single-run grammar and active state.",
+    "python": "Full Python gate passed: 981 tests plus lint, format and types.",
+    "web": "Full web gate passed: 474 tests plus typecheck/lint/format, worker probes and matching production assets.",
+    "cli": "bash tools/check-cli.sh: 58 installed CLI/API cases passed with required local IPC permissions.",
+    "native_api": "python/tools/check_api.py with the rebuilt CLI/current local wheel: 17 native coordinator journeys passed, including build state/job count equality with the retained build report.",
+    "documentation": "Specification 1.1.3 validator and 44 checker regressions passed; both repository diff whitespace checks passed.",
+    "safety": "Safety baseline and 27 regressions passed after refreshing the reviewed contract input hash.",
+    "browser": "Internal Codex Browser with rebuilt production CLI/assets, existing synthetic raw/root history: SUCCEEDED build with 4 runs, FAILED and CANCELED builds with 1 run; correct colors/icons and separate status lines. No console warnings/errors.",
+    "rust": "Rust formatting, workspace/standalone compilation, Clippy and 12 boundary regressions passed. cargo test --workspace --locked --offline passed 404 cases including one doc test with required process permissions."
+  },
+  "ci": "Pending owner confirmation; no workflow polling",
+  "corrections": [
+    "Initial safety check required the generated-contract registry input hash to be refreshed after the reviewed additive schema change.",
+    "Sandboxed lifecycle/CLI tests lacked process identity or local IPC access; rerun with required permissions."
+  ],
+  "limits": [
+    "The successful-dataset/failed-two-job-build case is covered by actual SQLite storage and component tests. An extra forced preview build was rejected by automatic approval review due to persistent synthetic workspace mutations; it was not run. Browser verification used existing history.",
+    "No database migration or build execution semantics change."
+  ],
+  "cleanup": "Own coordinator on 54063 stopped; listener absent. Browser tab closed. Workspace preserved at /tmp/transflow-t085-refine-browser-20260930; synthetic producer files and user coordinator untouched."
+}

@@ -141,7 +141,7 @@ impl Reader {
             return Err(invalid());
         }
         let mut tx = self.db.begin().await?;
-        let rows = sqlx::query("SELECT j.id,j.build_id,j.state,p.id AS plan,p.source_snapshot_id,b.created_at_us,b.finished_at_us,c.version_id AS reused_version,c.original_attempt_id,(SELECT count(*) FROM attempts a WHERE a.job_id=j.id) AS attempt_count,(SELECT v.id FROM dataset_versions v JOIN attempts a ON a.id=v.attempt_id WHERE a.job_id=j.id LIMIT 1) AS produced_version FROM jobs j JOIN data_branches d ON d.id=j.branch_id JOIN builds b ON b.id=j.build_id JOIN build_plans p ON p.id=b.plan_id LEFT JOIN cached_jobs c ON c.job_id=j.id WHERE d.workspace_id=? AND d.name=? AND j.dataset_id=? AND j.id>? ORDER BY j.id LIMIT ?")
+        let rows = sqlx::query("SELECT j.id,j.build_id,j.state,b.state AS build_state,(SELECT count(*) FROM jobs siblings WHERE siblings.build_id=b.id) AS build_job_count,p.id AS plan,p.source_snapshot_id,b.created_at_us,b.finished_at_us,c.version_id AS reused_version,c.original_attempt_id,(SELECT count(*) FROM attempts a WHERE a.job_id=j.id) AS attempt_count,(SELECT v.id FROM dataset_versions v JOIN attempts a ON a.id=v.attempt_id WHERE a.job_id=j.id LIMIT 1) AS produced_version FROM jobs j JOIN data_branches d ON d.id=j.branch_id JOIN builds b ON b.id=j.build_id JOIN build_plans p ON p.id=b.plan_id LEFT JOIN cached_jobs c ON c.job_id=j.id WHERE d.workspace_id=? AND d.name=? AND j.dataset_id=? AND j.id>? ORDER BY j.id LIMIT ?")
             .bind(workspace.to_string()).bind(branch.as_str()).bind(dataset.to_string()).bind(after).bind(limit).fetch_all(&mut *tx).await?;
         let mut entries = vec![];
         let mut total_attempts = 0_usize;
@@ -174,7 +174,7 @@ impl Reader {
                     .iter()
                     .try_fold(0_u128, |sum, a| sum.checked_add(number(&a["duration_ns"])?))
             };
-            entries.push(json!({"id":job,"build":r.try_get::<String,_>("build_id")?,"state":r.try_get::<String,_>("state")?,"plan":r.try_get::<String,_>("plan")?,"source":r.try_get::<String,_>("source_snapshot_id")?,"created_us":r.try_get::<i64,_>("created_at_us")?.to_string(),"finished_us":r.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"attempt_count":r.try_get::<i64,_>("attempt_count")?.to_string(),"produced_version":r.try_get::<Option<String>,_>("produced_version")?,"reused_version":r.try_get::<Option<String>,_>("reused_version")?,"original_attempt":r.try_get::<Option<String>,_>("original_attempt_id")?,"duration_ns":duration.map(|n|n.to_string()),"attempts":attempts}));
+            entries.push(json!({"id":job,"build":r.try_get::<String,_>("build_id")?,"build_state":r.try_get::<String,_>("build_state")?,"build_job_count":r.try_get::<i64,_>("build_job_count")?.to_string(),"state":r.try_get::<String,_>("state")?,"plan":r.try_get::<String,_>("plan")?,"source":r.try_get::<String,_>("source_snapshot_id")?,"created_us":r.try_get::<i64,_>("created_at_us")?.to_string(),"finished_us":r.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"attempt_count":r.try_get::<i64,_>("attempt_count")?.to_string(),"produced_version":r.try_get::<Option<String>,_>("produced_version")?,"reused_version":r.try_get::<Option<String>,_>("reused_version")?,"original_attempt":r.try_get::<Option<String>,_>("original_attempt_id")?,"duration_ns":duration.map(|n|n.to_string()),"attempts":attempts}));
         }
         if serde_json::to_vec(&entries).map_err(|_| invalid())?.len() > 32 * 1024 * 1024 {
             return Err(invalid());

@@ -354,7 +354,7 @@ export type ApiLogStreamV1 = { readonly "helper": string; readonly "stream": ("s
 export type ApiAttemptLogsV1 = { readonly "attempt": Uuid; readonly "streams": ReadonlyArray<ApiLogStreamV1>; readonly "helper": (null | string); readonly "stream": (null | ("stdout" | "stderr")); readonly "offset": Count; readonly "text": string; readonly "next_offset": (null | Count); readonly "available": boolean };
 
 // prettier-ignore
-export type ApiHistoryJobV1 = { readonly "id": Uuid; readonly "build": Uuid; readonly "plan": Uuid; readonly "source": Uuid; readonly "state": string; readonly "created_us": Count; readonly "finished_us": (null | Count); readonly "attempt_count": Count; readonly "produced_version": (null | Uuid); readonly "reused_version": (null | Uuid); readonly "original_attempt": (null | Uuid); readonly "duration_ns": (null | Count); readonly "attempts": ReadonlyArray<ApiAttemptTimingV1> };
+export type ApiHistoryJobV1 = { readonly "id": Uuid; readonly "build": Uuid; readonly "plan": Uuid; readonly "source": Uuid; readonly "state": string; readonly "created_us": Count; readonly "finished_us": (null | Count); readonly "attempt_count": Count; readonly "produced_version": (null | Uuid); readonly "reused_version": (null | Uuid); readonly "original_attempt": (null | Uuid); readonly "duration_ns": (null | Count); readonly "attempts": ReadonlyArray<ApiAttemptTimingV1>; readonly "build_state": string; readonly "build_job_count": Count };
 
 // prettier-ignore
 export type ApiDatasetHistoryV1 = { readonly "entries": ReadonlyArray<ApiHistoryJobV1>; readonly "next_cursor": (null | string) };

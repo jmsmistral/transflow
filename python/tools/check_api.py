@@ -173,6 +173,8 @@ def main() -> None:
             history = client.call(
                 "GET", f"/api/v1/datasets/{dataset}/history", query={"branch": "main"}
             )["data"]
+            assert history["entries"][0]["build_state"] == report["state"]
+            assert history["entries"][0]["build_job_count"] == str(len(report["jobs"]))
             assert history["entries"][0]["produced_version"] == version
             assert history["entries"][0]["duration_ns"] == duration
             assert history["entries"][0]["attempts"][0]["duration_ns"] == duration

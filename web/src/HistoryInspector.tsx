@@ -181,6 +181,13 @@ export function HistoryInspector({
                       : seconds(job.duration_ns)}{" "}
                     · {job.attempt_count} attempts
                   </small>
+                  <small className="history-build" title={`Build ${job.build}`}>
+                    Part of <Status state={job.build_state} />
+                    <span>
+                      {job.build_state} build · {job.build_job_count}{" "}
+                      {job.build_job_count === "1" ? "run" : "runs"}
+                    </span>
+                  </small>
                 </span>
               </button>
             ))}

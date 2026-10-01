@@ -164,6 +164,9 @@ async fn retained_history_metrics_cache_retry_and_context_isolation()
         .dataset_history(id(1).parse()?, &branch, id(2).parse()?, "", 2)
         .await?;
     assert_eq!(history.len(), 2);
+    assert_eq!(history[0]["build_state"], "SUCCEEDED");
+    assert_eq!(history[0]["build_job_count"], "1");
+    tf_protocol::validate_document("ApiHistoryJobV1", &history[0])?;
     assert_eq!(history[0]["attempt_count"], "2");
     assert_eq!(history[0]["duration_ns"], "17");
     assert_eq!(history[0]["attempts"][0]["state"], "FAILED");
@@ -240,6 +243,26 @@ async fn retained_history_metrics_cache_retry_and_context_isolation()
         .execute(&mut writer)
         .await?;
     assert_ne!(opened, rd.api_revision().await?);
+    // A successful dataset run still belongs to a failed two-dataset build.
+    sqlx::query("INSERT INTO datasets VALUES(?,?,0,NULL)")
+        .bind(id(900))
+        .bind(id(1))
+        .execute(&mut writer)
+        .await?;
+    sqlx::query("INSERT INTO jobs(id,build_id,dataset_id,definition_id,branch_id,state,bindings_json) VALUES(?,?,?,?,?,'FAILED','[]')")
+        .bind(id(901)).bind(id(201)).bind(id(900)).bind(id(4)).bind(id(5)).execute(&mut writer).await?;
+    sqlx::query("UPDATE builds SET state='FAILED' WHERE id=?")
+        .bind(id(201))
+        .execute(&mut writer)
+        .await?;
+    let mixed = rd
+        .dataset_history(id(1).parse()?, &branch, id(2).parse()?, "", 1)
+        .await?;
+    assert_eq!(mixed[0]["state"], "SUCCEEDED");
+    assert_eq!(mixed[0]["build_state"], "FAILED");
+    assert_eq!(mixed[0]["build_job_count"], "2");
+    assert_eq!(mixed[0]["attempt_count"], "2");
+    tf_protocol::validate_document("ApiHistoryJobV1", &mixed[0])?;
     writer.close().await?;
     rd.close().await?;
     std::fs::remove_dir_all(dir)?;
