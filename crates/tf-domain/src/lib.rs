@@ -22,7 +22,8 @@ pub use branch::{BranchName, BranchSelector, FallbackPermission};
 pub use error::{DomainError, ErrorKind};
 pub use identity::{
     AttemptId, BranchId, BuildId, CoordinatorSessionId, DatasetId, DatasetKey, DatasetScope,
-    ExternalRegistrationId, JobId, PlanId, RequestId, SourceSnapshotId, VersionId, WorkspaceId,
+    ExternalRegistrationId, JobId, PlanId, RequestId, ScheduleId, ScheduleOccurrenceId,
+    SourceSnapshotId, VersionId, WorkspaceId,
 };
 pub use path::DatasetPath;
 

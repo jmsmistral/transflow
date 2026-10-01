@@ -340,7 +340,7 @@ pub fn output_branch(
 pub enum OutputBranchOrigin {
     /// Explicit CLI/API data-branch override.
     Explicit,
-    /// Frozen accepted request or schedule revision.
+    /// Frozen accepted request or schedule definition or accepted occurrence.
     Recorded,
     /// Attached or unborn symbolic Git HEAD.
     Git,

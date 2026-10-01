@@ -359,7 +359,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -445,7 +445,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -528,7 +528,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -2045,7 +2045,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -2214,7 +2214,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -2395,7 +2395,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -2570,7 +2570,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -2897,7 +2897,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -3082,7 +3082,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -3264,7 +3264,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -3455,7 +3455,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -3789,7 +3789,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -4092,7 +4092,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -4584,7 +4584,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -4767,7 +4767,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -5305,7 +5305,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -6207,7 +6207,7 @@
             "name": "X-Transflow-CSRF",
             "in": "header",
             "required": false,
-            "description": "Required for browser session POSTs, except initial exchange",
+            "description": "Required for browser session mutations, except initial exchange",
             "schema": {
               "type": "string"
             }
@@ -6509,6 +6509,451 @@
             }
           }
         ]
+      }
+    },
+    "/api/v1/schedules": {
+      "get": {
+        "operationId": "get_api_v1_schedules",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiSchedulesV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "schedules": [],
+                    "next_cursor": null
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post_api_v1_schedules",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ScheduleRecordV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "etag": "x",
+                    "trigger_epoch": "x",
+                    "paused": false,
+                    "needs_review": false,
+                    "definition": null,
+                    "saved_at_us": "0"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Transflow-CSRF",
+            "in": "header",
+            "required": false,
+            "description": "Required for browser session mutations, except initial exchange",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiScheduleCreateV1"
+              },
+              "example": {
+                "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                "paused": false,
+                "definition": {
+                  "format_version": 1,
+                  "name": "x",
+                  "description": "example",
+                  "build": {
+                    "source": {
+                      "kind": "fixed_snapshot",
+                      "snapshot_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                    },
+                    "data_branch": "x",
+                    "fallback_branches": [],
+                    "input_fallback_policy": {
+                      "default": [],
+                      "rules": {}
+                    },
+                    "provider_fallback_policies": {},
+                    "targets": [
+                      {
+                        "workspace_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                        "dataset_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                      }
+                    ],
+                    "build_mode": "full",
+                    "boundaries": [],
+                    "exclusions": [],
+                    "refresh_sources": [],
+                    "parameters": {},
+                    "force": false,
+                    "require_current": false,
+                    "timeout_seconds": 0,
+                    "validation_timeout_seconds": 0
+                  },
+                  "trigger": {
+                    "kind": "manual"
+                  },
+                  "policies": {
+                    "max_attempts": 1,
+                    "retryable_classes": [],
+                    "abort_on_failure": false,
+                    "overlap_policy": "coalesce_latest",
+                    "max_pending": 1,
+                    "allow_overlapping_builds": false,
+                    "misfire_policy": "skip",
+                    "max_catch_up": 1,
+                    "token_window_seconds": null,
+                    "acknowledge_no_expiry": false,
+                    "max_consecutive_builds": 1,
+                    "minimum_delay_seconds": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedules/{schedule}": {
+      "get": {
+        "operationId": "get_api_v1_schedules_schedule",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ScheduleRecordV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "etag": "x",
+                    "trigger_epoch": "x",
+                    "paused": false,
+                    "needs_review": false,
+                    "definition": null,
+                    "saved_at_us": "0"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "schedule",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "put_api_v1_schedules_schedule",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ScheduleRecordV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "etag": "x",
+                    "trigger_epoch": "x",
+                    "paused": false,
+                    "needs_review": false,
+                    "definition": null,
+                    "saved_at_us": "0"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "schedule",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          {
+            "name": "X-Transflow-CSRF",
+            "in": "header",
+            "required": false,
+            "description": "Required for browser session mutations, except initial exchange",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleDefinitionV1"
+              },
+              "example": {
+                "format_version": 1,
+                "name": "x",
+                "description": "example",
+                "build": {
+                  "source": {
+                    "kind": "fixed_snapshot",
+                    "snapshot_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                  },
+                  "data_branch": "x",
+                  "fallback_branches": [],
+                  "input_fallback_policy": {
+                    "default": [],
+                    "rules": {}
+                  },
+                  "provider_fallback_policies": {},
+                  "targets": [
+                    {
+                      "workspace_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                      "dataset_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                    }
+                  ],
+                  "build_mode": "full",
+                  "boundaries": [],
+                  "exclusions": [],
+                  "refresh_sources": [],
+                  "parameters": {},
+                  "force": false,
+                  "require_current": false,
+                  "timeout_seconds": 0,
+                  "validation_timeout_seconds": 0
+                },
+                "trigger": {
+                  "kind": "manual"
+                },
+                "policies": {
+                  "max_attempts": 1,
+                  "retryable_classes": [],
+                  "abort_on_failure": false,
+                  "overlap_policy": "coalesce_latest",
+                  "max_pending": 1,
+                  "allow_overlapping_builds": false,
+                  "misfire_policy": "skip",
+                  "max_catch_up": 1,
+                  "token_window_seconds": null,
+                  "acknowledge_no_expiry": false,
+                  "max_consecutive_builds": 1,
+                  "minimum_delay_seconds": 1
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -15608,6 +16053,652 @@
             "minItems": 0
           }
         }
+      },
+      "ScheduleSourceV1": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "fixed_snapshot"
+              },
+              "snapshot_id": {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            },
+            "required": [
+              "kind",
+              "snapshot_id"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "git_ref"
+              },
+              "ref": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              }
+            },
+            "required": [
+              "kind",
+              "ref"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "working_tree"
+              },
+              "allow_additive_sync": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind",
+              "allow_additive_sync"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ScheduleFallbackPolicyV1": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "rules": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "minItems": 0,
+              "maxItems": 100
+            }
+          }
+        },
+        "required": [
+          "default",
+          "rules"
+        ],
+        "additionalProperties": false
+      },
+      "ScheduleBuildTemplateV1": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/ScheduleSourceV1"
+          },
+          "data_branch": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "fallback_branches": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "input_fallback_policy": {
+            "$ref": "#/components/schemas/ScheduleFallbackPolicyV1"
+          },
+          "provider_fallback_policies": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ScheduleFallbackPolicyV1"
+            }
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetKey"
+            },
+            "minItems": 1,
+            "maxItems": 1000
+          },
+          "build_mode": {
+            "enum": [
+              "full",
+              "selected",
+              "between",
+              "connecting"
+            ]
+          },
+          "boundaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetKey"
+            },
+            "minItems": 0,
+            "maxItems": 1000
+          },
+          "exclusions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetKey"
+            },
+            "minItems": 0,
+            "maxItems": 1000
+          },
+          "refresh_sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetKey"
+            },
+            "minItems": 0,
+            "maxItems": 1000
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ExecutionJsonV1"
+            }
+          },
+          "force": {
+            "type": "boolean"
+          },
+          "require_current": {
+            "type": "boolean"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "validation_timeout_seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          }
+        },
+        "required": [
+          "source",
+          "data_branch",
+          "fallback_branches",
+          "input_fallback_policy",
+          "provider_fallback_policies",
+          "targets",
+          "build_mode",
+          "boundaries",
+          "exclusions",
+          "refresh_sources",
+          "parameters",
+          "force",
+          "require_current",
+          "timeout_seconds",
+          "validation_timeout_seconds"
+        ],
+        "additionalProperties": false
+      },
+      "ScheduleTriggerV1": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "manual"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "cron"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "expression": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "timezone": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "duplicate_time": {
+                "enum": [
+                  "earliest",
+                  "both"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "expression",
+              "timezone",
+              "duplicate_time"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "dataset_head_changed"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "dataset": {
+                "$ref": "#/components/schemas/DatasetKey"
+              },
+              "branch": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "payload_mode": {
+                "enum": [
+                  "pin",
+                  "signal_only"
+                ]
+              },
+              "include_resets": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "dataset",
+              "branch",
+              "payload_mode",
+              "include_resets"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "dataset_published"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "dataset": {
+                "$ref": "#/components/schemas/DatasetKey"
+              },
+              "branch": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "payload_mode": {
+                "enum": [
+                  "pin",
+                  "signal_only"
+                ]
+              },
+              "include_resets": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "dataset",
+              "branch",
+              "payload_mode",
+              "include_resets"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "schedule_succeeded"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "schedule_id": {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              "require_materialization": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "schedule_id",
+              "require_materialization"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "build_succeeded"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DatasetKey"
+                },
+                "minItems": 1,
+                "maxItems": 1000
+              },
+              "branch": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "targets",
+              "branch"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "and"
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ScheduleTriggerV1"
+                },
+                "minItems": 2,
+                "maxItems": 64
+              }
+            },
+            "required": [
+              "kind",
+              "children"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "or"
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ScheduleTriggerV1"
+                },
+                "minItems": 2,
+                "maxItems": 64
+              }
+            },
+            "required": [
+              "kind",
+              "children"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "SchedulePoliciesV1": {
+        "type": "object",
+        "properties": {
+          "max_attempts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "retryable_classes": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "worker_crash",
+                "provider_unavailable",
+                "resource_unavailable"
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 3
+          },
+          "abort_on_failure": {
+            "type": "boolean"
+          },
+          "overlap_policy": {
+            "enum": [
+              "coalesce_latest",
+              "queue",
+              "skip"
+            ]
+          },
+          "max_pending": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "allow_overlapping_builds": {
+            "type": "boolean"
+          },
+          "misfire_policy": {
+            "enum": [
+              "skip",
+              "coalesce_latest",
+              "catch_up"
+            ]
+          },
+          "max_catch_up": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "token_window_seconds": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 31536000
+              }
+            ]
+          },
+          "acknowledge_no_expiry": {
+            "type": "boolean"
+          },
+          "max_consecutive_builds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "minimum_delay_seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 86400
+          }
+        },
+        "required": [
+          "max_attempts",
+          "retryable_classes",
+          "abort_on_failure",
+          "overlap_policy",
+          "max_pending",
+          "allow_overlapping_builds",
+          "misfire_policy",
+          "max_catch_up",
+          "token_window_seconds",
+          "acknowledge_no_expiry",
+          "max_consecutive_builds",
+          "minimum_delay_seconds"
+        ],
+        "additionalProperties": false
+      },
+      "ScheduleDefinitionV1": {
+        "type": "object",
+        "properties": {
+          "format_version": {
+            "const": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "build": {
+            "$ref": "#/components/schemas/ScheduleBuildTemplateV1"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerV1"
+          },
+          "policies": {
+            "$ref": "#/components/schemas/SchedulePoliciesV1"
+          }
+        },
+        "required": [
+          "format_version",
+          "name",
+          "description",
+          "build",
+          "trigger",
+          "policies"
+        ],
+        "additionalProperties": false
+      },
+      "ScheduleRecordV1": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "etag": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "trigger_epoch": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "paused": {
+            "type": "boolean"
+          },
+          "needs_review": {
+            "type": "boolean"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/ExecutionJsonV1"
+          },
+          "saved_at_us": {
+            "$ref": "#/components/schemas/Count"
+          }
+        },
+        "required": [
+          "id",
+          "etag",
+          "trigger_epoch",
+          "paused",
+          "needs_review",
+          "definition",
+          "saved_at_us"
+        ],
+        "additionalProperties": false
+      },
+      "ApiSchedulesV1": {
+        "type": "object",
+        "properties": {
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRecordV1"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          }
+        },
+        "required": [
+          "schedules",
+          "next_cursor"
+        ],
+        "additionalProperties": false
+      },
+      "ApiScheduleCreateV1": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "paused": {
+            "type": "boolean"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/ScheduleDefinitionV1"
+          }
+        },
+        "required": [
+          "id",
+          "paused",
+          "definition"
+        ],
+        "additionalProperties": false
       }
     },
     "securitySchemes": {

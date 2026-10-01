@@ -138,3 +138,13 @@ T080 adds `duckdb.query.v1`, `QueryExecutionRequestV1` and `query_results` for t
 supervised interactive helper. Closed API query request/status/result schemas and
 four routes generate all language contracts; 304 conformance cases cover both
 valid and refused boundaries. Query timers never apply to check/transform helpers.
+
+## Schedule definitions (T090)
+
+`ScheduleDefinitionV1` and `schedule::Definition::decode` define the bounded,
+closed build-template/trigger/policy contract. References use qualified stable
+IDs. Code selection is an explicit retained snapshot, full Git branch/tag ref or
+commit, or deliberately mutable working tree. The output data branch and ordered
+fallbacks are independent. The semantic codec checks source/ref syntax, duplicate
+IDs/fallbacks, scope conflicts, trigger depth/leaves and payload-mode conflicts.
+Cron syntax is checked; IANA zone lookup and tick/DST evaluation arrive in T093.

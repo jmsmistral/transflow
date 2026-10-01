@@ -104,19 +104,9 @@ fn live_jobs_views_schedules_and_leases_are_checked_again_at_mutation() {
             .execute(&mut h.db)
             .await
             .unwrap();
-        sqlx::query("INSERT INTO schedules VALUES('schedule','daily',NULL,1,NULL)")
-            .execute(&mut h.db)
-            .await
-            .unwrap();
-        sqlx::query("INSERT INTO schedule_revisions VALUES('schedule',1,'{}','{}',?,'fixture',1)")
-            .bind(serde_json::json!({"fallbacks":["master"]}).to_string())
-            .execute(&mut h.db)
-            .await
-            .unwrap();
-        sqlx::query("UPDATE schedules SET active_revision=1")
-            .execute(&mut h.db)
-            .await
-            .unwrap();
+        sqlx::query("INSERT INTO schedules(id,workspace_id,name,definition_json,etag,trigger_epoch,paused,needs_review,saved_at_us,saved_by,event_cursor) VALUES('schedule',(SELECT id FROM workspaces),'daily',?,'guard','epoch',1,1,1,'fixture',0)")
+            .bind(serde_json::json!({"build":{"fallbacks":["master"]}}).to_string())
+            .execute(&mut h.db).await.unwrap();
         assert!(
             reader
                 .branch_references(&row, 100)

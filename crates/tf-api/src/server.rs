@@ -266,7 +266,7 @@ async fn dispatch(
     }
     let method = parts.method.as_str();
     let path = parts.uri.path();
-    if !matches!(method, "GET" | "POST") {
+    if !matches!(method, "GET" | "POST" | "PUT") {
         return Err(ApiError::new(
             405,
             "TF_API_METHOD",
@@ -341,7 +341,7 @@ async fn dispatch(
         }
     }
     let content = one(h, "content-type")?;
-    if method == "POST" && content != Some("application/json") {
+    if matches!(method, "POST" | "PUT") && content != Some("application/json") {
         return Err(ApiError::new(
             415,
             "TF_API_CONTENT_TYPE",

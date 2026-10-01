@@ -375,3 +375,26 @@ View geometry permits bounded fractional JSON numbers. Its retry digest uses the
 parsed JSON encoding; execution fingerprint canonicalization remains integer-only.
 The UI entry allows only `/?view=<uuid>` as a saved-view link, with authentication
 still required for API reads. Asset queries and other entry query fields fail closed.
+
+## Schedule definition storage (T090)
+
+Authenticated `GET /api/v1/schedules` lists current definitions with an optional
+UUID `after` cursor; pages stop at 100 records or 1 MiB. `GET /api/v1/schedules/{id}`
+returns one record and its quoted `ETag`. These reads do not import code.
+
+`POST /api/v1/schedules` takes `ApiScheduleCreateV1` (`id`, initial `paused` and
+`definition`) and an `Idempotency-Key`; creation requires an unused stable ID.
+`PUT /api/v1/schedules/{id}` takes the complete `ScheduleDefinitionV1`, a fresh
+idempotency key and the quoted current `If-Match` ETag. A stale editor gets HTTP
+409 with `error.details.current_etag`; reload before making a new guarded save.
+Definition replacement preserves pause state, rotates the trigger epoch and
+clears unconsumed old tokens. Audit and successful receipt commit with the save;
+replaying the same operation returns its original response.
+
+Save checks the selected captured registry without importing Python or running
+producers. Full Git refs are captured independently of checkout, fixed captures
+must be retained locally, and working-tree capture must be explicitly selected.
+Fallback policies are explicit definition fields. Browser PUTs require the same
+session, Origin and CSRF protections as other mutations. No schedule definition
+history is retained. These routes store definitions; evaluator, dispatch,
+pause/resume/run-now, CLI and lineage schedule editor remain later tasks.

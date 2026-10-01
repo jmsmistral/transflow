@@ -104,10 +104,10 @@ async fn references(
           OR EXISTS(SELECT 1 FROM jobs j JOIN publication_contracts c ON c.job_id=j.id, json_tree(c.contract_json) t WHERE j.build_id=b.id AND t.atom IN (?1,?2))
           OR EXISTS(SELECT 1 FROM jobs j JOIN job_inputs i ON i.job_id=j.id, json_tree(i.binding_json) t WHERE j.build_id=b.id AND t.atom IN (?1,?2)))
         UNION SELECT 'write reservation: ' || build_id FROM write_reservations WHERE branch_id=?1
-        UNION SELECT 'saved schedule: ' || s.id FROM schedules s JOIN schedule_revisions r
-          ON r.schedule_id=s.id AND r.revision=s.active_revision WHERE s.deleted_at_us IS NULL AND (
-          EXISTS(SELECT 1 FROM json_tree(r.build_template_json) WHERE atom IN (?1,?2))
-          OR EXISTS(SELECT 1 FROM json_tree(r.policies_json) WHERE atom IN (?1,?2)))
+        UNION SELECT 'saved schedule: ' || s.id FROM schedules s
+          WHERE s.deleted_at_us IS NULL AND EXISTS(SELECT 1 FROM json_tree(s.definition_json) WHERE atom IN (?1,?2))
+        UNION SELECT 'accepted schedule work: ' || o.id FROM schedule_occurrences o
+          WHERE o.disposition IN ('ACCEPTED','QUEUED','HELD','RUNNING') AND EXISTS(SELECT 1 FROM json_tree(o.execution_json) WHERE atom IN (?1,?2))
         UNION SELECT 'saved view: ' || v.id FROM graph_views v WHERE
           EXISTS(SELECT 1 FROM json_tree(v.context_json) WHERE atom IN (?1,?2))
         UNION SELECT 'live read lease: ' || l.id FROM read_leases l WHERE l.released=0 AND l.expires_at_us>?3 AND (

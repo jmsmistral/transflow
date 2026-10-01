@@ -616,3 +616,48 @@ def validate_ApiOverlayDurationsV1(value: object) -> None:
 def validate_ApiOverlayFactsV1(value: object) -> None:
     """Assert the ApiOverlayFactsV1 contract, including custom formats."""
     validate_document("ApiOverlayFactsV1", value)
+
+
+def validate_ScheduleSourceV1(value: object) -> None:
+    """Assert the ScheduleSourceV1 contract, including custom formats."""
+    validate_document("ScheduleSourceV1", value)
+
+
+def validate_ScheduleFallbackPolicyV1(value: object) -> None:
+    """Assert the ScheduleFallbackPolicyV1 contract, including custom formats."""
+    validate_document("ScheduleFallbackPolicyV1", value)
+
+
+def validate_ScheduleBuildTemplateV1(value: object) -> None:
+    """Assert the ScheduleBuildTemplateV1 contract, including custom formats."""
+    validate_document("ScheduleBuildTemplateV1", value)
+
+
+def validate_ScheduleTriggerV1(value: object) -> None:
+    """Assert the ScheduleTriggerV1 contract, including custom formats."""
+    validate_document("ScheduleTriggerV1", value)
+
+
+def validate_SchedulePoliciesV1(value: object) -> None:
+    """Assert the SchedulePoliciesV1 contract, including custom formats."""
+    validate_document("SchedulePoliciesV1", value)
+
+
+def validate_ScheduleDefinitionV1(value: object) -> None:
+    """Assert the ScheduleDefinitionV1 contract, including custom formats."""
+    validate_document("ScheduleDefinitionV1", value)
+
+
+def validate_ScheduleRecordV1(value: object) -> None:
+    """Assert the ScheduleRecordV1 contract, including custom formats."""
+    validate_document("ScheduleRecordV1", value)
+
+
+def validate_ApiSchedulesV1(value: object) -> None:
+    """Assert the ApiSchedulesV1 contract, including custom formats."""
+    validate_document("ApiSchedulesV1", value)
+
+
+def validate_ApiScheduleCreateV1(value: object) -> None:
+    """Assert the ApiScheduleCreateV1 contract, including custom formats."""
+    validate_document("ApiScheduleCreateV1", value)

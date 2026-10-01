@@ -354,3 +354,108 @@ async fn contributor_assets_are_frozen_bounded_and_keep_transport_security()
     std::fs::remove_dir_all(root)?;
     Ok(())
 }
+
+struct SchedulesApp;
+impl Application for SchedulesApp {
+    fn capabilities(&self) -> Value {
+        json!({"api_version":1})
+    }
+    fn call(&self, r: tf_api::Request) -> Result<Reply, ApiError> {
+        if r.method != "PUT" || r.if_match != Some("a".repeat(64)) || r.key.is_none() {
+            return Err(ApiError::invalid());
+        }
+        Ok(Reply {
+            data: json!({"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","etag":"b".repeat(64),"trigger_epoch":"c".repeat(64),"paused":true,"needs_review":false,"definition":r.body,"saved_at_us":"1"}),
+            context: None,
+            etag: Some("b".repeat(64)),
+        })
+    }
+}
+#[tokio::test]
+async fn schedule_put_requires_authenticated_json_and_guard_and_cookie_csrf()
+-> Result<(), Box<dyn std::error::Error>> {
+    let r = tf_api::router(
+        "127.0.0.1:12345".parse()?,
+        TOKEN.into(),
+        Arc::new(SchedulesApp),
+    )?;
+    let cases: Value =
+        serde_json::from_str(include_str!("../../../schemas/fixtures/conformance.json"))?;
+    let body = cases
+        .as_array()
+        .ok_or("cases")?
+        .iter()
+        .find(|c| c["name"] == "schedule-definition-fixed")
+        .ok_or("definition")?["value"]
+        .to_string();
+    let path = "/api/v1/schedules/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    for (auth, origin, status) in [
+        (false, None, 401),
+        (true, Some("https://attacker.invalid"), 403),
+        (true, None, 200),
+    ] {
+        let mut b = request("PUT", path, &body)
+            .header("if-match", format!("\"{}\"", "a".repeat(64)))
+            .header("idempotency-key", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+        if auth {
+            b = b.header("authorization", format!("Bearer {TOKEN}"));
+        }
+        if let Some(o) = origin {
+            b = b.header("origin", o);
+        }
+        let reply = r.clone().oneshot(b.body(Body::from(body.clone()))?).await?;
+        assert_eq!(reply.status().as_u16(), status);
+        if status == 200 {
+            assert_eq!(reply.headers()["etag"], format!("\"{}\"", "b".repeat(64)));
+        }
+    }
+    let launch = r
+        .clone()
+        .oneshot(
+            request("POST", "/api/v1/sessions/launch", "{}")
+                .header("authorization", format!("Bearer {TOKEN}"))
+                .body(Body::from("{}"))?,
+        )
+        .await?;
+    let code = data(launch).await?["data"]["code"]
+        .as_str()
+        .ok_or("code")?
+        .to_owned();
+    let exchange = r
+        .clone()
+        .oneshot(
+            request("POST", "/api/v1/sessions/exchange", "")
+                .header("origin", "http://127.0.0.1:12345")
+                .body(Body::from(json!({"code":code}).to_string()))?,
+        )
+        .await?;
+    let cookie = exchange.headers()["set-cookie"]
+        .to_str()?
+        .split(';')
+        .next()
+        .ok_or("cookie")?
+        .to_owned();
+    let csrf = data(exchange).await?["data"]["csrf"]
+        .as_str()
+        .ok_or("csrf")?
+        .to_owned();
+    for (has_csrf, status) in [(false, 401), (true, 200)] {
+        let mut b = request("PUT", path, &body)
+            .header("cookie", &cookie)
+            .header("origin", "http://127.0.0.1:12345")
+            .header("if-match", format!("\"{}\"", "a".repeat(64)))
+            .header("idempotency-key", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+        if has_csrf {
+            b = b.header("x-transflow-csrf", &csrf);
+        }
+        assert_eq!(
+            r.clone()
+                .oneshot(b.body(Body::from(body.clone()))?)
+                .await?
+                .status()
+                .as_u16(),
+            status
+        );
+    }
+    Ok(())
+}

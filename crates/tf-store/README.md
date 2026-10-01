@@ -19,19 +19,27 @@ workspace initialization and robust ownership/path protection remain separate ta
 
 ## Schema and migrations
 
-Nine forward migrations install 53 logical tables: source/catalogue projections,
+Thirteen forward migrations install 53 logical tables: source/catalogue projections,
 versions/heads, builds/jobs/attempts, checks, scheduling, events/outbox, pins/audit,
 registry mutation journals, foreign replicas/leases, frozen publication/check
-links, read retention, replay, cache associations and computation comparison evidence. Publication is implemented below; scheduler, retention and replica-copy
-services remain later work.
+links, read retention, replay, cache associations and computation comparison evidence.
+Schedule definition storage is implemented; scheduling evaluation/dispatch remain later work.
+External data is consumed from its provider under leases.
 
 The database has an application ID, `user_version` and monotonic checksum ledger.
 Migration checksums are SHA-256 of exact embedded SQL bytes. Open rejects unrelated
 or newer databases, missing/reordered ledger entries and changed checksums. All
 pending DDL and version markers commit in one IMMEDIATE transaction; failure rolls
 back the whole upgrade. Existing migration bytes must never be edited after delivery.
-No destructive migration is currently provided. Future destructive upgrades require
-an explicit backup policy and migration before they can ship; there is no downgrade.
+Migration 13 replaces the pre-release schedule-revision placeholders with one current
+definition. Before upgrading a store with schedule rows, SQLite `VACUUM INTO`
+creates a private `schedule-schema-<old-version>-backup-<nonce>.sqlite` beside the
+runtime database, including committed WAL content. Backup failure aborts opening;
+backups are never overwritten or automatically removed. Retain this private backup
+until the upgrade is accepted; restore it with a compatible older binary if needed.
+The migration preserves accepted execution settings and consumed token evidence;
+legacy current definitions require review and an explicit normalized save. Other
+destructive upgrades need their own backup policy; there is no downgrade.
 
 STRICT tables, foreign keys, compound head/version identity, unique input aliases,
 attempt numbers and occurrence evidence constrain writes. Immutable snapshots,
@@ -122,3 +130,16 @@ without installing local input artifacts. Schema 10 retargets qualified foreign
 job-input FKs from replicas to foreign_versions while preserving history and legacy
 files. Local version/parent-job constraints remain intact. The application obtains
 and renews provider leases; retained metadata alone cannot grant a local data read.
+
+
+## Current schedule snapshots (T090)
+
+`Store::save_schedule` uses `BEGIN IMMEDIATE` to compare the opaque edit ETag,
+overwrite the only current snapshot, rotate its trigger epoch/event cursor,
+clear unconsumed tokens, audit the edit and optionally commit its API receipt.
+Replacement preserves paused state. `Reader` exposes bounded current records.
+`freeze_schedule_occurrence` retains accepted build settings/policies independently;
+it does not evaluate triggers or enqueue execution. Pending accepted execution
+and current fixed-source definitions protect source captures from collection and
+block deletion of referenced data branches. Completed occurrences are historical
+metadata, rather than permanent source retention roots.

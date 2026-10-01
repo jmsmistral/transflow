@@ -57,4 +57,7 @@ def test_generated_openapi_examples_and_parameter_names() -> None:
             validate(SCHEMA["$defs"][route["request"]], body, SCHEMA["$defs"])
         if route["mutation"]:
             assert ("header", "Idempotency-Key") in parameters
-            assert ("header", "If-Match") in parameters
+            if route["path"] == "/api/v1/schedules" and route["method"] == "POST":
+                assert ("header", "If-Match") not in parameters
+            else:
+                assert ("header", "If-Match") in parameters

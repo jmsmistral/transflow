@@ -7993,5 +7993,626 @@
       "input_failed": false,
       "durations": null
     }
+  },
+  {
+    "name": "schedule-definition-fixed",
+    "schema": "ScheduleDefinitionV1",
+    "value": {
+      "format_version": 1,
+      "name": "Daily example",
+      "description": "Synthetic schedule",
+      "build": {
+        "source": {
+          "kind": "fixed_snapshot",
+          "snapshot_id": "00000003-0000-4000-8000-000000000003"
+        },
+        "data_branch": "master",
+        "fallback_branches": [
+          "main"
+        ],
+        "input_fallback_policy": {
+          "default": [],
+          "rules": {
+            "master": [
+              "main"
+            ]
+          }
+        },
+        "provider_fallback_policies": {},
+        "targets": [
+          {
+            "workspace_id": "00000001-0000-4000-8000-000000000001",
+            "dataset_id": "00000002-0000-4000-8000-000000000002"
+          }
+        ],
+        "build_mode": "full",
+        "boundaries": [],
+        "exclusions": [],
+        "refresh_sources": [],
+        "parameters": {},
+        "force": false,
+        "require_current": false,
+        "timeout_seconds": 3600,
+        "validation_timeout_seconds": 3600
+      },
+      "trigger": {
+        "kind": "manual"
+      },
+      "policies": {
+        "max_attempts": 1,
+        "retryable_classes": [],
+        "abort_on_failure": true,
+        "overlap_policy": "coalesce_latest",
+        "max_pending": 10,
+        "allow_overlapping_builds": false,
+        "misfire_policy": "skip",
+        "max_catch_up": 5,
+        "token_window_seconds": 86400,
+        "acknowledge_no_expiry": false,
+        "max_consecutive_builds": 5,
+        "minimum_delay_seconds": 1
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "schedule-definition-git",
+    "schema": "ScheduleDefinitionV1",
+    "value": {
+      "format_version": 1,
+      "name": "Daily example",
+      "description": "Synthetic schedule",
+      "build": {
+        "source": {
+          "kind": "git_ref",
+          "ref": "refs/heads/master"
+        },
+        "data_branch": "master",
+        "fallback_branches": [
+          "main"
+        ],
+        "input_fallback_policy": {
+          "default": [],
+          "rules": {
+            "master": [
+              "main"
+            ]
+          }
+        },
+        "provider_fallback_policies": {},
+        "targets": [
+          {
+            "workspace_id": "00000001-0000-4000-8000-000000000001",
+            "dataset_id": "00000002-0000-4000-8000-000000000002"
+          }
+        ],
+        "build_mode": "full",
+        "boundaries": [],
+        "exclusions": [],
+        "refresh_sources": [],
+        "parameters": {},
+        "force": false,
+        "require_current": false,
+        "timeout_seconds": 3600,
+        "validation_timeout_seconds": 3600
+      },
+      "trigger": {
+        "kind": "manual"
+      },
+      "policies": {
+        "max_attempts": 1,
+        "retryable_classes": [],
+        "abort_on_failure": true,
+        "overlap_policy": "coalesce_latest",
+        "max_pending": 10,
+        "allow_overlapping_builds": false,
+        "misfire_policy": "skip",
+        "max_catch_up": 5,
+        "token_window_seconds": 86400,
+        "acknowledge_no_expiry": false,
+        "max_consecutive_builds": 5,
+        "minimum_delay_seconds": 1
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "schedule-definition-working-tree",
+    "schema": "ScheduleDefinitionV1",
+    "value": {
+      "format_version": 1,
+      "name": "Daily example",
+      "description": "Synthetic schedule",
+      "build": {
+        "source": {
+          "kind": "working_tree",
+          "allow_additive_sync": false
+        },
+        "data_branch": "master",
+        "fallback_branches": [
+          "main"
+        ],
+        "input_fallback_policy": {
+          "default": [],
+          "rules": {
+            "master": [
+              "main"
+            ]
+          }
+        },
+        "provider_fallback_policies": {},
+        "targets": [
+          {
+            "workspace_id": "00000001-0000-4000-8000-000000000001",
+            "dataset_id": "00000002-0000-4000-8000-000000000002"
+          }
+        ],
+        "build_mode": "full",
+        "boundaries": [],
+        "exclusions": [],
+        "refresh_sources": [],
+        "parameters": {},
+        "force": false,
+        "require_current": false,
+        "timeout_seconds": 3600,
+        "validation_timeout_seconds": 3600
+      },
+      "trigger": {
+        "kind": "manual"
+      },
+      "policies": {
+        "max_attempts": 1,
+        "retryable_classes": [],
+        "abort_on_failure": true,
+        "overlap_policy": "coalesce_latest",
+        "max_pending": 10,
+        "allow_overlapping_builds": false,
+        "misfire_policy": "skip",
+        "max_catch_up": 5,
+        "token_window_seconds": 86400,
+        "acknowledge_no_expiry": false,
+        "max_consecutive_builds": 5,
+        "minimum_delay_seconds": 1
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "schedule-definition-automatic",
+    "schema": "ScheduleDefinitionV1",
+    "value": {
+      "format_version": 1,
+      "name": "Daily example",
+      "description": "Synthetic schedule",
+      "build": {
+        "source": {
+          "kind": "fixed_snapshot",
+          "snapshot_id": "00000003-0000-4000-8000-000000000003"
+        },
+        "data_branch": "master",
+        "fallback_branches": [
+          "main"
+        ],
+        "input_fallback_policy": {
+          "default": [],
+          "rules": {
+            "master": [
+              "main"
+            ]
+          }
+        },
+        "provider_fallback_policies": {},
+        "targets": [
+          {
+            "workspace_id": "00000001-0000-4000-8000-000000000001",
+            "dataset_id": "00000002-0000-4000-8000-000000000002"
+          }
+        ],
+        "build_mode": "full",
+        "boundaries": [],
+        "exclusions": [],
+        "refresh_sources": [],
+        "parameters": {},
+        "force": false,
+        "require_current": false,
+        "timeout_seconds": 3600,
+        "validation_timeout_seconds": 3600
+      },
+      "trigger": {
+        "kind": "and",
+        "children": [
+          {
+            "kind": "cron",
+            "id": "daily",
+            "expression": "0 7 * * *",
+            "timezone": "UTC",
+            "duplicate_time": "earliest"
+          },
+          {
+            "kind": "dataset_head_changed",
+            "id": "changed",
+            "dataset": {
+              "workspace_id": "00000001-0000-4000-8000-000000000001",
+              "dataset_id": "00000002-0000-4000-8000-000000000002"
+            },
+            "branch": "master",
+            "payload_mode": "pin",
+            "include_resets": false
+          }
+        ]
+      },
+      "policies": {
+        "max_attempts": 1,
+        "retryable_classes": [],
+        "abort_on_failure": true,
+        "overlap_policy": "coalesce_latest",
+        "max_pending": 10,
+        "allow_overlapping_builds": false,
+        "misfire_policy": "skip",
+        "max_catch_up": 5,
+        "token_window_seconds": 86400,
+        "acknowledge_no_expiry": false,
+        "max_consecutive_builds": 5,
+        "minimum_delay_seconds": 1
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "schedule-empty-targets",
+    "schema": "ScheduleDefinitionV1",
+    "value": {
+      "format_version": 1,
+      "name": "Daily example",
+      "description": "Synthetic schedule",
+      "build": {
+        "source": {
+          "kind": "fixed_snapshot",
+          "snapshot_id": "00000003-0000-4000-8000-000000000003"
+        },
+        "data_branch": "master",
+        "fallback_branches": [
+          "main"
+        ],
+        "input_fallback_policy": {
+          "default": [],
+          "rules": {
+            "master": [
+              "main"
+            ]
+          }
+        },
+        "provider_fallback_policies": {},
+        "targets": [],
+        "build_mode": "full",
+        "boundaries": [],
+        "exclusions": [],
+        "refresh_sources": [],
+        "parameters": {},
+        "force": false,
+        "require_current": false,
+        "timeout_seconds": 3600,
+        "validation_timeout_seconds": 3600
+      },
+      "trigger": {
+        "kind": "manual"
+      },
+      "policies": {
+        "max_attempts": 1,
+        "retryable_classes": [],
+        "abort_on_failure": true,
+        "overlap_policy": "coalesce_latest",
+        "max_pending": 10,
+        "allow_overlapping_builds": false,
+        "misfire_policy": "skip",
+        "max_catch_up": 5,
+        "token_window_seconds": 86400,
+        "acknowledge_no_expiry": false,
+        "max_consecutive_builds": 5,
+        "minimum_delay_seconds": 1
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-unknown-source",
+    "schema": "ScheduleDefinitionV1",
+    "value": {
+      "format_version": 1,
+      "name": "Daily example",
+      "description": "Synthetic schedule",
+      "build": {
+        "source": {
+          "kind": "HEAD"
+        },
+        "data_branch": "master",
+        "fallback_branches": [
+          "main"
+        ],
+        "input_fallback_policy": {
+          "default": [],
+          "rules": {
+            "master": [
+              "main"
+            ]
+          }
+        },
+        "provider_fallback_policies": {},
+        "targets": [
+          {
+            "workspace_id": "00000001-0000-4000-8000-000000000001",
+            "dataset_id": "00000002-0000-4000-8000-000000000002"
+          }
+        ],
+        "build_mode": "full",
+        "boundaries": [],
+        "exclusions": [],
+        "refresh_sources": [],
+        "parameters": {},
+        "force": false,
+        "require_current": false,
+        "timeout_seconds": 3600,
+        "validation_timeout_seconds": 3600
+      },
+      "trigger": {
+        "kind": "manual"
+      },
+      "policies": {
+        "max_attempts": 1,
+        "retryable_classes": [],
+        "abort_on_failure": true,
+        "overlap_policy": "coalesce_latest",
+        "max_pending": 10,
+        "allow_overlapping_builds": false,
+        "misfire_policy": "skip",
+        "max_catch_up": 5,
+        "token_window_seconds": 86400,
+        "acknowledge_no_expiry": false,
+        "max_consecutive_builds": 5,
+        "minimum_delay_seconds": 1
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-unknown-trigger",
+    "schema": "ScheduleDefinitionV1",
+    "value": {
+      "format_version": 1,
+      "name": "Daily example",
+      "description": "Synthetic schedule",
+      "build": {
+        "source": {
+          "kind": "fixed_snapshot",
+          "snapshot_id": "00000003-0000-4000-8000-000000000003"
+        },
+        "data_branch": "master",
+        "fallback_branches": [
+          "main"
+        ],
+        "input_fallback_policy": {
+          "default": [],
+          "rules": {
+            "master": [
+              "main"
+            ]
+          }
+        },
+        "provider_fallback_policies": {},
+        "targets": [
+          {
+            "workspace_id": "00000001-0000-4000-8000-000000000001",
+            "dataset_id": "00000002-0000-4000-8000-000000000002"
+          }
+        ],
+        "build_mode": "full",
+        "boundaries": [],
+        "exclusions": [],
+        "refresh_sources": [],
+        "parameters": {},
+        "force": false,
+        "require_current": false,
+        "timeout_seconds": 3600,
+        "validation_timeout_seconds": 3600
+      },
+      "trigger": {
+        "kind": "anything"
+      },
+      "policies": {
+        "max_attempts": 1,
+        "retryable_classes": [],
+        "abort_on_failure": true,
+        "overlap_policy": "coalesce_latest",
+        "max_pending": 10,
+        "allow_overlapping_builds": false,
+        "misfire_policy": "skip",
+        "max_catch_up": 5,
+        "token_window_seconds": 86400,
+        "acknowledge_no_expiry": false,
+        "max_consecutive_builds": 5,
+        "minimum_delay_seconds": 1
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-retry-bounds",
+    "schema": "ScheduleDefinitionV1",
+    "value": {
+      "format_version": 1,
+      "name": "Daily example",
+      "description": "Synthetic schedule",
+      "build": {
+        "source": {
+          "kind": "fixed_snapshot",
+          "snapshot_id": "00000003-0000-4000-8000-000000000003"
+        },
+        "data_branch": "master",
+        "fallback_branches": [
+          "main"
+        ],
+        "input_fallback_policy": {
+          "default": [],
+          "rules": {
+            "master": [
+              "main"
+            ]
+          }
+        },
+        "provider_fallback_policies": {},
+        "targets": [
+          {
+            "workspace_id": "00000001-0000-4000-8000-000000000001",
+            "dataset_id": "00000002-0000-4000-8000-000000000002"
+          }
+        ],
+        "build_mode": "full",
+        "boundaries": [],
+        "exclusions": [],
+        "refresh_sources": [],
+        "parameters": {},
+        "force": false,
+        "require_current": false,
+        "timeout_seconds": 3600,
+        "validation_timeout_seconds": 3600
+      },
+      "trigger": {
+        "kind": "manual"
+      },
+      "policies": {
+        "max_attempts": 0,
+        "retryable_classes": [],
+        "abort_on_failure": true,
+        "overlap_policy": "coalesce_latest",
+        "max_pending": 10,
+        "allow_overlapping_builds": false,
+        "misfire_policy": "skip",
+        "max_catch_up": 5,
+        "token_window_seconds": 86400,
+        "acknowledge_no_expiry": false,
+        "max_consecutive_builds": 5,
+        "minimum_delay_seconds": 1
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-missing-source",
+    "schema": "ScheduleDefinitionV1",
+    "value": {
+      "format_version": 1,
+      "name": "Daily example",
+      "description": "Synthetic schedule",
+      "build": {
+        "data_branch": "master",
+        "fallback_branches": [
+          "main"
+        ],
+        "input_fallback_policy": {
+          "default": [],
+          "rules": {
+            "master": [
+              "main"
+            ]
+          }
+        },
+        "provider_fallback_policies": {},
+        "targets": [
+          {
+            "workspace_id": "00000001-0000-4000-8000-000000000001",
+            "dataset_id": "00000002-0000-4000-8000-000000000002"
+          }
+        ],
+        "build_mode": "full",
+        "boundaries": [],
+        "exclusions": [],
+        "refresh_sources": [],
+        "parameters": {},
+        "force": false,
+        "require_current": false,
+        "timeout_seconds": 3600,
+        "validation_timeout_seconds": 3600
+      },
+      "trigger": {
+        "kind": "manual"
+      },
+      "policies": {
+        "max_attempts": 1,
+        "retryable_classes": [],
+        "abort_on_failure": true,
+        "overlap_policy": "coalesce_latest",
+        "max_pending": 10,
+        "allow_overlapping_builds": false,
+        "misfire_policy": "skip",
+        "max_catch_up": 5,
+        "token_window_seconds": 86400,
+        "acknowledge_no_expiry": false,
+        "max_consecutive_builds": 5,
+        "minimum_delay_seconds": 1
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-extra-field",
+    "schema": "ScheduleDefinitionV1",
+    "value": {
+      "format_version": 1,
+      "name": "Daily example",
+      "description": "Synthetic schedule",
+      "build": {
+        "source": {
+          "kind": "fixed_snapshot",
+          "snapshot_id": "00000003-0000-4000-8000-000000000003"
+        },
+        "data_branch": "master",
+        "fallback_branches": [
+          "main"
+        ],
+        "input_fallback_policy": {
+          "default": [],
+          "rules": {
+            "master": [
+              "main"
+            ]
+          }
+        },
+        "provider_fallback_policies": {},
+        "targets": [
+          {
+            "workspace_id": "00000001-0000-4000-8000-000000000001",
+            "dataset_id": "00000002-0000-4000-8000-000000000002"
+          }
+        ],
+        "build_mode": "full",
+        "boundaries": [],
+        "exclusions": [],
+        "refresh_sources": [],
+        "parameters": {},
+        "force": false,
+        "require_current": false,
+        "timeout_seconds": 3600,
+        "validation_timeout_seconds": 3600
+      },
+      "trigger": {
+        "kind": "manual"
+      },
+      "policies": {
+        "max_attempts": 1,
+        "retryable_classes": [],
+        "abort_on_failure": true,
+        "overlap_policy": "coalesce_latest",
+        "max_pending": 10,
+        "allow_overlapping_builds": false,
+        "misfire_policy": "skip",
+        "max_catch_up": 5,
+        "token_window_seconds": 86400,
+        "acknowledge_no_expiry": false,
+        "max_consecutive_builds": 5,
+        "minimum_delay_seconds": 1
+      },
+      "extra": true
+    },
+    "valid": false
   }
 ]

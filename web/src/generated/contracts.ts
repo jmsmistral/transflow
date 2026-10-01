@@ -367,3 +367,30 @@ export type ApiOverlayDurationsV1 = { readonly "last_ns": (Count | null); readon
 
 // prettier-ignore
 export type ApiOverlayFactsV1 = { readonly "version": (Uuid | null); readonly "rows": (Count | null); readonly "files": (Count | null); readonly "bytes": (Count | null); readonly "latest_attempt": (("Running" | "Succeeded" | "Failed" | "Canceled" | "Interrupted") | null); readonly "freshness": ("current" | "data" | "logic" | "ancestor" | "never_built" | "unknown"); readonly "reasons": ReadonlyArray<string>; readonly "health": ("Passed" | "Warning" | "NoChecks" | "Unavailable"); readonly "input_failed": boolean; readonly "durations": (ApiOverlayDurationsV1 | null); readonly "roles"?: ReadonlyArray<("excluded" | "target" | "planned" | "trigger" | "boundary" | "cached")> };
+
+// prettier-ignore
+export type ScheduleSourceV1 = ({ readonly "kind": "fixed_snapshot"; readonly "snapshot_id": Uuid } | { readonly "kind": "git_ref"; readonly "ref": string } | { readonly "kind": "working_tree"; readonly "allow_additive_sync": boolean });
+
+// prettier-ignore
+export type ScheduleFallbackPolicyV1 = { readonly "default": ReadonlyArray<string>; readonly "rules": { readonly [key: string]: ReadonlyArray<string> } };
+
+// prettier-ignore
+export type ScheduleBuildTemplateV1 = { readonly "source": ScheduleSourceV1; readonly "data_branch": string; readonly "fallback_branches": ReadonlyArray<string>; readonly "input_fallback_policy": ScheduleFallbackPolicyV1; readonly "provider_fallback_policies": { readonly [key: string]: ScheduleFallbackPolicyV1 }; readonly "targets": ReadonlyArray<DatasetKey>; readonly "build_mode": ("full" | "selected" | "between" | "connecting"); readonly "boundaries": ReadonlyArray<DatasetKey>; readonly "exclusions": ReadonlyArray<DatasetKey>; readonly "refresh_sources": ReadonlyArray<DatasetKey>; readonly "parameters": { readonly [key: string]: ExecutionJsonV1 }; readonly "force": boolean; readonly "require_current": boolean; readonly "timeout_seconds": number; readonly "validation_timeout_seconds": number };
+
+// prettier-ignore
+export type ScheduleTriggerV1 = ({ readonly "kind": "manual" } | { readonly "kind": "cron"; readonly "id": string; readonly "expression": string; readonly "timezone": string; readonly "duplicate_time": ("earliest" | "both") } | { readonly "kind": "dataset_head_changed"; readonly "id": string; readonly "dataset": DatasetKey; readonly "branch": string; readonly "payload_mode": ("pin" | "signal_only"); readonly "include_resets": boolean } | { readonly "kind": "dataset_published"; readonly "id": string; readonly "dataset": DatasetKey; readonly "branch": string; readonly "payload_mode": ("pin" | "signal_only"); readonly "include_resets": boolean } | { readonly "kind": "schedule_succeeded"; readonly "id": string; readonly "schedule_id": Uuid; readonly "require_materialization": boolean } | { readonly "kind": "build_succeeded"; readonly "id": string; readonly "targets": ReadonlyArray<DatasetKey>; readonly "branch": string } | { readonly "kind": "and"; readonly "children": ReadonlyArray<ScheduleTriggerV1> } | { readonly "kind": "or"; readonly "children": ReadonlyArray<ScheduleTriggerV1> });
+
+// prettier-ignore
+export type SchedulePoliciesV1 = { readonly "max_attempts": number; readonly "retryable_classes": ReadonlyArray<("worker_crash" | "provider_unavailable" | "resource_unavailable")>; readonly "abort_on_failure": boolean; readonly "overlap_policy": ("coalesce_latest" | "queue" | "skip"); readonly "max_pending": number; readonly "allow_overlapping_builds": boolean; readonly "misfire_policy": ("skip" | "coalesce_latest" | "catch_up"); readonly "max_catch_up": number; readonly "token_window_seconds": (null | number); readonly "acknowledge_no_expiry": boolean; readonly "max_consecutive_builds": number; readonly "minimum_delay_seconds": number };
+
+// prettier-ignore
+export type ScheduleDefinitionV1 = { readonly "format_version": 1; readonly "name": string; readonly "description": string; readonly "build": ScheduleBuildTemplateV1; readonly "trigger": ScheduleTriggerV1; readonly "policies": SchedulePoliciesV1 };
+
+// prettier-ignore
+export type ScheduleRecordV1 = { readonly "id": Uuid; readonly "etag": string; readonly "trigger_epoch": string; readonly "paused": boolean; readonly "needs_review": boolean; readonly "definition": ExecutionJsonV1; readonly "saved_at_us": Count };
+
+// prettier-ignore
+export type ApiSchedulesV1 = { readonly "schedules": ReadonlyArray<ScheduleRecordV1>; readonly "next_cursor": (null | Uuid) };
+
+// prettier-ignore
+export type ApiScheduleCreateV1 = { readonly "id": Uuid; readonly "paused": boolean; readonly "definition": ScheduleDefinitionV1 };

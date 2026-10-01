@@ -1,7 +1,7 @@
 use crate::{Result, SCHEMA_VERSION, StoreError};
 use sqlx::{Connection, Row, SqliteConnection};
 const APP_ID: i64 = 0x5452464c;
-const MIGRATIONS: [&str; 12] = [
+const MIGRATIONS: [&str; 13] = [
     include_str!("../migrations/001_core.sql"),
     include_str!("../migrations/002_catalog_foreign.sql"),
     include_str!("../migrations/003_publication.sql"),
@@ -14,6 +14,7 @@ const MIGRATIONS: [&str; 12] = [
     include_str!("../migrations/010_direct_external_reads.sql"),
     include_str!("../migrations/011_api_operations.sql"),
     include_str!("../migrations/012_events.sql"),
+    include_str!("../migrations/013_schedule_snapshots.sql"),
 ];
 pub(crate) async fn preflight(db: &mut SqliteConnection) -> Result<()> {
     let version: i64 = sqlx::query_scalar("PRAGMA user_version")
@@ -72,5 +73,57 @@ pub(crate) async fn apply(db: &mut SqliteConnection) -> Result<()> {
     .execute(&mut *tx)
     .await?;
     tx.commit().await?;
+    Ok(())
+}
+
+/// Preserve the pre-release placeholder history before intentionally replacing it.
+/// The caller holds the runtime owner; VACUUM INTO includes committed WAL content.
+pub(crate) async fn backup_schedule_placeholders(
+    db: &mut SqliteConnection,
+    path: &std::path::Path,
+) -> Result<()> {
+    use std::{
+        fs::{self, OpenOptions},
+        os::unix::{
+            ffi::OsStrExt,
+            fs::{MetadataExt, OpenOptionsExt},
+        },
+    };
+    let version: i64 = sqlx::query_scalar("PRAGMA user_version")
+        .fetch_one(&mut *db)
+        .await?;
+    if !(1..13).contains(&version) {
+        return Ok(());
+    }
+    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM schedules")
+        .fetch_one(&mut *db)
+        .await?;
+    if count == 0 {
+        return Ok(());
+    }
+    let nonce: String = sqlx::query_scalar("SELECT lower(hex(randomblob(16)))")
+        .fetch_one(&mut *db)
+        .await?;
+    let parent = path.parent().ok_or(StoreError::Filesystem)?;
+    let backup = parent.join(format!("schedule-schema-{version}-backup-{nonce}.sqlite"));
+    let file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .open(&backup)?;
+    let before = file.metadata()?;
+    let name =
+        std::str::from_utf8(backup.as_os_str().as_bytes()).map_err(|_| StoreError::Filesystem)?;
+    sqlx::query("VACUUM INTO ?")
+        .bind(name)
+        .execute(&mut *db)
+        .await?;
+    let after = fs::symlink_metadata(&backup)?;
+    if !after.is_file() || before.dev() != after.dev() || before.ino() != after.ino() {
+        return Err(StoreError::Filesystem);
+    }
+    file.sync_all()?;
+    fs::File::open(parent)?.sync_all()?;
+    // The backup stays private and is never silently overwritten or automatically removed.
     Ok(())
 }

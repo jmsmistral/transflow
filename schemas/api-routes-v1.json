@@ -465,5 +465,43 @@
     ],
     "mutation": false,
     "context": true
+  },
+  {
+    "path": "/api/v1/schedules",
+    "method": "GET",
+    "response": "ApiSchedulesV1",
+    "request": null,
+    "query": [
+      "after"
+    ],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/schedules/{schedule}",
+    "method": "GET",
+    "response": "ScheduleRecordV1",
+    "request": null,
+    "query": [],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/schedules",
+    "method": "POST",
+    "response": "ScheduleRecordV1",
+    "request": "ApiScheduleCreateV1",
+    "query": [],
+    "mutation": true,
+    "context": false
+  },
+  {
+    "path": "/api/v1/schedules/{schedule}",
+    "method": "PUT",
+    "response": "ScheduleRecordV1",
+    "request": "ScheduleDefinitionV1",
+    "query": [],
+    "mutation": true,
+    "context": false
   }
 ]

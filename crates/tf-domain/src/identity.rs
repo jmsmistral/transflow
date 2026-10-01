@@ -74,6 +74,14 @@ id!(
     "Explicit local registration of a foreign dataset."
 );
 id!(BuildId, "Build request identity.");
+id!(
+    ScheduleId,
+    "Stable schedule identity, independent of replaceable definitions."
+);
+id!(
+    ScheduleOccurrenceId,
+    "Accepted scheduling occurrence and its frozen execution evidence."
+);
 id!(JobId, "Planned producer job identity.");
 id!(
     PlanId,

@@ -91,7 +91,7 @@ impl ApiError {
 pub struct Request {
     /// Server-generated diagnostic identity.
     pub id: RequestId,
-    /// GET or POST (unsupported methods are refused).
+    /// GET, POST or PUT (unsupported methods are refused).
     pub method: String,
     /// Decoded path, without query strings or credentials.
     pub path: String,

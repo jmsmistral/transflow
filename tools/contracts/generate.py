@@ -90,9 +90,9 @@ def openapi(source):
                 operation['parameters'].append({"name": segment[1:-1], "in": "path", "required": True, "schema": {"$ref": "#/$defs/Uuid"}})
         if route['request']:
             operation['requestBody'] = {"required": True, "content": {"application/json": {"schema": {"$ref": "#/$defs/" + route['request']}}}}
-            operation['parameters'].append({"name": "X-Transflow-CSRF", "in": "header", "required": False, "description": "Required for browser session POSTs, except initial exchange", "schema": {"type": "string"}})
+            operation['parameters'].append({"name": "X-Transflow-CSRF", "in": "header", "required": False, "description": "Required for browser session mutations, except initial exchange", "schema": {"type": "string"}})
         if route['mutation']:
-            for name in ['Idempotency-Key', 'If-Match']:
+            for name in (['Idempotency-Key'] if route['path'] == '/api/v1/schedules' else ['Idempotency-Key', 'If-Match']):
                 operation['parameters'].append({"name": name, "in": "header", "required": True, "schema": {"type": "string"}})
         operation['responses']['200']['content']['application/json']['example'] = {
             "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",

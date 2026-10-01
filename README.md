@@ -160,6 +160,13 @@ loads, with context-fenced hover/overlay refreshes. The separate dataset-list vi
 remains removed. A public synthetic fixture and opt-in measurement build document
 observed 500-node/1,500-edge performance in the verification report.
 
+T090 adds authenticated schedule definition storage: list/read/create and guarded
+replacement of one current snapshot, with stable dataset IDs, explicit code source,
+output branch and frozen fallback policies. Conflicting edits return the current
+ETag. Accepted occurrence templates survive subsequent edits. Trigger evaluation,
+automatic dispatch and the schedule UI are later tasks. See the
+[schedule API](crates/tf-api/README.md#schedule-definition-storage-t090).
+
 T087 adds the **Build planner** inspector for the current lineage selection. With
 nothing selected it shows a centered build prompt. Choose selected resources only
 (the UI default), transforms connecting selected endpoints, or all eligible ancestors;

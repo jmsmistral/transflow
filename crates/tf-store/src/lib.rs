@@ -2,6 +2,8 @@
 pub mod catalog_mutations;
 mod migrations;
 mod path;
+/// Single-snapshot schedule definitions and frozen occurrence evidence.
+pub mod schedules;
 /// Explicit, revisioned presentation state; never execution authority.
 pub mod views;
 use sqlx::{
@@ -15,7 +17,7 @@ use std::{
 use tf_domain::{DatasetId, WorkspaceId};
 
 /// Latest supported runtime schema. Authoring registry versions are independent.
-pub const SCHEMA_VERSION: i64 = 12;
+pub const SCHEMA_VERSION: i64 = 13;
 
 /// Safe read-only build history and execution evidence.
 pub mod build_read;
@@ -141,6 +143,7 @@ impl Store {
         if foreign_keys != 1 || synchronous != 2 || busy_timeout_ms != 250 {
             return Err(StoreError::InvalidRequest);
         }
+        migrations::backup_schedule_placeholders(&mut db, &path).await?;
         migrations::apply(&mut db).await?;
         let source = sqlx::query_scalar("SELECT sqlite_source_id()")
             .fetch_one(&mut db)

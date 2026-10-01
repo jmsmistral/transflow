@@ -7,6 +7,7 @@ mod api_overlays;
 mod api_preview;
 mod api_query;
 mod api_read;
+mod api_schedules;
 mod api_views;
 mod branch;
 mod browse;
