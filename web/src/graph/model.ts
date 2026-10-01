@@ -61,6 +61,7 @@ export class GraphModel {
   private request: AbortController | undefined;
   private generation = 0;
   private pendingAdds = new Set<string>();
+  private viewSelector = "";
   private cache: GraphCache;
   constructor(private readonly workspace: Workspace) {
     this.cache = new GraphCache(workspace);
@@ -89,7 +90,20 @@ export class GraphModel {
       }
       const context = state.value.context.fingerprint;
       const visualContext = contextIdentity(state.value.context);
-      const timingOnly = changed && this.state.visualContext === visualContext;
+      const selector = JSON.stringify([
+        state.value.context.workspace,
+        state.value.context.branch,
+        state.value.context.selection,
+        state.value.context.fallback_policy,
+      ]);
+      // A build may publish a new capture/registry. Rebind visible identities in
+      // the same branch view while retaining the camera and node positions.
+      const timingOnly =
+        changed &&
+        (this.state.visualContext === visualContext ||
+          (state.value.context.selection.kind === "retained_current" &&
+            selector === this.viewSelector));
+      this.viewSelector = selector;
       if (timingOnly) {
         const identities = this.state.nodes.map((node) => node.identity);
         this.set({
@@ -231,6 +245,39 @@ export class GraphModel {
         this.pendingAdds.delete(path);
         this.set({ busy: this.pendingAdds.size > 0 });
       }
+    }
+  }
+  async addMany(paths: readonly string[]): Promise<void> {
+    this.cancel();
+    const generation = this.generation;
+    this.set({ busy: true, message: "" });
+    try {
+      const requested = [...new Set(paths)].slice(0, 100);
+      const scope = await this.cache.lookup(requested);
+      if (generation === this.generation) {
+        // Keep the plan's parent-before-child order for newly placed nodes.
+        const rank = (node: ApiLineageNodeV1) =>
+          requested.findIndex(
+            (path) => node.identity === path || node.paths.includes(path),
+          );
+        this.accept(
+          {
+            ...scope,
+            nodes: [...scope.nodes].sort((a, b) => rank(a) - rank(b)),
+          },
+          { roots: [], direction: "upstream" },
+        );
+      }
+    } catch (error) {
+      if (generation === this.generation)
+        this.set({
+          message:
+            error instanceof Error
+              ? error.message
+              : "Could not add plan resources.",
+        });
+    } finally {
+      if (generation === this.generation) this.set({ busy: false });
     }
   }
   cancel = (): void => {

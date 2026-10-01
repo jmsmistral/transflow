@@ -217,3 +217,36 @@ highlighted matches, version labels and committed last-save timestamps. UI dates
 use `YYYY-MM-DD HH:mm:ss` in the browser's local time. Legend rows select matching
 visible nodes; dependency edges share one colour regardless of origin or role.
 Pointer-down on a node dismisses its tooltip until a fresh hover/focus.
+
+## Build planning (T087)
+
+Open **Build planner** in the right rail after selecting local producer nodes on the
+lineage. No selection shows a centered hammer and selection prompt. Targets always
+follow graph selection; external/imported nodes cannot become local build targets.
+Choose **Selected resources only** (the UI default), **All transforms in between
+selected resources**, or **All ancestor resources**. Connecting scope includes the
+selected endpoints and eligible paths between them in the complete validated graph;
+it excludes unrelated side ancestors, respects branch/read/pin barriers, and keeps
+isolated selections as explicit targets. The shared CLI/API mode is `connecting`;
+CLI's omitted mode remains `full`, and explicit `between` read-boundary semantics
+remain available. Advanced options expose read boundaries, exclusions, source refresh,
+exact input pins, JSON parameter overrides, require-current inputs and a source Git ref.
+
+**Next (View preview)** does not execute producers or register outputs. It shows the
+complete planned resource list and faded reused boundaries; toggle their visibility
+with **Show resources that will not be built**. Force prepares a new guarded plan.
+Deterministic jobs show **Cache evaluation pending** until execution resolves actual
+inputs and verifies retained bytes, so counts describe jobs in scope, not a speculative
+number of materializations. The graph temporarily highlights writes and fades other
+nodes. **Add to graph** adds hidden registered resources in batches of up to 100 without
+moving existing nodes. **Select nodes on graph** adds/selects up to 100 planned resources
+and returns to strategy selection. Pending registrations become browsable on acceptance.
+Collapsed **Plan details** retains checks, exact reads, symbolic inputs, parameters,
+source decisions and freshness reasons. Empty/invalid/expired/conflicting plans cannot run.
+
+**Run build** sends only the reviewed plan ID, matching context and durable idempotency
+receipt. Interrupted acceptance retries that receipt rather than creating another build.
+The live Build report opens automatically; changing the next selection or canceling
+its preview does not cancel an accepted build. Event refresh retains the last verified
+workspace through publication conflicts with capped, cancellation-aware backoff.
+The same-branch canvas keeps its membership, positions, selection and camera.

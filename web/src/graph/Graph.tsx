@@ -188,6 +188,9 @@ export function GraphExplorer({
   onSelection,
   focusRequest,
   cataloguePaths,
+  addRequest,
+  selectRequest,
+  planPreview,
   titleHost,
   actionsHost,
 }: {
@@ -196,6 +199,9 @@ export function GraphExplorer({
   workspace: Workspace;
   dark?: boolean;
   cataloguePaths?: readonly string[];
+  selectRequest?: { paths: readonly string[]; revision: number } | null;
+  planPreview?: import("../generated/contracts").PlanResultV1 | null;
+  addRequest?: { paths: readonly string[]; revision: number } | null;
   onVisible?: (identities: readonly string[]) => void;
   onSelection?: (nodes: readonly ApiLineageNodeV1[], context: string) => void;
   focusRequest?: { path: string; revision: number } | null;
@@ -296,6 +302,9 @@ export function GraphExplorer({
   useEffect(() => {
     if (canExplore && focusRequest) void model.add(focusRequest.path);
   }, [model, fingerprint, canExplore, focusRequest]);
+  useEffect(() => {
+    if (canExplore && addRequest) void model.addMany(addRequest.paths);
+  }, [model, canExplore, addRequest]);
 
   useEffect(
     () => onVisible?.(graph.nodes.map((n) => n.identity)),
@@ -319,6 +328,8 @@ export function GraphExplorer({
           graph={graph}
           workspace={workspace}
           active={ready}
+          selectRequest={selectRequest ?? null}
+          planPreview={planPreview ?? null}
           focusRequest={focusRequest ?? null}
           {...(onSelection ? { onSelection } : {})}
         />
@@ -337,6 +348,8 @@ function GraphView({
   graph,
   workspace,
   active,
+  selectRequest,
+  planPreview,
   focusRequest,
   onSelection,
 }: {
@@ -350,12 +363,34 @@ function GraphView({
   graph: GraphState;
   workspace: Workspace;
   active: boolean;
+  selectRequest: { paths: readonly string[]; revision: number } | null;
+  planPreview: import("../generated/contracts").PlanResultV1 | null;
   focusRequest: { path: string; revision: number } | null;
   onSelection?: (nodes: readonly ApiLineageNodeV1[], context: string) => void;
 }) {
   const [positions] = useState(() => new Positions());
   const layout = useSyncExternalStore(positions.subscribe, positions.snapshot);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const appliedSelection = useRef<typeof selectRequest>(null);
+  useEffect(() => {
+    if (
+      !selectRequest ||
+      appliedSelection.current === selectRequest ||
+      graph.busy
+    )
+      return;
+    const frame = requestAnimationFrame(() => {
+      appliedSelection.current = selectRequest;
+      setSelected(
+        new Set(
+          graph.nodes
+            .filter((n) => n.paths.some((p) => selectRequest.paths.includes(p)))
+            .map((n) => n.identity),
+        ),
+      );
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selectRequest, graph.nodes, graph.busy]);
   const focused = useRef<object | null>(null);
   // A direct selection supersedes pending catalogue focus, even before its frame runs.
   const selectNodes = useCallback(
@@ -485,6 +520,15 @@ function GraphView({
       graph.nodes.map((node, index) => ({
         id: node.identity,
         type: "dataset",
+        className: planPreview
+          ? planPreview.writes.some(
+              (w) =>
+                node.identity ===
+                `dataset:${planPreview.workspace}:${w.dataset}`,
+            )
+            ? "plan-will-build"
+            : "plan-will-not-build"
+          : "",
         position: layout.positions[node.identity] ?? {
           x: (index % 4) * 300,
           y: Math.floor(index / 4) * 180,
@@ -513,6 +557,7 @@ function GraphView({
       })),
     [
       graph.nodes,
+      planPreview,
       colour,
       graph.busy,
       model,

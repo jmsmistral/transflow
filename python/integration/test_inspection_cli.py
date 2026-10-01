@@ -313,15 +313,44 @@ def test_selected_between_fallback_and_exact_pins_use_real_retained_versions(
     seeded = json.loads(
         run([str(CLI.parent / "examples/inspection_fixture"), str(workspace)], workspace).stdout
     )
+    parity = []
     for mode, target, extra, writes, reads in [
         ("selected", "curated/left", [], 1, 1),
         ("full", "curated/left", ["--exclude", "raw/orders", "--force"], 1, 1),
         ("between", "curated/end", ["--boundary", "raw/orders", "--force"], 3, 2),
+        ("connecting", "curated/end", ["raw/orders"], 4, 0),
     ]:
         result = inspect(workspace, "plan", target, "--mode", mode, *extra)
         assert len(result["writes"]) == writes and len(result["reads"]) == reads
         assert all(r["version"] == seeded["head"] for r in result["reads"])
-        assert result["warnings"]
+        assert bool(result["warnings"]) == bool(reads)
+        parity.append((mode, result))
+    # The UI posts this same closed selection contract. Compare semantic write/read
+    # sets, not per-draft UUIDs for prospective registrations.
+    from api_client import Client, coordinator
+
+    with coordinator(workspace, CLI) as registration:
+        client = Client(registration)
+        for mode, expected in parity:
+            actual = client.mutate(
+                "/api/v1/plans",
+                {
+                    "branch": "master",
+                    "python": sys.executable,
+                    "targets": expected["targets"],
+                    "mode": mode,
+                    "boundaries": expected["boundaries"],
+                    "exclusions": expected["exclusions"],
+                    "force": expected["force"],
+                },
+                branch="master",
+            )["data"]
+            assert {w["path"] for w in actual["writes"]} == {w["path"] for w in expected["writes"]}
+            assert {(r["path"], r["alias"], r["version"]) for r in actual["reads"]} == {
+                (r["path"], r["alias"], r["version"]) for r in expected["reads"]
+            }
+            assert actual["force"] == expected["force"]
+            assert all("declaration" in w for w in actual["writes"])
     fallback = inspect(
         workspace,
         "plan",

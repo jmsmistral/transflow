@@ -3433,7 +3433,8 @@
           "enum": [
             "Full",
             "Selected",
-            "Between"
+            "Between",
+            "Connecting"
           ]
         },
         "force": {
@@ -3562,6 +3563,9 @@
               },
               "resources": {
                 "$ref": "#/$defs/ResourcePolicyV1"
+              },
+              "declaration": {
+                "$ref": "#/$defs/DeclarationV1"
               }
             },
             "required": [
@@ -3660,6 +3664,40 @@
         },
         "freshness_context": {
           "const": "selected_branch_heads"
+        },
+        "source_decisions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string"
+              },
+              "executes": {
+                "type": "boolean"
+              },
+              "evaluated_us": {
+                "$ref": "#/$defs/Count"
+              },
+              "published_us": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/Count"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "reason",
+              "executes",
+              "evaluated_us",
+              "published_us"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [
@@ -5992,7 +6030,8 @@
           "enum": [
             "full",
             "selected",
-            "between"
+            "between",
+            "connecting"
           ]
         },
         "boundaries": {

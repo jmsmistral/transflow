@@ -71,7 +71,7 @@ export function BuildModal({
   result: BuildEvidence | undefined;
   error: string;
   refresh: () => void;
-  dataset: ApiDatasetV1;
+  dataset: Pick<ApiDatasetV1, "path">;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);

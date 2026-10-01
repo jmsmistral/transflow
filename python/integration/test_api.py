@@ -132,6 +132,9 @@ def test_http_shared_preparation_and_retained_contexts(workspace: Path) -> None:
         )
         selection = {"branch": "main", "targets": ["raw/orders"], "python": sys.executable}
         draft = client.mutate("/api/v1/plans", selection)["data"]
+        assert draft["writes"][0]["declaration"]["path"] == "src/orders.py"
+        assert draft["writes"][0]["declaration"]["output"]["checks"] == []
+        assert isinstance(draft["source_decisions"], dict)
         exact = client.call(
             "GET",
             f"/api/v1/plans/{draft['plan_id']}",

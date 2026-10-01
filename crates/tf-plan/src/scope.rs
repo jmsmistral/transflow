@@ -16,6 +16,8 @@ pub enum Mode {
     Selected,
     /// Run paths after boundaries up to targets.
     Between,
+    /// Selected endpoints and eligible local producers connecting them.
+    Connecting,
 }
 /// Symbolic identities permit planning outputs before durable registration.
 #[derive(Clone, Debug, Default)]
@@ -210,6 +212,25 @@ impl Graph {
             }
             eligible = reached;
         }
+        if request.mode == Mode::Connecting {
+            // The ancestor pass restricts this to paths ending at a selected target.
+            // A forward pass retains only paths starting at another selected target.
+            let mut reached = request.targets.clone();
+            for id in &self.order {
+                if eligible.contains(id)
+                    && self.inputs.get(id).is_some_and(|edges| {
+                        edges.iter().any(|e| {
+                            !e.off_branch
+                                && !request.pins.contains(&(id.clone(), e.alias.clone()))
+                                && reached.contains(&e.parent)
+                        })
+                    })
+                {
+                    reached.insert(id.clone());
+                }
+            }
+            eligible.retain(|id| reached.contains(id));
+        }
         if !request.refresh_sources.is_subset(&eligible) {
             return Err(
                 "Refresh source is unrelated to the selected scope; it cannot expand the build",
@@ -271,6 +292,26 @@ mod tests {
             sources: BTreeMap::new(),
             known: (1..=7).map(id).collect(),
         }
+    }
+    #[test]
+    fn connecting_includes_endpoints_and_hidden_paths_but_not_side_ancestors() {
+        let mut g = graph(&[(1, 2), (2, 3), (3, 5), (2, 4), (4, 5), (6, 7)]);
+        assert_eq!(
+            writes(&g, &request(Mode::Connecting, &[2, 5, 7], &[])),
+            vec![id(2), id(3), id(4), id(5), id(7)]
+        );
+        g.inputs.get_mut(&id(4)).unwrap()[0].off_branch = true;
+        assert_eq!(
+            writes(&g, &request(Mode::Connecting, &[2, 5], &[])),
+            vec![id(2), id(3), id(5)]
+        );
+        assert_eq!(
+            writes(&g, &request(Mode::Connecting, &[5], &[])),
+            vec![id(5)]
+        );
+        let mut r = request(Mode::Connecting, &[2, 5], &[]);
+        r.exclusions.insert(id(3));
+        assert_eq!(writes(&g, &r), vec![id(2), id(5)]);
     }
     fn request(mode: Mode, targets: &[u8], boundaries: &[u8]) -> Request {
         Request {

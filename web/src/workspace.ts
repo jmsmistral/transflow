@@ -530,23 +530,23 @@ export class Workspace {
       while (!signal.aborted) {
         await follow(this.client, this.cursor, signal, async () => {
           // Phase facts can commit while the guarded metadata reads run. Retry the
-          // complete read set a bounded number of times; never combine revisions.
-          for (let retry = 0; retry < 3; retry++) {
+          // complete read set with capped backoff; retain the last verified snapshot
+          // during active publication bursts rather than tearing down live inspectors.
+          for (let retry = 0; !signal.aborted; retry++) {
             try {
               await this.refresh(true);
             } catch (error) {
-              if (
-                !(error instanceof ApiFailure) ||
-                error.kind !== "conflict" ||
-                retry === 2
-              )
+              if (!(error instanceof ApiFailure) || error.kind !== "conflict")
                 throw error;
               await new Promise<void>((resolve) => {
                 const finish = () => {
                   signal.removeEventListener("abort", stop);
                   resolve();
                 };
-                const timer = setTimeout(finish, 500 * (retry + 1));
+                const timer = setTimeout(
+                  finish,
+                  Math.min(3000, 500 * (retry + 1)),
+                );
                 const stop = () => {
                   clearTimeout(timer);
                   finish();

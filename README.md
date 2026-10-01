@@ -68,6 +68,13 @@ cargo run --locked -- --workspace /path/to/new-analysis env check --python /path
 Lock/sync are explicit package operations. The matched Transflow wheel is never
 looked up by name on an index. See [environment preparation](crates/tf-exec/ENVIRONMENTS.md)
 for offline wheelhouses, target-specific locks and drift checks.
+When the tooling interpreter was supplied explicitly, set the same absolute path in
+ignored `transflow.local.toml` so CLI defaults and UI builds use it:
+
+```toml
+[python]
+executable = "/path/to/tooling/python"
+```
 
 After environment setup, build a target or start the local coordinator:
 
@@ -140,7 +147,19 @@ including builds where another dataset failed. The header identifies the selecte
 History and Build timestamps omit the timezone suffix while retaining UTC values.
 Live timing updates preserve graph membership, positions, selection and camera;
 historical versions are labelled explicitly rather than as branch fallbacks.
-Schedule, health and build-planning actions remain later tasks.
+T087 adds the **Build planner** inspector for the current lineage selection. With
+nothing selected it shows a centered build prompt. Choose selected resources only
+(the UI default), transforms connecting selected endpoints, or all eligible ancestors;
+then **Next (View preview)** shows the complete scope, including hidden resources.
+The preview has a skipped-resource toggle, a force toggle that recomputes the plan,
+Cancel and **Run build**. Planned resources are coloured on the graph; published read
+boundaries are faded. Deterministic jobs remain pending cache evaluation until their
+actual inputs are resolved. Advanced options and collapsed plan evidence expose
+boundaries, exclusions, pins, parameters, source policy and required checks.
+**Run build** accepts exactly the reviewed plan and opens its automatically updating
+Build report. Changed/expired/conflicting plans require a fresh preview. Publishing
+builds preserves node positions and camera placement. Schedule and health actions
+remain later tasks.
 Plain-clicking any selected lineage node narrows a multi-selection to that node.
 With no node selected or multiple nodes selected, the bottom tabs and right
 Properties panel show a centered “Select a node to view information” notice with

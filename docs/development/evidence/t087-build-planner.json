@@ -1,0 +1,28 @@
+{
+  "task": "T087 build planning inspector",
+  "date": "2026-10-01",
+  "implementation_base": "d78eac3",
+  "specification_base": "44e9cfd",
+  "changes": [
+    "Selection-driven right-side Build inspector with centered empty state, selected-only default, complete-graph connecting or full-ancestor strategies, Next preview, skipped and force toggles, graph colours, Cancel and Run build; advanced boundaries, exclusions, pins, refresh, parameters and source options stay collapsed.",
+    "Nonexecuting plan preview includes pending registrations, exact local/provider reads, symbolic parent outputs, declaration checks, source decisions, freshness reasons and complete-plan hidden resource counts.",
+    "Guarded plan-only acceptance opens the live Build report; edits/context changes/expiry/rejection require replan, and interrupted responses reuse the same idempotency receipt.",
+    "Bounded hidden-resource addition and same-branch capture refresh retain canvas membership, existing positions and camera.",
+    "The connecting scope includes endpoints and hidden connecting transforms, respects branch/pin/exclusion barriers and does not change the CLI full default or boundary-exclusive between mode.",
+    "Publication conflict bursts retain the last verified workspace snapshot and retry with bounded backoff, preserving the accepted live report."
+  ],
+  "checks": {
+    "rust": "Full check-rust.sh passed: formatting, offline workspace/standalone compilation, Clippy, 405 Rust tests including documentation tests, and 12 tooling regressions.",
+    "python": "Full check-python.sh passed: 19 pinned tooling checks, pip check, Ruff, strict mypy and 981 tests.",
+    "cli": "Full check-cli.sh passed: 58 native integration tests. Selected/connecting/between/full-with-exclusion API requests match CLI write paths and exact read versions, including force. Retained plan projection preserves declarations and source decisions.",
+    "web": "Full check-web.sh passed: 492 tests, typecheck, lint, formatting, production worker probes and reproducible 16-asset build. New tests cover guarded immutable acceptance, interrupted-response receipt reuse, edited/expired/conflicting previews, provider identity accounting and same-branch capture/camera preservation. Final branch-receipt UI guard also passed focused planner tests, typecheck, lint and production build verification.",
+    "browser": "Internal Codex Browser against real coordinator and production assets: four-job full plan and successful UI-triggered build; selected-only one-job/two-input preview; hidden-resource addition; required output check remains FAIL policy under force and blocks publication while the previous four-row preview remains available; source edit after preview rejects acceptance; five-job forced build previews one pending registration and opens an automatically updating live report. After the owner UX correction, two selected endpoints preview all four diamond jobs including two hidden intermediates; forced Run build reached SUCCEEDED with 4/4 jobs through automatic updates, without manual refresh (synthetic build 90ba6f1b-b8f8-4e6b-a75c-5db17aa12548). Exact per-node coordinates, camera and two-node selection survived publication. Selected-only preview showed one job and two faded published inputs; skipped toggle, Select nodes on graph and clearing selection were verified. A transient guarded report read conflict retried and recovered automatically.",
+    "documentation": "Specification checker and 44 validator regressions passed. Safety baseline and 27 regressions passed; generated contract input hashes refreshed after review."
+  },
+  "limits": [
+    "Cache reuse is decided from resolved execution inputs; deterministic preview jobs are labelled pending cache evaluation.",
+    "The tooling interpreter must match env sync; the disposable workspace uses an explicit transflow.local.toml locator. No packages are installed by UI planning.",
+    "CI is pending owner confirmation. T087 remains unchecked until cross-platform evidence is confirmed."
+  ],
+  "cleanup": "Agent-started loopback coordinator stopped with Ctrl-C and STOPPED receipt; temporary internal Browser tab closed. Synthetic workspace preserved at /tmp/transflow-t087-browser. CLI and UI assets rebuilt. Original user preview workspace untouched."
+}

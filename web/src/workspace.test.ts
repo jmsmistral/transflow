@@ -443,3 +443,50 @@ test("background refresh retains the ready view and a user selection supersedes 
   });
   model.dispose();
 });
+
+test("publication conflicts keep the last verified workspace visible until coherent resync", async () => {
+  vi.useFakeTimers();
+  let stream: ReadableStreamDefaultController<Uint8Array> | undefined;
+  let conflicts = 0;
+  const model = new Workspace(
+    new Client(
+      fixtureTransport((path) => {
+        if (path.endsWith("/events"))
+          return Promise.resolve(
+            new Response(
+              new ReadableStream<Uint8Array>({
+                start(c) {
+                  stream = c;
+                },
+              }),
+              { headers: { "content-type": "text/event-stream" } },
+            ),
+          );
+        if (path.endsWith("/datasets") && conflicts > 0) {
+          conflicts--;
+          return Promise.resolve(new Response("{}", { status: 409 }));
+        }
+        return undefined;
+      }),
+    ),
+  );
+  try {
+    await model.connect("launch");
+    await vi.advanceTimersByTimeAsync(0);
+    conflicts = 5;
+    stream?.enqueue(
+      new TextEncoder().encode(
+        `event: resync_required\nid: 42\ndata: ${JSON.stringify({ workspace: workspaceId, cursor: "42" })}\n\n`,
+      ),
+    );
+    await vi.advanceTimersByTimeAsync(3500);
+    expect(model.snapshot()).toMatchObject({ kind: "ready", refreshing: true });
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(conflicts).toBe(0);
+    expect(model.snapshot()).toMatchObject({ kind: "ready" });
+    expect(model.snapshot()).not.toHaveProperty("refreshing");
+  } finally {
+    model.dispose();
+    vi.useRealTimers();
+  }
+});

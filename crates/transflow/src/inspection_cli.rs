@@ -60,7 +60,7 @@ pub(crate) fn commands() -> Vec<Command> {
                     .arg(
                         Arg::new("mode")
                             .long("mode")
-                            .value_parser(["full", "selected", "between"])
+                            .value_parser(["full", "selected", "between", "connecting"])
                             .default_value("full"),
                     )
                     .arg(
@@ -262,7 +262,29 @@ pub(crate) fn plan_value(name: &str, plan: &tf_store::planning::DraftPlan) -> Re
         })
         .map(|d| json!({"dataset":d.key().dataset_id().to_string(),"path":d.path().as_str()}))
         .collect::<Vec<_>>();
-    let writes=plan.writes.iter().map(|w|Ok(json!({"dataset":w.dataset,"path":path(&w.dataset)?,"job":w.job,"expected_generation":w.generation.to_string(),"bindings":w.bindings,"parameters":plan.context["parameters"][&w.dataset],"resources":plan.context["resources"][&w.dataset]}))).collect::<Result<Vec<_>,Error>>()?;
+    let definitions = plan.discovery["definitions"]
+        .as_array()
+        .ok_or_else(|| failure("missing retained declarations"))?;
+    let mut declarations = std::collections::BTreeMap::new();
+    for definition in definitions {
+        let output = &definition["output"]["ref"];
+        let reference = if output["form"] == "string" {
+            output["value"]
+                .as_str()
+                .ok_or_else(|| failure("missing output reference"))?
+                .to_owned()
+        } else {
+            format!(
+                "dataset:{}",
+                output["dataset_id"]
+                    .as_str()
+                    .ok_or_else(|| failure("missing bound output"))?
+            )
+        };
+        let dataset = registry.resolve_output(&reference).map_err(failure)?;
+        declarations.insert(dataset.key().dataset_id().to_string(), definition);
+    }
+    let writes=plan.writes.iter().map(|w|Ok(json!({"dataset":w.dataset,"path":path(&w.dataset)?,"job":w.job,"expected_generation":w.generation.to_string(),"bindings":w.bindings,"parameters":plan.context["parameters"][&w.dataset],"resources":plan.context["resources"][&w.dataset],"declaration":declarations.get(&w.dataset).ok_or_else(||failure("missing planned declaration"))?}))).collect::<Result<Vec<_>,Error>>()?;
     let reads=plan.reads.iter().map(|r|Ok(json!({"consumer":r.consumer,"consumer_path":path(&r.consumer)?,"alias":r.alias,"dataset":r.dataset,"path":if r.provenance["workspace"]==plan.workspace {path(&r.dataset)?}else{registry.external_registrations().find(|e|e.key().dataset_id().to_string()==r.dataset && e.key().workspace_id().to_string()==r.provenance["workspace"]).ok_or_else(||failure("missing external label"))?.alias().to_string()},"origin_workspace":r.provenance["workspace"],"version":r.version,"artifact":r.artifact,"starting_branch":r.provenance["starting_branch"],"resolved_branch":r.provenance["resolved_branch"],"resolution":r.provenance["resolution"]["kind"],"currentness":"unknown"}))).collect::<Result<Vec<_>,Error>>()?;
     let warnings = if reads.is_empty() {
         vec![]
@@ -272,7 +294,7 @@ pub(crate) fn plan_value(name: &str, plan: &tf_store::planning::DraftPlan) -> Re
         ]
     };
     Ok(
-        json!({"kind":name,"workspace":plan.workspace,"source":plan.source,"source_digest":plan.source_digest,"branch":plan.output.name,"source_selector":plan.source_evidence["selector"],"source_commit":plan.source_evidence["git"]["commit"],"plan_id":plan.id,"digest":plan.digest().map_err(failure)?.hex(),"created_us":plan.created_us.to_string(),"expires_us":plan.expires_us.to_string(),"mode":plan.context["mode"],"force":plan.context["force"],"targets":plan.context["targets"],"boundaries":plan.context["boundaries"],"exclusions":plan.context["exclusions"],"refresh_sources":plan.context["refresh_sources"],"fallback_override":plan.context["fallback_override"],"boundary_policy":plan.context["boundary_policy"],"branch_would_be_created":plan.output.branch.is_none(),"pending_registrations":pending,"writes":writes,"reads":reads,"freshness":plan.context["freshness"].as_array().cloned().unwrap_or_default(),"freshness_context":"selected_branch_heads","warnings":warnings,"producer_execution":false,"authoring_changed":false}),
+        json!({"kind":name,"workspace":plan.workspace,"source":plan.source,"source_digest":plan.source_digest,"branch":plan.output.name,"source_selector":plan.source_evidence["selector"],"source_commit":plan.source_evidence["git"]["commit"],"plan_id":plan.id,"digest":plan.digest().map_err(failure)?.hex(),"created_us":plan.created_us.to_string(),"expires_us":plan.expires_us.to_string(),"mode":plan.context["mode"],"force":plan.context["force"],"targets":plan.context["targets"],"boundaries":plan.context["boundaries"],"exclusions":plan.context["exclusions"],"refresh_sources":plan.context["refresh_sources"],"fallback_override":plan.context["fallback_override"],"boundary_policy":plan.context["boundary_policy"],"branch_would_be_created":plan.output.branch.is_none(),"pending_registrations":pending,"source_decisions":plan.context["source_decisions"],"writes":writes,"reads":reads,"freshness":plan.context["freshness"].as_array().cloned().unwrap_or_default(),"freshness_context":"selected_branch_heads","warnings":warnings,"producer_execution":false,"authoring_changed":false}),
     )
 }
 fn human(v: &Value) -> Result<String, Error> {
@@ -443,6 +465,7 @@ pub(crate) fn selection(
         mode: match args.get_one::<String>("mode").map(String::as_str) {
             Some("selected") => tf_plan::scope::Mode::Selected,
             Some("between") => tf_plan::scope::Mode::Between,
+            Some("connecting") => tf_plan::scope::Mode::Connecting,
             _ => tf_plan::scope::Mode::Full,
         },
         targets,

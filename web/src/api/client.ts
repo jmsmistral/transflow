@@ -1,5 +1,8 @@
 import schema from "../../../schemas/contracts-v1.schema.json";
 import type {
+  ApiSelectionV1,
+  ApiAcceptedV1,
+  PlanResultV1,
   ApiAttemptV1,
   ApiAttemptLogsV1,
   ApiExecutionTimelineV1,
@@ -28,6 +31,9 @@ import type {
 import { obj, same, validate } from "./validate";
 
 export interface Contracts {
+  ApiSelectionV1: ApiSelectionV1;
+  PlanResultV1: PlanResultV1;
+  ApiAcceptedV1: ApiAcceptedV1;
   ApiAttemptV1: ApiAttemptV1;
   ApiAttemptLogsV1: ApiAttemptLogsV1;
   ApiExecutionTimelineV1: ApiExecutionTimelineV1;
@@ -154,6 +160,95 @@ export class Client {
       "Idempotency-Key": key,
     });
     return this.envelope("GraphViewV1", value, context).data;
+  }
+  async preparePlan(
+    request: ApiSelectionV1,
+    context: ApiContextV1,
+    key: string,
+    signal: AbortSignal,
+  ) {
+    if (
+      request.branch !== context.branch ||
+      context.selection.kind !== "retained_current"
+    )
+      throw new ApiFailure(
+        "conflict",
+        "Choose a current branch context before planning.",
+      );
+    const query = {
+      branch: request.branch,
+      fallback: JSON.stringify(context.fallback_policy.slice(1)),
+    };
+    const value = await this.post(
+      `/api/v1/plans?${new URLSearchParams({ ...query, context: context.fingerprint })}`,
+      request,
+      signal,
+      {
+        "If-Match": `"${context.fingerprint}"`,
+        "Idempotency-Key": key,
+      },
+    );
+    const plan = this.envelope("PlanResultV1", value, context).data;
+    if (plan.workspace !== context.workspace || plan.branch !== request.branch)
+      throw new ApiFailure(
+        "conflict",
+        "The preview does not match this workspace and branch.",
+      );
+    const selected = await this.read(
+      "ApiContextV1",
+      "/api/v1/context",
+      { branch: plan.branch, plan: plan.plan_id },
+      signal,
+    );
+    if (
+      !selected.context ||
+      !same(selected.context, selected.data) ||
+      selected.data.workspace !== plan.workspace ||
+      selected.data.branch !== plan.branch ||
+      selected.data.source !== plan.source ||
+      selected.data.selection.kind !== "plan" ||
+      selected.data.selection.id !== plan.plan_id ||
+      selected.data.selection.digest !== plan.digest
+    )
+      throw new ApiFailure(
+        "conflict",
+        "The preview's retained plan context does not match.",
+      );
+    return { plan, context: selected.data };
+  }
+  async acceptPlan(
+    plan: PlanResultV1,
+    context: ApiContextV1,
+    key: string,
+    signal: AbortSignal,
+  ): Promise<ApiAcceptedV1> {
+    if (
+      context.selection.kind !== "plan" ||
+      context.selection.id !== plan.plan_id ||
+      context.selection.digest !== plan.digest ||
+      context.workspace !== plan.workspace ||
+      context.branch !== plan.branch
+    )
+      throw new ApiFailure(
+        "conflict",
+        "Preview this plan again before building.",
+      );
+    const value = await this.post(
+      `/api/v1/builds?${new URLSearchParams({ branch: plan.branch, plan: plan.plan_id, context: context.fingerprint })}`,
+      { kind: "plan", plan_id: plan.plan_id },
+      signal,
+      {
+        "If-Match": `"${context.fingerprint}"`,
+        "Idempotency-Key": key,
+      },
+    );
+    const accepted = this.envelope("ApiAcceptedV1", value, context).data;
+    if (accepted.plan !== plan.plan_id)
+      throw new ApiFailure(
+        "conflict",
+        "The accepted build does not match the preview.",
+      );
+    return accepted;
   }
   async cancelBuild(
     build: string,

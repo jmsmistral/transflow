@@ -1,3 +1,4 @@
+import { BuildPlanner } from "./BuildPlanner";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { Button, InspectorNotice, Status } from "./components";
@@ -58,6 +59,17 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
   const state = useSyncExternalStore(workspace.subscribe, workspace.snapshot);
   const [focusRequest, setFocusRequest] = useState<{
     path: string;
+    revision: number;
+  } | null>(null);
+  const [addRequest, setAddRequest] = useState<{
+    paths: readonly string[];
+    revision: number;
+  } | null>(null);
+  const [planPreview, setPlanPreview] = useState<
+    import("./generated/contracts").PlanResultV1 | null
+  >(null);
+  const [selectRequest, setSelectRequest] = useState<{
+    paths: readonly string[];
     revision: number;
   } | null>(null);
   const [catalogueFilter, setCatalogueFilter] = useState("");
@@ -214,6 +226,9 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 onVisible={setVisible}
                 onSelection={handleSelection}
                 focusRequest={focusRequest}
+                addRequest={addRequest}
+                selectRequest={selectRequest}
+                planPreview={mode === "Build planner" ? planPreview : null}
                 cataloguePaths={cataloguePaths}
                 titleHost={titleHost}
                 actionsHost={actionsHost}
@@ -297,9 +312,11 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 className={`inspector ${mode === "Catalogue" ? "catalogue-panel" : ""}`}
                 aria-label="Right inspector"
               >
-                <header className="inspector-header">
-                  <h2>{mode}</h2>
-                </header>
+                {mode !== "Build planner" && (
+                  <header className="inspector-header">
+                    <h2>{mode}</h2>
+                  </header>
+                )}
                 {mode === "Catalogue" ? (
                   <>
                     <CatalogueSearch
@@ -336,6 +353,30 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                       selected={selectedNodes}
                     />
                   )
+                ) : mode === "Build planner" && state.kind === "ready" ? (
+                  <BuildPlanner
+                    workspace={workspace}
+                    state={state}
+                    selected={selectedNodes}
+                    visible={visible}
+                    onPlan={setPlanPreview}
+                    onSelect={(paths) => {
+                      setAddRequest((old) => ({
+                        paths,
+                        revision: (old?.revision ?? 0) + 1,
+                      }));
+                      setSelectRequest((old) => ({
+                        paths,
+                        revision: (old?.revision ?? 0) + 1,
+                      }));
+                    }}
+                    onAdd={(paths) =>
+                      setAddRequest((old) => ({
+                        paths,
+                        revision: (old?.revision ?? 0) + 1,
+                      }))
+                    }
+                  />
                 ) : (
                   <>
                     <h2>{mode}</h2>

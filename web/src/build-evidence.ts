@@ -19,7 +19,7 @@ export interface BuildEvidence {
 export function useBuildEvidence(
   workspace: Workspace,
   state: Ready,
-  job: ApiHistoryJobV1,
+  job: Pick<ApiHistoryJobV1, "build" | "plan" | "source" | "build_state">,
 ) {
   const [result, setResult] = useState<BuildEvidence>();
   const [error, setError] = useState("");

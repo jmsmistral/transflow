@@ -279,6 +279,7 @@ enum Mode {
     Full,
     Selected,
     Between,
+    Connecting,
 }
 impl Selection {
     fn into_request(self) -> Result<(crate::build_plan::Request, crate::build_plan::Options)> {
@@ -292,6 +293,7 @@ impl Selection {
                 Mode::Full => tf_plan::scope::Mode::Full,
                 Mode::Selected => tf_plan::scope::Mode::Selected,
                 Mode::Between => tf_plan::scope::Mode::Between,
+                Mode::Connecting => tf_plan::scope::Mode::Connecting,
             },
             targets: self.targets,
             boundaries: self.boundaries,
