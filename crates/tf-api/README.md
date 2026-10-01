@@ -257,15 +257,24 @@ All these GET routes require bearer authentication and `branch`; browser clients
 use the existing authenticated read facade. Responses carry the frozen context.
 
 - `datasets/{dataset}/history`: keyset pages (`limit` 1–200, `cursor`) of jobs,
-  with produced/reused version, original attempt, attempt count and accepted plan.
+  with produced/reused version, original attempt, attempt count, accepted plan,
+  retry timings and measured job duration (`ApiDatasetHistoryV1`).
   Failed jobs remain visible without a version. `/versions` remains a separate
   retained-version projection and includes committed row, byte and file counts.
 - `builds/{build}/timeline?plan={plan}`: actual phase intervals per attempt,
   state counts, wall duration, initial queue wait and recorded critical path.
 - `attempts/{attempt}?plan={plan}`: inputs, frozen parameters, checks, retained
   process evidence, exact source ID/availability and the retained CLI log command.
-  Use `/source/{source}?plan={plan}&path=...` for captured code. Missing source
+  Use `/source/{source}?plan={plan}&path=...` for captured code, including optional
+  Git branch/commit/dirty provenance. Exact versions select their producing attempt’s
+  plan, including when other plans share that source snapshot. Missing source
   never falls back to current files. Build detail retains requester/trigger/targets.
+- `attempts/{attempt}/logs?plan={plan}`: retained helper `stdout`/`stderr` streams,
+  selected by enumerated helper identity (never a caller filesystem path). Optional
+  `helper`, `stream`, decimal byte `offset` and `limit` (1–32,768) return a bounded
+  UTF-8 display excerpt and `next_offset`. Missing logs are explicitly unavailable;
+  symlinked directories/files are refused. At most 128 helpers / 256 streams are
+  enumerated. The existing source, branch, plan and revision fences apply.
 - `metrics?from_us=...&to_us=...`: half-open UTC **build acceptance** window;
   optional local `dataset`, `materialized_any=true`, `window=10` (1–1000).
   Returns build/job state counts, executed jobs, attempts, committed materializations,

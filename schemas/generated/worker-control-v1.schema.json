@@ -6507,6 +6507,47 @@
               "maximum": 4294967295
             }
           ]
+        },
+        "git": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "branch": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "commit": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "dirty": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "branch",
+                "commit",
+                "dirty"
+              ],
+              "additionalProperties": false
+            }
+          ]
         }
       },
       "required": [
@@ -7972,6 +8013,9 @@
           },
           "minItems": 0,
           "maxItems": 10000
+        },
+        "path": {
+          "$ref": "#/$defs/RelativePath"
         }
       },
       "required": [
@@ -8568,6 +8612,231 @@
           ]
         }
       }
+    },
+    "ApiLogStreamV1": {
+      "type": "object",
+      "properties": {
+        "helper": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "stream": {
+          "enum": [
+            "stdout",
+            "stderr"
+          ]
+        },
+        "bytes": {
+          "$ref": "#/$defs/Count"
+        }
+      },
+      "required": [
+        "helper",
+        "stream",
+        "bytes"
+      ],
+      "additionalProperties": false
+    },
+    "ApiAttemptLogsV1": {
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "streams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiLogStreamV1"
+          },
+          "maxItems": 256,
+          "minItems": 0
+        },
+        "helper": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "maxLength": 128
+            }
+          ]
+        },
+        "stream": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "stdout",
+                "stderr"
+              ]
+            }
+          ]
+        },
+        "offset": {
+          "$ref": "#/$defs/Count"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 98304
+        },
+        "next_offset": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "available": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "attempt",
+        "streams",
+        "helper",
+        "stream",
+        "offset",
+        "text",
+        "next_offset",
+        "available"
+      ],
+      "additionalProperties": false
+    },
+    "ApiHistoryJobV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "build": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "plan": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "source": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "state": {
+          "type": "string"
+        },
+        "created_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "finished_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "attempt_count": {
+          "$ref": "#/$defs/Count"
+        },
+        "produced_version": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "reused_version": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "original_attempt": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "duration_ns": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "attempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiAttemptTimingV1"
+          },
+          "maxItems": 10000,
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "build",
+        "plan",
+        "source",
+        "state",
+        "created_us",
+        "finished_us",
+        "attempt_count",
+        "produced_version",
+        "reused_version",
+        "original_attempt",
+        "duration_ns",
+        "attempts"
+      ],
+      "additionalProperties": false
+    },
+    "ApiDatasetHistoryV1": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiHistoryJobV1"
+          },
+          "maxItems": 200,
+          "minItems": 0
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "maxLength": 4096
+            }
+          ]
+        }
+      },
+      "required": [
+        "entries",
+        "next_cursor"
+      ],
+      "additionalProperties": false
     }
   },
   "$ref": "#/$defs/ControlFrameV1"

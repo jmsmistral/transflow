@@ -195,7 +195,7 @@ pub(crate) fn context(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Cont
             json!({"metadata":metadata,"dataset":dataset.to_string(),"origin":origin.to_string()})
         };
         selection = json!({"kind":if origin==wid{"local_version"}else{"foreign_version"},"id":version.to_string(),"digest":digest(&evidence)?});
-    } else if r.query.contains_key("dataset") {
+    } else if r.query.contains_key("dataset") && r.path != "/api/v1/metrics" {
         return Err(E::invalid());
     }
     rt.block_on(rd.close()).map_err(bad)?;
@@ -482,8 +482,8 @@ pub(crate) fn read(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Reply> 
             return Err(E::conflict());
         }
         let path = r.query.get("path").ok_or_else(E::invalid)?;
-        let content = c
-            .capture()?
+        let capture = c.capture()?;
+        let content = capture
             .read(Path::new(path), 16 * 1024 * 1024)
             .map_err(|_| E::missing())?;
         let text = std::str::from_utf8(&content).map_err(|_| E::invalid())?;
@@ -503,7 +503,8 @@ pub(crate) fn read(root: &Path, wid: WorkspaceId, r: &Request) -> Result<Reply> 
                 "Request a smaller source range",
             ));
         }
-        json!({"source":id,"path":path,"offset":offset,"text":excerpt,"next_offset":(lines.len()>n).then(||offset+n)})
+        let git = capture.git().map(|g| json!({"branch":g.branch(),"commit":g.commit(),"dirty":!g.dirty_paths().is_empty()}));
+        json!({"source":id,"path":path,"offset":offset,"text":excerpt,"next_offset":(lines.len()>n).then(||offset+n),"git":git})
     } else if path == "lineage" {
         lineage(&c, r)?
     } else if let Some(id) = path.strip_prefix("builds/") {

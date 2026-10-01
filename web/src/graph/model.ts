@@ -15,6 +15,8 @@ export interface Exploration {
 }
 export interface GraphState {
   context: string;
+  /** Camera and selection survive timing-only context revisions. */
+  visualContext?: string;
   placement: {
     roots: readonly string[];
     direction: Exploration["direction"];
@@ -86,9 +88,42 @@ export class GraphModel {
         this.cache.reset();
       }
       const context = state.value.context.fingerprint;
+      const c = state.value.context;
+      const visualContext = JSON.stringify([
+        c.workspace,
+        c.branch,
+        c.source,
+        c.registry,
+        c.configuration,
+        c.selection,
+        c.graph,
+        c.fallback_policy,
+      ]);
+      const timingOnly = changed && this.state.visualContext === visualContext;
+      if (timingOnly) {
+        const identities = this.state.nodes.map((node) => node.identity);
+        this.set({
+          context,
+          nodes: this.state.nodes.map((node) => ({
+            ...node,
+            publication: "unknown",
+          })),
+        });
+        if (identities.length)
+          void this.reopen(identities).catch((error) => {
+            if (this.state.context === context)
+              this.set({
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : "Updated graph metadata is unavailable.",
+              });
+          });
+      }
       if (this.state.context !== context)
         this.set({
           context,
+          visualContext,
           nodes: [],
           edges: [],
           queryNodes: new Set(),

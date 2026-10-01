@@ -12,7 +12,13 @@ import type {
   GraphEdgeV1,
   ApiLineageNodeV1,
 } from "../generated/contracts";
-import { context, fixtureTransport, json } from "../test-fixtures";
+import {
+  context,
+  datasetId,
+  workspaceId,
+  fixtureTransport,
+  json,
+} from "../test-fixtures";
 import { Workspace } from "../workspace";
 import { GraphModel, depthQuery } from "./model";
 import { Positions, type LayoutWorker } from "./positions";
@@ -988,6 +994,69 @@ test("Align snaps keyboard node moves to the grid and leaves existing positions 
   expect(x()).toBe(snapped);
   fireEvent.keyDown(wrapper, { key: "ArrowRight" });
   await waitFor(() => expect(x()).toBe(snapped + 5));
+  view.unmount();
+  workspace.dispose();
+});
+
+test("timing revisions refresh graph metadata without remounting its selection or camera", async () => {
+  const root = {
+    ...node(`dataset:${workspaceId}:${datasetId}`),
+    paths: ["raw/example"],
+  };
+  const base = fixtureTransport((path, q) =>
+    path.endsWith("/lineage")
+      ? Promise.resolve(json(page([root]), context(q.branch)))
+      : undefined,
+  );
+  let revision = false;
+  const transport: typeof fetch = async (url, init) => {
+    const response = await base(url, init);
+    if (!revision) return response;
+    const value = (await response.json()) as {
+      data: unknown;
+      context: unknown;
+    };
+    const c = {
+      ...context(),
+      runtime_revision: "2",
+      fingerprint: "f".repeat(64),
+    };
+    const request = JSON.parse(String(init?.body)) as { path?: string };
+    return json(
+      request.path === "/api/v1/context" ? c : value.data,
+      value.context === null ? null : c,
+    );
+  };
+  const workspace = new Workspace(new Client(transport));
+  await workspace.connect("launch");
+  const view = render(
+    <GraphExplorer
+      workspace={workspace}
+      dark={false}
+      focusRequest={{ path: "raw/example", revision: 1 }}
+    />,
+  );
+  await waitFor(() =>
+    expect(view.container.querySelectorAll(".dataset-node")).toHaveLength(1),
+  );
+  expect(
+    await screen.findByRole("button", { name: "1 node selected" }),
+  ).toBeTruthy();
+  const viewport = view.container
+    .querySelector(".react-flow__viewport")
+    ?.getAttribute("style");
+  revision = true;
+  await act(async () => workspace.refresh());
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "1 node selected" }),
+    ).toBeTruthy(),
+  );
+  expect(
+    view.container
+      .querySelector(".react-flow__viewport")
+      ?.getAttribute("style"),
+  ).toBe(viewport);
   view.unmount();
   workspace.dispose();
 });

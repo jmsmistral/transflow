@@ -8,6 +8,10 @@ import { CatalogueSearch } from "./graph/Search";
 import { GraphExplorer } from "./graph/Graph";
 import { Workspace } from "./workspace";
 import type { ApiLineageNodeV1 } from "./generated/contracts";
+import type { Snapshot, WorkspaceState } from "./workspace";
+import { CodeInspector } from "./CodeInspector";
+import { HistoryInspector } from "./HistoryInspector";
+import { TimelineInspector } from "./BuildInspectors";
 import { PreviewInspector, PropertiesInspector } from "./inspectors";
 
 const tabs = [
@@ -103,7 +107,42 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     graphSelection.context === ready?.context.fingerprint
       ? graphSelection.nodes
       : [];
+  const [pinnedVersion, setPinnedVersion] = useState<{
+    key: string;
+    version: NonNullable<Snapshot["versions"]>["entries"][number];
+  } | null>(null);
+  const inspectionKey = `${ready?.context.fingerprint}:${selectedNodes[0]?.identity}`;
+  const pinKey = JSON.stringify([
+    ready?.context.workspace,
+    state.selection.branch,
+    ready?.context.fallback_policy,
+    selectedNodes[0]?.identity,
+  ]);
+  const pin = pinnedVersion?.key === pinKey ? pinnedVersion.version : null;
+  const inspectorState: WorkspaceState =
+    state.kind === "ready" && pin
+      ? {
+          ...state,
+          selection: { ...state.selection, version: pin.version },
+          value: {
+            ...state.value,
+            versions: {
+              entries: [
+                pin,
+                ...(state.value.versions?.entries.filter(
+                  (v) => v.version !== pin.version,
+                ) ?? []),
+              ],
+              next_cursor: state.value.versions?.next_cursor ?? null,
+            },
+          },
+        }
+      : state;
   const dataset = ready?.dataset;
+  const inspected =
+    selectedNodes.length === 1 &&
+    selectedNodes[0]?.identity ===
+      `dataset:${dataset?.workspace_id}:${dataset?.dataset_id}`;
   const requested = state.selection.branch;
   const title =
     dataset?.path ??
@@ -275,7 +314,16 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                     />
                   </>
                 ) : mode === "Properties" ? (
-                  <PropertiesInspector state={state} selected={selectedNodes} />
+                  selectedNodes.length === 1 && !inspected ? (
+                    <div className="execution-empty" role="status">
+                      Loading dataset information…
+                    </div>
+                  ) : (
+                    <PropertiesInspector
+                      state={inspectorState}
+                      selected={selectedNodes}
+                    />
+                  )
                 ) : (
                   <>
                     <h2>{mode}</h2>
@@ -346,11 +394,42 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
             >
               {selectedNodes.length !== 1 ? (
                 <InspectorNotice />
+              ) : !inspected ? (
+                <div className="execution-empty" role="status">
+                  Loading dataset information…
+                </div>
               ) : tab === "Preview" && bottomOpen ? (
                 <PreviewInspector
                   workspace={workspace}
-                  state={state}
+                  state={inspectorState}
                   dark={dark}
+                />
+              ) : tab === "Code" &&
+                bottomOpen &&
+                inspectorState.kind === "ready" ? (
+                <CodeInspector
+                  key={inspectionKey}
+                  workspace={workspace}
+                  state={inspectorState}
+                />
+              ) : tab === "History" &&
+                bottomOpen &&
+                inspectorState.kind === "ready" ? (
+                <HistoryInspector
+                  key={inspectionKey}
+                  workspace={workspace}
+                  state={inspectorState}
+                  onVersion={(version) =>
+                    setPinnedVersion(version ? { key: pinKey, version } : null)
+                  }
+                />
+              ) : tab === "Build timeline" &&
+                bottomOpen &&
+                inspectorState.kind === "ready" ? (
+                <TimelineInspector
+                  key={inspectionKey}
+                  workspace={workspace}
+                  state={inspectorState}
                 />
               ) : (
                 <>

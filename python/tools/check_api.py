@@ -157,15 +157,57 @@ def main() -> None:
             assert duration is not None and int(duration) > 0
             assert timeline["critical_path"]["duration_ns"] == duration
             assert timeline["jobs"][0]["attempts"][0]["phases"]
+            assert timeline["jobs"][0]["path"] == "raw/items"
             assert timeline["eta_us"] is None and timeline["resource_wait_us"] is None
             metric_query = {"branch": "main", "from_us": "0", "to_us": "9223372036854775807"}
             metrics = client.call("GET", "/api/v1/metrics", query=metric_query)["data"]
             assert metrics["duration_samples"] == "1" and metrics["jobs_executed"] == "1"
+            filtered_metrics = client.call(
+                "GET", "/api/v1/metrics", query={**metric_query, "dataset": dataset}
+            )["data"]
+            assert (
+                filtered_metrics["dataset"] == dataset
+                and filtered_metrics["duration_samples"] == "1"
+            )
             assert metrics["median_ns"] == {"numerator": duration, "denominator": "1"}
             history = client.call(
                 "GET", f"/api/v1/datasets/{dataset}/history", query={"branch": "main"}
             )["data"]
             assert history["entries"][0]["produced_version"] == version
+            assert history["entries"][0]["duration_ns"] == duration
+            assert history["entries"][0]["attempts"][0]["duration_ns"] == duration
+            logs = client.call("GET", f"/api/v1/attempts/{attempt}/logs", query=frozen)["data"]
+            assert logs["attempt"] == attempt and logs["offset"] == "0"
+            if logs["available"]:
+                stream = logs["streams"][0]
+                client.call(
+                    "GET",
+                    f"/api/v1/attempts/{attempt}/logs",
+                    query={
+                        **frozen,
+                        "helper": stream["helper"],
+                        "stream": stream["stream"],
+                        "limit": "1",
+                    },
+                )
+            client.call(
+                "GET",
+                f"/api/v1/attempts/{attempt}/logs",
+                query={**frozen, "helper": "../escape", "stream": "stdout"},
+                status=404,
+            )
+            client.call(
+                "GET",
+                f"/api/v1/attempts/{attempt}/logs",
+                query={**frozen, "limit": "32769"},
+                status=400,
+            )
+            client.call(
+                "GET",
+                f"/api/v1/attempts/{attempt}/logs",
+                query={"branch": "other", "plan": frozen["plan"]},
+                status=409,
+            )
             client.call("GET", "/api/v1/metrics", query={**metric_query, "window": "0"}, status=400)
             client.call(
                 "GET", "/api/v1/metrics", query={**metric_query, "plan": frozen["plan"]}, status=400
@@ -184,6 +226,7 @@ def main() -> None:
             )["data"]
             assert "changed current definition" not in captured["text"]
             assert "def items()" in captured["text"]
+            assert "git" in captured
             (root / "src/items.py").write_text(code)
             cases.append(
                 "history/timeline/metrics retain measured phases, exact statistics "
@@ -671,7 +714,10 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(
-            {"tasks": ["T074", "T075", "T076", "T077", "T078", "T081", "T084"], "cases": cases},
+            {
+                "tasks": ["T074", "T075", "T076", "T077", "T078", "T081", "T084", "T086"],
+                "cases": cases,
+            },
             indent=2,
         )
         + "\n"

@@ -140,9 +140,47 @@ impl Reader {
         if !(1..=201).contains(&limit) {
             return Err(invalid());
         }
+        let mut tx = self.db.begin().await?;
         let rows = sqlx::query("SELECT j.id,j.build_id,j.state,p.id AS plan,p.source_snapshot_id,b.created_at_us,b.finished_at_us,c.version_id AS reused_version,c.original_attempt_id,(SELECT count(*) FROM attempts a WHERE a.job_id=j.id) AS attempt_count,(SELECT v.id FROM dataset_versions v JOIN attempts a ON a.id=v.attempt_id WHERE a.job_id=j.id LIMIT 1) AS produced_version FROM jobs j JOIN data_branches d ON d.id=j.branch_id JOIN builds b ON b.id=j.build_id JOIN build_plans p ON p.id=b.plan_id LEFT JOIN cached_jobs c ON c.job_id=j.id WHERE d.workspace_id=? AND d.name=? AND j.dataset_id=? AND j.id>? ORDER BY j.id LIMIT ?")
-            .bind(workspace.to_string()).bind(branch.as_str()).bind(dataset.to_string()).bind(after).bind(limit).fetch_all(&mut self.db).await?;
-        rows.iter().map(|r|Ok(json!({"id":r.try_get::<String,_>("id")?,"build":r.try_get::<String,_>("build_id")?,"state":r.try_get::<String,_>("state")?,"plan":r.try_get::<String,_>("plan")?,"source":r.try_get::<String,_>("source_snapshot_id")?,"created_us":r.try_get::<i64,_>("created_at_us")?.to_string(),"finished_us":r.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"attempt_count":r.try_get::<i64,_>("attempt_count")?.to_string(),"produced_version":r.try_get::<Option<String>,_>("produced_version")?,"reused_version":r.try_get::<Option<String>,_>("reused_version")?,"original_attempt":r.try_get::<Option<String>,_>("original_attempt_id")?}))).collect()
+            .bind(workspace.to_string()).bind(branch.as_str()).bind(dataset.to_string()).bind(after).bind(limit).fetch_all(&mut *tx).await?;
+        let mut entries = vec![];
+        let mut total_attempts = 0_usize;
+        let mut total_phases = 0_usize;
+        for r in rows {
+            let job: String = r.try_get("id")?;
+            let records = sqlx::query("SELECT id,attempt_no,state,started_at_us,finished_at_us FROM attempts WHERE job_id=? ORDER BY attempt_no LIMIT 10001")
+                .bind(&job).fetch_all(&mut *tx).await?;
+            total_attempts += records.len();
+            if total_attempts > 10000 {
+                return Err(invalid());
+            }
+            let mut attempts = vec![];
+            for a in records {
+                let id: String = a.try_get("id")?;
+                let phases = sqlx::query("SELECT phase,started_at_us,finished_at_us,duration_ns FROM phase_intervals WHERE attempt_id=? ORDER BY sequence LIMIT 1001")
+                    .bind(&id).fetch_all(&mut *tx).await?;
+                total_phases += phases.len();
+                if phases.len() > 1000 || total_phases > 50000 {
+                    return Err(invalid());
+                }
+                let phases = phases.iter().map(|p| Ok(json!({"phase":p.try_get::<String,_>("phase")?,"started_us":p.try_get::<i64,_>("started_at_us")?.to_string(),"finished_us":p.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"duration_ns":p.try_get::<Option<i64>,_>("duration_ns")?.map(|n|n.to_string())}))).collect::<Result<Vec<_>>>()?;
+                let evidence = json!({"state":a.try_get::<String,_>("state")?,"phases":phases});
+                attempts.push(json!({"attempt":id,"number":a.try_get::<i64,_>("attempt_no")?.to_string(),"state":evidence["state"],"started_us":a.try_get::<i64,_>("started_at_us")?.to_string(),"finished_us":a.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"duration_ns":attempt_duration(&evidence).map(|n|n.to_string()),"phases":phases}));
+            }
+            let duration = if attempts.is_empty() {
+                None
+            } else {
+                attempts
+                    .iter()
+                    .try_fold(0_u128, |sum, a| sum.checked_add(number(&a["duration_ns"])?))
+            };
+            entries.push(json!({"id":job,"build":r.try_get::<String,_>("build_id")?,"state":r.try_get::<String,_>("state")?,"plan":r.try_get::<String,_>("plan")?,"source":r.try_get::<String,_>("source_snapshot_id")?,"created_us":r.try_get::<i64,_>("created_at_us")?.to_string(),"finished_us":r.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"attempt_count":r.try_get::<i64,_>("attempt_count")?.to_string(),"produced_version":r.try_get::<Option<String>,_>("produced_version")?,"reused_version":r.try_get::<Option<String>,_>("reused_version")?,"original_attempt":r.try_get::<Option<String>,_>("original_attempt_id")?,"duration_ns":duration.map(|n|n.to_string()),"attempts":attempts}));
+        }
+        if serde_json::to_vec(&entries).map_err(|_| invalid())?.len() > 32 * 1024 * 1024 {
+            return Err(invalid());
+        }
+        tx.commit().await?;
+        Ok(entries)
     }
     /// Find the owning build/branch/source without guessing from the current dataset head.
     pub async fn attempt_build(

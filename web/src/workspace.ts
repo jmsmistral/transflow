@@ -358,6 +358,78 @@ export class Workspace {
       throw new DOMException("The inspector context changed", "AbortError");
     return result.data;
   }
+  /** A separately selected retained context, fenced by the visible dataset and epoch. */
+  async scope(selection: Selection, cancellation: AbortSignal) {
+    if (this.state.kind !== "ready" || !this.request)
+      throw new ApiFailure(
+        "conflict",
+        "Load a dataset before inspecting retained evidence.",
+      );
+    const epoch = this.epoch,
+      inspection = this.inspection,
+      initial = this.state;
+    const signal = AbortSignal.any([this.request.signal, cancellation]);
+    const guard = () => {
+      if (
+        signal.aborted ||
+        epoch !== this.epoch ||
+        inspection !== this.inspection ||
+        this.state.kind !== "ready" ||
+        this.state.value.context.fingerprint !==
+          initial.value.context.fingerprint
+      )
+        throw new DOMException("The inspector context changed", "AbortError");
+    };
+    const query = queryFor(selection);
+    const result = await this.client.read(
+      "ApiContextV1",
+      "/api/v1/context",
+      query,
+      signal,
+    );
+    guard();
+    if (
+      !result.context ||
+      !same(result.context, result.data) ||
+      !matchesSelection(result.data, selection, initial.value.context.workspace)
+    )
+      throw new ApiFailure(
+        "conflict",
+        "Retained evidence does not match the requested context.",
+      );
+    const context = result.data;
+    return {
+      context,
+      read: async <K extends keyof Contracts>(
+        name: K,
+        path: string,
+        extra: Query = {},
+      ): Promise<Contracts[K]> => {
+        guard();
+        const response = await this.client.read(
+          name,
+          path,
+          { ...extra, ...query },
+          signal,
+          context,
+        );
+        guard();
+        return response.data;
+      },
+      cancel: async (build: string, key: string) => {
+        guard();
+        const response = await this.client.cancelBuild(
+          build,
+          query,
+          context,
+          key,
+          signal,
+        );
+        guard();
+        return response;
+      },
+    };
+  }
   /** Preview responses describe an exact-version context, distinct from the browsing context. */
   async preview(
     request: ApiPreviewRequestV1,
@@ -435,12 +507,16 @@ export class Workspace {
     try {
       while (!signal.aborted) {
         await follow(this.client, this.cursor, signal, async () => {
-          await this.refresh();
-          while (this.state.kind === "loading" && !signal.aborted)
-            await this.pending;
-          if (signal.aborted) return;
-          if (this.state.kind !== "ready")
-            throw new Error("Read models did not resynchronize");
+          // Phase facts can commit while the guarded metadata reads run. Retry the
+          // complete read set a bounded number of times; never combine revisions.
+          for (let retry = 0; retry < 3; retry++) {
+            await this.refresh();
+            while (this.state.kind === "loading" && !signal.aborted)
+              await this.pending;
+            if (signal.aborted || this.state.kind === "ready") return;
+            if (this.state.kind === "disconnected") break;
+          }
+          throw new Error("Read models did not resynchronize");
         });
         // Normal 60-second stream rollover is resumable; errors require an explicit reconnect.
         if (!signal.aborted)

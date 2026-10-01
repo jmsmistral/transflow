@@ -357,3 +357,51 @@ test("saved-view opening waits for an event refresh that supersedes its context 
   expect(settled).toBe(true);
   model.dispose();
 });
+
+test("scoped inspector reads discard late replies after a dataset inspection generation changes", async () => {
+  const late = deferred<Response>();
+  let hold = false;
+  const model = new Workspace(
+    new Client(
+      fixtureTransport((path) =>
+        hold && path.includes("/source/") ? late.promise : undefined,
+      ),
+    ),
+  );
+  await model.connect("launch");
+  await model.select({
+    branch: "master",
+    dataset: datasetId,
+    origin: workspaceId,
+  });
+  const scoped = await model.scope(
+    { branch: "master" },
+    new AbortController().signal,
+  );
+  hold = true;
+  const pending = scoped.read("ApiSourceV1", `/api/v1/source/${workspaceId}`, {
+    path: "src/items.py",
+  });
+  const rejected = expect(pending).rejects.toMatchObject({
+    name: "AbortError",
+  });
+  await model.select({
+    branch: "master",
+    dataset: datasetId,
+    origin: workspaceId,
+  });
+  late.resolve(
+    json(
+      {
+        source: workspaceId,
+        path: "src/items.py",
+        offset: 0,
+        text: "stale",
+        next_offset: null,
+      },
+      context(),
+    ),
+  );
+  await rejected;
+  model.dispose();
+});

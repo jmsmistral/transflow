@@ -172,7 +172,7 @@ impl Reader {
         version: tf_domain::VersionId,
     ) -> Result<(tf_domain::SourceSnapshotId, Option<DraftPlan>)> {
         let source:String=sqlx::query_scalar("SELECT v.source_snapshot_id FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id WHERE d.workspace_id=? AND d.id=? AND v.id=?").bind(workspace.to_string()).bind(dataset.to_string()).bind(version.to_string()).fetch_one(&mut self.db).await?;
-        let plan:Option<String>=sqlx::query_scalar("SELECT id FROM build_plans WHERE source_snapshot_id=? AND disposition='ACCEPTED' ORDER BY id LIMIT 1").bind(&source).fetch_optional(&mut self.db).await?;
+        let plan:Option<String>=sqlx::query_scalar("SELECT b.plan_id FROM dataset_versions v JOIN attempts a ON a.id=v.attempt_id JOIN jobs j ON j.id=a.job_id JOIN builds b ON b.id=j.build_id WHERE v.id=?").bind(version.to_string()).fetch_optional(&mut self.db).await?;
         let plan = if let Some(id) = plan {
             Some(
                 self.api_plan(id.parse().map_err(|_| StoreError::InvalidRequest)?)

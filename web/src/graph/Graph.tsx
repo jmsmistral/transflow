@@ -305,7 +305,9 @@ export function GraphExplorer({
     state.kind === "ready" && state.value.context.fingerprint === graph.context;
   return graph.context ? (
     <div className="graph-explorer" hidden={!ready}>
-      <ReactFlowProvider key={`${graph.context}:${generation}`}>
+      <ReactFlowProvider
+        key={`${graph.visualContext ?? graph.context}:${generation}`}
+      >
         <GraphView
           titleHost={titleHost ?? null}
           actionsHost={actionsHost ?? null}

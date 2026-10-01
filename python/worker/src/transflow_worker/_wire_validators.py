@@ -581,3 +581,23 @@ def validate_GraphViewV1(value: object) -> None:
 def validate_ApiViewsV1(value: object) -> None:
     """Assert the ApiViewsV1 contract, including custom formats."""
     validate_document("ApiViewsV1", value)
+
+
+def validate_ApiLogStreamV1(value: object) -> None:
+    """Assert the ApiLogStreamV1 contract, including custom formats."""
+    validate_document("ApiLogStreamV1", value)
+
+
+def validate_ApiAttemptLogsV1(value: object) -> None:
+    """Assert the ApiAttemptLogsV1 contract, including custom formats."""
+    validate_document("ApiAttemptLogsV1", value)
+
+
+def validate_ApiHistoryJobV1(value: object) -> None:
+    """Assert the ApiHistoryJobV1 contract, including custom formats."""
+    validate_document("ApiHistoryJobV1", value)
+
+
+def validate_ApiDatasetHistoryV1(value: object) -> None:
+    """Assert the ApiDatasetHistoryV1 contract, including custom formats."""
+    validate_document("ApiDatasetHistoryV1", value)

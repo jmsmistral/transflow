@@ -5551,7 +5551,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/ApiMetadataPageV1"
+                      "$ref": "#/components/schemas/ApiDatasetHistoryV1"
                     }
                   }
                 },
@@ -6315,6 +6315,185 @@
         "parameters": [
           {
             "name": "view",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/attempts/{attempt}/logs": {
+      "get": {
+        "operationId": "get_api_v1_attempts_attempt_logs",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiAttemptLogsV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "branch": "example",
+                    "source": null,
+                    "registry": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "runtime_revision": "example",
+                    "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "selection": {
+                      "kind": "retained_current",
+                      "id": null,
+                      "digest": null
+                    },
+                    "graph": null,
+                    "freshness": "unknown",
+                    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "fallback_policy": []
+                  },
+                  "data": {
+                    "attempt": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "streams": [],
+                    "helper": null,
+                    "stream": null,
+                    "offset": "0",
+                    "text": "example",
+                    "next_offset": null,
+                    "available": false
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "helper",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stream",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attempt",
             "in": "path",
             "required": true,
             "schema": {
@@ -12830,6 +13009,47 @@
                 "maximum": 4294967295
               }
             ]
+          },
+          "git": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "branch": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "commit": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "dirty": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "branch",
+                  "commit",
+                  "dirty"
+                ],
+                "additionalProperties": false
+              }
+            ]
           }
         },
         "required": [
@@ -14295,6 +14515,9 @@
             },
             "minItems": 0,
             "maxItems": 10000
+          },
+          "path": {
+            "$ref": "#/components/schemas/RelativePath"
           }
         },
         "required": [
@@ -14891,6 +15114,231 @@
             ]
           }
         }
+      },
+      "ApiLogStreamV1": {
+        "type": "object",
+        "properties": {
+          "helper": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "stream": {
+            "enum": [
+              "stdout",
+              "stderr"
+            ]
+          },
+          "bytes": {
+            "$ref": "#/components/schemas/Count"
+          }
+        },
+        "required": [
+          "helper",
+          "stream",
+          "bytes"
+        ],
+        "additionalProperties": false
+      },
+      "ApiAttemptLogsV1": {
+        "type": "object",
+        "properties": {
+          "attempt": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "streams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiLogStreamV1"
+            },
+            "maxItems": 256,
+            "minItems": 0
+          },
+          "helper": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "maxLength": 128
+              }
+            ]
+          },
+          "stream": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "enum": [
+                  "stdout",
+                  "stderr"
+                ]
+              }
+            ]
+          },
+          "offset": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 98304
+          },
+          "next_offset": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "available": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "attempt",
+          "streams",
+          "helper",
+          "stream",
+          "offset",
+          "text",
+          "next_offset",
+          "available"
+        ],
+        "additionalProperties": false
+      },
+      "ApiHistoryJobV1": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "build": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "state": {
+            "type": "string"
+          },
+          "created_us": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "finished_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "attempt_count": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "produced_version": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          },
+          "reused_version": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          },
+          "original_attempt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          },
+          "duration_ns": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "attempts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiAttemptTimingV1"
+            },
+            "maxItems": 10000,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "id",
+          "build",
+          "plan",
+          "source",
+          "state",
+          "created_us",
+          "finished_us",
+          "attempt_count",
+          "produced_version",
+          "reused_version",
+          "original_attempt",
+          "duration_ns",
+          "attempts"
+        ],
+        "additionalProperties": false
+      },
+      "ApiDatasetHistoryV1": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiHistoryJobV1"
+            },
+            "maxItems": 200,
+            "minItems": 0
+          },
+          "next_cursor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "maxLength": 4096
+              }
+            ]
+          }
+        },
+        "required": [
+          "entries",
+          "next_cursor"
+        ],
+        "additionalProperties": false
       }
     },
     "securitySchemes": {

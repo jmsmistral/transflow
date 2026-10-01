@@ -1,0 +1,22 @@
+{
+  "task": "T086",
+  "date": "2026-10-01",
+  "specification": "1.1.3",
+  "platform": "macOS arm64 / Python 3.14 / Node 24",
+  "implementation_base": "8b71a15",
+  "specification_base": "9abbc3b",
+  "ci": "Pending owner confirmation; no workflow polling",
+  "checks": {
+    "focused": "Bounded-log pagination/path/symlink regression, three retained history fixtures (failed retry duration and cache/no-duration), stale scoped-read fences and timing-only graph selection/camera regression passed.",
+    "native_api": "17 actual coordinator/native-engine journeys passed, including dataset-filtered metrics, measured retry summaries, plan-derived dataset labels, bounded logs/path selectors and context isolation.",
+    "aggregate": "Required staged aggregate gates passed: specification checker and 44 regressions, safety and 27 regressions, rustfmt/Clippy and 404 Rust cases, 981 Python cases, 469 web cases with typecheck/lint/format and verified production assets, and 58 CLI cases. The aggregate invocation stopped at the new graph fixture; its fix passed the full web gate, then the remaining CLI gate passed.",
+    "browser": "Internal Codex Browser on macOS, production assets, synthetic workspace /tmp/transflow-t085-refine-browser-20260930: producing/current retained source and diff; failed and canceled real attempts with recorded phase bars/process evidence; retained stdout; UI cancellation reached CANCELED; last-good branch-tip Preview still showed two rows after failure and cancellation; historical version Preview and unchanged camera; return to branch tip; final light/dark layout checks. Preview coordinator cleanup is recorded separately below. Final tab console reported no warnings/errors."
+  },
+  "limits": [
+    "Current definition is the current validated retained capture; editor integration remains deferred.",
+    "Chart scatter covers labelled loaded history pages; the mean line is the backend aggregate for the selected cohort.",
+    "Provider source/history are explicitly unavailable here; external data remains provider-owned under leases.",
+    "Missing timing, ETA and source remain unknown; no synthetic execution intervals."
+  ],
+  "cleanup": "Own preview coordinator on 54063 stopped; loopback listener absent. Synthetic authoring file restored. Agent browser tabs closed. Workspace preserved at /tmp/transflow-t085-refine-browser-20260930; user foreground coordinator on 54062 was not changed."
+}

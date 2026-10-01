@@ -7899,5 +7899,44 @@
       "next_cursor": null
     },
     "valid": false
+  },
+  {
+    "name": "retained-logs-unavailable",
+    "schema": "ApiAttemptLogsV1",
+    "value": {
+      "attempt": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "streams": [],
+      "helper": null,
+      "stream": null,
+      "offset": "0",
+      "text": "",
+      "next_offset": null,
+      "available": false
+    },
+    "valid": true
+  },
+  {
+    "name": "retained-logs-negative-offset",
+    "schema": "ApiAttemptLogsV1",
+    "value": {
+      "attempt": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "streams": [],
+      "helper": null,
+      "stream": null,
+      "offset": "-1",
+      "text": "",
+      "next_offset": null,
+      "available": false
+    },
+    "valid": false
+  },
+  {
+    "name": "dataset-history-empty",
+    "schema": "ApiDatasetHistoryV1",
+    "value": {
+      "entries": [],
+      "next_cursor": null
+    },
+    "valid": true
   }
 ]

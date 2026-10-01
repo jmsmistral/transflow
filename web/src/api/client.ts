@@ -1,5 +1,12 @@
 import schema from "../../../schemas/contracts-v1.schema.json";
 import type {
+  ApiAttemptV1,
+  ApiAttemptLogsV1,
+  ApiExecutionTimelineV1,
+  ApiExecutionMetricsV1,
+  ApiDatasetHistoryV1,
+  ApiCanceledV1,
+  ExecutionJsonV1,
   ApiCapabilitiesV1,
   ApiContextV1,
   ApiDatasetV1,
@@ -21,6 +28,14 @@ import type {
 import { obj, same, validate } from "./validate";
 
 export interface Contracts {
+  ApiAttemptV1: ApiAttemptV1;
+  ApiAttemptLogsV1: ApiAttemptLogsV1;
+  ApiExecutionTimelineV1: ApiExecutionTimelineV1;
+  ApiExecutionMetricsV1: ApiExecutionMetricsV1;
+  ApiDatasetHistoryV1: ApiDatasetHistoryV1;
+  ApiCanceledV1: ApiCanceledV1;
+  ExecutionJsonV1: ExecutionJsonV1;
+
   GraphViewV1: GraphViewV1;
   ApiViewsV1: ApiViewsV1;
   ApiLineageV1: ApiLineageV1;
@@ -139,6 +154,27 @@ export class Client {
       "Idempotency-Key": key,
     });
     return this.envelope("GraphViewV1", value, context).data;
+  }
+  async cancelBuild(
+    build: string,
+    query: Query,
+    context: ApiContextV1,
+    key: string,
+    signal: AbortSignal,
+  ): Promise<Contracts["ApiCanceledV1"]> {
+    const value = await this.post(
+      `/api/v1/builds/${encodeURIComponent(build)}/cancel?${new URLSearchParams({ ...query, context: context.fingerprint })}`,
+      {},
+      signal,
+      { "If-Match": `"${context.fingerprint}"`, "Idempotency-Key": key },
+    );
+    const result = decode("ApiCanceledV1", value.data);
+    if (result.build !== build)
+      throw new ApiFailure(
+        "conflict",
+        "Cancellation does not match this build.",
+      );
+    return result;
   }
   async preview(
     request: ApiPreviewRequestV1,

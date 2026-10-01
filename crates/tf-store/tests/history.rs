@@ -67,8 +67,17 @@ async fn retained_history_metrics_cache_retry_and_context_isolation()
     ] {
         let job_state = if b == 3 { "CACHED" } else { state };
         let branch = if b == 8 { 6 } else { 5 };
-        let plan = json!({"id":id(100+b),"source":id(3),"output":{"name":if b==8 {"other"} else {"main"}},"writes":[{"dataset":id(2),"bindings":[]}],"context":{"parameters":{"cutoff":"captured"}}});
-        sqlx::query("INSERT INTO build_plans VALUES(?,'ACCEPTED',?,?,'{}','{}','[]','[]','[]','digest',NULL)").bind(id(100+b)).bind(id(3)).bind(plan.to_string()).execute(&mut db).await?;
+        let plan = json!({"format_version":1,"id":id(100+b),"workspace":id(1),"source":id(3),"source_digest":"a".repeat(64),"registry":"","replacement":"","discovery":{},"environment":{},"source_evidence":{},"output":{"name":if b==8 {"other"} else {"main"},"branch":id(branch),"revision":0,"deleted":false,"dataset":null,"version":null,"generation":0},"guards":[],"writes":[{"dataset":id(2),"job":id(300+b),"generation":0,"bindings":[]}],"reads":[],"context":{"parameters":{"cutoff":"captured"}},"created_us":0,"expires_us":1000});
+        let draft: tf_store::planning::DraftPlan = serde_json::from_value(plan.clone())?;
+        sqlx::query(
+            "INSERT INTO build_plans VALUES(?,'ACCEPTED',?,?,'{}','{}','[]','[]','[]',?,NULL)",
+        )
+        .bind(id(100 + b))
+        .bind(id(3))
+        .bind(plan.to_string())
+        .bind(draft.digest()?.hex())
+        .execute(&mut db)
+        .await?;
         sqlx::query("INSERT INTO builds(id,plan_id,trigger_json,requested_by,state,created_at_us,finished_at_us) VALUES(?,?,'{}','fixture',?,?,?)").bind(id(200+b)).bind(id(100+b)).bind(state).bind(if b==9 {100} else {b as i64}).bind(if b==7 {None} else {Some(1000_i64)}).execute(&mut db).await?;
         sqlx::query("INSERT INTO jobs(id,build_id,dataset_id,definition_id,branch_id,state,bindings_json) VALUES(?,?,?,?,?,?,'[]')").bind(id(300+b)).bind(id(200+b)).bind(id(2)).bind(id(4)).bind(id(branch)).bind(job_state).execute(&mut db).await?;
         if b == 3 {
@@ -156,6 +165,10 @@ async fn retained_history_metrics_cache_retry_and_context_isolation()
         .await?;
     assert_eq!(history.len(), 2);
     assert_eq!(history[0]["attempt_count"], "2");
+    assert_eq!(history[0]["duration_ns"], "17");
+    assert_eq!(history[0]["attempts"][0]["state"], "FAILED");
+    assert_eq!(history[0]["attempts"][0]["duration_ns"], "7");
+    assert_eq!(history[0]["attempts"][1]["duration_ns"], "10");
     let next = rd
         .dataset_history(
             id(1).parse()?,
@@ -167,6 +180,13 @@ async fn retained_history_metrics_cache_retry_and_context_isolation()
         .await?;
     assert_eq!(next[0]["reused_version"], id(501));
     assert_eq!(next[0]["attempt_count"], "0");
+    assert!(next[0]["duration_ns"].is_null());
+    assert_eq!(next[0]["attempts"], json!([]));
+    // Versions sharing a capture must select their own producing plan, not the first plan UUID.
+    let (_, producing_plan) = rd
+        .api_version_source(id(1).parse()?, id(2).parse()?, id(502).parse()?)
+        .await?;
+    assert_eq!(producing_plan.ok_or("producing plan missing")?.id, id(102));
     let report = rd.build_report(id(1).parse()?, id(201).parse()?).await?;
     let t = timeline(&report)?;
     assert_eq!(t["jobs"][0]["duration_ns"], "17");

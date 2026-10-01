@@ -110,9 +110,20 @@ pub(crate) fn read(
         };
         json!({"entries":entries,"next_cursor":next})
     } else {
-        keys(r, &[])?;
+        let log_attempt = path
+            .strip_prefix("attempts/")
+            .and_then(|s| s.strip_suffix("/logs"));
+        keys(
+            r,
+            if log_attempt.is_some() {
+                &["helper", "stream", "offset", "limit"]
+            } else {
+                &[]
+            },
+        )?;
         let attempt = path
             .strip_prefix("attempts/")
+            .map(|id| id.strip_suffix("/logs").unwrap_or(id))
             .map(|id| id.parse::<AttemptId>().map_err(|_| E::invalid()))
             .transpose()?;
         let build = if let Some(id) = attempt {
@@ -151,6 +162,10 @@ pub(crate) fn read(
             {
                 return Err(E::conflict());
             }
+            if log_attempt.is_some() {
+                rt.block_on(rd.close()).map_err(bad)?;
+                return crate::api_logs::read(root, id, r);
+            }
             json!({"attempt":id.to_string(),"build":build.to_string(),"job":job["id"],"dataset":job["dataset"],"plan":report["plan"]["id"],"source":report["source"],"source_availability":if tf_catalog::capture::SourceSnapshot::open(&root.join(".transflow/runtime/source-snapshots"),c.source.ok_or_else(E::missing)?).is_ok() {"retained"} else {"unavailable"},"parameters":report["plan"]["context"]["parameters"],"inputs":job["inputs"],"evidence":a,"duration_ns":tf_store::history::attempt_duration(a).map(|n|n.to_string()),"log_command":format!("transflow build logs {build}")})
         } else {
             if r.query.contains_key("version")
@@ -159,7 +174,24 @@ pub(crate) fn read(
             {
                 return Err(E::invalid());
             }
-            tf_store::history::timeline(&report).map_err(bad)?
+            let mut timeline = tf_store::history::timeline(&report).map_err(bad)?;
+            let paths: std::collections::BTreeMap<String, String> =
+                tf_catalog::browse::entries(&c.registry)
+                    .into_iter()
+                    .filter(|e| e["origin"] == "local")
+                    .filter_map(|e| {
+                        Some((
+                            e["dataset_id"].as_str()?.to_owned(),
+                            e["path"].as_str()?.to_owned(),
+                        ))
+                    })
+                    .collect();
+            for job in timeline["jobs"].as_array_mut().ok_or_else(E::internal)? {
+                if let Some(path) = job["dataset"].as_str().and_then(|id| paths.get(id)) {
+                    job["path"] = json!(path);
+                }
+            }
+            timeline
         }
     };
     rt.block_on(rd.close()).map_err(bad)?;

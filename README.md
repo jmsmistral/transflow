@@ -116,8 +116,17 @@ top-left corner selects up to 1,000 displayed rows. Right-click offers a
 header-inclusive copy of the existing selection, and Cmd+C or Ctrl+C copies it
 from the keyboard. If the selected branch has no head,
 Preview tries configured fallbacks before offering an available retained branch for browsing. Foreign
-preview bytes are read directly from the provider. Code, history, build,
-schedule and health actions follow later.
+preview bytes are read directly from the provider.
+
+T086 adds numbered read-only producing Code, an explicit current retained definition
+and diff, separate published Versions and Runs, bounded attempt logs and a recorded
+phase Build timeline with cancellation. Selecting a historical version pins Preview,
+Code and Properties without moving the graph. Failed runs leave last-good Preview
+unchanged. History shows UTC acceptance-window metrics and measured duration points;
+reuse has no execution duration. Missing source/timings and ETA remain unavailable.
+Live timing updates preserve graph membership, positions, selection and camera;
+historical versions are labelled explicitly rather than as branch fallbacks.
+Schedule, health and build-planning actions remain later tasks.
 Plain-clicking any selected lineage node narrows a multi-selection to that node.
 With no node selected or multiple nodes selected, the bottom tabs and right
 Properties panel show a centered “Select a node to view information” notice with
@@ -191,7 +200,7 @@ transflow --workspace /path/to/workspace serve --ui-dir "$PWD/web/dist" --open
 ```
 
 Use the local `target/debug/transflow` binary when it is not installed on PATH.
-Code/history and build/schedule/health inspectors remain later tasks. The Vite dev
+Schedule/health and build-planning inspectors remain later tasks. The Vite dev
 preview remains disconnected; connected browsing uses the coordinator's same-origin
 session. Browser verification uses Codex’s internal Browser. Native embedded UI
 packaging remains T117.

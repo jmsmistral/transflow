@@ -438,16 +438,24 @@ function PreviewContent({
   const published = page?.published_us ?? meta?.published;
   return (
     <div className="preview-inspector">
-      {resolved && resolved !== state.selection.branch && (
-        <div className="preview-fallback-banner" role="status">
-          <Icon name="branch" />
-          Could not find data on current branch, so showing data from branch{" "}
-          <strong>{resolved}</strong>
-        </div>
-      )}
+      {!state.selection.version &&
+        resolved &&
+        resolved !== state.selection.branch && (
+          <div className="preview-fallback-banner" role="status">
+            <Icon name="branch" />
+            Could not find data on current branch, so showing data from branch{" "}
+            <strong>{resolved}</strong>
+          </div>
+        )}
       <div className="preview-toolbar">
         <h2>{dataset.path}</h2>
         <div className="preview-toolbar-details">
+          {state.selection.version && (
+            <span title={state.selection.version}>
+              Version <strong>{state.selection.version.slice(0, 8)}</strong>
+              {resolved ? ` · Branch ${resolved}` : ""}
+            </span>
+          )}
           {published && (
             <span>
               Published <strong>{date(published)}</strong>
