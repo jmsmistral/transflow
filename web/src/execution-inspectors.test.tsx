@@ -1,9 +1,20 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { expect, test } from "vitest";
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { expect, test, vi } from "vitest";
+import { App } from "./App";
 import { Client } from "./api/client";
 import { Workspace } from "./workspace";
 import { CodeInspector } from "./CodeInspector";
 import { HistoryInspector } from "./HistoryInspector";
+import { useBuildEvidence, orderedJobs } from "./build-evidence";
+import { BuildGantt, BuildModal } from "./BuildReport";
 import { TimelineInspector } from "./BuildInspectors";
 import { PreviewInspector } from "./inspectors";
 import {
@@ -17,6 +28,8 @@ import {
 } from "./test-fixtures";
 import type {
   ApiContextV1,
+  ApiExecutionTimelineV1,
+  ExecutionJsonV1,
   ApiExecutionMetricsV1,
   ApiHistoryJobV1,
   ApiVersionsV1,
@@ -106,7 +119,15 @@ const metrics: ApiExecutionMetricsV1 = {
   trailing_window: "10",
   trailing_samples: "0",
 };
-async function fixture(missing = false, historyJob: ApiHistoryJobV1 = job) {
+async function fixture(
+  missing = false,
+  historyJob: ApiHistoryJobV1 = job,
+  control: {
+    timeline?: () => Partial<ApiExecutionTimelineV1>;
+    trigger?: ExecutionJsonV1;
+    fail?: boolean;
+  } = {},
+) {
   const calls: { path: string; query: Record<string, string> }[] = [];
   const model = new Workspace(
     new Client(
@@ -172,6 +193,8 @@ async function fixture(missing = false, historyJob: ApiHistoryJobV1 = job) {
           return Promise.resolve(
             json({ ...metrics, from_us: query.from_us, to_us: query.to_us }, c),
           );
+        if (path.endsWith("/timeline") && control.fail)
+          return Promise.reject(new Error("offline"));
         if (path.endsWith("/timeline"))
           return Promise.resolve(
             json(
@@ -198,6 +221,7 @@ async function fixture(missing = false, historyJob: ApiHistoryJobV1 = job) {
                     attempts: job.attempts,
                   },
                 ],
+                ...control.timeline?.(),
               },
               c,
             ),
@@ -207,8 +231,16 @@ async function fixture(missing = false, historyJob: ApiHistoryJobV1 = job) {
             json(
               {
                 id: build,
+                jobs: [
+                  {
+                    id: jobId,
+                    dataset: datasetId,
+                    state: "FAILED",
+                    attempts: [{ id: attempt, failure_class: "USER_CODE" }],
+                  },
+                ],
                 requested_by: "fixture",
-                trigger: { kind: "manual" },
+                trigger: control.trigger ?? { kind: "manual" },
                 plan: {
                   writes: [{ dataset: datasetId, path: dataset.path }],
                   targets: [dataset.path],
@@ -336,6 +368,7 @@ test("history shows job details and returns to the summary without changing vers
   const failure = screen.getByRole("button", { name: /FAILED · 1 attempts/ });
   fireEvent.click(failure);
   expect(await screen.findByText("Failure: USER_CODE")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Logs" }));
   expect(
     await screen.findByRole("textbox", { name: "Retained log excerpt" }),
   ).toHaveProperty("textContent", "error");
@@ -386,16 +419,22 @@ test("history identifies the selected branch and submits inclusive ISO calendar 
 test("Gantt uses recorded phases and exposes retained failure evidence in the owning plan", async () => {
   const { model, state, calls } = await fixture();
   render(<TimelineInspector workspace={model} state={state} />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "View build report" }),
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Progress details" }),
+  );
   const bar = await screen.findByRole("button", {
     name: /attempt 1: Running, 1.000 s/,
   });
   expect(bar.getAttribute("style")).toContain("width: 100%");
   fireEvent.click(screen.getByRole("button", { name: /Critical path/ }));
-  await waitFor(() =>
-    expect(bar.closest(".gantt-row")?.classList.contains("critical-job")).toBe(
-      true,
-    ),
+  expect(screen.getByText("Most critical")).toBeTruthy();
+  fireEvent.click(
+    await screen.findByRole("button", { name: /attempt 1: FAILED/ }),
   );
+  expect(await screen.findByText("Failure: USER_CODE")).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Cancel build" })).toBeNull();
   expect(
     calls
@@ -437,3 +476,288 @@ test.each([
     model.dispose();
   },
 );
+
+test("job overview opens a modal, preserves selection and hides manual schedule card", async () => {
+  const { model, state } = await fixture();
+  render(
+    <HistoryInspector workspace={model} state={state} onVersion={() => {}} />,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: /FAILED · 1 attempts/ }),
+  );
+  expect(await screen.findByText("Transaction details")).toBeTruthy();
+  expect(screen.getByText("No version published")).toBeTruthy();
+  const opener = screen.getByRole("button", { name: "View build report" });
+  opener.focus();
+  fireEvent.click(opener);
+  const dialog = screen.getByRole("dialog", { name: "Build report" });
+  expect(within(dialog).getByText("Build info")).toBeTruthy();
+  expect(within(dialog).queryByText("Build schedule")).toBeNull();
+  expect(
+    within(dialog).getByRole("button", { name: "Critical path" }),
+  ).toHaveProperty("disabled", false);
+  fireEvent(dialog, new Event("cancel"));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(document.activeElement).toBe(opener);
+  expect(screen.getByText("Transaction details")).toBeTruthy();
+  model.dispose();
+});
+
+test("active evidence refreshes after errors, stops at completion and aborts on unmount", async () => {
+  const control = {
+    fail: false,
+    timeline: (): Partial<ApiExecutionTimelineV1> => ({
+      state: "RUNNING",
+      finished_us: null,
+      wall_duration_us: null,
+      critical_path: null,
+    }),
+  };
+  const { model, state, calls } = await fixture(
+    false,
+    { ...job, build_state: "RUNNING" },
+    control,
+  );
+  vi.useFakeTimers();
+  try {
+    const hook = renderHook(() =>
+      useBuildEvidence(model, state, {
+        ...job,
+        build_state: "RUNNING",
+      }),
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(hook.result.current.result?.timeline.state).toBe("RUNNING");
+    control.fail = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    expect(hook.result.current.error).toContain("disconnected");
+    control.fail = false;
+    control.timeline = () => ({ state: "SUCCEEDED" });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    expect(hook.result.current.result?.timeline.state).toBe("SUCCEEDED");
+    expect(hook.result.current.error).toBe("");
+    const completed = calls.length;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6000);
+    });
+    expect(calls.length).toBe(completed);
+    hook.unmount();
+    control.timeline = () => ({ state: "RUNNING", finished_us: null });
+    const second = renderHook(() =>
+      useBuildEvidence(model, state, {
+        ...job,
+        build_state: "RUNNING",
+      }),
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    second.unmount();
+    const closed = calls.length;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6000);
+    });
+    expect(calls.length).toBe(closed);
+  } finally {
+    vi.useRealTimers();
+    model.dispose();
+  }
+});
+
+test("Gantt orders started jobs first, updates open spans and freezes completed evidence", async () => {
+  const { model, state } = await fixture();
+  const scope = await model.scope(
+    { branch: state.selection.branch, plan },
+    new AbortController().signal,
+  );
+  const base = await scope.read(
+    "ApiExecutionTimelineV1",
+    `/api/v1/builds/${build}/timeline`,
+  );
+  const one = base.jobs[0];
+  if (!one) throw new Error("Missing fixture job");
+  const firstAttempt = one.attempts[0];
+  if (!firstAttempt) throw new Error("Missing fixture attempt");
+  const later = {
+    ...one,
+    job: "later",
+    path: "later",
+    attempts: [
+      {
+        ...firstAttempt,
+        started_us: "1700000002000000",
+        finished_us: null,
+      },
+    ],
+  };
+  const early = { ...one, job: "early", path: "early" };
+  const waiting = { ...one, job: "waiting", path: "waiting", attempts: [] };
+  const timeline = {
+    ...base,
+    state: "RUNNING",
+    finished_us: null,
+    jobs: [later, waiting, early],
+  };
+  expect(orderedJobs(timeline.jobs).map((j) => j.job)).toEqual([
+    "early",
+    "later",
+    "waiting",
+  ]);
+  const view = render(
+    <BuildGantt
+      timeline={timeline}
+      mode="status"
+      now={1700000004000000n}
+      name={(j) => j.path ?? j.job}
+      onAttempt={() => {}}
+    />,
+  );
+  expect(
+    [...view.container.querySelectorAll(".gantt-label strong")].map(
+      (e) => e.textContent,
+    ),
+  ).toEqual(["early", "later", "waiting"]);
+  const bar = screen.getByRole("button", { name: /later attempt/ });
+  expect(bar.style.width).toBe("50%");
+  view.rerender(
+    <BuildGantt
+      timeline={timeline}
+      mode="status"
+      now={1700000006000000n}
+      name={(j) => j.path ?? j.job}
+      onAttempt={() => {}}
+    />,
+  );
+  expect(parseFloat(bar.style.width)).toBeGreaterThan(66);
+  model.dispose();
+});
+
+test("scheduled active modal exposes retained trigger and disables critical path", async () => {
+  const { model, state } = await fixture(false, job, {
+    trigger: {
+      kind: "schedule",
+      name: "Daily fixture",
+      schedule_id: "fixture-schedule",
+    },
+    timeline: () => ({
+      state: "RUNNING",
+      finished_us: null,
+      critical_path: null,
+    }),
+  });
+  const scope = await model.scope(
+    { branch: state.selection.branch, plan },
+    new AbortController().signal,
+  );
+  const timeline = await scope.read(
+    "ApiExecutionTimelineV1",
+    `/api/v1/builds/${build}/timeline`,
+  );
+  const report = await scope.read("ExecutionJsonV1", `/api/v1/builds/${build}`);
+  const view = render(
+    <BuildModal
+      result={{ timeline, report, scope }}
+      error=""
+      refresh={() => {}}
+      dataset={
+        state.value.dataset ??
+        (() => {
+          throw new Error("Missing dataset");
+        })()
+      }
+      onClose={() => {}}
+    />,
+  );
+  expect(screen.getByText("Build schedule")).toBeTruthy();
+  expect(screen.getByText("Daily fixture")).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Critical path" })).toHaveProperty(
+    "disabled",
+    true,
+  );
+  expect(screen.getByText("Live · updates automatically")).toBeTruthy();
+  fireEvent.change(screen.getByRole("textbox", { name: "Dataset path" }), {
+    target: { value: "no-such-dataset" },
+  });
+  expect(screen.getByText("No jobs match these filters.")).toBeTruthy();
+  view.unmount();
+  model.dispose();
+});
+
+test("job transaction metadata stays pinned to its own version without changing Preview", async () => {
+  const { model, state, calls } = await fixture(false, {
+    ...job,
+    state: "SUCCEEDED",
+    produced_version: versionId,
+  });
+  render(
+    <HistoryInspector
+      workspace={model}
+      state={state}
+      onVersion={() => {
+        throw new Error("Must not switch Preview");
+      }}
+    />,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: /SUCCEEDED · 1 attempts/ }),
+  );
+  expect(await screen.findByText("42 bytes")).toBeTruthy();
+  expect(
+    calls.some(
+      (c) =>
+        c.path.endsWith("/versions") &&
+        c.query.version === versionId &&
+        c.query.dataset === datasetId,
+    ),
+  ).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Files" }));
+  expect(screen.getByText("a".repeat(64))).toBeTruthy();
+  model.dispose();
+});
+
+test("mismatched build timeline is rejected instead of painting a different build", async () => {
+  const { model, state } = await fixture(false, job, {
+    timeline: () => ({ build: "55555555-5555-4555-8555-555555555555" }),
+  });
+  const hook = renderHook(() => useBuildEvidence(model, state, job));
+  await waitFor(() =>
+    expect(hook.result.current.error).toContain("does not match"),
+  );
+  expect(hook.result.current.result).toBeUndefined();
+  hook.unmount();
+  model.dispose();
+});
+
+test("background metadata refresh keeps the selected job and Build modal mounted", async () => {
+  const { model } = await fixture();
+  render(<App workspace={model} />);
+  fireEvent.click(screen.getByRole("button", { name: "Catalogue" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: /raw\/example, local/ }),
+  );
+  await screen.findByRole("button", { name: "1 node selected" });
+  fireEvent.click(screen.getByRole("tab", { name: "History" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: /FAILED · 1 attempts/ }),
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: "View build report" }),
+  );
+  const dialog = screen.getByRole("dialog");
+  await act(async () => {
+    await model.refresh(true);
+  });
+  expect(screen.getByRole("dialog")).toBe(dialog);
+  expect(
+    screen
+      .getByRole("button", { name: /FAILED · 1 attempts/ })
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
+  model.dispose();
+});

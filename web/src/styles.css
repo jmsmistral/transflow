@@ -2429,3 +2429,281 @@ revo-grid.preview-grid
   font-size: 14px;
   min-width: 14px;
 }
+
+/* Build reports occupy the workspace while retaining the lineage underneath. */
+.build-modal {
+  width: calc(100vw - 48px);
+  max-width: 1800px;
+  height: calc(100vh - 48px);
+  max-height: none;
+  padding: 0;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.build-modal[open] {
+  display: flex;
+  flex-direction: column;
+}
+.build-modal::backdrop {
+  background: #17253788;
+}
+.build-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.build-modal-header h2 {
+  margin: 0;
+  font-size: 17px;
+}
+.build-modal-header > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.build-modal-header .button {
+  margin-left: auto;
+}
+.build-report-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+.build-info {
+  padding: 20px;
+  border-right: 1px solid var(--line);
+  overflow: auto;
+}
+.build-info h3,
+.build-progress h3,
+.job-overview h3 {
+  font-size: 14px;
+  margin: 0 0 18px;
+}
+.build-info details {
+  margin-top: 24px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.build-progress {
+  min-width: 0;
+  overflow: auto;
+}
+.build-progress > .execution-toolbar {
+  padding: 12px 20px;
+}
+.build-progress h3 {
+  margin: 0;
+}
+.build-live {
+  color: var(--muted);
+  margin-left: auto;
+  font-size: 12px;
+}
+.build-filters {
+  justify-content: flex-end;
+}
+.build-filters label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.build-filters input[type="checkbox"] {
+  width: auto;
+}
+.build-filters input:not([type="checkbox"]) {
+  max-width: 240px;
+}
+.build-schedule {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 14px;
+  margin-top: 24px;
+}
+.build-schedule .execution-json {
+  max-height: 160px;
+  overflow: auto;
+}
+.build-gantt {
+  padding: 4px 20px 24px;
+}
+.build-gantt .gantt-row {
+  grid-template-columns: minmax(120px, 30%) 1fr;
+  border: 0;
+  padding: 8px 0;
+  align-items: center;
+}
+.build-gantt .gantt-label {
+  text-align: right;
+  font-size: 12px;
+  padding-right: 8px;
+}
+.build-gantt .gantt-track {
+  height: 28px;
+  min-width: 0;
+  background: repeating-linear-gradient(
+    to right,
+    var(--line) 0,
+    var(--line) 1px,
+    transparent 1px,
+    transparent 25%
+  );
+}
+.build-gantt .phase-bar {
+  top: 4px;
+  height: 20px;
+  color: #fff;
+  overflow: hidden;
+}
+.gantt-time-axis {
+  margin-left: 30%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+.gantt-time-axis span {
+  max-width: 90px;
+  padding-top: 6px;
+}
+.job-bar-succeeded {
+  background: #70c59c;
+}
+.job-bar-failed {
+  background: #dc666e;
+}
+.job-bar-running {
+  background: #4a91e8;
+}
+.job-bar-queued,
+.job-bar-waiting {
+  background: #9575ce;
+}
+.job-bar-canceled,
+.job-bar-interrupted,
+.job-bar-blocked,
+.job-bar-cached {
+  background: #939ba8;
+}
+.critical-0 {
+  background: #c6404a;
+}
+.critical-1 {
+  background: #ef929e;
+}
+.critical-2 {
+  background: #929aa7;
+}
+.build-jobs {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.build-jobs th,
+.build-jobs td {
+  text-transform: none;
+  text-align: left;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.build-jobs th {
+  color: var(--muted);
+  font-weight: 500;
+}
+.build-jobs td:first-child {
+  max-width: 300px;
+  overflow-wrap: anywhere;
+}
+.build-jobs small {
+  display: block;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.build-jobs .button {
+  margin-left: 10px;
+  font-size: 11px;
+}
+.job-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+  padding: 0 12px;
+}
+.job-tabs .button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 12px;
+}
+.job-tabs .button[aria-pressed="true"] {
+  color: var(--accent);
+  box-shadow: inset 0 -2px var(--accent);
+}
+.job-overview {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(360px, 1.4fr);
+  gap: 36px;
+  padding: 20px 24px;
+}
+.job-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.build-report-link {
+  color: var(--accent);
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font-size: 12px;
+}
+.job-facts {
+  display: grid;
+  grid-template-columns: minmax(80px, 30%) minmax(0, 1fr);
+  gap: 16px 12px;
+  font-size: 12px;
+  margin: 0;
+}
+.job-facts dt {
+  margin: 0;
+  color: var(--muted);
+}
+.job-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.job-facts dd small {
+  color: var(--muted);
+}
+.job-facts .execution-status,
+.build-jobs .execution-status {
+  font-size: 15px;
+}
+.job-tab-content {
+  padding: 20px 24px;
+}
+@media (max-width: 850px) {
+  .build-modal {
+    width: calc(100vw - 16px);
+    height: calc(100vh - 16px);
+  }
+  .build-report-layout {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+  .job-overview {
+    grid-template-columns: 1fr;
+  }
+}
+
+.build-filters label {
+  white-space: nowrap;
+}

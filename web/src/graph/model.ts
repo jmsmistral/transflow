@@ -5,7 +5,7 @@ import type {
   ApiLineageNodeV1,
 } from "../generated/contracts";
 import { ApiFailure, type Query } from "../api/client";
-import type { Workspace } from "../workspace";
+import { visualContext as contextIdentity, type Workspace } from "../workspace";
 
 export interface Exploration {
   start: string;
@@ -88,17 +88,7 @@ export class GraphModel {
         this.cache.reset();
       }
       const context = state.value.context.fingerprint;
-      const c = state.value.context;
-      const visualContext = JSON.stringify([
-        c.workspace,
-        c.branch,
-        c.source,
-        c.registry,
-        c.configuration,
-        c.selection,
-        c.graph,
-        c.fallback_policy,
-      ]);
+      const visualContext = contextIdentity(state.value.context);
       const timingOnly = changed && this.state.visualContext === visualContext;
       if (timingOnly) {
         const identities = this.state.nodes.map((node) => node.identity);

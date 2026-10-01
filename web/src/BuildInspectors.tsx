@@ -2,21 +2,12 @@ import { useEffect, useState } from "react";
 import type {
   ApiAttemptV1,
   ApiAttemptLogsV1,
-  ApiDatasetV1,
-  ApiExecutionTimelineV1,
   ApiHistoryJobV1,
-  ExecutionJsonV1,
 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
 import { Button } from "./components";
 import { field } from "./inspectors";
-import {
-  position,
-  seconds,
-  short,
-  sortedHistory,
-  timestamp,
-} from "./execution-model";
+import { seconds, short, sortedHistory, timestamp } from "./execution-model";
 import {
   type Ready,
   type Scope,
@@ -24,12 +15,10 @@ import {
   branchSelection,
   message,
   Empty,
-  Metric,
-  Status,
   Evidence,
   property,
-  items,
 } from "./execution-ui";
+import { BuildDetail } from "./BuildReport";
 export function TimelineInspector({
   workspace,
   state,
@@ -152,301 +141,13 @@ export function TimelineInspector({
     </div>
   );
 }
-export function BuildDetail({
-  workspace,
-  state,
-  job,
-  dataset,
+export function AttemptDetail({
+  scope,
+  attempt,
 }: {
-  workspace: Workspace;
-  state: Ready;
-  job: ApiHistoryJobV1;
-  dataset: ApiDatasetV1;
+  scope: Scope;
+  attempt: string;
 }) {
-  const [result, setResult] = useState<{
-    timeline: ApiExecutionTimelineV1;
-    report: ExecutionJsonV1;
-    scope: Scope;
-  }>();
-  const [error, setError] = useState("");
-  const [attempt, setAttempt] = useState<string>();
-  const [critical, setCritical] = useState(false);
-  const [refresh, setRefresh] = useState(0);
-  const [cancelMessage, setCancelMessage] = useState("");
-  const [canceling, setCanceling] = useState(false);
-  const [cancelKey] = useState(() => crypto.randomUUID());
-  useEffect(() => {
-    const abort = new AbortController();
-    void (async () => {
-      const scope = await workspace.scope(
-        { branch: state.selection.branch, plan: job.plan },
-        abort.signal,
-      );
-      const [timeline, report] = await Promise.all([
-        scope.read(
-          "ApiExecutionTimelineV1",
-          `/api/v1/builds/${job.build}/timeline`,
-        ),
-        scope.read("ExecutionJsonV1", `/api/v1/builds/${job.build}`),
-      ]);
-      if (
-        timeline.build !== job.build ||
-        timeline.plan !== job.plan ||
-        timeline.source !== job.source
-      )
-        throw new Error("Timeline does not match the selected retained plan.");
-      return { timeline, report, scope };
-    })().then(
-      (value) => {
-        if (!abort.signal.aborted) {
-          setResult(value);
-          setError("");
-        }
-      },
-      (error) => {
-        if (!abort.signal.aborted) setError(message(error));
-      },
-    );
-    return () => abort.abort();
-  }, [workspace, state, job, refresh]);
-  async function cancel() {
-    if (!result) return;
-    setCanceling(true);
-    try {
-      const response = await result.scope.cancel(job.build, cancelKey);
-      setCancelMessage(
-        response.disposition === "TooLate"
-          ? "This build has already finished."
-          : "Cancellation requested; running attempts stop at their next safe boundary.",
-      );
-      setRefresh((n) => n + 1);
-    } catch (error) {
-      setError(message(error));
-    } finally {
-      setCanceling(false);
-    }
-  }
-  if (error)
-    return (
-      <p role="alert" className="execution-error">
-        Retained build unavailable: {error}{" "}
-        <Button onClick={() => setRefresh((n) => n + 1)}>Refresh</Button>
-      </p>
-    );
-  if (!result || result.timeline.build !== job.build)
-    return <Empty>Loading plan-bound build evidence…</Empty>;
-  const { timeline, report } = result;
-  const active = !["SUCCEEDED", "FAILED", "CANCELED", "INTERRUPTED"].includes(
-    timeline.state,
-  );
-  const plan = property(report, "plan"),
-    writes = items(property(plan, "writes"));
-  const labels = new Map(
-    writes.map((write) => [
-      field(write, "dataset"),
-      field(write, "path") ?? short(field(write, "dataset")),
-    ]),
-  );
-  for (const job of timeline.jobs)
-    if (job.path) labels.set(job.dataset, job.path);
-  if (!labels.has(dataset.dataset_id))
-    labels.set(dataset.dataset_id, dataset.path);
-  const latest = timeline.jobs
-    .find((j) => j.dataset === dataset.dataset_id)
-    ?.attempts.at(-1)?.attempt;
-  return (
-    <div className="build-detail">
-      <div className="execution-toolbar">
-        <Status state={timeline.state} />
-        <strong>{timeline.state}</strong>
-        <span title={timeline.build}>Build {short(timeline.build)}</span>
-        <Button onClick={() => setRefresh((n) => n + 1)}>Refresh</Button>
-        {active && (
-          <Button
-            onClick={() => {
-              void cancel();
-            }}
-            disabled={canceling}
-          >
-            {canceling ? "Requesting…" : "Cancel build"}
-          </Button>
-        )}
-      </div>
-      {cancelMessage && <p role="status">{cancelMessage}</p>}
-      <div className="metrics-summary">
-        <Metric label="Queued" value={timestamp(timeline.queued_us)} />
-        <Metric label="Started" value={timestamp(timeline.started_us)} />
-        <Metric label="Finished" value={timestamp(timeline.finished_us)} />
-        <Metric
-          label="Build elapsed"
-          value={seconds(
-            timeline.wall_duration_us === null
-              ? null
-              : (BigInt(timeline.wall_duration_us) * 1000n).toString(),
-          )}
-        />
-        <Metric
-          label="Initial queue wait"
-          value={seconds(
-            timeline.initial_queue_wait_us === null
-              ? null
-              : (BigInt(timeline.initial_queue_wait_us) * 1000n).toString(),
-          )}
-        />
-      </div>
-      <div className="source-provenance">
-        <span title={timeline.plan}>Plan {short(timeline.plan)}</span>
-        <span title={timeline.source}>Snapshot {short(timeline.source)}</span>
-        <span>
-          Requested by {field(report, "requested_by") ?? "Unavailable"}
-        </span>
-        <span>ETA unavailable</span>
-        {timeline.job_counts.map((count) => (
-          <span key={count.state}>
-            {count.count} {count.state.toLowerCase()}
-          </span>
-        ))}
-      </div>
-      <details>
-        <summary>Targets and trigger</summary>
-        <Evidence>{property(property(plan, "context"), "targets")}</Evidence>
-        <Evidence>{property(report, "trigger")}</Evidence>
-      </details>
-      <div className="execution-toolbar">
-        {timeline.critical_path ? (
-          <Button
-            aria-pressed={critical}
-            onClick={() => setCritical(!critical)}
-          >
-            Critical path · {seconds(timeline.critical_path.duration_ns)}
-          </Button>
-        ) : (
-          <span>Critical path unavailable while evidence is incomplete.</span>
-        )}
-        <span>
-          Phase positions use recorded UTC intervals; duration labels use
-          measured nanoseconds.
-        </span>
-      </div>
-      <Gantt
-        timeline={timeline}
-        labels={labels}
-        critical={critical}
-        onAttempt={setAttempt}
-      />
-      {(attempt ?? latest) ? (
-        <AttemptDetail
-          key={attempt ?? latest}
-          scope={result.scope}
-          attempt={attempt ?? latest ?? ""}
-        />
-      ) : (
-        <Empty>
-          {job.state === "CACHED"
-            ? `Reused version ${short(job.reused_version)}; no execution attempt. Original attempt ${short(job.original_attempt)}.`
-            : "No attempt has started for this job."}
-        </Empty>
-      )}
-    </div>
-  );
-}
-function Gantt({
-  timeline,
-  labels,
-  critical,
-  onAttempt,
-}: {
-  timeline: ApiExecutionTimelineV1;
-  labels: ReadonlyMap<string | undefined, string>;
-  critical: boolean;
-  onAttempt: (id: string) => void;
-}) {
-  const phases = timeline.jobs.flatMap((job) =>
-    job.attempts.flatMap((attempt) => attempt.phases),
-  );
-  const start = BigInt(timeline.queued_us);
-  const end = phases.reduce(
-    (end, phase) => {
-      const n = BigInt(phase.finished_us ?? phase.started_us);
-      return n > end ? n : end;
-    },
-    BigInt(timeline.finished_us ?? timeline.started_us ?? timeline.queued_us),
-  );
-  const span = end > start ? end - start : 1n;
-  const names = [...new Set(phases.map((phase) => phase.phase))];
-  return (
-    <div className="gantt">
-      <div className="phase-legend">
-        {names.map((name, index) => (
-          <span key={name}>
-            <i className={`phase-color phase-${index % 6}`} />
-            {name}
-          </span>
-        ))}
-      </div>
-      <div className="gantt-axis">
-        <span>{timestamp(start.toString())}</span>
-        <span>{seconds((span * 1000n).toString())} recorded span</span>
-      </div>
-      {timeline.jobs.map((job) => (
-        <div
-          className={`gantt-row ${critical && timeline.critical_path?.jobs.includes(job.job) ? "critical-job" : ""}`}
-          key={job.job}
-        >
-          <div className="gantt-label">
-            <strong title={job.dataset}>
-              {labels.get(job.dataset) ?? short(job.dataset)}
-            </strong>
-            <small>
-              {job.state} ·{" "}
-              {job.state === "CACHED" ? "Reuse" : seconds(job.duration_ns)}
-            </small>
-          </div>
-          <div className="gantt-attempts">
-            {!job.attempts.length ? (
-              <span className="gantt-no-attempt">
-                {job.state === "CACHED"
-                  ? "Cached reuse · no phases"
-                  : "No recorded phases"}
-              </span>
-            ) : (
-              job.attempts.map((attempt) => (
-                <div className="gantt-attempt" key={attempt.attempt}>
-                  <Button onClick={() => onAttempt(attempt.attempt)}>
-                    #{attempt.number} · {attempt.state}
-                  </Button>
-                  <div className="gantt-track">
-                    {attempt.phases.map((phase, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        className={`phase-bar phase-${names.indexOf(phase.phase) % 6} ${phase.finished_us === null ? "phase-open" : ""}`}
-                        style={{
-                          left: `${position(BigInt(phase.started_us), start, span)}%`,
-                          width:
-                            phase.finished_us === null
-                              ? "4px"
-                              : `${Math.max(0.4, position(BigInt(phase.finished_us), BigInt(phase.started_us), span))}%`,
-                        }}
-                        onClick={() => onAttempt(attempt.attempt)}
-                        aria-label={`${labels.get(job.dataset) ?? job.dataset} attempt ${attempt.number}: ${phase.phase}, ${phase.finished_us === null ? "running; end unavailable" : seconds(phase.duration_ns)}`}
-                        title={`${phase.phase} · ${timestamp(phase.started_us)} → ${timestamp(phase.finished_us)} · ${seconds(phase.duration_ns)} (${phase.duration_ns ?? "unknown"} ns)`}
-                      />
-                    ))}
-                  </div>
-                  {attempt.phases.some((p) => p.finished_us === null) && (
-                    <small>Running · end unavailable</small>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-function AttemptDetail({ scope, attempt }: { scope: Scope; attempt: string }) {
   const [detail, setDetail] = useState<ApiAttemptV1>();
   const [error, setError] = useState("");
   useEffect(() => {
@@ -509,7 +210,7 @@ function AttemptDetail({ scope, attempt }: { scope: Scope; attempt: string }) {
     </section>
   );
 }
-function Logs({ scope, attempt }: { scope: Scope; attempt: string }) {
+export function Logs({ scope, attempt }: { scope: Scope; attempt: string }) {
   const [page, setPage] = useState<ApiAttemptLogsV1>();
   const [text, setText] = useState("");
   const [error, setError] = useState("");

@@ -405,3 +405,41 @@ test("scoped inspector reads discard late replies after a dataset inspection gen
   await rejected;
   model.dispose();
 });
+
+test("background refresh retains the ready view and a user selection supersedes it", async () => {
+  const late = deferred<Response>();
+  let hold = false;
+  const model = new Workspace(
+    new Client(
+      fixtureTransport((path, q) =>
+        hold && path.endsWith("/datasets") && q.branch === "master"
+          ? late.promise
+          : undefined,
+      ),
+    ),
+  );
+  await model.connect("launch");
+  hold = true;
+  const pending = model.refresh(true);
+  await Promise.resolve();
+  expect(model.snapshot()).toMatchObject({ kind: "ready", refreshing: true });
+  await model.select({ branch: "feature" });
+  late.resolve(
+    json(
+      {
+        entries: [dataset],
+        total: "1",
+        next_cursor: null,
+        schema: null,
+        freshness: "unknown",
+      },
+      context(),
+    ),
+  );
+  await pending;
+  expect(model.snapshot()).toMatchObject({
+    kind: "ready",
+    selection: { branch: "feature" },
+  });
+  model.dispose();
+});

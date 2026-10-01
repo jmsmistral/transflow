@@ -125,7 +125,11 @@ Cached jobs reuse a version without executing a new attempt.
 T086 adds numbered read-only producing Code, an explicit current retained definition
 and diff, dataset jobs, bounded attempt logs and a recorded phase Build timeline
 with cancellation. History opens with a duration summary; selecting a job shows its
-details, and the header’s Show summary button returns to the summary. Failed jobs
+transaction/job overview and Logs, Files, Metadata, Schema and Job spec tabs.
+View build report opens a large overlay with build facts, execution-ordered jobs,
+status/phase/critical-path Gantt modes and path/status filters. Active reports
+refresh automatically and show live elapsed bars; completed critical paths use
+retained timing evidence. The header’s Show summary button returns to the summary. Failed jobs
 leave last-good Preview unchanged. History shows UTC acceptance-window metrics and
 measured duration points;
 reuse has no execution duration. Missing source/timings and ETA remain unavailable.

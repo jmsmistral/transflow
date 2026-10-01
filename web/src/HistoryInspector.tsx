@@ -28,7 +28,7 @@ import {
   Metric,
   Status,
 } from "./execution-ui";
-import { BuildDetail } from "./BuildInspectors";
+import { JobHistoryDetail } from "./JobHistoryDetail";
 export function HistoryInspector({
   workspace,
   state,
@@ -212,7 +212,7 @@ export function HistoryInspector({
           </div>
           <div className="history-detail">
             {selected && dataset ? (
-              <BuildDetail
+              <JobHistoryDetail
                 key={selected.id}
                 workspace={workspace}
                 state={state}

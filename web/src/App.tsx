@@ -6,7 +6,7 @@ import { ResizeHandle } from "./panels";
 import { BranchControls } from "./BranchControls";
 import { CatalogueSearch } from "./graph/Search";
 import { GraphExplorer } from "./graph/Graph";
-import { Workspace } from "./workspace";
+import { Workspace, visualContext } from "./workspace";
 import type { ApiLineageNodeV1 } from "./generated/contracts";
 import type { Snapshot, WorkspaceState } from "./workspace";
 import { CodeInspector } from "./CodeInspector";
@@ -67,11 +67,21 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
   const [visible, setVisible] = useState<readonly string[]>([]);
   const [graphSelection, setGraphSelection] = useState<{
     context: string;
+    visual: string;
     nodes: readonly ApiLineageNodeV1[];
-  }>({ context: "", nodes: [] });
+  }>({ context: "", visual: "", nodes: [] });
   const handleSelection = useCallback(
     (nodes: readonly ApiLineageNodeV1[], context: string) => {
-      setGraphSelection({ context, nodes });
+      const snapshot = workspace.snapshot();
+      setGraphSelection({
+        context,
+        nodes,
+        visual:
+          snapshot.kind === "ready" &&
+          snapshot.value.context.fingerprint === context
+            ? visualContext(snapshot.value.context)
+            : "",
+      });
       if (nodes.length === 1) {
         const [, origin, id] = nodes[0]?.identity.split(":") ?? [];
         const current = workspace.snapshot();
@@ -104,14 +114,14 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     [tab, setTab] = useState<string>("Preview");
   const ready = state.kind === "ready" ? state.value : null;
   const selectedNodes =
-    graphSelection.context === ready?.context.fingerprint
+    ready && graphSelection.visual === visualContext(ready.context)
       ? graphSelection.nodes
       : [];
   const [pinnedVersion, setPinnedVersion] = useState<{
     key: string;
     version: NonNullable<Snapshot["versions"]>["entries"][number];
   } | null>(null);
-  const inspectionKey = `${ready?.context.fingerprint}:${selectedNodes[0]?.identity}`;
+  const inspectionKey = `${ready ? visualContext(ready.context) : ""}:${selectedNodes[0]?.identity}`;
   const pinKey = JSON.stringify([
     ready?.context.workspace,
     state.selection.branch,
@@ -149,7 +159,9 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     (state.selection.dataset ? "Selected dataset" : "Workspace");
   const status =
     state.kind === "ready"
-      ? "Connected"
+      ? state.refreshing
+        ? "Refreshing…"
+        : "Connected"
       : state.kind === "failed"
         ? "Request failed"
         : state.kind === "disconnected"

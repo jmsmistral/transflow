@@ -35,7 +35,25 @@ export type WorkspaceState =
   | { kind: "disconnected"; message: string; selection: Selection }
   | { kind: "connecting" | "loading"; selection: Selection }
   | { kind: "failed"; message: string; selection: Selection }
-  | { kind: "ready"; selection: Selection; value: Snapshot };
+  | {
+      kind: "ready";
+      selection: Selection;
+      value: Snapshot;
+      refreshing?: boolean;
+    };
+/** Runtime revisions do not change the visual lineage or inspector identity. */
+export function visualContext(c: ApiContextV1): string {
+  return JSON.stringify([
+    c.workspace,
+    c.branch,
+    c.source,
+    c.registry,
+    c.configuration,
+    c.selection,
+    c.graph,
+    c.fallback_policy,
+  ]);
+}
 export function queryFor(selection: Selection): Query {
   return {
     branch: selection.branch,
@@ -116,6 +134,7 @@ export class Workspace {
     const state = this.state;
     const sameContext =
       state.kind === "ready" &&
+      !state.refreshing &&
       selection.dataset &&
       same(queryFor(selection), queryFor(state.selection)) &&
       selection.cursor === state.selection.cursor;
@@ -174,12 +193,14 @@ export class Workspace {
         this.fail(error);
     }
   }
-  private async load(selection: Selection): Promise<void> {
+  private async load(selection: Selection, background = false): Promise<void> {
     this.request?.abort();
     const epoch = ++this.epoch,
       request = new AbortController();
     this.request = request;
-    this.set({ kind: "loading", selection: { ...selection } });
+    if (background && this.state.kind === "ready")
+      this.set({ ...this.state, refreshing: true });
+    else this.set({ kind: "loading", selection: { ...selection } });
     if (!this.capabilities) {
       this.fail(
         new ApiFailure(
@@ -326,6 +347,7 @@ export class Workspace {
     } catch (error) {
       if (current()) {
         request.abort();
+        if (background) throw error;
         this.fail(error);
       }
     }
@@ -484,10 +506,10 @@ export class Workspace {
           : "The coordinator response could not be verified. Refresh or inspect its diagnostics.",
     });
   }
-  refresh = async (): Promise<void> => {
+  refresh = async (background = false): Promise<void> => {
     const selection = { ...this.state.selection };
     delete selection.cursor;
-    const pending = this.load(selection);
+    const pending = this.load(selection, background);
     this.pending = pending;
     await pending;
   };
@@ -510,7 +532,29 @@ export class Workspace {
           // Phase facts can commit while the guarded metadata reads run. Retry the
           // complete read set a bounded number of times; never combine revisions.
           for (let retry = 0; retry < 3; retry++) {
-            await this.refresh();
+            try {
+              await this.refresh(true);
+            } catch (error) {
+              if (
+                !(error instanceof ApiFailure) ||
+                error.kind !== "conflict" ||
+                retry === 2
+              )
+                throw error;
+              await new Promise<void>((resolve) => {
+                const finish = () => {
+                  signal.removeEventListener("abort", stop);
+                  resolve();
+                };
+                const timer = setTimeout(finish, 500 * (retry + 1));
+                const stop = () => {
+                  clearTimeout(timer);
+                  finish();
+                };
+                signal.addEventListener("abort", stop, { once: true });
+              });
+              continue;
+            }
             while (this.state.kind === "loading" && !signal.aborted)
               await this.pending;
             if (signal.aborted || this.state.kind === "ready") return;

@@ -1,0 +1,26 @@
+{
+  "task": "T086 dedicated Build modal and job History details",
+  "date": "2026-10-01",
+  "implementation_base": "eb92278",
+  "specification_base": "40897d2",
+  "changes": [
+    "Job-specific transaction/execution overview and Logs, Files, Metadata, Schema, Job spec tabs; exact produced/reused version metadata; View build report link.",
+    "Large native Build modal with sidebar, filters, chronological jobs, status/recorded-phase/completed-critical-path Gantt and retained attempt evidence.",
+    "Sequential 1.5-second active refresh, one-second elapsed clock, cancellation, terminal stop and context/unmount abort.",
+    "Background workspace event refresh retains the same visual inspector identity; bounded context retries back off while user branch/dataset changes supersede old reads."
+  ],
+  "checks": {
+    "web": "bash tools/check-web.sh passed: 482 tests, strict types, lint, formatting, production worker probes and reproducible 16-asset builds.",
+    "browser": "Internal Codex Browser with production assets: existing four-job build in execution order; status/phase/critical modes; job version counts; native Escape restores opener focus. Disposable real two-job build showed RUNNING and WAITING_DEPENDENCIES, moving live phase span and disabled critical mode, then automatic 2/2 SUCCEEDED completion with the modal and selected History job retained. No warning/error console entries.",
+    "documentation": "Specification checker and all 44 regression tests passed; both repository diff whitespace checks passed.",
+    "safety": "Safety baseline and all 27 regression tests passed."
+  },
+  "observed_fix": "Initial real completion exposed workspace refresh unmounting the modal and tight conflicting-context retries. Fixed shared refresh lifecycle and inspector identity; final real completion passed.",
+  "limits": [
+    "Scheduler execution and rich schedule projections remain deferred; conditional schedule-card presentation tested with explicit synthetic retained trigger. Existing manual builds omit it.",
+    "Files exposes retained artifact/count/bytes; per-file names are not supplied by this API. ETA and missing evidence remain unavailable.",
+    "UI build initiation/rebuild remains T087. Backend contracts/execution were unchanged; backend suites were not repeated."
+  ],
+  "ci": "Pending owner confirmation; not polled",
+  "cleanup": "Own preview coordinators stopped, port 54063 listener absent and agent tabs closed. Existing /tmp/transflow-t085-refine-browser-20260930 preserved. New /tmp/transflow-t086-live-build-modal retained with completed synthetic builds and no running producer."
+}
