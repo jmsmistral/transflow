@@ -2962,9 +2962,6 @@ revo-grid.preview-grid
   margin-top: 6px;
   color: var(--muted);
 }
-.planner-skipped {
-  opacity: 0.5;
-}
 .planner-resource-list {
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);

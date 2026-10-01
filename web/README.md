@@ -234,8 +234,8 @@ refresh, exact pins, parameters, require-current inputs and source refs. These a
 fields are not shown in the inspector.
 
 **Next (View preview)** does not execute producers or register outputs. It shows the
-complete planned resource list and faded reused boundaries; toggle their visibility
-with **Show resources that will not be built**. Force, selection/context changes and
+planned build datasets only; reused input boundaries remain in collapsed Plan details.
+Force, selection/context changes and
 expiry automatically prepare a new guarded preview; transient conflicts refresh context
 and retry up to three times with backoff. Preparation errors remain visible with an
 explicit retry; builds always require a separate Run build click.

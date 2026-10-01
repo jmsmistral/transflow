@@ -15,5 +15,10 @@
     "documentation": "Specification checker and 44 regressions passed; safety baseline and 27 regressions passed; both repository diffs pass whitespace checks."
   },
   "ci": "Pending owner confirmation; no CI polling.",
-  "cleanup": "Agent-started coordinator stopped with STOPPED receipt; internal Browser tab closed. Existing synthetic workspace retained at /tmp/transflow-t083-browser with its corrected interpreter selection. Production UI assets rebuilt."
+  "cleanup": "Agent-started coordinator stopped with STOPPED receipt; internal Browser tab closed. Existing synthetic workspace retained at /tmp/transflow-t083-browser with its corrected interpreter selection. Production UI assets rebuilt.",
+  "list_refinement": {
+    "date": "2026-10-01",
+    "changes": "Primary list shows only planned writes. Removed show-skipped control, faded published-input rows and their helper text. Input provenance remains in collapsed Plan details; graph colouring and execution scope are unchanged.",
+    "verification": "check-web.sh passed all 494 tests and type/lint/format/production checks. Specification checker, safety baseline and 27 safety regressions passed. Internal Browser verified three selected write rows only while reused root and external input remain excluded from the list, with Force off and on."
+  }
 }

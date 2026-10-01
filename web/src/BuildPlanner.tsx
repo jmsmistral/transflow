@@ -63,7 +63,6 @@ export function BuildPlanner({
     [settings, targets],
   );
   const [reviewing, setReviewing] = useState(false);
-  const [showSkipped, setShowSkipped] = useState(true);
   const [autoPreview, setAutoPreview] = useState(false);
   const [draft, setDraft] = useState<Draft>();
   const [failedKey, setFailedKey] = useState<string>();
@@ -244,14 +243,6 @@ export function BuildPlanner({
     (r) => !r.pending && !visible.includes(r.identity),
   );
   const count = targets ? targets.split("\n").length : 0;
-  const skipped = plan
-    ? relevant.filter(
-        (r) =>
-          !plan.writes.some(
-            (w) => r.identity === `dataset:${plan.workspace}:${w.dataset}`,
-          ),
-      )
-    : [];
   return (
     <div className="build-planner">
       {accepted && (
@@ -340,15 +331,6 @@ export function BuildPlanner({
                   <input
                     type="checkbox"
                     role="switch"
-                    checked={showSkipped}
-                    onChange={(e) => setShowSkipped(e.target.checked)}
-                  />
-                  Show resources that will not be built
-                </label>
-                <label className="planner-check">
-                  <input
-                    type="checkbox"
-                    role="switch"
                     checked={options.force}
                     onChange={(e) => {
                       setSettings((s) => ({ ...s, force: e.target.checked }));
@@ -365,7 +347,6 @@ export function BuildPlanner({
               {plan && (
                 <section className="plan-review" aria-label="Plan preview">
                   <h3>Resources to be built</h3>
-                  <p className="muted">Faded resources will not be built.</p>
                   <div className="planner-resource-list">
                     {plan.writes.map((w) => (
                       <div className="planner-resource" key={w.job}>
@@ -382,19 +363,6 @@ export function BuildPlanner({
                         </div>
                       </div>
                     ))}
-                    {showSkipped &&
-                      skipped.map((r) => (
-                        <div
-                          className="planner-resource planner-skipped"
-                          key={r.identity}
-                        >
-                          <Icon name="table" />
-                          <div>
-                            <strong>{r.path}</strong>
-                            <small>Published input · will not be built</small>
-                          </div>
-                        </div>
-                      ))}
                   </div>
                   {!!hidden.length && (
                     <div className="planner-notice">

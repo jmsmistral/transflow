@@ -151,7 +151,7 @@ T087 adds the **Build planner** inspector for the current lineage selection. Wit
 nothing selected it shows a centered build prompt. Choose selected resources only
 (the UI default), transforms connecting selected endpoints, or all eligible ancestors;
 then **Next (View preview)** shows the complete scope, including hidden resources.
-The preview has a skipped-resource toggle, a force toggle that recomputes the plan,
+The preview list contains only planned build datasets, with a force toggle that recomputes the plan,
 Cancel and **Run build**. Planned resources are coloured on the graph; published read
 boundaries are faded. Deterministic jobs remain pending cache evaluation until their
 actual inputs are resolved. The inspector keeps strategy and force controls; advanced
