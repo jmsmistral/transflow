@@ -227,7 +227,7 @@ fn schema_eight_job_bindings_upgrade_without_losing_local_foreign_keys() {
         // Reconstruct the previously shipped schema-8 table with its real local FKs.
         sqlx::raw_sql("CREATE TABLE legacy_job_inputs (job_id TEXT NOT NULL REFERENCES jobs(id),alias TEXT NOT NULL,version_id TEXT REFERENCES dataset_versions(id),parent_job_id TEXT REFERENCES jobs(id),binding_json TEXT NOT NULL CHECK(json_valid(binding_json)),CHECK((version_id IS NULL)!=(parent_job_id IS NULL)),PRIMARY KEY(job_id,alias)) STRICT; INSERT INTO legacy_job_inputs SELECT job_id,alias,version_id,parent_job_id,binding_json FROM job_inputs; DROP TABLE job_inputs; ALTER TABLE legacy_job_inputs RENAME TO job_inputs; DROP TRIGGER IF EXISTS stream_builds_insert; DROP TRIGGER IF EXISTS stream_builds_state; DROP TRIGGER IF EXISTS stream_jobs_insert; DROP TRIGGER IF EXISTS stream_jobs_state; DROP TRIGGER IF EXISTS stream_attempts_insert; DROP TRIGGER IF EXISTS stream_attempts_state; DROP TABLE api_operations; DELETE FROM schema_migrations WHERE version>=9; PRAGMA user_version=8;").execute(&mut h.db).await.unwrap();
         let owned=h.owner.as_mut().unwrap().open_store().await.unwrap();owned.close().await.unwrap();
-        assert_eq!(h.scalar("PRAGMA user_version").await,13);
+        assert_eq!(h.scalar("PRAGMA user_version").await,14);
         assert_eq!(h.scalar("SELECT count(*) FROM job_inputs WHERE alias='legacy' AND version_id IS NOT NULL AND foreign_version_id IS NULL").await,1);
         assert!(sqlx::query("UPDATE job_inputs SET version_id=?").bind(VersionId::from_bytes([99;16]).to_string()).execute(&mut h.db).await.is_err());
     });
@@ -345,7 +345,7 @@ CREATE INDEX job_inputs_foreign ON job_inputs(foreign_workspace_id,foreign_datas
         let before = ArtifactStore::open(&h.root).unwrap().verify(h.digest).unwrap();
         let owned = h.owner.as_mut().unwrap().open_store().await.unwrap();
         owned.close().await.unwrap();
-        assert_eq!(h.scalar("PRAGMA user_version").await, 13);
+        assert_eq!(h.scalar("PRAGMA user_version").await, 14);
         assert_eq!(h.scalar("SELECT count(*) FROM job_inputs WHERE alias='external'").await, 1);
         assert_eq!(h.scalar("SELECT count(*) FROM replicas").await, 1);
         assert_eq!(h.scalar("SELECT count(*) FROM foreign_versions WHERE availability='METADATA_ONLY'").await, 1);

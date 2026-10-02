@@ -1,0 +1,45 @@
+{
+  "task": "T092",
+  "date": "2026-10-03",
+  "host": "macOS arm64",
+  "implementation_base": "f8516d8cf86807f567f5074613b196c842e9b60e",
+  "specification_base": "99e9c5c4a6c3d004105883980d82e24db70bb676",
+  "specification_version": "1.1.3",
+  "runtime_schema": 14,
+  "local_verification": {
+    "focused": "Seven pure evaluator tests, eleven SQLite integration entrypoints (including one crash-probe child), and thirteen storage tests passed",
+    "affected_clippy": "Domain/storage all-target Clippy passed before the full gate",
+    "specification_regressions": 44,
+    "safety_regressions": 27,
+    "specification_and_safety": "Document/link/fence validation, generated drift, offline dependency and public artifact checks passed",
+    "rust_full_gate": "439 Rust tests plus one documentation test, formatting, workspace and standalone storage compilation, Clippy and 12 boundary regressions passed",
+    "installed_worker_cli": "58 CLI/API integration tests passed with Python 3.14.7 in 130.26 seconds"
+  },
+  "coverage": [
+    "Bounded pure trees, manual separation, duplicate/unknown token rejection and exclusive expiry/future eligibility",
+    "Original occurrence time precedes arrival sequence; equal-time sequence/token ordering and authored OR tie breaks are deterministic",
+    "AND requires each child; OR consumes only its chosen branch and leaves independent remainder eligible",
+    "Older eligible chosen-leaf tokens coalesce with counts, preserving chosen exact pins and signal-only provenance",
+    "Deterministic evidence/occurrence identity, immutable queued build settings and input pins survive definition edits, head advances and expiry",
+    "Paused schedules and full accepted/queued/held capacity do not consume evidence; running work does not occupy pending capacity",
+    "Injected enqueue, token-consumption and audit failures roll back all writes; close/reopen retries enqueue once",
+    "Two SQLite owners racing on one evidence set produce one queued occurrence",
+    "Subprocess SIGKILL at four modeled SQLite enqueue transaction boundaries rolls back; the production evaluator queues once after recovery",
+    "Malformed/conflicting chosen evidence, oversized payloads and 100001-token backlog fail before acceptance",
+    "Schema 13 to 14 upgrade preserves tokens/definitions; query plans use partial pending indexes and reopening remains idempotent"
+  ],
+  "boundaries": [
+    "The QUEUED occurrence is the durable request; no validated build plan, executing job, producer or provider read is launched",
+    "T093 owns cron/tick generation; T094 lifecycle controls; T095 source resolution and guarded dispatch; T096 full overlap/coalesce/skip and causal loop controls",
+    "A26 full static-cycle/ancestry/hop-limit scenario is not claimed; selected evidence retains its causation/correlation for later loop controls",
+    "No persistent scheduler daemon or UI integration is activated",
+    "Generated wire contracts, dependency locks and Python/web application sources are unchanged; their full suites were not repeated",
+    "No preview coordinator or browser journey was started for this domain/storage task",
+    "CI remains pending owner confirmation; no CI polling"
+  ],
+  "iteration_fixes": [
+    "Pending-token/occurrence partial indexes and a 100000-token backlog bound keep evaluation off consumed history",
+    "Updated existing runtime-schema assertions to 14 while preserving historical upgrade fixtures and foreign-key checks",
+    "Pending capacity counts accepted/queued/held occurrences separately from running work"
+  ]
+}

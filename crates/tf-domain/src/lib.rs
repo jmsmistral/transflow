@@ -44,3 +44,6 @@ pub mod expectation;
 
 /// Exact execution statistics and dependency-path timing, independent of storage.
 pub mod history;
+
+/// Pure deterministic scheduling trigger selection and coalescing.
+pub mod schedule;

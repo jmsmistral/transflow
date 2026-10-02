@@ -107,7 +107,7 @@ pub enum PayloadMode {
     /// Record causation without binding input data.
     SignalOnly,
 }
-/// Normalized trigger tree; evaluation remains a later scheduling task.
+/// Normalized trigger tree; pure evaluation and atomic queueing are separate domain/store services.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Trigger {

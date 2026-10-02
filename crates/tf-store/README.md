@@ -19,7 +19,7 @@ workspace initialization and robust ownership/path protection remain separate ta
 
 ## Schema and migrations
 
-Thirteen forward migrations install 53 logical tables: source/catalogue projections,
+Fourteen forward migrations install 53 logical tables: source/catalogue projections,
 versions/heads, builds/jobs/attempts, checks, scheduling, events/outbox, pins/audit,
 registry mutation journals, foreign replicas/leases, frozen publication/check
 links, read retention, replay, cache associations and computation comparison evidence.
@@ -180,5 +180,44 @@ while live automatic schedules have not scanned them. Unexpired unconsumed token
 and pending occurrence `payload_json.tokens` retain exact local versions and their
 transitive provenance. Accepted/queued/held/running occurrence pins survive token
 expiry and definition edits; cancellation/completion releases these pending roots.
-Existing retention traversal limits still fail closed. No AND/OR consumption,
-cron evaluation, automatic provider polling, enqueue or dispatch is implemented here.
+Existing retention traversal limits still fail closed. These event adapters do not
+evaluate compound trees or dispatch work; occurrence queueing is described below.
+Cron generation and automatic provider polling remain later tasks.
+
+## Atomic scheduling occurrence queue (T092)
+
+`Store::queue_schedule_occurrence` evaluates one current trigger epoch under
+`BEGIN IMMEDIATE`. It commits a deterministic QUEUED occurrence, selected-token
+and coalesced-token consumption, exact pins, frozen build/policy settings and audit
+in one transaction. This occurrence is the durable build request; no plan, job,
+producer or provider read is started. T095 resolves source and submits it through
+the guarded build pipeline; T096 implements overlap/coalesce/skip and loop controls.
+
+Schema 14 adds partial indexes for unconsumed tokens and accepted/queued/held
+occurrences, without rewriting data. SQLite ranks the newest eligible token per
+leaf by original occurrence time, then local event sequence and token ID. Only up
+to 64 candidates are decoded, each at most 4 KiB; occurrence payloads are capped at
+256 KiB. At most 100,000 pending tokens are examined per schedule/epoch. Limits
+fail explicitly rather than dropping evidence. Older chosen-leaf evidence is
+consumed and counted in SQLite without loading its payloads into the evaluator.
+
+The pure [domain evaluator](../tf-domain/README.md) determines AND/OR selection.
+Canonical chosen evidence produces the digest; schedule identity, epoch and that
+digest produce the stable occurrence identity. Selected original tokens remain in
+`payload_json.tokens` for provenance/retention, with deduplicated exact bindings
+in `input_pins`; signal-only observations contribute no binding. Conflicting exact
+versions for the same origin dataset/branch fail before consumption.
+
+A paused schedule, an unsatisfied expression or a full `max_pending` queue returns
+no occurrence and consumes nothing. Running occurrences are not pending capacity;
+allowing enqueue does not allow overlapping execution. Unchosen OR tokens remain
+unconsumed, so callers can evaluate again until no evidence is ready or capacity
+is reached. Expired and future tokens remain historical/unconsumed evidence and
+cannot satisfy the current expression. Definition edits reject stale epochs;
+already queued requests keep their source settings, fallback policies and pins.
+
+Clock/tick generation and lifecycle endpoints are later tasks. The primitive is
+not connected to the persistent daemon yet. Tests cover injected failures at each
+write stage, concurrent SQLite owners, close/reopen replay, real process death
+across modeled enqueue transaction boundaries, retained pins after expiry/edits,
+and schema-13 upgrade/index use.

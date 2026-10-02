@@ -87,3 +87,16 @@ and caller obligations](EXECUTION.md). Twelve additional tests exercise these AP
 
 `input` contains captured local branch policies, per-consumer input keys, roles
 and read-versus-planned-producer classification. See the [input service guide](../tf-store/INPUTS.md).
+
+`schedule` (T092) evaluates bounded pure `Expression` trees over supplied unconsumed
+`Token` evidence. It performs no clock read, hashing, storage or identity allocation.
+Depth is at most 8, leaves at most 64 and tokens at most 4,096. Manual cannot occur
+inside an automatic tree; compound nodes have at least two children and leaf IDs
+are unique. Negative times, duplicate token IDs and unknown leaves fail explicitly.
+
+A leaf chooses the greatest original occurrence time, then event sequence and token
+ID. Future evidence and tokens expired at the caller's frozen clock do not qualify.
+AND combines every child and uses the latest ready time. OR selects the earliest
+ready child, using authored child order on ties. `Selection` reports chosen indexes
+and older eligible tokens for chosen leaves only. Unchosen OR branches remain
+eligible for a separate later occurrence; OR is not a global debounce.

@@ -163,8 +163,9 @@ observed 500-node/1,500-edge performance in the verification report.
 T090 adds authenticated schedule definition storage: list/read/create and guarded
 replacement of one current snapshot, with stable dataset IDs, explicit code source,
 output branch and frozen fallback policies. Conflicting edits return the current
-ETag. Accepted occurrence templates survive subsequent edits. Trigger evaluation,
-automatic dispatch and the schedule UI are later tasks. See the
+ETag. Accepted occurrence templates survive subsequent edits. Automatic dispatch
+and the schedule UI are later tasks; event/evaluation foundations are described
+below. See the
 [schedule API](crates/tf-api/README.md#schedule-definition-storage-t090).
 
 T091 adds internal durable scheduling event adapters. Committed dataset head,
@@ -173,6 +174,13 @@ and causation evidence; provider retries and cursor replay cannot duplicate toke
 Pending local evidence and accepted occurrence pins protect retained data from GC.
 Signal-only events retain provenance without binding an input. These storage
 primitives do not activate automatic scheduling or add schedule UI controls.
+
+T092 adds deterministic AND/OR evidence evaluation and atomic occurrence queueing.
+Chosen tokens, older eligible evidence for those leaves, exact input pins and
+frozen build settings commit together with an audited queued request. Unchosen OR
+branches keep their tokens. Paused schedules and full pending queues consume
+nothing. Schema 14 adds pending-evidence indexes. Source resolution, execution,
+cron generation and scheduling controls remain later tasks.
 
 T087 adds the **Build planner** inspector for the current lineage selection. With
 nothing selected it shows a centered build prompt. Choose selected resources only

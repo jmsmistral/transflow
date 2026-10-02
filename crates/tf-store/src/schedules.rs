@@ -177,7 +177,7 @@ impl Store {
         Ok(saved)
     }
     /// Freeze an accepted occurrence's execution settings under its expected trigger epoch.
-    /// Trigger evaluation/build enqueue belong to T092/T095; this primitive launches nothing.
+    /// Automatic evidence acceptance uses queue_schedule_occurrence; this primitive launches nothing.
     pub async fn freeze_schedule_occurrence(&mut self, request: Freeze<'_>) -> Result<bool, Error> {
         let Freeze {
             workspace,

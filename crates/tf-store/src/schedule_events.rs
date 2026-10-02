@@ -119,13 +119,13 @@ struct Fact {
     jobs: Vec<(DatasetKey, String, String)>,
     materialized: bool,
 }
-fn digest(value: &Value) -> Result<String> {
+pub(crate) fn digest(value: &Value) -> Result<String> {
     let bytes = tf_protocol::canonical::canonical_json(value).map_err(|_| invalid())?;
     Ok(tf_protocol::canonical::file_digest(&mut bytes.as_slice())
         .map_err(|_| invalid())?
         .hex())
 }
-fn event_id(value: &Value) -> Result<RequestId> {
+pub(crate) fn event_id(value: &Value) -> Result<RequestId> {
     let hex = digest(value)?;
     let mut bytes = [0; 16];
     for (out, pair) in bytes.iter_mut().zip(hex.as_bytes().as_chunks::<2>().0) {
