@@ -167,6 +167,13 @@ ETag. Accepted occurrence templates survive subsequent edits. Trigger evaluation
 automatic dispatch and the schedule UI are later tasks. See the
 [schedule API](crates/tf-api/README.md#schedule-definition-storage-t090).
 
+T091 adds internal durable scheduling event adapters. Committed dataset head,
+publication, successful build and successful schedule events retain exact version
+and causation evidence; provider retries and cursor replay cannot duplicate tokens.
+Pending local evidence and accepted occurrence pins protect retained data from GC.
+Signal-only events retain provenance without binding an input. These storage
+primitives do not activate automatic scheduling or add schedule UI controls.
+
 T087 adds the **Build planner** inspector for the current lineage selection. With
 nothing selected it shows a centered build prompt. Choose selected resources only
 (the UI default), transforms connecting selected endpoints, or all eligible ancestors;

@@ -428,8 +428,11 @@ async fn roots(
  UNION SELECT version_id FROM live_build_inputs
  UNION SELECT id FROM contract_inputs
  UNION SELECT c.version_id FROM cached_jobs c JOIN jobs j ON j.id=c.job_id JOIN builds b ON b.id=j.build_id WHERE b.state IN ('QUEUED','RUNNING')
+ UNION SELECT h.new_version_id FROM head_changes h JOIN events e ON e.id=h.event_id WHERE EXISTS(SELECT 1 FROM schedules s WHERE s.deleted_at_us IS NULL AND s.paused=0 AND s.needs_review=0 AND s.event_cursor<e.sequence AND json_extract(s.definition_json,'$.trigger.kind')!='manual')
+ UNION SELECT json_extract(t.payload_json,'$.dataset.version_id') FROM trigger_tokens t JOIN schedules s ON s.id=t.schedule_id AND s.trigger_epoch=t.trigger_epoch WHERE s.deleted_at_us IS NULL AND t.consumed_by IS NULL AND (t.expires_at_us IS NULL OR t.expires_at_us>?) AND json_extract(t.payload_json,'$.dataset.workspace_id')=(SELECT id FROM workspaces)
+ UNION SELECT json_extract(t.value,'$.dataset.version_id') FROM schedule_occurrences o,json_each(o.payload_json,'$.tokens') t WHERE o.disposition IN ('ACCEPTED','QUEUED','HELD','RUNNING') AND json_extract(t.value,'$.dataset.workspace_id')=(SELECT id FROM workspaces)
  UNION SELECT v.id FROM version_inputs i JOIN retained r ON r.id=i.output_version_id JOIN dataset_versions v ON v.id=i.origin_version_id AND v.dataset_id=i.origin_dataset_id WHERE i.origin_workspace_id=(SELECT id FROM workspaces))
- SELECT id FROM retained LIMIT 100001"#).bind(now).bind(now).bind(i64::from(policy.latest)).bind(cutoff).fetch_all(&mut *db).await?;
+ SELECT id FROM retained WHERE id IS NOT NULL LIMIT 100001"#).bind(now).bind(now).bind(i64::from(policy.latest)).bind(cutoff).bind(now).fetch_all(&mut *db).await?;
     if versions.len() > 100_000 {
         return Err(RetentionError::ClockOrLimit);
     }

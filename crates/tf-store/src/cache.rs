@@ -315,8 +315,12 @@ impl Store {
         } else {
             None
         };
+        let branch_name: String = sqlx::query_scalar("SELECT name FROM data_branches WHERE id=?")
+            .bind(r.target.branch.to_string())
+            .fetch_one(&mut *tx)
+            .await?;
         let payload = encode(
-            &json!({"job_id":r.job.to_string(),"version_id":c.version.to_string(),"original_attempt_id":c.attempt.to_string(),"dataset_id":r.target.dataset.dataset_id().to_string(),"branch_id":r.target.branch.to_string(),"generation":generation.to_string(),"cause":"cache_reuse"}),
+            &json!({"job_id":r.job.to_string(),"version_id":c.version.to_string(),"original_attempt_id":c.attempt.to_string(),"workspace":r.target.dataset.workspace_id().to_string(),"dataset_id":r.target.dataset.dataset_id().to_string(),"branch_id":r.target.branch.to_string(),"branch":branch_name,"generation":generation.to_string(),"cause":"cache_reuse"}),
         )?;
         if let Some(event) = event {
             if r.target.expected_generation == 0 {

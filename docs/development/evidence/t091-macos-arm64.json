@@ -1,0 +1,43 @@
+{
+  "task": "T091",
+  "date": "2026-10-02",
+  "host": "macOS arm64",
+  "implementation_base": "b1e27b04e0387b383d1cd8b3838b2476f48aefb0",
+  "specification_base": "1298ff414af12fea0f26e7c325ee7a7b32104316",
+  "specification_version": "1.1.3",
+  "runtime_schema": 13,
+  "local_verification": {
+    "rust": "Passed: 421 tests plus one documentation test; formatting, workspace and standalone storage compilation, Clippy and 12 boundary regressions passed",
+    "focused": "Seven real SQLite scheduling event tests passed before the full gate",
+    "web": "510 tests, typecheck, lint, formatting, production bundle, reproducible assets and worker diamond/error probes passed",
+    "specification_regressions": 44,
+    "safety_regressions": 27,
+    "specification_and_safety": "Document/link/fence validation, generated drift, offline dependency and public artifact checks passed",
+    "installed_worker_cli": "58 CLI/API tests passed using Python 3.14.7"
+  },
+  "coverage": [
+    "Dataset publication, cache adoption and opt-in reset matching use committed authoritative evidence",
+    "Frozen branch labels survive catalogue renaming; exact observed versions never resolve a later head",
+    "Stable schedule/epoch/leaf/event token identity and provider publication deduplication; conflicting redelivery rejected",
+    "Signal-only preserves origin/version provenance while contributing no input binding",
+    "Cursor, tokens and audit rollback together; bounded pagination and close/reopen cursor recovery",
+    "Uncommitted events are invisible; failed or unauthoritative publication and failed build cannot generate success tokens",
+    "Event-time expiry and paused ignored-event cursor progress",
+    "Out-of-order provider delivery preserves original timestamps and exact foreign versions without artifacts or replicas",
+    "Build target/branch filters and successful schedule required-target validation; cached success differs from required materialization",
+    "Successful schedule disposition and event rollback together; completion retry is idempotent",
+    "Unprocessed head evidence, unexpired tokens and accepted occurrence pins protect exact local versions after head advance; expiry or cancellation releases pending roots"
+  ],
+  "boundaries": [
+    "T092 owns AND/OR evaluation and atomic occurrence consumption/enqueue; cron and automatic dispatch remain T093-T096",
+    "Provider adapter is a trusted repository primitive; no automatic provider polling or wire route added",
+    "Foreign metadata does not guarantee provider bytes; later execution must acquire provider leases",
+    "No runtime migration, generated schema or dependency change; Python SDK sources unchanged and its full unit gate was not repeated",
+    "No UI changes or preview coordinator; internal Browser verification was not required for this storage task",
+    "CI remains pending owner confirmation; no CI polling"
+  ],
+  "iteration_fixes": [
+    "Publication and cache events now freeze branch names inside the visibility transaction",
+    "Uncommitted visibility coverage uses an independent WAL reader; writer ownership remains serialized"
+  ]
+}

@@ -2,6 +2,8 @@
 pub mod catalog_mutations;
 mod migrations;
 mod path;
+/// Durable event matching and exact schedule-token evidence, without dispatch.
+pub mod schedule_events;
 /// Single-snapshot schedule definitions and frozen occurrence evidence.
 pub mod schedules;
 /// Explicit, revisioned presentation state; never execution authority.

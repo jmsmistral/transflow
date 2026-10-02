@@ -987,8 +987,12 @@ pub(crate) async fn publish_head(
         return Err(PublicationError::Conflict);
     }
     let event = RequestId::from_bytes(*version.as_bytes());
+    let branch_name: String = sqlx::query_scalar("SELECT name FROM data_branches WHERE id=?")
+        .bind(t.branch.to_string())
+        .fetch_one(&mut *db)
+        .await?;
     let payload = encoded(
-        &json!({"version_id":version.to_string(),"artifact_digest":artifact,"dataset_id":t.dataset.dataset_id().to_string(),"branch_id":t.branch.to_string(),"generation":generation.to_string()}),
+        &json!({"version_id":version.to_string(),"artifact_digest":artifact,"workspace":t.dataset.workspace_id().to_string(),"dataset_id":t.dataset.dataset_id().to_string(),"branch_id":t.branch.to_string(),"branch":branch_name,"generation":generation.to_string()}),
     )?;
     sqlx::query("INSERT INTO events(id,type,payload_json,causation_id,correlation_id,wall_time_us) VALUES(?,'dataset.published',?,?,?,?)").bind(event.to_string()).bind(&payload).bind(causation).bind(correlation).bind(at_us).execute(&mut *db).await?;
     sqlx::query("INSERT INTO head_changes VALUES(?,?,?,?,?,?,?,?)")

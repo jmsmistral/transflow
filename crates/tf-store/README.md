@@ -143,3 +143,42 @@ it does not evaluate triggers or enqueue execution. Pending accepted execution
 and current fixed-source definitions protect source captures from collection and
 block deletion of referenced data branches. Completed occurrences are historical
 metadata, rather than permanent source retention roots.
+
+## Durable schedule event evidence (T091)
+
+`Store::scan_schedule_events` scans up to 100 committed events for an expected
+current trigger epoch. Matching tokens, the event cursor and scan audit commit
+in one transaction. Evidence format 1 retains the original timestamp, sequence,
+causation/correlation and exact origin-qualified dataset version. Token expiry
+uses event time. Paused schedules advance their cursor and count matching events
+as ignored; definitions awaiting review advance without evaluating legacy rules.
+Per-event payloads are capped at 256 KiB, each page at 1 MiB, and successful-build
+job inspection at 10,000. Invalid evidence or a storage failure rolls back the
+page; continuation is explicit.
+
+Publication differs from cached head adoption. Head-reset matching is opt-in.
+Publication/cache events now freeze the branch name in their visibility transaction;
+legacy events without that field use retained branch metadata. Token IDs are
+stable across cursor replay within one schedule/epoch/leaf/event combination.
+Signal-only tokens keep the observation, but `TokenPayload::input_pin` returns no
+binding for them.
+
+`receive_foreign_schedule_event` is a trusted repository adapter requiring an
+already registered provider and retained immutable version metadata. It deduplicates
+publications by origin dataset/version and head changes by origin dataset/branch/
+generation. Conflicting redelivery fails closed. It opens no provider, installs no
+replica and copies no bytes. Metadata retention does not guarantee provider byte
+availability; later execution must obtain provider leases.
+
+`complete_schedule_success` records occurrence success and its event atomically,
+only for its own successful build with all required target jobs successful or cached.
+For `require_materialization`, at least one required target must have executed
+successfully; all-cached success does not qualify. Retries reuse the same event.
+
+Local versions from unprocessed committed head events are conservatively protected
+while live automatic schedules have not scanned them. Unexpired unconsumed tokens
+and pending occurrence `payload_json.tokens` retain exact local versions and their
+transitive provenance. Accepted/queued/held/running occurrence pins survive token
+expiry and definition edits; cancellation/completion releases these pending roots.
+Existing retention traversal limits still fail closed. No AND/OR consumption,
+cron evaluation, automatic provider polling, enqueue or dispatch is implemented here.
