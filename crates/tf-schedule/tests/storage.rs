@@ -10,7 +10,7 @@ use chrono::DateTime;
 use serde_json::{Value, json};
 use sqlx::{Connection, SqliteConnection};
 use support::filesystem::ScratchDirectory;
-use tf_domain::{DatasetId, ScheduleId, WorkspaceId, schedule_clock::Plan};
+use tf_domain::{DatasetId, RequestId, ScheduleId, WorkspaceId, schedule_clock::Plan};
 use tf_schedule::{Clock, prepare};
 use tf_store::{Store, schedule_clock::Error, schedules::Save};
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
@@ -548,9 +548,9 @@ async fn schema_fourteen_upgrade_preserves_definitions_and_rejects_unknown_zone_
     )
     .await?;
     s.close().await?;
-    sqlx::raw_sql("DROP TABLE schedule_clock_ticks; DROP TABLE schedule_clock_state; DELETE FROM schema_migrations WHERE version=15; PRAGMA user_version=14;").execute(&mut db).await?;
+    sqlx::raw_sql("DROP TABLE schedule_pause_intervals; DROP TABLE schedule_clock_ticks; DROP TABLE schedule_clock_state; DELETE FROM schema_migrations WHERE version>=15; PRAGMA user_version=14;").execute(&mut db).await?;
     let mut s = Store::open(&path).await?;
-    assert_eq!(s.info().schema_version, 15);
+    assert_eq!(s.info().schema_version, 16);
     assert_eq!(count(&mut db, "SELECT count(*) FROM schedules").await?, 1);
     assert!(poll(&mut s, start + 60_000_000).await.is_err());
     assert_eq!(
@@ -658,6 +658,155 @@ async fn invalid_prepared_capacity_and_pause_race_do_not_mutate_clock_state() ->
     assert_eq!(
         count(&mut db, "SELECT count(*) FROM schedule_clock_ticks").await?,
         0
+    );
+    db.close().await?;
+    s.close().await?;
+    Ok(())
+}
+#[tokio::test]
+async fn lifecycle_pause_windows_survive_restart_and_fence_delayed_clock_observation() -> Result {
+    use tf_store::schedule_lifecycle::{Action, Control};
+    let dir = ScratchDirectory::new()?;
+    let path = dir.path().join("db");
+    let start = at("2026-10-03T00:00:00Z");
+    let (mut s, mut db, current) =
+        fixture(&path, cron("* * * * *", "UTC", false), "catch_up", start).await?;
+    let snapshot = s.schedule_clock(workspace(), id()).await?;
+    let stale = tf_schedule::prepare(
+        &snapshot.leaves,
+        &snapshot.evaluation,
+        &Virtual(start + 60_000_000),
+    )?;
+    let paused = s
+        .control_schedule(Control {
+            workspace: workspace(),
+            id: id(),
+            etag: current["etag"].as_str().unwrap(),
+            key: RequestId::from_bytes([80; 16]),
+            digest: &"a".repeat(64),
+            actor: "fixture",
+            at_us: start + 2 * 60_000_000,
+            action: Action::Pause,
+        })
+        .await?["data"]
+        .clone();
+    assert!(matches!(
+        s.accept_schedule_clock(&snapshot, &stale).await,
+        Err(Error::Conflict)
+    ));
+    let resumed = s
+        .control_schedule(Control {
+            workspace: workspace(),
+            id: id(),
+            etag: paused["etag"].as_str().unwrap(),
+            key: RequestId::from_bytes([81; 16]),
+            digest: &"b".repeat(64),
+            actor: "fixture",
+            at_us: start + 4 * 60_000_000,
+            action: Action::Resume(None),
+        })
+        .await?["data"]
+        .clone();
+    s.close().await?;
+    let mut s = Store::open(&path).await?;
+    let p = poll(&mut s, start + 5 * 60_000_000).await?;
+    assert_eq!((p.matched, p.ignored, p.ticks.len()), (5, 2, 3));
+    assert_eq!(
+        p.ticks.iter().map(|t| t.key.at_us).collect::<Vec<_>>(),
+        vec![
+            start + 60_000_000,
+            start + 2 * 60_000_000,
+            start + 5 * 60_000_000
+        ]
+    );
+    assert!(poll(&mut s, start + 5 * 60_000_000).await?.ticks.is_empty());
+    assert_eq!(resumed["trigger_epoch"], current["trigger_epoch"]);
+    assert_eq!(
+        count(&mut db, "SELECT ignored_count FROM schedule_clock_state").await?,
+        2
+    );
+    db.close().await?;
+    s.close().await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn backward_pause_resume_fences_remaining_leaves_at_partial_cursor_instant() -> Result {
+    use tf_store::schedule_lifecycle::{Action, Control};
+    let dir = ScratchDirectory::new()?;
+    let start = at("2026-10-03T00:00:00Z");
+    let mut second = cron("* * * * *", "UTC", false);
+    second["id"] = json!("second");
+    let trigger = json!({"kind":"and","children":[cron("* * * * *","UTC",false),second]});
+    let (mut s, mut db, current) =
+        fixture(&dir.path().join("db"), trigger, "catch_up", start).await?;
+    // A previously accepted catch-up page stopped between simultaneous leaves.
+    sqlx::query("INSERT INTO schedule_clock_state VALUES(?,?,?,0,1,0,0,0)")
+        .bind(id().to_string())
+        .bind(current["trigger_epoch"].as_str().unwrap())
+        .bind(start + 60_000_000)
+        .execute(&mut db)
+        .await?;
+    // The wall clock went backward before pause, then recovered on resume.
+    let paused = s
+        .control_schedule(Control {
+            workspace: workspace(),
+            id: id(),
+            etag: current["etag"].as_str().unwrap(),
+            key: RequestId::from_bytes([82; 16]),
+            digest: &"c".repeat(64),
+            actor: "fixture",
+            at_us: start + 30_000_000,
+            action: Action::Pause,
+        })
+        .await?["data"]
+        .clone();
+    s.control_schedule(Control {
+        workspace: workspace(),
+        id: id(),
+        etag: paused["etag"].as_str().unwrap(),
+        key: RequestId::from_bytes([83; 16]),
+        digest: &"d".repeat(64),
+        actor: "fixture",
+        at_us: start + 60_000_000,
+        action: Action::Resume(None),
+    })
+    .await?;
+    let state = s.schedule_clock(workspace(), id()).await?;
+    assert_eq!(
+        state.evaluation.ignored_intervals,
+        vec![(start + 30_000_000, start + 60_000_000)]
+    );
+    let plan = prepare(
+        &state.leaves,
+        &state.evaluation,
+        &Virtual(start + 120_000_000),
+    )?;
+    assert_eq!((plan.matched, plan.ignored, plan.ticks.len()), (3, 1, 2));
+    assert!(
+        plan.ticks
+            .iter()
+            .all(|tick| tick.key.at_us == start + 120_000_000)
+    );
+    let mut forged = plan.clone();
+    forged.ticks[0].key.at_us = start + 60_000_000;
+    forged.ticks[0].key.leaf = 1;
+    assert!(matches!(
+        s.accept_schedule_clock(&state, &forged).await,
+        Err(Error::Invalid)
+    ));
+    assert_eq!(
+        count(&mut db, "SELECT count(*) FROM schedule_clock_ticks").await?,
+        0
+    );
+    s.accept_schedule_clock(&state, &plan).await?;
+    assert_eq!(
+        count(&mut db, "SELECT count(*) FROM schedule_clock_ticks").await?,
+        2
+    );
+    assert_eq!(
+        count(&mut db, "SELECT ignored_count FROM schedule_clock_state").await?,
+        1
     );
     db.close().await?;
     s.close().await?;

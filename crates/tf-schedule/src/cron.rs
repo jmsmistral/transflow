@@ -225,6 +225,11 @@ pub fn prepare(leaves: &[Leaf], request: &Evaluation, clock: &dyn Clock) -> Resu
         || request.cursor.leaf > 63
         || !(1..=100).contains(&request.max_catch_up)
         || request.pending > 100
+        || request.ignored_intervals.len() > 100
+        || request
+            .ignored_intervals
+            .iter()
+            .any(|(a, b)| *a < 0 || b < a)
     {
         return Err(Error::Limit);
     }
@@ -287,38 +292,51 @@ pub fn prepare(leaves: &[Leaf], request: &Evaluation, clock: &dyn Clock) -> Resu
     if due.len() > 100_000 {
         return Err(Error::Limit);
     }
+    let ignored = |tick: &&Tick| {
+        request
+            .ignored_intervals
+            .iter()
+            .any(|(a, b)| tick.key.at_us > *a && tick.key.at_us <= *b)
+    };
+    let eligible: Vec<_> = due.iter().filter(|t| !ignored(t)).copied().collect();
     let on_time = |tick: &&Tick| tick.key.at_us > now.saturating_sub(MINUTE);
     if request.paused {
         plan.ignored = due.len() as u64;
     } else {
+        plan.ignored = (due.len() - eligible.len()) as u64;
         match request.misfire {
             Misfire::Skip => {
-                plan.ticks = due.iter().filter(on_time).copied().collect();
+                plan.ticks = eligible.iter().filter(on_time).copied().collect();
                 plan.ignored = (due.len() - plan.ticks.len()) as u64;
             }
             Misfire::CoalesceLatest => {
                 let mut latest = std::collections::BTreeMap::new();
-                for t in &due {
+                for t in &eligible {
                     latest.insert(t.key.leaf, *t);
                 }
                 plan.ticks = latest.into_values().collect();
                 plan.ticks.sort_unstable();
-                plan.coalesced = (due.len() - plan.ticks.len()) as u64;
+                plan.coalesced = (eligible.len() - plan.ticks.len()) as u64;
             }
             Misfire::CatchUp => {
                 let limit = request.max_catch_up.min(100 - request.pending) as usize;
-                plan.ticks = due.iter().take(limit).copied().collect();
-                if due.len() > limit {
+                plan.ticks = eligible.iter().take(limit).copied().collect();
+                if eligible.len() > limit {
+                    let first_unaccepted = eligible[limit].key;
+                    let accounted: Vec<_> = due
+                        .iter()
+                        .take_while(|t| t.key < first_unaccepted)
+                        .collect();
                     plan.more = true;
-                    if let Some(last) = plan.ticks.last() {
+                    if let Some(last) = accounted.last() {
                         plan.cursor = last.key;
                     }
-                    plan.matched = plan.ticks.len() as u64;
-                    plan.missed = plan
-                        .ticks
+                    plan.matched = accounted.len() as u64;
+                    plan.missed = accounted
                         .iter()
                         .filter(|t| t.key.at_us <= now.saturating_sub(MINUTE))
                         .count() as u64;
+                    plan.ignored = (accounted.len() - plan.ticks.len()) as u64;
                     return Ok(plan);
                 }
             }

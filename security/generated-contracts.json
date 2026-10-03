@@ -5,9 +5,9 @@
       "name": "worker-contract-v1",
       "inputs": {
         "tools/contracts/generate.py": "8f5595a78863e8f0b5a0dab886ff62256e86d25180bf388184f3a9a0126bbe5d",
-        "schemas/contracts-v1.schema.json": "b2b68dbaa3a3d24f639ea2111862bd7acf08c26e427248c4521f1e6caae64e79",
+        "schemas/contracts-v1.schema.json": "66bf7d9a89de04bb1c92a1cbd25ca085b50f947fcc9390a7c73c55b127770eec",
         "schemas/versions.json": "beb4e63198f8a245c2735b23f3fa9890697b166d20cc6812f0b47aa19ec4080f",
-        "schemas/api-routes-v1.json": "67fe3a51ebbd2126d60bea7fdb3045cdaffe5a180cc1e4d8033bddabd9ba7568"
+        "schemas/api-routes-v1.json": "a2c3891d7db053676317e55b887231da8409a0197ab1666fbd598d20503214de"
       },
       "outputs": [
         "schemas/generated/worker-control-v1.schema.json",

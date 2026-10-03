@@ -82,6 +82,11 @@ async fn snapshot(
     if pending > 100 || at < 0 {
         return Err(Error::Invalid);
     }
+    let intervals: Vec<(i64,i64)> = sqlx::query_as("SELECT started_at_us,ended_at_us FROM schedule_pause_intervals WHERE schedule_id=? AND trigger_epoch=? AND ended_at_us IS NOT NULL AND ended_at_us>=? AND started_at_us<? ORDER BY started_at_us LIMIT 101")
+        .bind(id.to_string()).bind(&epoch).bind(at).bind(at.saturating_add(86_400_000_000)).fetch_all(&mut *db).await.map_err(StoreError::from)?;
+    if intervals.len() > 100 {
+        return Err(Error::Invalid);
+    }
     Ok(Snapshot {
         workspace,
         schedule: id,
@@ -94,6 +99,7 @@ async fn snapshot(
                 leaf: u8::try_from(order).map_err(|_| Error::Invalid)?,
             },
             paused: r.try_get::<i64, _>(2).map_err(StoreError::from)? != 0,
+            ignored_intervals: intervals,
             misfire: match def.policies.misfire_policy.as_str() {
                 "skip" => Misfire::Skip,
                 "coalesce_latest" => Misfire::CoalesceLatest,
@@ -148,6 +154,7 @@ impl Store {
             || current.evaluation.cursor != expected.evaluation.cursor
             || current.evaluation.paused != expected.evaluation.paused
             || current.evaluation.pending != expected.evaluation.pending
+            || current.evaluation.ignored_intervals != expected.evaluation.ignored_intervals
         {
             return Err(Error::Conflict);
         }
@@ -193,6 +200,9 @@ impl Store {
             if t.key <= previous
                 || t.key > plan.cursor
                 || usize::from(t.key.leaf) >= current.leaves.len()
+                || e.ignored_intervals
+                    .iter()
+                    .any(|(a, b)| t.key.at_us > *a && t.key.at_us <= *b)
             {
                 return Err(Error::Invalid);
             }

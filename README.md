@@ -180,14 +180,23 @@ Chosen tokens, older eligible evidence for those leaves, exact input pins and
 frozen build settings commit together with an audited queued request. Unchosen OR
 branches keep their tokens. Paused schedules and full pending queues consume
 nothing. Schema 14 adds pending-evidence indexes. Source resolution, execution and
-scheduling controls remain later tasks; clock generation is described below.
+persistent dispatch remains later work; clock generation and controls are described below.
 
 T093 adds internal five-field cron resolution using bundled IANA timezone rules,
 next-five UTC/local previews, durable intended-tick identities and clock cursors.
 Sleep/restart observation follows skip, latest-per-leaf coalescing or bounded
 catch-up, with missed/ignored counts. Backward clock jumps never lower the cursor.
 The [clock services](crates/tf-schedule/README.md) do not activate a scheduler or
-execute jobs; lifecycle controls, dispatch and the schedule editor remain later tasks.
+execute jobs; persistent dispatch and the schedule editor remain later tasks.
+
+T094 adds authenticated, guarded **pause/resume/run-now** API actions. Pause holds
+pending automatic requests, and resume applies their frozen expiry/queue/coalescing
+policies. Durable pause intervals keep delayed events and clock ticks ignored after
+resume. Run-now queues an independent manual request even while paused; it does not
+unpause or consume automatic tokens. Optional bounded event replay creates new
+audited occurrences. Saves overwrite one definition and preserve accepted settings
+and pins. These are backend request services; executing scheduled jobs is T095,
+with the scheduling CLI/editor in T097/T098. See the [API guide](crates/tf-api/README.md#schedule-lifecycle-actions-t094).
 
 T087 adds the **Build planner** inspector for the current lineage selection. With
 nothing selected it shows a centered build prompt. Choose selected resources only

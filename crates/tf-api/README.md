@@ -396,5 +396,31 @@ producers. Full Git refs are captured independently of checkout, fixed captures
 must be retained locally, and working-tree capture must be explicitly selected.
 Fallback policies are explicit definition fields. Browser PUTs require the same
 session, Origin and CSRF protections as other mutations. No schedule definition
-history is retained. These routes store definitions; evaluator, dispatch,
-pause/resume/run-now, CLI and lineage schedule editor remain later tasks.
+history is retained. Evaluation and lifecycle services are delivered; persistent
+dispatch, the scheduling CLI and lineage schedule editor remain later tasks.
+
+## Schedule lifecycle actions (T094)
+
+Authenticated `POST /api/v1/schedules/{id}/pause`, `/resume` and `/run` require a
+fresh `Idempotency-Key` and the quoted current `If-Match` ETag. Browser sessions
+also require Origin and CSRF protection. Bodies are closed objects: pause/run take
+`{}`, and resume takes `ApiScheduleResumeV1`. Pause/resume return `ScheduleRecordV1`
+and its ETag. Run returns `ScheduleRunV1`: an independently identified QUEUED manual
+request with frozen settings, even when paused. It does not yet start an executing
+job/build or unpause/consume automatic evidence. `schedule_controls` in capability
+operations advertises these backend actions; automatic scheduling remains inactive.
+
+Ordinary resume uses `{}` and ignores paused-arrival evidence. Explicit retained
+event replay uses both `replay_after_event` (lossless decimal sequence string,
+exclusive) and `replay_limit` (integer 1–100). The entire committed event tail must
+fit that budget, including unrelated events; oversized tails fail with HTTP 409
+`TF_API_SCHEDULE_LIMIT`. Unknown/partial fields fail validation. Replacement PUT
+accepts the same paired names as query parameters (the limit is decimal text),
+keeping its body a complete definition. PUT replay while paused is rejected;
+resume can unpause and replay atomically. Clock replay is not inferred from this
+option; the new clock epoch begins at action time.
+
+Exact retries return the original response after restart or definition edits.
+Changed digests and stale guards conflict; HTTP 409 includes the current edit ETag
+when available. Source resolution, dispatch-time overlap and worker execution are
+T095/T096, while CLI/editor integrations remain T097/T098.

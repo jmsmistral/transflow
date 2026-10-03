@@ -101,7 +101,8 @@ ready child, using authored child order on ties. `Selection` reports chosen inde
 and older eligible tokens for chosen leaves only. Unchosen OR branches remain
 eligible for a separate later occurrence; OR is not a global debounce.
 
-`schedule_clock` (T093) carries the authored clock leaf, compound UTC/leaf-order
-cursor, frozen evaluation request and bounded prepared tick plan. It has no
+`schedule_clock` (T093/T094) carries the authored clock leaf, compound UTC/leaf-order
+cursor, frozen evaluation request (including bounded operational pause intervals)
+and bounded prepared tick plan. It has no
 third-party dependencies, timezone lookup or clock reads. Resolution belongs to
 [tf-schedule](../tf-schedule/README.md); atomic acceptance belongs to tf-store.

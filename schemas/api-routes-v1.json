@@ -500,6 +500,36 @@
     "method": "PUT",
     "response": "ScheduleRecordV1",
     "request": "ScheduleDefinitionV1",
+    "query": [
+      "replay_after_event",
+      "replay_limit"
+    ],
+    "mutation": true,
+    "context": false
+  },
+  {
+    "path": "/api/v1/schedules/{schedule}/pause",
+    "method": "POST",
+    "response": "ScheduleRecordV1",
+    "request": "ApiEmptyV1",
+    "query": [],
+    "mutation": true,
+    "context": false
+  },
+  {
+    "path": "/api/v1/schedules/{schedule}/resume",
+    "method": "POST",
+    "response": "ScheduleRecordV1",
+    "request": "ApiScheduleResumeV1",
+    "query": [],
+    "mutation": true,
+    "context": false
+  },
+  {
+    "path": "/api/v1/schedules/{schedule}/run",
+    "method": "POST",
+    "response": "ScheduleRunV1",
+    "request": "ApiEmptyV1",
     "query": [],
     "mutation": true,
     "context": false

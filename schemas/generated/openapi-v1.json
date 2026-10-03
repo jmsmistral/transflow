@@ -6861,6 +6861,22 @@
         },
         "parameters": [
           {
+            "name": "replay_after_event",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "replay_limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "schedule",
             "in": "path",
             "required": true,
@@ -6951,6 +6967,336 @@
                   "minimum_delay_seconds": 1
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedules/{schedule}/pause": {
+      "post": {
+        "operationId": "post_api_v1_schedules_schedule_pause",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ScheduleRecordV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "etag": "x",
+                    "trigger_epoch": "x",
+                    "paused": false,
+                    "needs_review": false,
+                    "definition": null,
+                    "saved_at_us": "0"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "schedule",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          {
+            "name": "X-Transflow-CSRF",
+            "in": "header",
+            "required": false,
+            "description": "Required for browser session mutations, except initial exchange",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiEmptyV1"
+              },
+              "example": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedules/{schedule}/resume": {
+      "post": {
+        "operationId": "post_api_v1_schedules_schedule_resume",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ScheduleRecordV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "etag": "x",
+                    "trigger_epoch": "x",
+                    "paused": false,
+                    "needs_review": false,
+                    "definition": null,
+                    "saved_at_us": "0"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "schedule",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          {
+            "name": "X-Transflow-CSRF",
+            "in": "header",
+            "required": false,
+            "description": "Required for browser session mutations, except initial exchange",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiScheduleResumeV1"
+              },
+              "example": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedules/{schedule}/run": {
+      "post": {
+        "operationId": "post_api_v1_schedules_schedule_run",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ScheduleRunV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "schedule_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "trigger_epoch": "x",
+                    "evidence_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "logical_fire_at_us": "0",
+                    "disposition": "QUEUED",
+                    "manual": true
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "schedule",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          {
+            "name": "X-Transflow-CSRF",
+            "in": "header",
+            "required": false,
+            "description": "Required for browser session mutations, except initial exchange",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiEmptyV1"
+              },
+              "example": {}
             }
           }
         }
@@ -16697,6 +17043,69 @@
           "id",
           "paused",
           "definition"
+        ],
+        "additionalProperties": false
+      },
+      "ApiScheduleResumeV1": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ApiEmptyV1"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "replay_after_event": {
+                "$ref": "#/components/schemas/Count"
+              },
+              "replay_limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "replay_after_event",
+              "replay_limit"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ScheduleRunV1": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "schedule_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "trigger_epoch": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "evidence_digest": {
+            "$ref": "#/components/schemas/Sha256"
+          },
+          "logical_fire_at_us": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "disposition": {
+            "const": "QUEUED"
+          },
+          "manual": {
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "schedule_id",
+          "trigger_epoch",
+          "evidence_digest",
+          "logical_fire_at_us",
+          "disposition",
+          "manual"
         ],
         "additionalProperties": false
       }

@@ -20,6 +20,9 @@ pub enum Error {
     /// Missing retained schedule or required source.
     #[error("The schedule or its required retained source is unavailable")]
     Missing,
+    /// Bounded pending capacity or explicit replay interval exceeded.
+    #[error("The schedule request exceeds its pending or replay limit")]
+    Limit,
 }
 /// Guarded save intent. Creation is explicit; replacement preserves pause state.
 pub struct Save<'a> {
@@ -60,7 +63,7 @@ pub struct Freeze<'a> {
 fn bad() -> Error {
     StoreError::InvalidRequest.into()
 }
-async fn row(
+pub(crate) async fn row(
     db: &mut SqliteConnection,
     workspace: WorkspaceId,
     id: ScheduleId,
@@ -72,6 +75,14 @@ impl Store {
     /// Replace the current snapshot atomically with audit/token reset and optional API receipt.
     /// Validation performs no imports, worker launches or provider contact.
     pub async fn save_schedule(&mut self, request: Save<'_>) -> Result<Value, Error> {
+        self.save_schedule_with_replay(request, None).await
+    }
+    /// Guarded replacement plus an explicitly bounded retained-event replay.
+    pub async fn save_schedule_with_replay(
+        &mut self,
+        request: Save<'_>,
+        replay: Option<crate::schedule_lifecycle::Replay>,
+    ) -> Result<Value, Error> {
         let definition = Definition::decode(request.definition).map_err(|_| bad())?;
         if request.at_us < 0
             || request.actor.is_empty()
@@ -152,6 +163,26 @@ impl Store {
             sqlx::query("INSERT INTO schedules(id,workspace_id,name,definition_json,etag,trigger_epoch,paused,needs_review,saved_at_us,saved_by,event_cursor) VALUES(?,?,?,?,?,?,?,0,?,?,?)")
              .bind(request.id.to_string()).bind(request.workspace.to_string()).bind(&definition.name).bind(&encoded).bind(&etag).bind(&epoch).bind(paused).bind(request.at_us).bind(request.actor).bind(cursor).execute(&mut *tx).await.map_err(StoreError::from)?;
         }
+        if let Some(old) = &current {
+            crate::schedule_lifecycle::close_pause(
+                &mut tx,
+                request.id,
+                old["trigger_epoch"].as_str().ok_or_else(bad)?,
+                request.at_us,
+                cursor,
+            )
+            .await?;
+        }
+        if paused {
+            crate::schedule_lifecycle::open_pause(
+                &mut tx,
+                request.id,
+                &epoch,
+                request.at_us,
+                cursor,
+            )
+            .await?;
+        }
         // A saved definition cannot combine old, unaccepted leaf evidence with new rules.
         // Consumed tokens and accepted occurrence evidence remain historical execution facts.
         sqlx::query("DELETE FROM trigger_tokens WHERE schedule_id=? AND consumed_by IS NULL")
@@ -159,6 +190,21 @@ impl Store {
             .execute(&mut *tx)
             .await
             .map_err(StoreError::from)?;
+        let epoch = if let Some(replay) = replay {
+            if paused {
+                return Err(bad());
+            }
+            crate::schedule_lifecycle::replay(
+                &mut tx,
+                request.workspace,
+                request.id,
+                replay,
+                request.at_us,
+            )
+            .await?
+        } else {
+            epoch
+        };
         sqlx::query("INSERT INTO audit_log(operation,evidence_json,wall_time_us) VALUES('schedule_saved',?,?)").bind(json!({"schedule":request.id.to_string(),"etag":etag,"trigger_epoch":epoch,"actor":request.actor,"created":current.is_none()}).to_string()).bind(request.at_us).execute(&mut *tx).await.map_err(StoreError::from)?;
         let saved = json!({"id":request.id.to_string(),"etag":etag,"trigger_epoch":epoch,"paused":paused,"needs_review":false,"definition":request.definition,"saved_at_us":request.at_us.to_string()});
         if let Some((id, digest)) = request.receipt {

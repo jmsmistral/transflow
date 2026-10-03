@@ -19,7 +19,7 @@ use std::{
 use tf_domain::{DatasetId, WorkspaceId};
 
 /// Latest supported runtime schema. Authoring registry versions are independent.
-pub const SCHEMA_VERSION: i64 = 15;
+pub const SCHEMA_VERSION: i64 = 16;
 
 /// Safe read-only build history and execution evidence.
 pub mod build_read;
@@ -404,3 +404,6 @@ pub mod schedule_evaluation;
 
 /// Durable UTC clock cursors, intended ticks and bounded token delivery.
 pub mod schedule_clock;
+
+/// Audited schedule lifecycle and explicit bounded replay services.
+pub mod schedule_lifecycle;

@@ -1,4 +1,4 @@
-//! Definition storage only; trigger evaluation and dispatch are subsequent scheduling tasks.
+//! Guarded schedule definitions and lifecycle actions; build dispatch is T095.
 use crate::api_read::{self, Result, bad};
 use std::path::Path;
 use tf_api::{ApiError as E, Reply, Request};
@@ -23,6 +23,11 @@ fn error(e: Error) -> E {
             error.details = serde_json::json!({"current_etag":current_etag});
             error
         }
+        Error::Limit => E::new(
+            409,
+            "TF_API_SCHEDULE_LIMIT",
+            "The schedule request exceeds its pending or replay limit",
+        ),
         Error::Missing => E::missing(),
         Error::Store(tf_store::StoreError::InvalidRequest) => E::invalid(),
         e => bad(e),
@@ -70,7 +75,11 @@ pub(crate) fn save(
     rt: &tokio::runtime::Runtime,
     digest: &str,
 ) -> Result<Reply> {
-    if !r.query.is_empty() {
+    if r.query
+        .keys()
+        .any(|k| !matches!(k.as_str(), "replay_after_event" | "replay_limit"))
+        || (r.method != "PUT" && !r.query.is_empty())
+    {
         return Err(E::invalid());
     }
     let key = r.key.ok_or_else(E::invalid)?;
@@ -100,6 +109,12 @@ pub(crate) fn save(
         Receipt::New => {}
         _ => return Err(E::conflict()),
     }
+    if r.method == "POST" && r.path != "/api/v1/schedules" {
+        return control(owner, r, rt, digest);
+    }
+    let replay = replay_request(
+        &serde_json::json!({"replay_after_event":r.query.get("replay_after_event"),"replay_limit":r.query.get("replay_limit").map(|s|s.parse::<u32>()).transpose().map_err(|_|E::invalid())?}),
+    )?;
     let (id, definition, paused, expected) = if r.method == "POST" && r.path == "/api/v1/schedules"
     {
         if r.if_match.is_some() {
@@ -146,16 +161,19 @@ pub(crate) fn save(
         let result = store
             .repository()
             .map_err(bad)?
-            .save_schedule(Save {
-                id,
-                workspace,
-                definition,
-                expected_etag: expected,
-                paused,
-                actor: "authenticated_api",
-                at_us: now,
-                receipt: Some((key, digest)),
-            })
+            .save_schedule_with_replay(
+                Save {
+                    id,
+                    workspace,
+                    definition,
+                    expected_etag: expected,
+                    paused,
+                    actor: "authenticated_api",
+                    at_us: now,
+                    receipt: Some((key, digest)),
+                },
+                replay,
+            )
             .await
             .map_err(error);
         store.close().await.map_err(bad)?;
@@ -169,6 +187,90 @@ pub(crate) fn save(
     })
 }
 
+fn replay_request(
+    value: &serde_json::Value,
+) -> Result<Option<tf_store::schedule_lifecycle::Replay>> {
+    if value["replay_after_event"].is_null() && value["replay_limit"].is_null() {
+        return Ok(None);
+    }
+    let after = value["replay_after_event"]
+        .as_str()
+        .ok_or_else(E::invalid)?
+        .parse::<i64>()
+        .map_err(|_| E::invalid())?;
+    let limit = value["replay_limit"]
+        .as_u64()
+        .and_then(|n| u32::try_from(n).ok())
+        .ok_or_else(E::invalid)?;
+    if after < 0 || !(1..=100).contains(&limit) {
+        return Err(E::invalid());
+    }
+    Ok(Some(tf_store::schedule_lifecycle::Replay { after, limit }))
+}
+fn control(
+    owner: &mut RuntimeOwner,
+    r: &Request,
+    rt: &tokio::runtime::Runtime,
+    digest: &str,
+) -> Result<Reply> {
+    use tf_store::schedule_lifecycle::{Action, Control};
+    let (id, action) = r
+        .path
+        .strip_prefix("/api/v1/schedules/")
+        .and_then(|s| s.split_once('/'))
+        .ok_or_else(E::invalid)?;
+    let action = match action {
+        "pause" => {
+            tf_protocol::validate_document("ApiEmptyV1", &r.body).map_err(|_| E::invalid())?;
+            Action::Pause
+        }
+        "resume" => {
+            tf_protocol::validate_document("ApiScheduleResumeV1", &r.body)
+                .map_err(|_| E::invalid())?;
+            Action::Resume(replay_request(&r.body)?)
+        }
+        "run" => {
+            tf_protocol::validate_document("ApiEmptyV1", &r.body).map_err(|_| E::invalid())?;
+            Action::Run
+        }
+        _ => return Err(E::invalid()),
+    };
+    let now = i64::try_from(
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(bad)?
+            .as_micros(),
+    )
+    .map_err(bad)?;
+    let workspace = owner.workspace_id().map_err(bad)?;
+    let id = id.parse().map_err(|_| E::invalid())?;
+    let etag = r.if_match.as_deref().ok_or_else(E::invalid)?;
+    let value = rt.block_on(async {
+        let mut store = owner.open_store().await.map_err(bad)?;
+        let result = store
+            .repository()
+            .map_err(bad)?
+            .control_schedule(Control {
+                workspace,
+                id,
+                etag,
+                key: r.key.ok_or_else(E::invalid)?,
+                digest,
+                actor: "authenticated_api",
+                at_us: now,
+                action,
+            })
+            .await
+            .map_err(error);
+        store.close().await.map_err(bad)?;
+        result
+    })?;
+    Ok(Reply {
+        data: value["data"].clone(),
+        context: None,
+        etag: value["etag"].as_str().map(str::to_owned),
+    })
+}
 // Saving checks captured registry identity without importing Python or executing a producer.
 fn validate_source(
     root: &Path,
@@ -402,6 +504,38 @@ mod tests {
             "refs/heads/stable"
         );
         assert_eq!(current.data["definition"]["build"]["data_branch"], "output");
+        let mut action = Request {
+            method: "POST".into(),
+            path: format!("/api/v1/schedules/{id}/run"),
+            body: json!({}),
+            query: BTreeMap::new(),
+            key: Some(RequestId::from_bytes([80; 16])),
+            if_match: third.etag.clone(),
+            ..request.clone()
+        };
+        let manual = save(&mut owner, &action, &rt, &"0".repeat(64)).unwrap();
+        tf_protocol::validate_document("ScheduleRunV1", &manual.data).unwrap();
+        assert_eq!(
+            save(&mut owner, &action, &rt, &"0".repeat(64))
+                .unwrap()
+                .data,
+            manual.data
+        );
+        action.key = Some(RequestId::from_bytes([81; 16]));
+        action.path = format!("/api/v1/schedules/{id}/pause");
+        let paused = save(&mut owner, &action, &rt, &"1".repeat(64)).unwrap();
+        assert_eq!(paused.data["paused"], true);
+        action.key = Some(RequestId::from_bytes([82; 16]));
+        action.path = format!("/api/v1/schedules/{id}/resume");
+        action.if_match = paused.etag.clone();
+        let resumed = save(&mut owner, &action, &rt, &"2".repeat(64)).unwrap();
+        assert_eq!(resumed.data["paused"], false);
+        action.key = Some(RequestId::from_bytes([83; 16]));
+        action.path = format!("/api/v1/schedules/{id}/pause");
+        assert!(matches!(save(&mut owner,&action,&rt,&"3".repeat(64)),Err(e) if e.status==409));
+        action.if_match = resumed.etag;
+        action.body = json!({"extra":true});
+        assert!(matches!(save(&mut owner,&action,&rt,&"3".repeat(64)),Err(e) if e.status==400));
         assert!(
             matches!(save(&mut owner,&Request{method:"PUT".into(),body:{let mut bad=request.body.clone();bad["build"]["source"]=json!({"kind":"git_ref","ref":"HEAD"});bad},key:Some(RequestId::from_bytes([14;16])),if_match:third.etag,..request},&rt,&"e".repeat(64)),Err(e) if e.status==400)
         );

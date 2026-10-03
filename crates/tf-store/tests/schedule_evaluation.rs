@@ -519,9 +519,9 @@ async fn schema_thirteen_upgrade_preserves_evidence_and_uses_pending_indexes() -
     publish(&mut db, 10, 1, "publication", 20).await?;
     scan(&mut s, epoch, 30).await?;
     s.close().await?;
-    sqlx::raw_sql("DROP TABLE schedule_clock_ticks; DROP TABLE schedule_clock_state; DROP INDEX schedule_pending_tokens; DROP INDEX schedule_pending_occurrences; DELETE FROM schema_migrations WHERE version>=14; PRAGMA user_version=13;").execute(&mut db).await?;
+    sqlx::raw_sql("DROP TABLE schedule_pause_intervals; DROP TABLE schedule_clock_ticks; DROP TABLE schedule_clock_state; DROP INDEX schedule_pending_tokens; DROP INDEX schedule_pending_occurrences; DELETE FROM schema_migrations WHERE version>=14; PRAGMA user_version=13;").execute(&mut db).await?;
     s = Store::open(&path).await?;
-    assert_eq!(s.info().schema_version, 15);
+    assert_eq!(s.info().schema_version, 16);
     assert_eq!(
         count(&mut db, "SELECT count(*) FROM trigger_tokens").await?,
         1

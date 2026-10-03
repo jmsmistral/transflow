@@ -3,7 +3,7 @@
 This crate resolves typed clock leaves into intended UTC ticks and read-only
 next-five previews. It activates no daemon, creates no executing job and does not
 read source files or providers. Operational source resolution/dispatch is T095;
-schedule lifecycle and editor integration are T094/T098.
+lifecycle API actions are delivered in T094; editor integration remains T098.
 
 ## Resolution
 
@@ -64,3 +64,14 @@ then explicitly counted/ignored. Current epoch/ETag/cursor/pause guards prevent
 stale preparation from accepting evidence after an edit or competing observation.
 No daemon means no scheduled execution; restart/wake behavior becomes automatic
 only when the later persistent coordinator integration invokes these services.
+
+## Delayed observation after pause/resume (T094)
+
+The frozen evaluation carries durable closed pause intervals from storage. Intended
+ticks in `(paused_at, resumed_at]` are ignored even when resolved after resume or
+restart. Counts and partial catch-up cursors account for ignored ticks exactly
+once; ignored intervals cannot displace the newest eligible coalesced tick. At most
+100 intervals overlapping a one-day pass are loaded; excess fails explicitly.
+ETag/epoch guards reject preparation made before a lifecycle change. Explicit
+retained-event replay starts its new clock epoch at action time and does not turn
+paused clock intervals into missed ticks to replay.

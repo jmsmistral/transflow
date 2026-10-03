@@ -361,8 +361,16 @@ impl Application for SchedulesApp {
         json!({"api_version":1})
     }
     fn call(&self, r: tf_api::Request) -> Result<Reply, ApiError> {
-        if r.method != "PUT" || r.if_match != Some("a".repeat(64)) || r.key.is_none() {
+        if !matches!(r.method.as_str(), "PUT" | "POST")
+            || r.if_match != Some("a".repeat(64))
+            || r.key.is_none()
+        {
             return Err(ApiError::invalid());
+        }
+        if r.path.ends_with("/run") {
+            return Ok(Reply::metadata(
+                json!({"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","schedule_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","trigger_epoch":"c".repeat(64),"evidence_digest":"d".repeat(64),"logical_fire_at_us":"1","disposition":"QUEUED","manual":true}),
+            ));
         }
         Ok(Reply {
             data: json!({"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","etag":"b".repeat(64),"trigger_epoch":"c".repeat(64),"paused":true,"needs_review":false,"definition":r.body,"saved_at_us":"1"}),
@@ -456,6 +464,107 @@ async fn schedule_put_requires_authenticated_json_and_guard_and_cookie_csrf()
                 .as_u16(),
             status
         );
+    }
+    Ok(())
+}
+#[tokio::test]
+async fn lifecycle_routes_require_auth_origin_etag_key_and_closed_bodies()
+-> Result<(), Box<dyn std::error::Error>> {
+    let r = tf_api::router(
+        "127.0.0.1:12345".parse()?,
+        TOKEN.into(),
+        Arc::new(SchedulesApp),
+    )?;
+    for action in ["pause", "resume", "run"] {
+        let path = format!("/api/v1/schedules/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/{action}");
+        for (auth, origin, guard, key, body, status) in [
+            (false, None, true, true, "{}", 401),
+            (
+                true,
+                Some("https://attacker.invalid"),
+                true,
+                true,
+                "{}",
+                403,
+            ),
+            (true, None, false, true, "{}", 400),
+            (true, None, true, false, "{}", 400),
+            (true, None, true, true, "{\"extra\":true}", 400),
+            (true, None, true, true, "{}", 200),
+        ] {
+            let mut b = request("POST", &path, body);
+            if auth {
+                b = b.header("authorization", format!("Bearer {TOKEN}"));
+            }
+            if let Some(origin) = origin {
+                b = b.header("origin", origin);
+            }
+            if guard {
+                b = b.header("if-match", format!("\"{}\"", "a".repeat(64)));
+            }
+            if key {
+                b = b.header("idempotency-key", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+            }
+            assert_eq!(
+                r.clone()
+                    .oneshot(b.body(Body::from(body))?)
+                    .await?
+                    .status()
+                    .as_u16(),
+                status
+            );
+        }
+    }
+    let launch = r
+        .clone()
+        .oneshot(
+            request("POST", "/api/v1/sessions/launch", "{}")
+                .header("authorization", format!("Bearer {TOKEN}"))
+                .body(Body::from("{}"))?,
+        )
+        .await?;
+    let code = data(launch).await?["data"]["code"]
+        .as_str()
+        .ok_or("code")?
+        .to_owned();
+    let exchange = r
+        .clone()
+        .oneshot(
+            request("POST", "/api/v1/sessions/exchange", "")
+                .header("origin", "http://127.0.0.1:12345")
+                .body(Body::from(json!({"code":code}).to_string()))?,
+        )
+        .await?;
+    let cookie = exchange.headers()["set-cookie"]
+        .to_str()?
+        .split(';')
+        .next()
+        .ok_or("cookie")?
+        .to_owned();
+    let csrf = data(exchange).await?["data"]["csrf"]
+        .as_str()
+        .ok_or("csrf")?
+        .to_owned();
+    for action in ["pause", "resume", "run"] {
+        for (has_csrf, status) in [(false, 401), (true, 200)] {
+            let path = format!("/api/v1/schedules/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/{action}");
+            let mut b = request("POST", &path, "{}")
+                .header("cookie", &cookie)
+                .header("origin", "http://127.0.0.1:12345")
+                .header("if-match", format!("\"{}\"", "a".repeat(64)))
+                .header("idempotency-key", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+            if has_csrf {
+                b = b.header("x-transflow-csrf", &csrf);
+            }
+            assert_eq!(
+                r.clone()
+                    .oneshot(b.body(Body::from("{}"))?)
+                    .await?
+                    .status()
+                    .as_u16(),
+                status
+            );
+        }
     }
     Ok(())
 }

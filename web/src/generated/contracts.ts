@@ -394,3 +394,9 @@ export type ApiSchedulesV1 = { readonly "schedules": ReadonlyArray<ScheduleRecor
 
 // prettier-ignore
 export type ApiScheduleCreateV1 = { readonly "id": Uuid; readonly "paused": boolean; readonly "definition": ScheduleDefinitionV1 };
+
+// prettier-ignore
+export type ApiScheduleResumeV1 = (ApiEmptyV1 | { readonly "replay_after_event": Count; readonly "replay_limit": number });
+
+// prettier-ignore
+export type ScheduleRunV1 = { readonly "id": Uuid; readonly "schedule_id": Uuid; readonly "trigger_epoch": string; readonly "evidence_digest": Sha256; readonly "logical_fire_at_us": Count; readonly "disposition": "QUEUED"; readonly "manual": true };

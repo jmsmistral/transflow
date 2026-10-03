@@ -36,6 +36,8 @@ pub struct Evaluation {
     pub cursor: Cursor,
     /// Current operational pause state.
     pub paused: bool,
+    /// Closed operational pause windows, exclusive start and inclusive end.
+    pub ignored_intervals: Vec<(i64, i64)>,
     /// Missed-tick policy.
     pub misfire: Misfire,
     /// Explicit catch-up limit, from 1 through 100.

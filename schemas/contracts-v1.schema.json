@@ -9744,6 +9744,69 @@
         "definition"
       ],
       "additionalProperties": false
+    },
+    "ApiScheduleResumeV1": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ApiEmptyV1"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "replay_after_event": {
+              "$ref": "#/$defs/Count"
+            },
+            "replay_limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "replay_after_event",
+            "replay_limit"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ScheduleRunV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "schedule_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "trigger_epoch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "logical_fire_at_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "disposition": {
+          "const": "QUEUED"
+        },
+        "manual": {
+          "const": true
+        }
+      },
+      "required": [
+        "id",
+        "schedule_id",
+        "trigger_epoch",
+        "evidence_digest",
+        "logical_fire_at_us",
+        "disposition",
+        "manual"
+      ],
+      "additionalProperties": false
     }
   }
 }

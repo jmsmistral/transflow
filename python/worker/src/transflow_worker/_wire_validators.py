@@ -661,3 +661,13 @@ def validate_ApiSchedulesV1(value: object) -> None:
 def validate_ApiScheduleCreateV1(value: object) -> None:
     """Assert the ApiScheduleCreateV1 contract, including custom formats."""
     validate_document("ApiScheduleCreateV1", value)
+
+
+def validate_ApiScheduleResumeV1(value: object) -> None:
+    """Assert the ApiScheduleResumeV1 contract, including custom formats."""
+    validate_document("ApiScheduleResumeV1", value)
+
+
+def validate_ScheduleRunV1(value: object) -> None:
+    """Assert the ScheduleRunV1 contract, including custom formats."""
+    validate_document("ScheduleRunV1", value)

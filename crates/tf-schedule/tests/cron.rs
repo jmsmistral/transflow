@@ -27,6 +27,7 @@ fn request(t: i64, p: Misfire) -> Evaluation {
     Evaluation {
         cursor: Cursor { at_us: t, leaf: 63 },
         paused: false,
+        ignored_intervals: vec![],
         misfire: p,
         max_catch_up: 100,
         pending: 0,
@@ -232,4 +233,32 @@ fn invalid_syntax_zones_policies_and_impossible_previews_fail_closed() {
     let mut req = request(0, Misfire::Skip);
     req.max_catch_up = 101;
     assert!(prepare(&[], &req, &Virtual(0)).is_err());
+}
+#[test]
+fn paused_windows_do_not_replay_after_resume_and_catchup_prefix_preserves_counts() {
+    let start = at("2026-10-03T00:00:00Z");
+    let mut req = request(start, Misfire::CatchUp);
+    req.ignored_intervals = vec![(start, start + 2 * 60_000_000)];
+    req.max_catch_up = 1;
+    let first = prepare(
+        &[leaf("* * * * *", "UTC", false)],
+        &req,
+        &Virtual(start + 5 * 60_000_000),
+    )
+    .unwrap();
+    assert_eq!((first.matched, first.ignored, first.ticks.len()), (3, 2, 1));
+    assert_eq!(first.cursor.at_us, start + 3 * 60_000_000);
+    assert!(first.more);
+    req.cursor = first.cursor;
+    let second = prepare(
+        &[leaf("* * * * *", "UTC", false)],
+        &req,
+        &Virtual(start + 5 * 60_000_000),
+    )
+    .unwrap();
+    assert_eq!(
+        (second.matched, second.ignored, second.ticks.len()),
+        (1, 0, 1)
+    );
+    assert_eq!(second.cursor.at_us, start + 4 * 60_000_000);
 }

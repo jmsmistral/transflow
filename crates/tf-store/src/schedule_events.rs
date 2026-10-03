@@ -329,137 +329,10 @@ impl Store {
         limit: u32,
         now_us: i64,
     ) -> Result<Scan> {
-        if !(1..=100).contains(&limit) || now_us < 0 {
-            return Err(invalid());
-        }
         let mut tx = self.db.begin_with("BEGIN IMMEDIATE").await?;
-        retention::clock(&mut tx, now_us)
-            .await
-            .map_err(|_| invalid())?;
-        let r=sqlx::query("SELECT definition_json,event_cursor,paused,needs_review FROM schedules WHERE workspace_id=? AND id=? AND trigger_epoch=? AND deleted_at_us IS NULL").bind(workspace.to_string()).bind(schedule.to_string()).bind(epoch).fetch_optional(&mut *tx).await?.ok_or_else(invalid)?;
-        let paused = r.try_get::<i64, _>(2)? != 0;
-        let review = r.try_get::<i64, _>(3)? != 0;
-        let raw: String = r.try_get(0)?;
-        let def = if review {
-            None
-        } else {
-            Some(
-                Definition::decode(&serde_json::from_str(&raw).map_err(|_| invalid())?)
-                    .map_err(|_| invalid())?,
-            )
-        };
-        let mut leafs = vec![];
-        if let Some(d) = &def {
-            leaves(&d.trigger, &mut leafs)
-        }
-        let mut report = Scan {
-            cursor: r.try_get(1)?,
-            ..Scan::default()
-        };
-        let rows=sqlx::query("SELECT sequence,id,type,CASE WHEN type IN ('dataset.published','dataset.head_changed','build.state','schedule.succeeded','schedule.dataset_event') THEN payload_json ELSE '{}' END,wall_time_us,causation_id,correlation_id FROM events WHERE sequence>? ORDER BY sequence LIMIT ?").bind(report.cursor).bind(limit).fetch_all(&mut *tx).await?;
-        let mut bytes = 0;
-        for e in rows {
-            let raw: String = e.try_get(3)?;
-            bytes += raw.len();
-            if raw.len() > 262144 {
-                return Err(invalid());
-            }
-            if bytes > 1048576 {
-                break;
-            }
-            let sequence: i64 = e.try_get(0)?;
-            let at_us: i64 = e.try_get(4)?;
-            if at_us < 0 {
-                return Err(invalid());
-            }
-            let id: String = e.try_get(1)?;
-            let kind: String = e.try_get(2)?;
-            let payload: Value = serde_json::from_str(&raw).map_err(|_| invalid())?;
-            if let Some(f) = fact(&mut tx, &id, &kind, &payload).await? {
-                for leaf in &leafs {
-                    let Some((leaf, mode)) = matched(leaf, &f)? else {
-                        continue;
-                    };
-                    let expires = def
-                        .as_ref()
-                        .and_then(|d| d.policies.token_window_seconds)
-                        .map(|s| {
-                            at_us
-                                .checked_add(i64::from(s) * 1000000)
-                                .ok_or_else(invalid)
-                        })
-                        .transpose()?;
-                    if paused || review || expires.is_some_and(|t| t <= now_us) {
-                        report.ignored += 1;
-                        continue;
-                    }
-                    if let Some(observed) = &f.dataset
-                        && observed.workspace_id == workspace.to_string()
-                    {
-                        retention::version_available(
-                            &mut tx,
-                            observed.version_id.parse().map_err(|_| invalid())?,
-                        )
-                        .await
-                        .map_err(|_| invalid())?;
-                    }
-                    let evidence = TokenPayload {
-                        format_version: 1,
-                        event_id: id.clone(),
-                        event_sequence: sequence.to_string(),
-                        occurred_at_us: at_us.to_string(),
-                        event_kind: kind.clone(),
-                        causation: e.try_get(5)?,
-                        correlation: e.try_get(6)?,
-                        payload_mode: mode,
-                        dataset: f.dataset.clone(),
-                        build_id: f.build.clone(),
-                        schedule_id: f.schedule.clone(),
-                        occurrence_id: f.occurrence.clone(),
-                    };
-                    let encoded = serde_json::to_string(&evidence).map_err(|_| invalid())?;
-                    let token = digest(&json!([
-                        "transflow.schedule.token.v1",
-                        schedule.to_string(),
-                        epoch,
-                        leaf,
-                        id
-                    ]))?;
-                    let n=sqlx::query("INSERT INTO trigger_tokens(id,schedule_id,trigger_epoch,leaf_id,event_id,tick_id,payload_json,seen_at_us,expires_at_us,consumed_by) VALUES(?,?,?,?,?,NULL,?,?,?,NULL) ON CONFLICT(id) DO NOTHING").bind(&token).bind(schedule.to_string()).bind(epoch).bind(leaf).bind(&id).bind(&encoded).bind(now_us).bind(expires).execute(&mut *tx).await?.rows_affected();
-                    if n == 0 {
-                        let existing: String = sqlx::query_scalar(
-                            "SELECT payload_json FROM trigger_tokens WHERE id=?",
-                        )
-                        .bind(token)
-                        .fetch_one(&mut *tx)
-                        .await?;
-                        if existing != encoded {
-                            return Err(invalid());
-                        }
-                    }
-                    report.tokens += usize::try_from(n).map_err(|_| invalid())?;
-                }
-            }
-            report.cursor = sequence;
-            report.scanned += 1;
-        }
-        sqlx::query("UPDATE schedules SET event_cursor=? WHERE id=? AND trigger_epoch=?")
-            .bind(report.cursor)
-            .bind(schedule.to_string())
-            .bind(epoch)
-            .execute(&mut *tx)
-            .await?;
-        if report.scanned > 0 {
-            sqlx::query("INSERT INTO audit_log(operation,evidence_json,wall_time_us) VALUES('schedule_events_scanned',?,?)").bind(json!({"schedule":schedule.to_string(),"epoch":epoch,"cursor":report.cursor.to_string(),"scanned":report.scanned,"tokens":report.tokens,"ignored":report.ignored,"needs_review":review}).to_string()).bind(now_us).execute(&mut *tx).await?;
-        }
-        report.more =
-            sqlx::query_scalar::<_, i64>("SELECT EXISTS(SELECT 1 FROM events WHERE sequence>?)")
-                .bind(report.cursor)
-                .fetch_one(&mut *tx)
-                .await?
-                != 0;
+        let result = scan(&mut tx, workspace, schedule, epoch, limit, now_us).await?;
         tx.commit().await?;
-        Ok(report)
+        Ok(result)
     }
     /// Deduplicate a provider publication by origin identity/version, or a head change by
     /// origin identity/generation. Changed evidence for an existing event fails closed.
@@ -582,4 +455,145 @@ impl Store {
         tx.commit().await?;
         Ok(id)
     }
+}
+
+/// Shared bounded scanner used within an already-owned lifecycle transaction.
+pub(crate) async fn scan(
+    db: &mut SqliteConnection,
+    workspace: WorkspaceId,
+    schedule: ScheduleId,
+    epoch: &str,
+    limit: u32,
+    now_us: i64,
+) -> Result<Scan> {
+    if !(1..=100).contains(&limit) || now_us < 0 {
+        return Err(invalid());
+    }
+    retention::clock(&mut *db, now_us)
+        .await
+        .map_err(|_| invalid())?;
+    let r=sqlx::query("SELECT definition_json,event_cursor,paused,needs_review FROM schedules WHERE workspace_id=? AND id=? AND trigger_epoch=? AND deleted_at_us IS NULL").bind(workspace.to_string()).bind(schedule.to_string()).bind(epoch).fetch_optional(&mut *db).await?.ok_or_else(invalid)?;
+    let paused = r.try_get::<i64, _>(2)? != 0;
+    let review = r.try_get::<i64, _>(3)? != 0;
+    let raw: String = r.try_get(0)?;
+    let def = if review {
+        None
+    } else {
+        Some(
+            Definition::decode(&serde_json::from_str(&raw).map_err(|_| invalid())?)
+                .map_err(|_| invalid())?,
+        )
+    };
+    let mut leafs = vec![];
+    if let Some(d) = &def {
+        leaves(&d.trigger, &mut leafs)
+    }
+    let mut report = Scan {
+        cursor: r.try_get(1)?,
+        ..Scan::default()
+    };
+    let rows=sqlx::query("SELECT sequence,id,type,CASE WHEN type IN ('dataset.published','dataset.head_changed','build.state','schedule.succeeded','schedule.dataset_event') THEN payload_json ELSE '{}' END,wall_time_us,causation_id,correlation_id FROM events WHERE sequence>? ORDER BY sequence LIMIT ?").bind(report.cursor).bind(limit).fetch_all(&mut *db).await?;
+    let mut bytes = 0;
+    for e in rows {
+        let raw: String = e.try_get(3)?;
+        bytes += raw.len();
+        if raw.len() > 262144 {
+            return Err(invalid());
+        }
+        if bytes > 1048576 {
+            break;
+        }
+        let sequence: i64 = e.try_get(0)?;
+        let at_us: i64 = e.try_get(4)?;
+        if at_us < 0 {
+            return Err(invalid());
+        }
+        let id: String = e.try_get(1)?;
+        let kind: String = e.try_get(2)?;
+        let payload: Value = serde_json::from_str(&raw).map_err(|_| invalid())?;
+        let was_paused: i64 = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM schedule_pause_intervals WHERE schedule_id=? AND trigger_epoch=? AND event_after<? AND (event_through IS NULL OR event_through>=?))")
+                .bind(schedule.to_string()).bind(epoch).bind(sequence).bind(sequence).fetch_one(&mut *db).await?;
+        if let Some(f) = fact(&mut *db, &id, &kind, &payload).await? {
+            for leaf in &leafs {
+                let Some((leaf, mode)) = matched(leaf, &f)? else {
+                    continue;
+                };
+                let expires = def
+                    .as_ref()
+                    .and_then(|d| d.policies.token_window_seconds)
+                    .map(|s| {
+                        at_us
+                            .checked_add(i64::from(s) * 1000000)
+                            .ok_or_else(invalid)
+                    })
+                    .transpose()?;
+                if paused || was_paused != 0 || review || expires.is_some_and(|t| t <= now_us) {
+                    report.ignored += 1;
+                    continue;
+                }
+                if let Some(observed) = &f.dataset
+                    && observed.workspace_id == workspace.to_string()
+                {
+                    retention::version_available(
+                        &mut *db,
+                        observed.version_id.parse().map_err(|_| invalid())?,
+                    )
+                    .await
+                    .map_err(|_| invalid())?;
+                }
+                let evidence = TokenPayload {
+                    format_version: 1,
+                    event_id: id.clone(),
+                    event_sequence: sequence.to_string(),
+                    occurred_at_us: at_us.to_string(),
+                    event_kind: kind.clone(),
+                    causation: e.try_get(5)?,
+                    correlation: e.try_get(6)?,
+                    payload_mode: mode,
+                    dataset: f.dataset.clone(),
+                    build_id: f.build.clone(),
+                    schedule_id: f.schedule.clone(),
+                    occurrence_id: f.occurrence.clone(),
+                };
+                let encoded = serde_json::to_string(&evidence).map_err(|_| invalid())?;
+                let token = digest(&json!([
+                    "transflow.schedule.token.v1",
+                    schedule.to_string(),
+                    epoch,
+                    leaf,
+                    id
+                ]))?;
+                let n=sqlx::query("INSERT INTO trigger_tokens(id,schedule_id,trigger_epoch,leaf_id,event_id,tick_id,payload_json,seen_at_us,expires_at_us,consumed_by) VALUES(?,?,?,?,?,NULL,?,?,?,NULL) ON CONFLICT(id) DO NOTHING").bind(&token).bind(schedule.to_string()).bind(epoch).bind(leaf).bind(&id).bind(&encoded).bind(now_us).bind(expires).execute(&mut *db).await?.rows_affected();
+                if n == 0 {
+                    let existing: String =
+                        sqlx::query_scalar("SELECT payload_json FROM trigger_tokens WHERE id=?")
+                            .bind(token)
+                            .fetch_one(&mut *db)
+                            .await?;
+                    if existing != encoded {
+                        return Err(invalid());
+                    }
+                }
+                report.tokens += usize::try_from(n).map_err(|_| invalid())?;
+            }
+        }
+        report.cursor = sequence;
+        report.scanned += 1;
+    }
+    sqlx::query("UPDATE schedules SET event_cursor=? WHERE id=? AND trigger_epoch=?")
+        .bind(report.cursor)
+        .bind(schedule.to_string())
+        .bind(epoch)
+        .execute(&mut *db)
+        .await?;
+    if report.scanned > 0 {
+        sqlx::query("INSERT INTO audit_log(operation,evidence_json,wall_time_us) VALUES('schedule_events_scanned',?,?)").bind(json!({"schedule":schedule.to_string(),"epoch":epoch,"cursor":report.cursor.to_string(),"scanned":report.scanned,"tokens":report.tokens,"ignored":report.ignored,"needs_review":review}).to_string()).bind(now_us).execute(&mut *db).await?;
+    }
+    report.more =
+        sqlx::query_scalar::<_, i64>("SELECT EXISTS(SELECT 1 FROM events WHERE sequence>?)")
+            .bind(report.cursor)
+            .fetch_one(&mut *db)
+            .await?
+            != 0;
+    Ok(report)
 }

@@ -1,0 +1,56 @@
+{
+  "task": "T094",
+  "date": "2026-10-03",
+  "host": "macOS arm64",
+  "implementation_base": "1ad8b77a477495e1c09368668a8e6db4aadf2e98",
+  "specification_base": "9f1ca2c05953771ebbcd76ca6501bb633c3ee4b6",
+  "specification_version": "1.1.3",
+  "runtime_schema": 16,
+  "local_verification": {
+    "focused": "10 SQLite lifecycle integration entrypoints; 8 API security tests; native schedule API integration; 11 cron and 13 clock storage tests plus existing evaluation/event/definition/storage tests passed",
+    "python": "1021 tests passed with Python 3.14.7; full lint, format, type and package gate passed",
+    "web": "517 component/contract tests passed; strict TypeScript, lint, format and production builds/reproducibility passed",
+    "installed_worker_cli": "58 CLI/API integration tests passed with Python 3.14.7",
+    "specification": "Documentation/link/fence/syntax validation and all 44 specification regressions passed",
+    "safety": "Generated drift, offline dependency/public artifact checks and all 27 safety regressions passed; unchanged 643 locked package versions",
+    "conformance": "All 350 shared cases parsed and checked in Rust/Python/TypeScript",
+    "rust_gate": "474 Rust unit/integration tests plus one doctest passed; formatting, workspace/standalone storage compilation, workspace all-target Clippy and 12 boundary regressions passed"
+  },
+  "coverage": [
+    "Pause holds pending automatic work; manual and running work are unchanged",
+    "Frozen original expiry and queue/skip/coalescing policies survive edits; distinct execution templates remain independent",
+    "Delayed paused event/clock observation stays ignored after resume/restart; original exact pins survive",
+    "Manual acceptance while paused consumes no tokens; guarded idempotent retry returns original response across edits/restart",
+    "Explicit bounded retained-event replay produces fresh audited occurrences and preserves original evidence timestamps/pins",
+    "Injected failures roll back pause intervals, held disposition, definition/epoch, token, occurrence, clock state, audit and receipts; exact retry succeeds once",
+    "Concurrent SQLite owners and stale edits cannot lose changes; schema-15 upgrade preserves definitions",
+    "Native RuntimeOwner schedule API plus auth/Origin/Host/ETag/idempotency/CSRF and closed payload validation",
+    "Backward clock pause/resume at a partial simultaneous-leaf cursor still ignores remaining paused ticks; forged interval ticks rejected"
+  ],
+  "boundaries": [
+    "Backend lifecycle API and durable request acceptance only; no scheduled job/build execution or persistent observation loop activated",
+    "T095 owns observation/source resolution/dispatch; T096 full active overlap and causal-loop enforcement; T097/T098 CLI/editor",
+    "Replay is an exclusive retained event sequence plus a 1-100 event budget covering the entire committed tail; no paused clock replay",
+    "Clock observation loads at most 100 closed pause intervals per one-UTC-day pass; pending lifecycle inspection bounded at 100",
+    "No dependency/lock changes; no UI change, coordinator or browser preview started",
+    "CI awaits owner confirmation and was not polled"
+  ],
+  "iteration_fixes": [
+    "Historical downgrade fixtures remove the schema-16 interval table and update schema/table counts",
+    "Native workspace API test required sandbox escalation; authorized rerun passed",
+    "Replay evaluator budget failures preserve the explicit lifecycle limit error",
+    "Shared fixture count and reviewed generated-contract input hashes updated for seven lifecycle cases",
+    "Inclusive closed pause interval query and acceptance guards cover partial cursors after backward clock jumps"
+  ],
+  "commands": [
+    "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-rust.sh",
+    "PYTHON_CHECK=\"$PWD/target/python/py314/bin/python\" bash tools/check-cli.sh",
+    "PYTHON_CHECK=\"$PWD/target/python/py314/bin/python\" bash tools/check-python.sh",
+    "bash tools/check-web.sh",
+    "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+    "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests",
+    "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+    "git diff --check (both repositories)"
+  ],
+  "verification_scope": "Final Rust gate covers the paused-clock boundary fix. The prior passing CLI/Python/web gates cover the unchanged native API and regenerated codecs; specification/safety were validated again after final documentation updates."
+}

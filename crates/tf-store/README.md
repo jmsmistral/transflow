@@ -19,11 +19,11 @@ workspace initialization and robust ownership/path protection remain separate ta
 
 ## Schema and migrations
 
-Fifteen forward migrations install 55 logical tables: source/catalogue projections,
+Sixteen forward migrations install 56 logical tables: source/catalogue projections,
 versions/heads, builds/jobs/attempts, checks, scheduling, events/outbox, pins/audit,
 registry mutation journals, foreign replicas/leases, frozen publication/check
 links, read retention, replay, cache associations and computation comparison evidence.
-Schedule definition storage is implemented; scheduling evaluation/dispatch remain later work.
+Schedule storage, evaluation and lifecycle actions are implemented; persistent dispatch remains later work.
 External data is consumed from its provider under leases.
 
 The database has an application ID, `user_version` and monotonic checksum ledger.
@@ -216,8 +216,7 @@ is reached. Expired and future tokens remain historical/unconsumed evidence and
 cannot satisfy the current expression. Definition edits reject stale epochs;
 already queued requests keep their source settings, fallback policies and pins.
 
-Clock generation is delivered separately in T093 below; lifecycle endpoints are
-later tasks. The primitive is not connected to the persistent daemon yet. Tests cover injected failures at each
+Clock generation and lifecycle endpoints are delivered in T093/T094 below. The primitive is not connected to the persistent daemon yet. Tests cover injected failures at each
 write stage, concurrent SQLite owners, close/reopen replay, real process death
 across modeled enqueue transaction boundaries, retained pins after expiry/edits,
 and schema-13 upgrade/index use.
@@ -255,3 +254,41 @@ compound catch-up, paused/expired accounting, epoch races, pending capacity,
 forged evidence and rollback at tick, cursor, token and audit writes. Schema-14
 upgrade preserves current definitions. Lifecycle API/CLI operations, the persistent
 observation/dispatch loop and schedule editor remain T094–T098.
+
+## Schedule lifecycle transactions (T094)
+
+`Store::control_schedule` commits a guarded pause, resume or manual request together
+with its audit and idempotency receipt in one immediate SQLite transaction. Exact
+retry returns the original receipt across restart and subsequent edits; a changed
+request digest or stale edit ETag conflicts. Definition replacement uses the same
+atomic replay services through `save_schedule_with_replay`.
+
+Schema 16 adds operational `schedule_pause_intervals`, separate from definition
+history. Event sequence intervals and clock time intervals preserve paused-arrival
+boundaries even when observation occurs after resume/restart. Initially paused
+schedules open an interval on save; legacy paused records are fenced from their
+saved time/current event cursor on first resume. A clock scan accepts at most 100
+closed pause intervals overlapping its one-day observation; excess fails explicitly.
+
+Pause holds ACCEPTED/QUEUED automatic occurrences. It leaves RUNNING occurrences
+and independent manual requests untouched. Resume expires held evidence at the
+original earliest selected token time plus its frozen window, then applies its
+frozen overlap policy: queue releases, skip records SKIPPED, and coalesce_latest
+releases only the newest per identical frozen execution template. Different
+accepted templates retain separate newest requests. All changes/reasons are audited;
+accepted payloads/settings/pins are not rewritten. Pending inspection is bounded
+at 100 requests. Dispatch-time overlap/reservation and causal-loop enforcement
+remain T095/T096.
+
+Run-now freezes current source/output branch, fallback and execution policies into
+one QUEUED occurrence with `manual=true`, its own request identity and no automatic
+tokens. It is allowed while paused, consumes no trigger tokens and respects pending
+capacity. It does not yet resolve source or start a build/job.
+
+Explicit replay takes an exclusive retained event sequence and a 1–100 event
+budget. The entire committed tail must fit; oversized/rejected replay rolls back
+all definition/lifecycle changes. Matching, expiry, exact pins, queueing, epoch,
+token reset, audit and receipt commit atomically. This creates new occurrences;
+accepted old work remains frozen. A full queue retains eligible replay tokens for
+later evaluation. Event replay resets the new clock epoch to action time; it does
+not replay paused clock intervals. Ordinary save/resume performs no implicit replay.

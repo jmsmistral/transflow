@@ -33,8 +33,8 @@ fn runtime_assertions_agree_with_all_shared_schema_cases() {
     assert_eq!(versions["worker_protocol"]["minor"], PROTOCOL_MINOR);
     let cases: Vec<Value> =
         serde_json::from_str(include_str!("../../../schemas/fixtures/conformance.json")).unwrap();
-    // T079 adds seven private scratchpad binding/request/result fixtures.
-    assert_eq!(cases.len(), 343);
+    // T094 adds seven closed lifecycle/replay/manual-response fixtures.
+    assert_eq!(cases.len(), 350);
     for case in cases {
         assert_eq!(
             validate_document(case["schema"].as_str().unwrap(), &case["value"]).is_ok(),

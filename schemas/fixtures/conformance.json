@@ -8614,5 +8614,74 @@
       "extra": true
     },
     "valid": false
+  },
+  {
+    "name": "schedule-resume-no-replay",
+    "valid": true,
+    "value": {},
+    "schema": "ApiScheduleResumeV1"
+  },
+  {
+    "name": "schedule-resume-explicit-replay",
+    "valid": true,
+    "value": {
+      "replay_after_event": "9007199254740993",
+      "replay_limit": 100
+    },
+    "schema": "ApiScheduleResumeV1"
+  },
+  {
+    "name": "schedule-resume-partial-replay",
+    "valid": false,
+    "value": {
+      "replay_after_event": "0"
+    },
+    "schema": "ApiScheduleResumeV1"
+  },
+  {
+    "name": "schedule-resume-unbounded-replay",
+    "valid": false,
+    "value": {
+      "replay_after_event": "0",
+      "replay_limit": 101
+    },
+    "schema": "ApiScheduleResumeV1"
+  },
+  {
+    "name": "schedule-resume-implicit-option",
+    "valid": false,
+    "value": {
+      "catch_up": true
+    },
+    "schema": "ApiScheduleResumeV1"
+  },
+  {
+    "name": "schedule-manual-request",
+    "schema": "ScheduleRunV1",
+    "valid": true,
+    "value": {
+      "id": "00000001-0000-4000-8000-000000000001",
+      "schedule_id": "00000002-0000-4000-8000-000000000002",
+      "trigger_epoch": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "evidence_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "logical_fire_at_us": "9007199254740993",
+      "disposition": "QUEUED",
+      "manual": true
+    }
+  },
+  {
+    "name": "schedule-manual-request-extra",
+    "schema": "ScheduleRunV1",
+    "valid": false,
+    "value": {
+      "id": "00000001-0000-4000-8000-000000000001",
+      "schedule_id": "00000002-0000-4000-8000-000000000002",
+      "trigger_epoch": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "evidence_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "logical_fire_at_us": "9007199254740993",
+      "disposition": "QUEUED",
+      "manual": true,
+      "definition": {}
+    }
   }
 ]
