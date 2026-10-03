@@ -431,6 +431,9 @@ def end(left, right):
         from check_build_commands import exercise
 
         cases.extend(exercise(cli, root, sys.executable, probe))
+        from check_schedule_dispatch import exercise as exercise_schedules
+
+        cases.extend(exercise_schedules(cli, root, sys.executable))
         print(json.dumps({"cases": cases, "passed": len(cases)}))
 
 

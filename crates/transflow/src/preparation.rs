@@ -204,7 +204,6 @@ pub(crate) fn inspect_selected(
     overlay: Option<(&RegistrySnapshot, &RegistrySnapshot)>,
     selected: Option<(&str, &tf_domain::BranchName)>,
 ) -> Result<Inspection, Error> {
-    let current = std::env::current_dir()?;
     let scratch = Scratch::create()?;
     let capture = if let Some((reference, branch)) = selected {
         tf_catalog::git::capture_ref(workspace, reference, Some(branch), limits())?
@@ -213,9 +212,42 @@ pub(crate) fn inspect_selected(
     } else {
         tf_catalog::git::capture_temporary(workspace, scratch.path(), limits())?
     };
+    inspect_capture(
+        workspace,
+        python,
+        overlay,
+        capture,
+        scratch,
+        selected.is_some(),
+    )
+}
+/// Revalidate an immutable retained snapshot, including non-Git captures.
+pub(crate) fn inspect_fixed(
+    workspace: &Workspace,
+    python: Option<&String>,
+    snapshot: tf_domain::SourceSnapshotId,
+) -> Result<Inspection, Error> {
+    let capture = SourceSnapshot::open(
+        &workspace.root().join(".transflow/runtime/source-snapshots"),
+        snapshot,
+    )?;
+    inspect_capture(workspace, python, None, capture, Scratch::create()?, true)
+}
+fn inspect_capture(
+    workspace: &Workspace,
+    python: Option<&String>,
+    overlay: Option<(&RegistrySnapshot, &RegistrySnapshot)>,
+    capture: SourceSnapshot,
+    scratch: Scratch,
+    fixed: bool,
+) -> Result<Inspection, Error> {
+    let current = std::env::current_dir()?;
     let config = WorkspaceConfig::parse(&text(&capture, "workspace.toml")?)?;
+    if config.id() != workspace.config().id() {
+        return Err(Error::Context);
+    }
     // The installed environment must match the selected source dependencies.
-    if selected.is_some() {
+    if fixed {
         for path in [config.dependency_paths().0, config.dependency_paths().1] {
             if capture.read(Path::new(path), 16 * 1024 * 1024)?
                 != std::fs::read(workspace.root().join(path))?
@@ -273,7 +305,11 @@ pub(crate) fn inspect_selected(
         resolved_resources.worker_threads,
     )?;
     let graph = validate(&registry, &capture, &result, &env)?;
-    verify_selection(&capture, workspace, false)?;
+    if fixed {
+        verify_retained(&capture, workspace)?;
+    } else {
+        verify_selection(&capture, workspace, false)?;
+    }
     if environment::inspect(workspace.root(), &python, &environment_request)? != env {
         return Err(Error::Context);
     }
@@ -295,25 +331,32 @@ pub(crate) fn verify_selection(
     registry_replaced: bool,
 ) -> Result<(), Error> {
     if capture.git().is_some_and(|g| g.requested_ref().is_some()) {
-        let verified = SourceSnapshot::open(
-            &workspace.root().join(".transflow/runtime/source-snapshots"),
-            capture.id()?,
-        )?;
-        if verified.digest() != capture.digest() {
-            return Err(Error::Context);
-        }
-        let config = WorkspaceConfig::parse(&text(capture, "workspace.toml")?)?;
-        for path in [config.dependency_paths().0, config.dependency_paths().1] {
-            if capture.read(Path::new(path), 16 * 1024 * 1024)?
-                != std::fs::read(workspace.root().join(path))?
-            {
-                return Err(Error::Context);
-            }
-        }
-        Ok(())
+        verify_retained(capture, workspace)
     } else {
         Ok(capture.verify_working_copy(workspace, registry_replaced)?)
     }
+}
+/// Immutable source and installed dependency guard, independent of live source files.
+pub(crate) fn verify_retained(
+    capture: &SourceSnapshot,
+    workspace: &Workspace,
+) -> Result<(), Error> {
+    let verified = SourceSnapshot::open(
+        &workspace.root().join(".transflow/runtime/source-snapshots"),
+        capture.id()?,
+    )?;
+    if verified.digest() != capture.digest() {
+        return Err(Error::Context);
+    }
+    let config = WorkspaceConfig::parse(&text(capture, "workspace.toml")?)?;
+    for path in [config.dependency_paths().0, config.dependency_paths().1] {
+        if capture.read(Path::new(path), 16 * 1024 * 1024)?
+            != std::fs::read(workspace.root().join(path))?
+        {
+            return Err(Error::Context);
+        }
+    }
+    Ok(())
 }
 pub(crate) fn execute(
     operation: Operation,

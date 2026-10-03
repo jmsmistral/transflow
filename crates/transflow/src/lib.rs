@@ -36,6 +36,7 @@ pub mod reconcile;
 /// Fenced startup reconciliation and authenticated orphan cleanup.
 pub mod recovery;
 mod replay;
+mod schedule_dispatch;
 mod serve;
 use std::{
     ffi::OsString,

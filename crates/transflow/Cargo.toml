@@ -14,6 +14,7 @@ tf-protocol = { path = "../tf-protocol" }
 tf-catalog = { path = "../tf-catalog" }
 tf-exec = { path = "../tf-exec" }
 tf-plan = { path = "../tf-plan" }
+tf-schedule = { path = "../tf-schedule" }
 tf-store = { path = "../tf-store" }
 tokio = { workspace = true, features = ["signal"] }
 clap.workspace = true

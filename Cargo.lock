@@ -1778,6 +1778,7 @@ dependencies = [
  "tf-exec",
  "tf-plan",
  "tf-protocol",
+ "tf-schedule",
  "tf-store",
  "thiserror",
  "tokio",

@@ -6897,7 +6897,7 @@
           "const": "provider_owned_leased"
         },
         "schedules": {
-          "const": false
+          "type": "boolean"
         },
         "ui": {
           "type": "boolean"

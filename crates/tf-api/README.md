@@ -422,5 +422,7 @@ option; the new clock epoch begins at action time.
 
 Exact retries return the original response after restart or definition edits.
 Changed digests and stale guards conflict; HTTP 409 includes the current edit ETag
-when available. Source resolution, dispatch-time overlap and worker execution are
-T095/T096, while CLI/editor integrations remain T097/T098.
+when available. Full dispatch-time overlap/queue/cycle policy remains T096,
+while CLI/editor integrations remain T097/T098. T095 now composes these
+requests into [persistent dispatch](../transflow/SCHEDULING.md); authenticated
+capabilities report `schedules: true`. Temporary owners do not activate scheduling.

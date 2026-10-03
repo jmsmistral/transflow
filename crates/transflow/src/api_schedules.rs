@@ -1,4 +1,4 @@
-//! Guarded schedule definitions and lifecycle actions; build dispatch is T095.
+//! Guarded schedule definitions and lifecycle actions, composed with persistent dispatch.
 use crate::api_read::{self, Result, bad};
 use std::path::Path;
 use tf_api::{ApiError as E, Reply, Request};

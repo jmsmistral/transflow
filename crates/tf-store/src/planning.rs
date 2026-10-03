@@ -304,6 +304,16 @@ impl Store {
         if authority != 1 {
             return Err(conflict("coordinator ownership changed"));
         }
+        let scheduled: Option<crate::schedule_dispatch::Pending> = plan
+            .context
+            .get("schedule")
+            .cloned()
+            .map(serde_json::from_value)
+            .transpose()
+            .map_err(|_| conflict("invalid scheduled acceptance context"))?;
+        if let Some(pending) = &scheduled {
+            crate::schedule_dispatch::guard(&mut tx, &plan.workspace, pending).await?;
+        }
         let branch = if let Some(id) = &plan.output.branch {
             id.parse::<BranchId>()
                 .map_err(|_| conflict("invalid output branch"))?
@@ -371,6 +381,16 @@ impl Store {
         .execute(&mut *tx)
         .await?;
         sqlx::query("INSERT INTO builds(id,plan_id,trigger_json,requested_by,state,created_at_us) VALUES(?,?,'{}','local','QUEUED',?)").bind(build.to_string()).bind(&plan.id).bind(now).execute(&mut *tx).await?;
+        if let Some(pending) = &scheduled {
+            sqlx::query("UPDATE builds SET occurrence_id=?,trigger_json=?,requested_by='schedule' WHERE id=?").bind(pending.occurrence.to_string()).bind(json!({"kind":"schedule","schedule_id":pending.schedule.to_string(),"occurrence_id":pending.occurrence.to_string(),"manual":pending.payload["manual"]==true,"evidence":pending.payload}).to_string()).bind(build.to_string()).execute(&mut *tx).await?;
+            sqlx::query(
+                "UPDATE schedule_occurrences SET disposition='RUNNING',build_id=? WHERE id=?",
+            )
+            .bind(build.to_string())
+            .bind(pending.occurrence.to_string())
+            .execute(&mut *tx)
+            .await?;
+        }
         for w in &plan.writes {
             let valid:i64=sqlx::query_scalar("SELECT count(*) FROM datasets WHERE id=? AND workspace_id=? AND tombstoned_at_us IS NULL").bind(&w.dataset).bind(&plan.workspace).fetch_one(&mut *tx).await?;
             if valid != 1 {

@@ -1014,3 +1014,32 @@ causal-path budget. The final shallow fan-in graph stays inside it; the specific
 budget failure now degrades freshness to explicit Unknown while planning remains
 fail-closed. Missing policies, unverified bytes and provider facts remain unavailable.
 Scheduler role population is deferred to T090–T095. CI is pending owner confirmation.
+
+## T095 scheduled dispatch — 2026-10-04
+
+The [native receipt](evidence/t095-macos-arm64.json) records persistent foreground
+event/cron observation, frozen source/branch/policy/pin dispatch and atomic
+occurrence/build acceptance. Local gates passed: 476 Rust tests plus one doctest,
+58 installed CLI/API tests, 1,023 Python 3.14.7 tests, 518 web tests, all 351 shared
+conformance cases, strict lint/type/format, standalone storage and reproducible
+production builds. Specification validation/44 regressions and safety/27 regressions
+passed. The inventory's 643 locked package versions are unchanged; the advisory
+refresh reported zero matches at query time.
+
+`python/tools/check_dispatch.py` now includes 11 schedule cases in its 47 real-worker
+dispatch cases. They verify non-Git retained source, foreground-independent Git
+refs/output branches, invalid/unregistered source refusal, cache reuse, cross-branch
+local publication pins, frozen pending pins after head movement, missed cron restart
+and explicit working-tree additive registration. `python/tools/check_foreign.py`
+passes 17 provider/consumer cases, including saved provider fallback policies despite
+later edits and exact foreign inputs without replication. Queued-pin and downtime
+fixtures seed accepted durable evidence/cursors; actual local publication matching
+is separately exercised. SQLite acceptance tests inject job insertion failure and
+check that links, reservations and every related row roll back before a unique retry.
+
+The final Rust/native dispatch gates cover the API-busy priority fix. Full
+Python/web gates cover the generated boolean scheduling capability; final helper
+edits also passed focused lint/format/type checks and real worker qualification.
+No UI changes or internal Browser preview were needed. All test coordinators were
+stopped. Complete overlap/queue/cycle policy remains T096; scheduling CLI/editor
+remain T097/T098. CI is pending owner confirmation and was not polled.

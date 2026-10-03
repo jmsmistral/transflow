@@ -102,6 +102,31 @@ pub(super) fn prepare(
             let bytes = std::fs::read(capture.files_root().join(text(f, "path")?)).map_err(fail)?;
             Ok(found || bytes.windows(3).any(|w| w == b"ctx"))
         })?;
+    let (retry, abort_on_failure) = if let Some(scheduled) = plan.context.get("schedule") {
+        use tf_domain::execution::FailureClass;
+        let policies: tf_protocol::schedule::Policies =
+            serde_json::from_value(scheduled["execution"]["policies"].clone()).map_err(fail)?;
+        let classes = policies
+            .retryable_classes
+            .iter()
+            .map(|c| match c.as_str() {
+                "worker_unavailable" => Ok(FailureClass::WorkerUnavailable),
+                "transient_io" => Ok(FailureClass::TransientIo),
+                _ => Err(fail("Invalid scheduled retry class")),
+            })
+            .collect::<Result<std::collections::BTreeSet<_>>>()?;
+        (
+            RetryPolicy::new(
+                std::num::NonZeroU32::new(policies.max_attempts)
+                    .ok_or_else(|| fail("Invalid scheduled retry count"))?,
+                classes,
+            )
+            .map_err(fail)?,
+            policies.abort_on_failure,
+        )
+    } else {
+        config.failure_policy()
+    };
     let mut declarations = BTreeMap::new();
     let mut jobs = BTreeMap::new();
     let mut parents = BTreeMap::new();
@@ -245,7 +270,7 @@ pub(super) fn prepare(
                 },
                 target,
                 fence,
-                config.failure_policy().0,
+                retry.clone(),
                 EventTime(0),
             ),
         );
@@ -264,7 +289,7 @@ pub(super) fn prepare(
         parents,
         jobs,
         contextual,
-        abort_on_failure: config.failure_policy().1,
+        abort_on_failure,
         capacity: capacity.ok_or_else(|| fail("empty write set"))?,
     })
 }

@@ -66,6 +66,8 @@ pub struct Options {
     pub parameters: Vec<(String, Value)>,
     /// Attach the shared freshness read model for public explanations.
     pub explain: bool,
+    /// Frozen scheduled occurrence, rechecked against durable evidence at persistent acceptance.
+    pub scheduled: Option<tf_store::schedule_dispatch::Pending>,
 }
 /// Safe diagnostic retains internal errors without emitting user source or environment paths.
 #[derive(Debug, thiserror::Error)]
@@ -161,14 +163,43 @@ pub(crate) async fn prepare_inner(
     if owner.workspace_id().map_err(failure)? != workspace.config().id() {
         return Err(failure("workspace identity changed during inspection"));
     }
-    let inspection = preparation::inspect_selected(
-        &workspace,
-        request.python.as_ref(),
-        true,
-        None,
-        options.git_ref.as_deref().map(|r| (r, &request.branch)),
-    )
+    let mut request = request;
+    let fixed = options
+        .scheduled
+        .as_ref()
+        .and_then(|s| s.execution["build"]["source"]["snapshot_id"].as_str());
+    let inspection = if let Some(snapshot) = fixed {
+        preparation::inspect_fixed(
+            &workspace,
+            request.python.as_ref(),
+            snapshot.parse().map_err(failure)?,
+        )
+    } else {
+        preparation::inspect_selected(
+            &workspace,
+            request.python.as_ref(),
+            true,
+            None,
+            options.git_ref.as_deref().map(|r| (r, &request.branch)),
+        )
+    }
     .map_err(crate::build_plan::preparation_failure)?;
+    for reference in &mut request.boundaries {
+        if let Some(origin) = reference.strip_prefix("external:") {
+            let (workspace, dataset) = origin
+                .split_once('/')
+                .ok_or_else(|| failure("Invalid external boundary identity"))?;
+            let key = DatasetKey::from_text(workspace, dataset).map_err(failure)?;
+            let entry = inspection
+                .registry
+                .external_registrations()
+                .find(|e| e.key() == key)
+                .ok_or_else(|| {
+                    failure("Scheduled boundary is not registered in the selected source")
+                })?;
+            *reference = entry.alias().to_string();
+        }
+    }
     prepare_captured(owner, request, options, &inspection).await
 }
 /// Reuse an already inspected source for a why selection preview, including blocked plans.
@@ -190,6 +221,16 @@ pub(crate) async fn prepare_captured(
     let env = &inspection.env;
     let python = &inspection.python;
     let environment_request = &inspection.environment_request;
+    if let Some(scheduled) = &options.scheduled {
+        let source = &scheduled.execution["build"]["source"];
+        if (source["kind"] != "working_tree" || source["allow_additive_sync"] != true)
+            && !graph.candidate().pending().is_empty()
+        {
+            return Err(failure(
+                "Scheduled source has unregistered datasets; register them in the selected source before building",
+            ));
+        }
+    }
     let proposal = graph
         .candidate()
         .propose(|| {
@@ -239,6 +280,21 @@ pub(crate) async fn prepare_captured(
         request.fallbacks.as_deref(),
     )
     .map_err(failure)?;
+    if let Some(scheduled) = &options.scheduled {
+        let frozen: tf_protocol::schedule::BuildTemplate =
+            serde_json::from_value(scheduled.execution["build"].clone()).map_err(failure)?;
+        let policies = crate::schedule_dispatch::policy(&frozen.input_fallback_policy)?;
+        for binding in bindings.values_mut() {
+            binding.policy = policies
+                .local(
+                    &request.branch,
+                    binding.policy.declared().clone(),
+                    binding.policy.permission(),
+                    request.fallbacks.as_deref(),
+                )
+                .map_err(failure)?;
+        }
+    }
     // Qualify explicit pins without contacting providers. Exact pins need no live policy.
     let empty_policy =
         tf_domain::input::BranchPolicySnapshot::new(vec![], BTreeMap::new()).map_err(failure)?;
@@ -267,8 +323,44 @@ pub(crate) async fn prepare_captured(
             })
             .collect()
     };
-    let pins =
+    let mut pins =
         pins::qualify(&request.pins, &proposed, &bindings, &BTreeSet::new()).map_err(failure)?;
+    if let Some(scheduled) = &options.scheduled {
+        for pin in scheduled.payload["input_pins"]
+            .as_array()
+            .ok_or_else(|| failure("Missing frozen schedule input pins"))?
+        {
+            let pin: tf_store::schedule_events::ObservedDataset =
+                serde_json::from_value(pin.clone()).map_err(failure)?;
+            let origin =
+                DatasetKey::from_text(&pin.workspace_id, &pin.dataset_id).map_err(failure)?;
+            let version = pin.version_id.parse().map_err(failure)?;
+            let mut matched = false;
+            for (key, binding) in &bindings {
+                if binding.dataset == origin
+                    && match binding.policy.declared() {
+                        tf_domain::BranchSelector::Named(name) => name.as_str() == pin.branch,
+                        _ => true,
+                    }
+                {
+                    if pins
+                        .insert(key.clone(), version)
+                        .is_some_and(|old| old != version)
+                    {
+                        return Err(failure(
+                            "Frozen schedule pins conflict for an input binding",
+                        ));
+                    }
+                    matched = true;
+                }
+            }
+            if !matched {
+                return Err(failure(
+                    "Frozen event pin has no matching input in the selected source",
+                ));
+            }
+        }
+    }
     let scope_request = ScopeRequest {
         mode: request.mode,
         targets: resolve(&request.targets)?,
@@ -286,6 +378,19 @@ pub(crate) async fn prepare_captured(
             .collect(),
     };
     let mut scope = graph_scope.select(&scope_request).map_err(failure)?;
+    for key in pins.keys() {
+        let binding = bindings
+            .get(key)
+            .ok_or_else(|| failure("Missing pinned input"))?;
+        if scope_request
+            .targets
+            .contains(&CandidateIdentity::Registered(binding.dataset))
+        {
+            return Err(failure(
+                "A scheduled input pin cannot also be a requested output",
+            ));
+        }
+    }
     let supplied = crate::plan_parameters::overrides(
         &graph,
         &proposed,
@@ -473,8 +578,30 @@ pub(crate) async fn prepare_captured(
                 .find(|d| d.output == selected.consumer)
                 .and_then(|d| d.inputs.iter().find(|i| i.alias == selected.alias))
                 .ok_or_else(|| failure("missing external declaration"))?;
-            let (origin, selection) =
+            let (origin, mut selection) =
                 crate::external_reads::selection(&proposed, input, &key, &request.branch)?;
+            if let Some(scheduled) = &options.scheduled {
+                let frozen: tf_protocol::schedule::BuildTemplate =
+                    serde_json::from_value(scheduled.execution["build"].clone())
+                        .map_err(failure)?;
+                let provider = frozen
+                    .provider_fallback_policies
+                    .get(&origin.workspace_id().to_string())
+                    .ok_or_else(|| failure("Missing frozen provider fallback policy"))?;
+                let binding = selection.binding(
+                    origin.workspace_id(),
+                    &crate::schedule_dispatch::policy(provider)?,
+                )?;
+                selection.fallback = Some(
+                    binding
+                        .policy
+                        .candidates()
+                        .iter()
+                        .skip(1)
+                        .map(ToString::to_string)
+                        .collect(),
+                );
+            }
             reads.push(
                 crate::external_reads::prepare(
                     store,
@@ -612,7 +739,7 @@ pub(crate) async fn prepare_captured(
         replacement: proposal.replacement().into(),
         discovery: result,
         environment: json!({"fingerprint":env.fingerprint,"runtime_version":env.runtime_version,"interpreter":env.interpreter,"base_python":python}),
-        source_evidence: json!({"selector":options.git_ref.as_ref().map(|r|json!({"kind":"git_ref","ref":r})).unwrap_or_else(||json!({"kind":"working_tree"})),"git":capture.git(),"files":capture.manifest_files()}),
+        source_evidence: json!({"selector":capture.git().and_then(|g|g.requested_ref()).map(|r|json!({"kind":"git_ref","ref":r})).unwrap_or_else(||json!({"kind":"working_tree"})),"git":capture.git(),"files":capture.manifest_files()}),
         output,
         guards,
         writes,
@@ -628,7 +755,16 @@ pub(crate) async fn prepare_captured(
         "require_available"
     });
     plan.context["freshness"] = freshness.unwrap_or(Value::Null);
-    preparation::verify_selection(capture, &workspace, false).map_err(failure)?;
+    if let Some(scheduled) = &options.scheduled {
+        plan.context["schedule"] = serde_json::to_value(scheduled).map_err(failure)?;
+        if scheduled.execution["build"]["source"]["kind"] == "fixed_snapshot" {
+            preparation::verify_retained(capture, &workspace).map_err(failure)?;
+        } else {
+            preparation::verify_selection(capture, &workspace, false).map_err(failure)?;
+        }
+    } else {
+        preparation::verify_selection(capture, &workspace, false).map_err(failure)?;
+    }
     if environment::inspect(workspace.root(), python, environment_request).map_err(failure)? != *env
     {
         return Err(failure("environment changed during planning"));
@@ -709,8 +845,19 @@ pub(crate) async fn accept_inner(
         return Err(failure("saved source identity changed"));
     }
     let replay = plan.context["replay_of"].is_string();
-    let fixed = replay || capture.git().is_some_and(|g| g.requested_ref().is_some());
-    if !replay {
+    let retained =
+        plan.context["schedule"]["execution"]["build"]["source"]["kind"] == "fixed_snapshot";
+    let fixed = replay || retained || capture.git().is_some_and(|g| g.requested_ref().is_some());
+    if plan.context.get("schedule").is_some()
+        && owner.registration().mode() != tf_exec::ownership::CoordinatorMode::Persistent
+    {
+        return Err(failure(
+            "Scheduled dispatch requires the persistent coordinator",
+        ));
+    }
+    if retained {
+        preparation::verify_retained(&capture, &workspace).map_err(failure)?;
+    } else if !replay {
         preparation::verify_selection(&capture, &workspace, true).map_err(failure)?;
     }
     let current_registry = std::fs::read(root.join(".transflow/catalog.toml")).map_err(failure)?;

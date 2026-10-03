@@ -1,4 +1,4 @@
-//! Foreground headless coordinator for CLI submissions. API/UI/schedules compose later.
+//! Foreground persistent coordinator for shared CLI/API builds and schedule dispatch.
 use crate::{
     build_cli,
     build_plan::{Error, failure},
@@ -131,10 +131,23 @@ pub(crate) fn execute(
         );
         eprintln!("HTTP API: http://{}", http.address());
     }
+    let mut schedule_after = String::new();
+    let mut schedule_next = std::time::Instant::now();
     while !stopped.load(Ordering::Acquire) {
         service.queries.tick();
         crate::provider::drain(&mut owner, &rt, &endpoint.providers)?;
         crate::api::drain(&mut owner, &commands, &endpoint.busy).map_err(failure)?;
+        if std::time::Instant::now() >= schedule_next {
+            let (completion, next) = rt.block_on(crate::schedule_dispatch::advance(
+                owner,
+                schedule_after,
+                endpoint.busy.clone(),
+            ))?;
+            owner = completion.owner;
+            schedule_after = next;
+            completion.result?;
+            schedule_next = std::time::Instant::now() + Duration::from_secs(1);
+        }
         let queued = rt.block_on(async {
             let mut s = owner.open_store().await.map_err(failure)?;
             let q = s

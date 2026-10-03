@@ -486,6 +486,7 @@ pub(crate) fn selection(
         parameters: json!({}),
     };
     let options = build_plan::Options {
+        scheduled: None,
         git_ref: source,
         require_current: args
             .get_one::<String>("boundary-policy")

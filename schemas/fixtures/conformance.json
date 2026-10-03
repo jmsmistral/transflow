@@ -8683,5 +8683,39 @@
       "manual": true,
       "definition": {}
     }
+  },
+  {
+    "name": "api-capabilities-scheduling-enabled",
+    "schema": "ApiCapabilitiesV1",
+    "valid": true,
+    "value": {
+      "api_version": 1,
+      "protocol_major": 1,
+      "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "operations": [],
+      "engines": [],
+      "limits": {
+        "body_bytes": 0,
+        "in_flight": 0,
+        "page_default": 0,
+        "page_max": 0,
+        "graph_default": 0,
+        "graph_max": 0,
+        "graph_expansion_threshold": 0,
+        "source_bytes": 0,
+        "event_replay": 10000,
+        "event_streams": 4,
+        "preview_rows": 1000,
+        "preview_bytes": 2097152,
+        "preview_cell_bytes": 4096,
+        "query_active": 4,
+        "query_retention_seconds": 300,
+        "query_spill_bytes": 268435456
+      },
+      "metadata_reads_import_code": false,
+      "external_reads": "provider_owned_leased",
+      "schedules": true,
+      "ui": true
+    }
   }
 ]

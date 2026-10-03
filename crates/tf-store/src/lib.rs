@@ -407,3 +407,6 @@ pub mod schedule_clock;
 
 /// Audited schedule lifecycle and explicit bounded replay services.
 pub mod schedule_lifecycle;
+
+/// Guarded scheduled build linking and terminal reconciliation.
+pub mod schedule_dispatch;

@@ -186,8 +186,8 @@ T093 adds internal five-field cron resolution using bundled IANA timezone rules,
 next-five UTC/local previews, durable intended-tick identities and clock cursors.
 Sleep/restart observation follows skip, latest-per-leaf coalescing or bounded
 catch-up, with missed/ignored counts. Backward clock jumps never lower the cursor.
-The [clock services](crates/tf-schedule/README.md) do not activate a scheduler or
-execute jobs; persistent dispatch and the schedule editor remain later tasks.
+The [clock services](crates/tf-schedule/README.md) are composed into persistent
+observation by T095; the schedule editor remains later work.
 
 T094 adds authenticated, guarded **pause/resume/run-now** API actions. Pause holds
 pending automatic requests, and resume applies their frozen expiry/queue/coalescing
@@ -195,8 +195,22 @@ policies. Durable pause intervals keep delayed events and clock ticks ignored af
 resume. Run-now queues an independent manual request even while paused; it does not
 unpause or consume automatic tokens. Optional bounded event replay creates new
 audited occurrences. Saves overwrite one definition and preserve accepted settings
-and pins. These are backend request services; executing scheduled jobs is T095,
-with the scheduling CLI/editor in T097/T098. See the [API guide](crates/tf-api/README.md#schedule-lifecycle-actions-t094).
+and pins. See the [API guide](crates/tf-api/README.md#schedule-lifecycle-actions-t094).
+
+T095 executes scheduled builds through the shared guarded pipeline while
+`transflow serve` is running. It observes committed events and cron ticks, resolves
+the saved source selector at dispatch, and preserves the occurrence's output
+branch, fallback policies, parameters, retry settings and exact event input pins.
+Retained non-Git snapshots and clean Git refs require registered identities and
+never change the foreground checkout. Mutable working-tree capture permits
+additive registration only when the definition explicitly enables it. Failed
+preparation records a failed occurrence without launching a job. Restart recovery
+keeps the unique occurrence/build link and emits schedule success once.
+
+This foreground backend currently dispatches serially, with conservative ancestry
+and consecutive-build safeguards. Full overlap/queue/cycle policy remains T096;
+the scheduling CLI/editor remain T097/T098. It does not install a background
+service. See the [dispatch guide](crates/transflow/SCHEDULING.md).
 
 T087 adds the **Build planner** inspector for the current lineage selection. With
 nothing selected it shows a centered build prompt. Choose selected resources only

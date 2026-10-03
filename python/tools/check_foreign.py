@@ -17,7 +17,11 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(REPO / "python/sdk/src"), str(REPO / "python/worker/src")]
+sys.path[:0] = [
+    str(REPO / "python/tools"),
+    str(REPO / "python/sdk/src"),
+    str(REPO / "python/worker/src"),
+]
 from transflow_worker.environment import lock_environment, sync_environment  # noqa: E402
 
 
@@ -204,6 +208,10 @@ def main() -> None:
             "SELECT starting_branch,resolved_branch FROM version_inputs "
             "ORDER BY rowid DESC LIMIT 1",
         ) == [("feature", "master")]
+        from check_schedule_dispatch import exercise_foreign
+
+        for case in exercise_foreign(cli, consumer, provider, sys.executable, current["id"]):
+            passed(case)
         source(", branch=Branch.CURRENT, stop_branch_fallback=True")
         build(consumer, "curated/result", "--branch", "feature", ok=False)
         source(', branch="master", stop_branch_fallback=True')
