@@ -224,8 +224,18 @@ impl Store {
                 {
                     return Err(Error::Evidence);
                 }
-            } else if tick.as_ref() != Some(&p.event_id) || p.event_kind != "schedule.tick" {
-                return Err(Error::Evidence);
+            } else {
+                let tick = tick.ok_or(Error::Evidence)?;
+                let original: Option<(String,String,String,i64)> = sqlx::query_as("SELECT schedule_id,trigger_epoch,leaf_id,at_us FROM schedule_clock_ticks WHERE id=? AND disposition='DELIVERED'")
+                    .bind(&tick).fetch_optional(&mut *tx).await.map_err(StoreError::from)?;
+                if tick != p.event_id
+                    || p.event_kind != "schedule.tick"
+                    || sequence != 0
+                    || original != Some((id.to_string(), epoch.into(), leaf.clone(), time))
+                    || token != digest(&json!(["transflow.schedule.tick.token.v1", tick]))?
+                {
+                    return Err(Error::Evidence);
+                }
             }
             if let Some(d) = &p.dataset {
                 if d.workspace_id == workspace.to_string() {

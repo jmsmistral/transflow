@@ -1,6 +1,6 @@
 {
   "locks": {
-    "Cargo.lock": "285151a3d2161f1d69ccf46775d96decf64f8544da7c14a45cf2dd5a9f4cb5de",
+    "Cargo.lock": "9f3b02844cf0f0c00a35583d44ccf9d15861e2e6b5769849ae53a000d5690bf6",
     "python/dev-py314.lock": "70e9c67f810e843334c39b4d47c1a23c30e7a982a1da144b87fc86c844227ddc",
     "tools/qualification/python/py314.lock": "cd008e118c8e66bda4e999a67be7d869a1fa62ada37ca19246e42a00f7014be3",
     "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
@@ -764,6 +764,7 @@
         "MIT OR Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "chrono-tz",
@@ -2073,6 +2074,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "phf",
@@ -2086,6 +2088,7 @@
         "MIT"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "phf_shared",
@@ -2486,6 +2489,7 @@
         "MIT/Apache-2.0"
       ],
       "locks": [
+        "Cargo.lock",
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "siphasher",

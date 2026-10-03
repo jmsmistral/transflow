@@ -1,0 +1,53 @@
+{
+  "task": "T093",
+  "date": "2026-10-03",
+  "host": "macOS arm64",
+  "implementation_base": "aac3cb0c3a455b01d1bc9ed570b561661fb8219e",
+  "specification_base": "69489ed1ccecab52accef6f34146fa2d7a1f5fce",
+  "specification_version": "1.1.3",
+  "runtime_schema": 15,
+  "timezone_dependencies": {
+    "chrono": "0.4.45",
+    "chrono_tz": "0.10.4",
+    "bundled_iana": "2025b",
+    "qualification": "Existing T003 pins; no package-version additions or changes across the nine reviewed locks"
+  },
+  "local_verification": {
+    "focused": "10 cron/timezone tests, 11 new real SQLite clock tests, 11 T092 scheduling integration entrypoints, 4 definition tests and 13 storage tests passed",
+    "affected_clippy": "tf-schedule/tf-store all-target Clippy and formatting passed",
+    "dependency_advisories": "Explicit OSV refresh queried all 643 locked package versions; zero advisory matches; license declarations retained for unchanged versions",
+    "rust_gate": "460 Rust unit/integration tests plus one doctest passed; formatting, workspace compilation, standalone storage compilation, workspace all-target Clippy and 12 boundary regressions passed",
+    "installed_worker_cli": "58 CLI/API integration tests passed with Python 3.14.7",
+    "specification": "Documentation/link/fence/syntax validation and all 44 specification regressions passed",
+    "safety": "Generated drift, offline dependency and public artifact checks passed, with 27 safety regressions"
+  },
+  "coverage": [
+    "Numeric five-field lists/ranges/steps, calendar day OR weekday, Sunday 0/7, leap-day preview and quarter-hour offsets",
+    "Spring-forward gaps, default earliest folds, explicit both distinct UTC keys/offset labels, Lord Howe half-hour folds and Apia removed date",
+    "Virtual frozen clocks, backward jumps, bounded sleep passes, skip/latest/catch-up counts and simultaneous leaf cursor continuation",
+    "Atomic intended-tick/cursor/audit acceptance and token delivery with injection rollback at every write stage",
+    "Actual file SQLite restart/retry and concurrent owner conflicts; immutable tick identity; no duplicate T092 occurrences",
+    "Catch-up delivers separate intended ticks between evaluations; other policies may supersede prior signal tokens",
+    "Paused observation advances/counts ignored intervals; exclusively expired pending ticks are counted/audited; full pending capacity preserves cursor",
+    "Stale edit/epoch/pause and oversized prepared capacity fail without writes; forged tick evidence fails before occurrence acceptance",
+    "Schema 14 upgrade preserves current schedule definitions and trigger epochs; existing historical upgrade fixtures remain covered",
+    "Next-five UTC/local preview is exposed by the internal resolver; unknown zones/impossible previews fail explicitly"
+  ],
+  "boundaries": [
+    "These are explicit resolver/store services; no automatic persistent observation loop, executing job, producer or provider contact is activated",
+    "T094 owns lifecycle commands; T095 owns persistent observation/source resolution/guarded dispatch; T098 owns schedule editor and preview display",
+    "A25 clock/misfire foundations are covered; full pause/resume lifecycle remains T094",
+    "T090 definition codec retains structural timezone validation; actual IANA lookup is required by preview/clock preparation",
+    "One UTC day per pass, 64 clock leaves, 500000 local candidates and 100000 due ticks; more indicates remaining work",
+    "Preview horizon is 32 calendar years and 100000 matching local candidates; supported observations are Unix epoch through year 9999",
+    "At most 100 intended ticks pending per schedule/epoch; occurrence max_pending is a separate budget",
+    "No wire/schema generator changes or Python/web application changes; their full language suites were not repeated",
+    "No UI change or preview coordinator/browser journey was started",
+    "CI awaits owner confirmation and was not polled"
+  ],
+  "iteration_fixes": [
+    "Updated schema/table-count assertions and historical fixture reconstruction for two added clock tables",
+    "Catch-up blocks older unconsumed same-leaf evidence; latest/skip policies can supersede it",
+    "Prepared-plan counters and capacity are checked before arithmetic/storage mutation"
+  ]
+}

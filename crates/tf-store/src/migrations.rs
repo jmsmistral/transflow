@@ -1,7 +1,7 @@
 use crate::{Result, SCHEMA_VERSION, StoreError};
 use sqlx::{Connection, Row, SqliteConnection};
 const APP_ID: i64 = 0x5452464c;
-const MIGRATIONS: [&str; 14] = [
+const MIGRATIONS: [&str; 15] = [
     include_str!("../migrations/001_core.sql"),
     include_str!("../migrations/002_catalog_foreign.sql"),
     include_str!("../migrations/003_publication.sql"),
@@ -16,6 +16,7 @@ const MIGRATIONS: [&str; 14] = [
     include_str!("../migrations/012_events.sql"),
     include_str!("../migrations/013_schedule_snapshots.sql"),
     include_str!("../migrations/014_schedule_queue_indexes.sql"),
+    include_str!("../migrations/015_schedule_clocks.sql"),
 ];
 pub(crate) async fn preflight(db: &mut SqliteConnection) -> Result<()> {
     let version: i64 = sqlx::query_scalar("PRAGMA user_version")

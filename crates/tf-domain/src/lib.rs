@@ -47,3 +47,6 @@ pub mod history;
 
 /// Pure deterministic scheduling trigger selection and coalescing.
 pub mod schedule;
+
+/// Bounded clock planning requests shared by resolver and persistence.
+pub mod schedule_clock;

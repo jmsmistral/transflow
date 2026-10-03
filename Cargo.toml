@@ -22,6 +22,8 @@ rust-version = "1.98.1"
 publish = false
 
 [workspace.dependencies]
+chrono = { version = "=0.4.45", default-features = false, features = ["std"] }
+chrono-tz = { version = "=0.10.4", default-features = false, features = ["std"] }
 arrow-array = "=60.0.0"
 arrow-schema = "=60.0.0"
 arrow-ipc = "=60.0.0"

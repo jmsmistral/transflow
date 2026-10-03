@@ -39,8 +39,8 @@ EXTERNAL = {
     "transflow": {"rustix", "clap", "thiserror", "tokio", "tracing", "serde", "serde_json"},
 }
 
-# T007's real SQLite integration fixture needs an executor, only in tests.
-DEV_EXTERNAL = {"tf-exec": {"sqlx", "libsqlite3-sys"}, "tf-store": {"tokio"}, "transflow": {"serde_json", "sqlx"}}
+# Real SQLite scheduling/execution fixtures use these dependencies only in tests.
+DEV_EXTERNAL = {"tf-exec": {"sqlx", "libsqlite3-sys"}, "tf-store": {"tokio"}, "tf-schedule": {"sqlx", "serde_json", "tokio"}, "transflow": {"serde_json", "sqlx"}}
 
 
 def validate_graph(metadata: dict, qualified: dict[str, str]) -> list[str]:

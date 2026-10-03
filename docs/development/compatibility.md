@@ -20,6 +20,7 @@ the native SQLite/engine results, exact tool output and selected wheel filenames
 | pandas / NumPy | 3.0.6 / 2.5.3 |
 | Rust Arrow / Parquet | 60.0.0 |
 | SQLx / libsqlite3-sys | 0.9.0 / 0.37.0, bundled SQLite enabled |
+| Chrono / Chrono-TZ | 0.4.45 / 0.10.4; T093 runtime resolver uses bundled IANA 2025b |
 | Observed Rust SQLite | 3.51.3; source ID below |
 | Node / npm | 24.4.1 / 11.4.2, observed installed versions; no global Node update |
 | React / React DOM | 19.3.0 |

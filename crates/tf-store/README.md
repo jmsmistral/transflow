@@ -19,7 +19,7 @@ workspace initialization and robust ownership/path protection remain separate ta
 
 ## Schema and migrations
 
-Fourteen forward migrations install 53 logical tables: source/catalogue projections,
+Fifteen forward migrations install 55 logical tables: source/catalogue projections,
 versions/heads, builds/jobs/attempts, checks, scheduling, events/outbox, pins/audit,
 registry mutation journals, foreign replicas/leases, frozen publication/check
 links, read retention, replay, cache associations and computation comparison evidence.
@@ -216,8 +216,42 @@ is reached. Expired and future tokens remain historical/unconsumed evidence and
 cannot satisfy the current expression. Definition edits reject stale epochs;
 already queued requests keep their source settings, fallback policies and pins.
 
-Clock/tick generation and lifecycle endpoints are later tasks. The primitive is
-not connected to the persistent daemon yet. Tests cover injected failures at each
+Clock generation is delivered separately in T093 below; lifecycle endpoints are
+later tasks. The primitive is not connected to the persistent daemon yet. Tests cover injected failures at each
 write stage, concurrent SQLite owners, close/reopen replay, real process death
 across modeled enqueue transaction boundaries, retained pins after expiry/edits,
 and schema-13 upgrade/index use.
+
+## Durable schedule clocks (T093)
+
+`Store`/`Reader::schedule_clock` reads a consistent definition/epoch/cursor snapshot.
+The caller resolves timezone/cron work outside SQLite writer ownership, using
+[tf-schedule](../tf-schedule/README.md). `accept_schedule_clock` compares the edit,
+epoch, cursor, pause and pending-count guards and atomically records intended ticks,
+cursor/counters and audit. Concurrent/stale preparation conflicts without writes.
+Schema 15 adds `schedule_clock_state` and `schedule_clock_ticks`, with a partial
+pending index, unique schedule/epoch/leaf/UTC keys and immutable intended identities.
+No existing definition or execution history is rewritten.
+
+The initial cursor is the current definition's save timestamp. Its leaf-order
+component preserves simultaneous compound ticks when catch-up stops mid-instant.
+Backward clock observations are no-ops. Paused observations advance the cursor
+and record ignored ticks; resuming cannot silently replay that observed interval.
+A new trigger epoch starts from its new save time, independently of old tick facts.
+
+`deliver_schedule_ticks` emits at most one pending token per leaf per call. For
+catch-up, another eligible unconsumed token blocks that leaf until T092 consumes it;
+call T092 evaluation between delivery passes. This prevents a queued set of missed
+clock ticks from being collapsed by the evaluator's latest-per-leaf rule. Other
+policies can deliver newer evidence to supersede an older token. Pending ticks are
+capped at 100; accepted occurrences have their separate `max_pending` capacity.
+The token window begins at the intended UTC time. Exclusively expired ticks are
+marked EXPIRED, counted as ignored and audited; expiry never substitutes a new time.
+Tick tokens retain their original UTC evidence and are checked against the durable
+tick identity before occurrence acceptance. No build/job or provider read is started.
+
+Tests cover exact DST keys, both fold instants, restart/backward-clock idempotency,
+compound catch-up, paused/expired accounting, epoch races, pending capacity,
+forged evidence and rollback at tick, cursor, token and audit writes. Schema-14
+upgrade preserves current definitions. Lifecycle API/CLI operations, the persistent
+observation/dispatch loop and schedule editor remain T094–T098.
