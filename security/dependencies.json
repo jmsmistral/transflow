@@ -5,8 +5,8 @@
     "tools/qualification/python/py314.lock": "cd008e118c8e66bda4e999a67be7d869a1fa62ada37ca19246e42a00f7014be3",
     "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
     "tools/qualification/rust/Cargo.lock": "5f9a764a0b893a1aefac1495f24c9f2c425bd5c375690ea6f162c8c4e364f632",
-    "tools/qualification/web/package-lock.json": "a9105bbe9e499ec2f60b679f0f838cbf7a5bc7bdee19b1b03de8a6c606f49574",
-    "web/package-lock.json": "d531ea2a6acbc2b9928b4f65d8ff6406726967ae272841ffe72523a809c41664"
+    "tools/qualification/web/package-lock.json": "05283de8ee91ea2de18dc35391a714928cac80d348555cc249391cc58d6e47b5",
+    "web/package-lock.json": "634127a7a586889c4a726e89468bf9ec16017274a24ab818c7d01b4adcd5bf02"
   },
   "packages": [
     {
@@ -7960,7 +7960,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:source-map-js@1.2.1",
+      "id": "npm:source-map-js@1.2.2",
       "licenses": [
         "BSD-3-Clause"
       ],
@@ -7969,7 +7969,7 @@
         "web/package-lock.json"
       ],
       "name": "source-map-js",
-      "version": "1.2.1"
+      "version": "1.2.2"
     },
     {
       "deprecations": [],

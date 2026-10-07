@@ -1,7 +1,7 @@
 {
-  "checked_at": "2026-10-03T20:42:24.668251+00:00",
+  "checked_at": "2026-10-07T07:46:49.967861+00:00",
   "findings": [],
-  "inventory_sha256": "63af8e124b2e0f92f73c51eff827203619ea13273f642359f3ff855c3fa15e7e",
+  "inventory_sha256": "5cba7090c66e068ee17e6558c1448ae300150c1c1ea6b9b02c3892d802b52e83",
   "provider": "https://api.osv.dev/v1/querybatch",
   "queried": [
     "PyPI:ast-serialize@0.11.2",
@@ -594,7 +594,7 @@
     "npm:side-channel-weakmap@1.0.2",
     "npm:side-channel@1.1.1",
     "npm:siginfo@2.0.0",
-    "npm:source-map-js@1.2.1",
+    "npm:source-map-js@1.2.2",
     "npm:stackback@0.0.2",
     "npm:std-env@4.2.0",
     "npm:stop-iteration-iterator@1.1.0",

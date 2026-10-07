@@ -100,6 +100,25 @@ Two development-only deprecations are temporarily excepted until 2026-10-19:
 The Transflow maintainers own both reviews. Neither exception suppresses a
 vulnerability advisory. No dependency version was changed for T008.
 
+### source-map-js advisory correction (2026-10-07)
+
+The owner reported safety CI rejecting `source-map-js@1.2.1` for
+[GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q)
+(CVE-2026-93749): excessive indexed source-map section offsets can block the
+JavaScript event loop. Both the application web and isolated web qualification
+lockfiles now resolve the patched `1.2.2`, within the existing dependency range.
+The package manifests, toolchain versions and advisory policy are unchanged.
+
+The license inventory and OSV evidence were refreshed together. The query on
+2026-10-07 covered 643 locked package versions and reported zero advisory matches.
+Both standalone CI-mode and paired local safety checks passed all 27 regressions.
+The full web gate passed 518 component tests, strict checks, production worker
+probes and reproducibility checks for 16 assets. The isolated web probe passed
+typechecking, its build and six tests, including a regression accepting an ordinary
+indexed map and rejecting excessive, invalid and cumulatively excessive nested
+section offsets before serialization. No advisory exception was added. Updated
+remote CI is pending owner monitoring.
+
 ## Privacy scope
 
 The scanner uses each explicit repository's tracked and nonignored candidate

@@ -8,6 +8,27 @@ import { mkdtemp, mkdir, readFile, writeFile, copyFile, rm } from 'node:fs/promi
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { SourceMapConsumer } from 'source-map-js';
+
+test('indexed source maps reject excessive and invalid section offsets', () => {
+  const flat = { version: 3, sources: ['probe.js'], names: [], mappings: 'AAAA' };
+  const indexed = (line, map = flat) => ({
+    version: 3, sections: [{ offset: { line, column: 0 }, map }],
+  });
+  const valid = new SourceMapConsumer(indexed(0));
+  const mappings = [];
+  valid.eachMapping(mapping => mappings.push({ source: mapping.source, line: mapping.generatedLine }));
+  assert.deepEqual(mappings, [{ source: 'probe.js', line: 1 }]);
+  // Constructing the consumer must reject the offset before serializers can
+  // turn this tiny map into unbounded line expansion (CVE-2026-93749).
+  for (const line of [Number.MAX_SAFE_INTEGER, Infinity, -1, 0.5]) {
+    assert.throws(() => new SourceMapConsumer(indexed(line)), /Section offset line/);
+  }
+  assert.throws(
+    () => new SourceMapConsumer(indexed(6_000_000, indexed(6_000_000))),
+    /including offsets of nested sections/,
+  );
+});
 
 test('React and React Flow import together', () => {
   assert.ok(ReactFlow);
