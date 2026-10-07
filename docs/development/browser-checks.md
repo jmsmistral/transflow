@@ -31,6 +31,16 @@ the bearer token.
 
 Keep private reference screenshots and credentials out of committed evidence.
 
+## Persistent review workspaces
+
+For owner review sessions, create feature-specific synthetic workspaces under the
+sibling `../transflow-workspace/` directory, such as `t095-schedules/`. Keep setup
+and authenticated launch helpers there too, so a restart does not remove them.
+Reserve temporary directories for automated fixtures that clean up after themselves.
+Preserve existing review workspaces; remove them only when the owner requests
+cleanup. Stop any coordinator started for verification before handing the workspace
+back, and report its path and the observed checks.
+
 ## Dataset inspection (T085)
 
 On a real synthetic coordinator, select a published local dataset and open the
