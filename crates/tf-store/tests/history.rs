@@ -369,6 +369,54 @@ async fn retained_history_metrics_cache_retry_and_context_isolation()
             .await
             .is_err()
     );
+    // Build captions may use current schedule metadata, but the accepted trigger
+    // stays frozen. Never resolve another workspace's schedule name.
+    let sid = id(950);
+    sqlx::query("INSERT INTO schedules(id,workspace_id,name,definition_json,etag,trigger_epoch,paused,needs_review,saved_at_us,saved_by,event_cursor) VALUES(?,?,?,'{}','etag','epoch',0,0,0,'fixture',0)")
+        .bind(&sid).bind(workspace.to_string()).bind("Daily items")
+        .execute(&mut writer).await?;
+    let trigger = json!({"kind":"schedule","schedule_id":sid,"evidence":{"frozen":true}});
+    sqlx::query("UPDATE builds SET trigger_json=? WHERE id=?")
+        .bind(trigger.to_string())
+        .bind(id(202))
+        .execute(&mut writer)
+        .await?;
+    let named = rd.build_report(workspace, id(202).parse()?).await?;
+    assert_eq!(named["schedule_name"], "Daily items");
+    assert_eq!(named["trigger"], trigger);
+    sqlx::query("UPDATE schedules SET name='Renamed items',deleted_at_us=10 WHERE id=?")
+        .bind(&sid)
+        .execute(&mut writer)
+        .await?;
+    let renamed = rd.build_report(workspace, id(202).parse()?).await?;
+    assert_eq!(renamed["schedule_name"], "Renamed items");
+    assert_eq!(renamed["trigger"], trigger);
+    assert!(
+        rd.build_report(id(951).parse()?, id(202).parse()?)
+            .await
+            .is_err()
+    );
+    sqlx::query("DELETE FROM schedules WHERE id=?")
+        .bind(&sid)
+        .execute(&mut writer)
+        .await?;
+    let missing = rd.build_report(workspace, id(202).parse()?).await?;
+    assert!(missing.get("schedule_name").is_none());
+    assert_eq!(missing["trigger"], trigger);
+    let captured = json!({"kind":"schedule","name":"Captured name","schedule_id":sid});
+    sqlx::query("UPDATE builds SET trigger_json=? WHERE id=?")
+        .bind(captured.to_string())
+        .bind(id(202))
+        .execute(&mut writer)
+        .await?;
+    let retained = rd.build_report(workspace, id(202).parse()?).await?;
+    assert_eq!(retained["schedule_name"], "Captured name");
+    assert_eq!(retained["trigger"], captured);
+    let stored: String = sqlx::query_scalar("SELECT trigger_json FROM builds WHERE id=?")
+        .bind(id(202))
+        .fetch_one(&mut writer)
+        .await?;
+    assert_eq!(stored, captured.to_string());
     writer.close().await?;
     rd.close().await?;
     std::fs::remove_dir_all(dir)?;

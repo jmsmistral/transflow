@@ -64,6 +64,17 @@ duration appears. A first build without historical samples retains an unavailabl
 estimate; noncached missing starts/waits remain unavailable. Status/path filtering
 and active-build refresh still work.
 
+Check that manual single/multiple-target headings show the dataset path/count,
+and scheduled headings show the schedule name. Open the custom status picker:
+search, move with arrow keys and choose with Enter; selection returns focus to
+the trigger. Escape closes just the picker, leaving the Build modal open. Clicking
+outside closes it while allowing the clicked widget to act; moving outside does
+not close it. Clear the filter to restore all jobs without shifting the time axis.
+Names share a content-sized column capped at 240 pixels, with full-name tooltips
+and ellipses for longer paths. The first track starts 12 pixels after that column;
+the time axis aligns with the tracks. Bars have square corners and no glyphs.
+Hover recorded/open bars to check duration units and the explicit elapsed label.
+
 ## Persistent review workspaces
 
 For owner review sessions, create feature-specific synthetic workspaces under the

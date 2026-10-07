@@ -4,10 +4,23 @@ import {
   historyDateRange,
   percent,
   position,
+  readableDuration,
   seconds,
   sourceDiff,
   timestamp,
 } from "./execution-model";
+
+test("bar duration units keep integer precision and choose seconds, minutes or hours", () => {
+  expect(readableDuration("0")).toBe("0.00 s");
+  expect(readableDuration("2565000000")).toBe("2.57 s");
+  expect(readableDuration("59990000000")).toBe("59.99 s");
+  expect(readableDuration("60000000000")).toBe("1.00 min");
+  expect(readableDuration("90000000000")).toBe("1.50 min");
+  expect(readableDuration("3600000000000")).toBe("1.00 h");
+  expect(readableDuration("5400000000000")).toBe("1.50 h");
+  expect(readableDuration("9007199254740993123")).toBe("2501999.79 h");
+  expect(readableDuration(null)).toBe("Unavailable");
+});
 
 test("inclusive history dates include a whole UTC day and reject invalid ranges", () => {
   const leapDay = historyDateRange("2024-02-29", "2024-02-29");

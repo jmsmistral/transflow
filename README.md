@@ -160,6 +160,12 @@ with the same dataset job set. The approximate total duration includes operation
 overhead and exposes its sample count; insufficient timing evidence stays
 unavailable. Cached-only builds show completion time as Started and a not-applicable
 Queue wait, while retaining no execution duration or Gantt interval.
+Build headings identify a single requested dataset, the number of requested
+datasets, or the schedule name. The searchable status picker supports keyboard
+selection, Escape and outside-click dismissal. Gantt names use a shared column
+sized to their text, capped at 240 pixels with ellipses; square bars show status
+through the legend and table. Bar tooltips end with a duration in seconds,
+minutes or hours; open bars explicitly label their live elapsed time.
 T088 adds status, freshness, duration, rows, files, physical size, output health and
 build-role colouring with compact node labels and legends counting visible unique
 nodes. Zero, Unknown and No health checks remain distinct; failed jobs do not erase

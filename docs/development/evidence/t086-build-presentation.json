@@ -1,0 +1,38 @@
+{
+  "task": "T086 Build captions and Gantt presentation refinement",
+  "date": "2026-10-07",
+  "implementation_base": "f60ed83b18652229364ef4963319c545c7ac3456",
+  "specification_base": "6b760541c92268bc9fbbae2077886b7da62647be",
+  "changes": [
+    "Manual captions resolve one accepted target to its display path or count multiple unique requested datasets; scheduled captions use the schedule name.",
+    "Optional read-only schedule_name projection preserves the accepted trigger and resolves legacy names from the current same-workspace schedule row, including soft-deleted rows.",
+    "Custom searchable status dropdown supports keyboard selection, focus restoration, Escape and outside-click dismissal.",
+    "Shared Gantt label column fits content up to 240 pixels with ellipses, 12-pixel track gap and an aligned axis. Square bars omit glyphs and expose duration units in tooltips."
+  ],
+  "checks": {
+    "focused": "29 frontend tests and all three store history tests passed.",
+    "rust": "Full Rust gate passed: 477 unit/integration tests plus one doctest, strict Clippy, formatting, standalone storage and 12 tool regressions.",
+    "cli_api": "All 58 installed-worker CLI/API integration cases passed on Python 3.14.7.",
+    "web": "Full web gate passed: 532 tests, typecheck, lint, formatting, production worker probes and reproducible 16-asset builds. A subsequent popup-only CSS correction passed formatting and final production build/probes/reproducibility.",
+    "browser": "Real coordinator and production assets in the internal Browser: scheduled name, single requested dataset even with ancestor jobs, four requested targets, search/keyboard selection and focus, Escape leaving modal open, outside dismissal allowing path-input focus, short-name sizing, long-name ellipsis, square glyph-free bars and measured-duration tooltips. Corrected search input fits inside its popup.",
+    "documentation": "Specification validation and 44 checker regressions passed; final document/diff checks passed.",
+    "safety": "Safety baseline and all 27 regressions passed."
+  },
+  "observations": {
+    "short_name_column_css_pixels": 59.4765625,
+    "long_name_column_css_pixels": 240,
+    "track_gap_css_pixels": 12,
+    "track_and_axis_left_css_pixels": 577,
+    "control_height_css_pixels": 32,
+    "control_center_css_pixels": 171.6875,
+    "bar_border_radius": "0px",
+    "bar_text_present": false
+  },
+  "limits": [
+    "Legacy schedule display names follow later stored renames; no schedule-definition history or frozen-trigger mutation was introduced.",
+    "Minutes/hours, open elapsed spans and absent timing are covered by deterministic tests; real review builds expose measured seconds.",
+    "No Python application source, dependency or closed generated contract changed; the unrelated full Python unit gate was not repeated.",
+    "Browser evidence is macOS arm64 only. CI remains unverified and no push was attempted."
+  ],
+  "cleanup": "Both temporary review tabs closed, owned coordinators exited, one-use launch link removed. Persistent t086-build-display workspace and its setup/review instructions preserved."
+}

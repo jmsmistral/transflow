@@ -46,6 +46,21 @@ export function percent(value: ApiExactRatioV1 | null): string {
   const n = (BigInt(value.numerator) * 10000n) / BigInt(value.denominator);
   return `${n / 100n}.${(n % 100n).toString().padStart(2, "0")}%`;
 }
+/** Use the largest readable unit while retaining integer-only rounding. */
+export function readableDuration(value: string | null | undefined): string {
+  if (value == null) return "Unavailable";
+  const n = BigInt(value);
+  const [divisor, unit] =
+    n >= 3600000000000n
+      ? ["3600", "h"]
+      : n >= 60000000000n
+        ? ["60", "min"]
+        : ["1", "s"];
+  return seconds({ numerator: value, denominator: divisor }, 2).replace(
+    / s$/,
+    ` ${unit}`,
+  );
+}
 export function timestamp(
   us: string | null | undefined,
   precision: "minute" | "second" = "second",

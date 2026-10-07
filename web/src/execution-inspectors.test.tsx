@@ -515,7 +515,7 @@ test("Gantt uses recorded phases and exposes retained failure evidence in the ow
     await screen.findByRole("button", { name: "Progress details" }),
   );
   const bar = await screen.findByRole("button", {
-    name: /attempt 1: Running, 1.000 s/,
+    name: /attempt 1: Running, 1.00 s/,
   });
   expect(bar.getAttribute("style")).toContain("width: 100%");
   fireEvent.click(screen.getByRole("button", { name: /Critical path/ }));
@@ -585,7 +585,9 @@ test("job overview opens a modal, preserves selection and hides manual schedule 
   expect(within(dialog).queryByText("Targets and provenance")).toBeNull();
   expect(within(dialog).getAllByText("Job status")).toHaveLength(1);
   expect(
-    within(dialog).getByRole("combobox", { name: "Job status" }),
+    within(dialog).getByRole("button", {
+      name: "Filter by job status: All statuses",
+    }),
   ).toBeTruthy();
   expect(
     within(dialog).getByRole("button", { name: "Refresh" }).textContent,
@@ -593,6 +595,19 @@ test("job overview opens a modal, preserves selection and hides manual schedule 
   expect(
     within(dialog).getByRole("button", { name: "Critical path" }),
   ).toHaveProperty("disabled", false);
+  const filter = within(dialog).getByRole("button", {
+    name: "Filter by job status: All statuses",
+  });
+  fireEvent.click(filter);
+  fireEvent.keyDown(
+    screen.getByRole("textbox", { name: "Search job statuses" }),
+    { key: "Escape" },
+  );
+  expect(screen.getByRole("dialog", { name: "Build report" })).toBe(dialog);
+  expect(
+    screen.queryByRole("dialog", { name: "Job status filter" }),
+  ).toBeNull();
+  expect(document.activeElement).toBe(filter);
   fireEvent(dialog, new Event("cancel"));
   expect(screen.queryByRole("dialog")).toBeNull();
   expect(document.activeElement).toBe(opener);
@@ -837,6 +852,11 @@ test("Gantt orders started jobs first, updates open spans and freezes completed 
     "0%",
   );
   expect(view.container.querySelector(".gantt-label small")).toBeNull();
+  expect(bar.textContent).toBe("");
+  expect(bar.title).toContain("2.00 s elapsed");
+  expect(screen.getByRole("button", { name: /early attempt/ }).title).toMatch(
+    / · 1\.00 s$/,
+  );
   view.rerender(
     <BuildGantt
       timeline={timeline}
@@ -847,6 +867,7 @@ test("Gantt orders started jobs first, updates open spans and freezes completed 
     />,
   );
   expect(parseFloat(bar.style.width)).toBeGreaterThan(66);
+  expect(bar.title).toContain("4.00 s elapsed");
   model.dispose();
 });
 

@@ -86,6 +86,27 @@ impl Reader {
         }
         let r=sqlx::query("SELECT b.id,b.state,b.cancel_requested,b.created_at_us,b.finished_at_us,b.requested_by,CASE WHEN length(b.trigger_json)<=1048576 THEN b.trigger_json END AS trigger_json,CASE WHEN length(p.candidate_json)<=16777216 THEN p.candidate_json END AS candidate_json,p.source_snapshot_id FROM builds b JOIN build_plans p ON p.id=b.plan_id JOIN source_snapshots s ON s.id=p.source_snapshot_id WHERE b.id=? AND s.workspace_id=?").bind(build.to_string()).bind(workspace.to_string()).fetch_one(&mut *tx).await?;
         let plan = parse(r.try_get("candidate_json")?)?;
+        let trigger = parse(r.try_get("trigger_json")?)?;
+        // Display metadata only: keep the accepted trigger and execution evidence intact.
+        // Legacy triggers have no name, so resolve the current stored name within
+        // this workspace (including a soft-deleted schedule's retained row).
+        let schedule_name = if trigger["kind"] == "schedule" {
+            if let Some(name) = trigger["name"].as_str() {
+                Some(name.to_owned())
+            } else if let Some(id) = trigger["schedule_id"].as_str() {
+                sqlx::query_scalar::<_, String>(
+                    "SELECT name FROM schedules WHERE id=? AND workspace_id=?",
+                )
+                .bind(id)
+                .bind(workspace.to_string())
+                .fetch_optional(&mut *tx)
+                .await?
+            } else {
+                None
+            }
+        } else {
+            None
+        };
         let rows=sqlx::query("SELECT j.id,j.dataset_id,j.state,d.name AS branch FROM jobs j JOIN data_branches d ON d.id=j.branch_id WHERE j.build_id=? ORDER BY j.id").bind(build.to_string()).fetch_all(&mut *tx).await?;
         let mut jobs = vec![];
         for j in rows {
@@ -124,7 +145,10 @@ impl Reader {
             };
             jobs.push(json!({"id":id,"dataset":j.try_get::<String,_>("dataset_id")?,"branch":j.try_get::<String,_>("branch")?,"state":j.try_get::<String,_>("state")?,"inputs":inputs,"attempts":attempts,"version":version,"cached_from":cached_from}));
         }
-        let result = json!({"id":build.to_string(),"state":r.try_get::<String,_>("state")?,"source":r.try_get::<String,_>("source_snapshot_id")?,"cancel_requested":r.try_get::<i64,_>("cancel_requested")?!=0,"created_us":r.try_get::<i64,_>("created_at_us")?.to_string(),"finished_us":r.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"requested_by":r.try_get::<String,_>("requested_by")?,"trigger":parse(r.try_get("trigger_json")?)?,"plan":plan,"jobs":jobs});
+        let mut result = json!({"id":build.to_string(),"state":r.try_get::<String,_>("state")?,"source":r.try_get::<String,_>("source_snapshot_id")?,"cancel_requested":r.try_get::<i64,_>("cancel_requested")?!=0,"created_us":r.try_get::<i64,_>("created_at_us")?.to_string(),"finished_us":r.try_get::<Option<i64>,_>("finished_at_us")?.map(|n|n.to_string()),"requested_by":r.try_get::<String,_>("requested_by")?,"trigger":trigger,"plan":plan,"jobs":jobs});
+        if let Some(name) = schedule_name {
+            result["schedule_name"] = Value::String(name);
+        }
         if serde_json::to_vec(&result)
             .map_err(|_| StoreError::InvalidRequest)?
             .len()

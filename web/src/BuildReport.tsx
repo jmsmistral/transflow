@@ -8,7 +8,15 @@ import type { Workspace } from "./workspace";
 import { Button } from "./components";
 import { Icon } from "./Icons";
 import { field } from "./inspectors";
-import { position, seconds, short, timestamp } from "./execution-model";
+import {
+  position,
+  readableDuration,
+  seconds,
+  short,
+  timestamp,
+} from "./execution-model";
+import { BuildStatusFilter } from "./BuildStatusFilter";
+import { buildCaption } from "./build-display";
 import {
   type Ready,
   Empty,
@@ -76,9 +84,6 @@ export function BuildModal({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const title = useId();
-  const targets = items(
-    property(property(property(result?.report, "plan"), "context"), "targets"),
-  ).filter((value): value is string => typeof value === "string");
   useEffect(() => {
     const dialog = ref.current;
     const previous = document.activeElement;
@@ -99,11 +104,7 @@ export function BuildModal({
       <header className="build-modal-header">
         <Icon name="build" />
         <h2 id={title}>Build report</h2>
-        <span>
-          {targets.length
-            ? `Build of: ${targets.join(", ")}`
-            : `Opened from: ${dataset.path}`}
-        </span>
+        <span>{buildCaption(result, dataset.path)}</span>
         <Button aria-label="Close build report" onClick={onClose}>
           <Icon name="close" />
         </Button>
@@ -258,7 +259,8 @@ function BuildReport({
               <Icon name="calendar" /> Build schedule
             </h3>
             <strong>
-              {field(trigger, "name") ??
+              {field(report, "schedule_name") ??
+                field(trigger, "name") ??
                 field(trigger, "schedule_id") ??
                 "Retained schedule trigger"}
             </strong>
@@ -298,16 +300,11 @@ function BuildReport({
             />{" "}
             Gantt chart
           </label>
-          <select
-            aria-label="Job status"
+          <BuildStatusFilter
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="">All statuses</option>
-            {timeline.job_counts.map((c) => (
-              <option key={c.state}>{c.state}</option>
-            ))}
-          </select>
+            statuses={timeline.job_counts.map((c) => c.state)}
+            onChange={setStatus}
+          />
           <input
             aria-label="Dataset path"
             placeholder="Dataset path…"
@@ -488,73 +485,80 @@ export function BuildGantt({
           </span>
         ))}
       </div>
-      {orderedJobs(displayJobs).map((j) => (
-        <div className="gantt-row" key={j.job}>
-          <div className="gantt-label">
-            <strong>{name(j)}</strong>
-          </div>
-          <div>
-            {!j.attempts.length ? (
-              <span className="gantt-no-attempt">
-                {j.state === "CACHED"
-                  ? "Cached reuse · no execution"
-                  : "Not started"}
-              </span>
-            ) : (
-              j.attempts.map((a) => {
-                const bars =
-                  mode === "phases"
-                    ? a.phases
-                    : [
-                        {
-                          phase: j.state,
-                          started_us: a.started_us,
-                          finished_us: a.finished_us,
-                          duration_ns: a.duration_ns,
-                        },
-                      ];
-                return (
-                  <div className="gantt-track" key={a.attempt}>
-                    {bars.map((p, i) => (
-                      <button
-                        key={i}
-                        className={`phase-bar ${mode === "phases" ? `phase-${names.indexOf(p.phase) % 6}` : mode === "critical" ? `critical-${j.job === longest ? 0 : path.includes(j.job) ? 1 : 2}` : `job-bar-${j.state.toLowerCase()}`} ${p.finished_us === null ? "phase-open" : ""}`}
-                        style={{
-                          left: `${position(BigInt(p.started_us), start, span)}%`,
-                          width: `${Math.max(0.35, position(p.finished_us === null ? (active ? end : BigInt(p.started_us)) : BigInt(p.finished_us), BigInt(p.started_us), span))}%`,
-                        }}
-                        onClick={() => onAttempt(a.attempt)}
-                        aria-label={`${name(j)} attempt ${a.number}: ${p.phase}, ${p.finished_us === null ? (active ? "in progress; elapsed only" : "end unavailable") : seconds(p.duration_ns)}`}
-                        title={`${p.phase} · ${timestamp(p.started_us)} → ${p.finished_us === null ? (active ? "In progress (live elapsed, not a completion estimate)" : "End unavailable") : timestamp(p.finished_us)}`}
-                      >
-                        <span aria-hidden="true">
-                          {mode === "critical"
+      <div className="build-gantt-grid">
+        {orderedJobs(displayJobs).map((j) => (
+          <div className="gantt-row" key={j.job}>
+            <div className="gantt-label">
+              <strong title={name(j)}>{name(j)}</strong>
+            </div>
+            <div>
+              {!j.attempts.length ? (
+                <span className="gantt-no-attempt">
+                  {j.state === "CACHED"
+                    ? "Cached reuse · no execution"
+                    : "Not started"}
+                </span>
+              ) : (
+                j.attempts.map((a) => {
+                  const bars =
+                    mode === "phases"
+                      ? a.phases
+                      : [
+                          {
+                            phase: j.state,
+                            started_us: a.started_us,
+                            finished_us: a.finished_us,
+                            duration_ns: a.duration_ns,
+                          },
+                        ];
+                  return (
+                    <div className="gantt-track" key={a.attempt}>
+                      {bars.map((p, i) => {
+                        const duration =
+                          p.finished_us !== null
+                            ? p.duration_ns === null
+                              ? "Duration unavailable"
+                              : readableDuration(p.duration_ns)
+                            : active
+                              ? `${readableDuration(((now > BigInt(p.started_us) ? now - BigInt(p.started_us) : 0n) * 1000n).toString())} elapsed`
+                              : "Duration unavailable";
+                        const critical =
+                          mode === "critical"
                             ? j.job === longest
-                              ? "!"
+                              ? "Most critical"
                               : path.includes(j.job)
-                                ? "◷"
-                                : "·"
-                            : j.state === "SUCCEEDED"
-                              ? "✓"
-                              : j.state === "FAILED"
-                                ? "×"
-                                : "·"}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                );
-              })
-            )}
+                                ? "On critical path"
+                                : "Non-critical"
+                            : "";
+                        return (
+                          <button
+                            type="button"
+                            key={i}
+                            className={`phase-bar ${mode === "phases" ? `phase-${names.indexOf(p.phase) % 6}` : mode === "critical" ? `critical-${j.job === longest ? 0 : path.includes(j.job) ? 1 : 2}` : `job-bar-${j.state.toLowerCase()}`} ${p.finished_us === null ? "phase-open" : ""}`}
+                            style={{
+                              left: `${position(BigInt(p.started_us), start, span)}%`,
+                              width: `${Math.max(0.35, position(p.finished_us === null ? (active ? end : BigInt(p.started_us)) : BigInt(p.finished_us), BigInt(p.started_us), span))}%`,
+                            }}
+                            onClick={() => onAttempt(a.attempt)}
+                            aria-label={`${name(j)} attempt ${a.number}: ${p.phase}, ${duration}${critical ? ` · ${critical}` : ""}`}
+                            title={`${critical ? `${critical} · ` : ""}${p.phase} · ${timestamp(p.started_us)} → ${p.finished_us === null ? (active ? "In progress (live elapsed, not a completion estimate)" : "End unavailable") : timestamp(p.finished_us)} · ${duration}`}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
-        </div>
-      ))}
-      <div className="gantt-time-axis">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <span key={i}>
-            {timestamp((start + (span * BigInt(i)) / 4n).toString())}
-          </span>
         ))}
+        <div className="gantt-time-axis">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <span key={i}>
+              {timestamp((start + (span * BigInt(i)) / 4n).toString())}
+            </span>
+          ))}
+        </div>
       </div>
     </section>
   );

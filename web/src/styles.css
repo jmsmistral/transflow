@@ -865,6 +865,7 @@ summary {
   width: 18px;
 }
 .branch-results button[aria-pressed="true"],
+.branch-results button[aria-selected="true"],
 .branch-results button:hover {
   background: var(--soft);
 }
@@ -2542,7 +2543,7 @@ revo-grid.preview-grid
   gap: 6px;
   min-height: 32px;
 }
-.build-filters > select,
+.build-filters .build-status-picker > .button,
 .build-filters > input:not([type="checkbox"]),
 .build-filters .execution-switches .button {
   height: 32px;
@@ -2552,16 +2553,36 @@ revo-grid.preview-grid
   line-height: 20px;
   margin: 0;
 }
-.build-filters > select {
-  width: auto;
+.build-status-picker {
+  position: relative;
   min-width: 110px;
   flex: 0 0 auto;
+}
+.build-status-picker > .button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+.build-status-menu {
+  left: 0;
+  right: auto;
+  width: 240px;
+}
+.build-filters .build-status-menu > label {
+  display: block;
+  min-height: 0;
+  white-space: normal;
+}
+.build-status-menu input {
+  display: block;
 }
 .build-filters input[type="checkbox"] {
   width: auto;
   margin: 0;
 }
-.build-filters input:not([type="checkbox"]) {
+.build-filters > input:not([type="checkbox"]) {
   width: 200px;
   max-width: 240px;
 }
@@ -2578,16 +2599,28 @@ revo-grid.preview-grid
 .build-gantt {
   padding: 4px 20px 24px;
 }
-.build-gantt .gantt-row {
-  grid-template-columns: minmax(120px, 30%) 1fr;
-  border: 0;
-  padding: 8px 0;
+.build-gantt-grid {
+  display: grid;
+  grid-template-columns: fit-content(240px) minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 16px;
   align-items: center;
 }
+.build-gantt .gantt-row {
+  display: contents;
+}
 .build-gantt .gantt-label {
-  text-align: right;
+  text-align: left;
   font-size: 12px;
-  padding-right: 8px;
+  min-width: 0;
+  max-width: 240px;
+  padding: 0;
+}
+.build-gantt .gantt-label strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .build-gantt .gantt-track {
   height: 28px;
@@ -2605,9 +2638,10 @@ revo-grid.preview-grid
   height: 20px;
   color: #fff;
   overflow: hidden;
+  border-radius: 0;
 }
 .gantt-time-axis {
-  margin-left: 30%;
+  grid-column: 2;
   display: flex;
   justify-content: space-between;
   font-size: 9px;
