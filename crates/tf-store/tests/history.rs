@@ -287,6 +287,88 @@ async fn retained_history_metrics_cache_retry_and_context_isolation()
     assert_eq!(mixed[0]["build_job_count"], "2");
     assert_eq!(mixed[0]["attempt_count"], "2");
     tf_protocol::validate_document("ApiHistoryJobV1", &mixed[0])?;
+    // Historical total-duration estimates are exact, bounded and never use later
+    // completions, other branches, failed builds or a different dataset set.
+    let target = id(207).parse()?;
+    let early = rd.build_duration_estimate(workspace, target, 10).await?;
+    assert_eq!(early["samples"], "0");
+    assert!(early["mean_us"].is_null());
+    sqlx::query("UPDATE builds SET created_at_us=2000 WHERE id=?")
+        .bind(id(207))
+        .execute(&mut writer)
+        .await?;
+    let estimate = rd.build_duration_estimate(workspace, target, 10).await?;
+    assert_eq!(estimate["samples"], "4");
+    assert_eq!(estimate["missing_samples"], "0");
+    assert_eq!(
+        estimate["mean_us"],
+        json!({"numerator":"3885","denominator":"4"})
+    );
+    let recent = rd.build_duration_estimate(workspace, target, 2).await?;
+    assert_eq!(recent["samples"], "2");
+    assert_eq!(
+        recent["mean_us"],
+        json!({"numerator":"1890","denominator":"2"})
+    );
+    let mut with_estimate = timeline(&rd.build_report(workspace, target).await?)?;
+    with_estimate["duration_estimate"] = estimate;
+    tf_protocol::validate_document("ApiExecutionTimelineV1", &with_estimate)?;
+    sqlx::query("UPDATE builds SET created_at_us=50 WHERE id=?")
+        .bind(id(207))
+        .execute(&mut writer)
+        .await?;
+    let before_later = rd.build_duration_estimate(workspace, target, 10).await?;
+    assert_eq!(
+        before_later["samples"], "0",
+        "No build had completed at acceptance time"
+    );
+    sqlx::query("UPDATE builds SET created_at_us=2000 WHERE id=?")
+        .bind(id(207))
+        .execute(&mut writer)
+        .await?;
+    sqlx::query("UPDATE builds SET finished_at_us=NULL WHERE id=?")
+        .bind(id(210))
+        .execute(&mut writer)
+        .await?;
+    let missing = rd.build_duration_estimate(workspace, target, 10).await?;
+    assert_eq!(missing["samples"], "4");
+    assert_eq!(missing["missing_samples"], "1");
+    assert!(
+        missing["mean_us"].is_null(),
+        "Do not replace missing recent evidence with older builds"
+    );
+    sqlx::query("UPDATE builds SET finished_at_us=1 WHERE id=?")
+        .bind(id(210))
+        .execute(&mut writer)
+        .await?;
+    let backwards = rd.build_duration_estimate(workspace, target, 10).await?;
+    assert_eq!(backwards["missing_samples"], "1");
+    assert!(backwards["mean_us"].is_null());
+    sqlx::query("UPDATE jobs SET dataset_id=? WHERE id=?")
+        .bind(id(900))
+        .bind(id(302))
+        .execute(&mut writer)
+        .await?;
+    let different_dataset = rd.build_duration_estimate(workspace, target, 10).await?;
+    assert_eq!(
+        different_dataset["samples"], "3",
+        "Equal job counts are not equal dataset sets"
+    );
+    assert!(
+        rd.build_duration_estimate(id(999).parse()?, target, 10)
+            .await
+            .is_err()
+    );
+    assert!(
+        rd.build_duration_estimate(workspace, target, 0)
+            .await
+            .is_err()
+    );
+    assert!(
+        rd.build_duration_estimate(workspace, target, 1001)
+            .await
+            .is_err()
+    );
     writer.close().await?;
     rd.close().await?;
     std::fs::remove_dir_all(dir)?;

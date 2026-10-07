@@ -175,6 +175,9 @@ pub(crate) fn read(
                 return Err(E::invalid());
             }
             let mut timeline = tf_store::history::timeline(&report).map_err(bad)?;
+            timeline["duration_estimate"] = rt
+                .block_on(rd.build_duration_estimate(wid, build, 10))
+                .map_err(bad)?;
             let paths: std::collections::BTreeMap<String, String> =
                 tf_catalog::browse::entries(&c.registry)
                     .into_iter()

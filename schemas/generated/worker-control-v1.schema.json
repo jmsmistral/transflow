@@ -8173,6 +8173,37 @@
           },
           "minItems": 0,
           "maxItems": 2000
+        },
+        "duration_estimate": {
+          "type": "object",
+          "properties": {
+            "window": {
+              "$ref": "#/$defs/Count"
+            },
+            "samples": {
+              "$ref": "#/$defs/Count"
+            },
+            "missing_samples": {
+              "$ref": "#/$defs/Count"
+            },
+            "mean_us": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/ApiExactRatioV1"
+                }
+              ]
+            }
+          },
+          "required": [
+            "window",
+            "samples",
+            "missing_samples",
+            "mean_us"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [

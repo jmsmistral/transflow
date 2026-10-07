@@ -160,6 +160,16 @@ function BuildReport({
           : 0n
         ).toString()
       : null);
+  const cachedOnly =
+    timeline.jobs.length > 0 &&
+    timeline.jobs.every((j) => j.state === "CACHED" && j.attempts.length === 0);
+  const estimate = timeline.duration_estimate;
+  const estimatedNs = estimate?.mean_us
+    ? {
+        numerator: (BigInt(estimate.mean_us.numerator) * 1000n).toString(),
+        denominator: estimate.mean_us.denominator,
+      }
+    : null;
   const trigger = property(report, "trigger");
   const scheduled = field(trigger, "kind") === "schedule";
   async function cancel() {
@@ -196,9 +206,25 @@ function BuildReport({
             )}
           </dd>
           <dt>Estimated</dt>
-          <dd>Unavailable</dd>
+          <dd
+            title={
+              estimate
+                ? `Mean total duration of ${estimate.samples} previous successful ${estimate.samples === "1" ? "build" : "builds"} (up to ${estimate.window}) on this branch with the same dataset set. Includes cache reuse and queue wait; ${estimate.missing_samples} missing timings. Source, parameters and load can change actual duration.`
+                : "Historical estimate unavailable"
+            }
+          >
+            {estimatedNs ? `~ ${seconds(estimatedNs)}` : "Unavailable"}
+          </dd>
           <dt>Started</dt>
-          <dd>{timestamp(timeline.started_us)}</dd>
+          <dd
+            title={
+              cachedOnly
+                ? "Cache reuse completed; no execution started"
+                : undefined
+            }
+          >
+            {timestamp(cachedOnly ? timeline.finished_us : timeline.started_us)}
+          </dd>
           <dt>Ended</dt>
           <dd>{timestamp(timeline.finished_us)}</dd>
           <dt>Started by</dt>
@@ -215,10 +241,14 @@ function BuildReport({
           <dd>{timestamp(timeline.queued_us)}</dd>
           <dt>Queue wait</dt>
           <dd>
-            {seconds(
-              timeline.initial_queue_wait_us === null
-                ? null
-                : (BigInt(timeline.initial_queue_wait_us) * 1000n).toString(),
+            {cachedOnly ? (
+              <span aria-label="Not applicable: no execution queued">—</span>
+            ) : (
+              seconds(
+                timeline.initial_queue_wait_us === null
+                  ? null
+                  : (BigInt(timeline.initial_queue_wait_us) * 1000n).toString(),
+              )
             )}
           </dd>
         </dl>
@@ -268,15 +298,16 @@ function BuildReport({
             />{" "}
             Gantt chart
           </label>
-          <label>
-            Job status{" "}
-            <select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">All statuses</option>
-              {timeline.job_counts.map((c) => (
-                <option key={c.state}>{c.state}</option>
-              ))}
-            </select>
-          </label>
+          <select
+            aria-label="Job status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">All statuses</option>
+            {timeline.job_counts.map((c) => (
+              <option key={c.state}>{c.state}</option>
+            ))}
+          </select>
           <input
             aria-label="Dataset path"
             placeholder="Dataset path…"
@@ -338,7 +369,19 @@ function BuildReport({
                     {j.attempts.length === 1 ? "attempt" : "attempts"}
                   </small>
                 </td>
-                <td>{timestamp(j.attempts[0]?.started_us ?? null)}</td>
+                <td
+                  title={
+                    cachedOnly
+                      ? "Cache reuse completed; no execution started"
+                      : undefined
+                  }
+                >
+                  {timestamp(
+                    cachedOnly
+                      ? timeline.finished_us
+                      : (j.attempts[0]?.started_us ?? null),
+                  )}
+                </td>
                 <td>
                   {j.state === "CACHED"
                     ? "Cached reuse"

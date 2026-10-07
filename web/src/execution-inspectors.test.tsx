@@ -583,6 +583,10 @@ test("job overview opens a modal, preserves selection and hides manual schedule 
   expect(within(dialog).getByText("Build info")).toBeTruthy();
   expect(within(dialog).queryByText("Build schedule")).toBeNull();
   expect(within(dialog).queryByText("Targets and provenance")).toBeNull();
+  expect(within(dialog).getAllByText("Job status")).toHaveLength(1);
+  expect(
+    within(dialog).getByRole("combobox", { name: "Job status" }),
+  ).toBeTruthy();
   expect(
     within(dialog).getByRole("button", { name: "Refresh" }).textContent,
   ).toBe("");
@@ -593,6 +597,116 @@ test("job overview opens a modal, preserves selection and hides manual schedule 
   expect(screen.queryByRole("dialog")).toBeNull();
   expect(document.activeElement).toBe(opener);
   expect(screen.getByText("Transaction details")).toBeTruthy();
+  model.dispose();
+});
+
+test("cached Build report displays completion as start, no execution queue wait and a historical estimate", async () => {
+  const cached = {
+    ...job,
+    state: "CACHED",
+    build_state: "SUCCEEDED",
+    attempt_count: "0",
+    attempts: [],
+    duration_ns: null,
+    reused_version: versionId,
+  };
+  const { model, state } = await fixture(false, cached, {
+    timeline: () => ({
+      state: "SUCCEEDED",
+      started_us: null,
+      initial_queue_wait_us: null,
+      duration_estimate: {
+        window: "10",
+        samples: "2",
+        missing_samples: "0",
+        mean_us: { numerator: "1500000", denominator: "2" },
+      },
+      job_counts: [{ state: "CACHED", count: "1" }],
+      jobs: [
+        {
+          job: jobId,
+          dataset: datasetId,
+          state: "CACHED",
+          duration_ns: null,
+          attempts: [],
+        },
+      ],
+    }),
+  });
+  render(
+    <HistoryInspector workspace={model} state={state} onVersion={() => {}} />,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: /CACHED · Reuse/ }),
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: "View build report" }),
+  );
+  const dialog = screen.getByRole("dialog", { name: "Build report" });
+  expect(await within(dialog).findByText("~ 0.750 s")).toBeTruthy();
+  const started = within(dialog).getByText("Started").nextElementSibling;
+  const ended = within(dialog).getByText("Ended").nextElementSibling;
+  expect(started?.textContent).toBe(ended?.textContent);
+  expect(started?.getAttribute("title")).toContain("no execution started");
+  expect(
+    within(dialog).getByLabelText("Not applicable: no execution queued")
+      .textContent,
+  ).toBe("—");
+  expect(dialog.querySelectorAll(".phase-bar")).toHaveLength(0);
+  expect(
+    within(dialog).getByTitle(/Mean total duration of 2 previous/),
+  ).toBeTruthy();
+  model.dispose();
+});
+
+test("a noncached Build report keeps unknown execution start and queue wait unavailable", async () => {
+  const pending = {
+    ...job,
+    state: "QUEUED",
+    build_state: "QUEUED",
+    attempt_count: "0",
+    attempts: [],
+    duration_ns: null,
+  };
+  const { model, state } = await fixture(false, pending, {
+    timeline: () => ({
+      state: "QUEUED",
+      started_us: null,
+      finished_us: null,
+      initial_queue_wait_us: null,
+      job_counts: [{ state: "QUEUED", count: "1" }],
+      jobs: [
+        {
+          job: jobId,
+          dataset: datasetId,
+          state: "QUEUED",
+          duration_ns: null,
+          attempts: [],
+        },
+      ],
+    }),
+  });
+  const view = render(
+    <HistoryInspector workspace={model} state={state} onVersion={() => {}} />,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: /QUEUED · 0 attempts/ }),
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: "View build report" }),
+  );
+  const dialog = screen.getByRole("dialog", { name: "Build report" });
+  await within(dialog).findByText("Build info");
+  expect(
+    within(dialog).getByText("Started").nextElementSibling?.textContent,
+  ).toBe("Unavailable");
+  expect(
+    within(dialog).getByText("Queue wait").nextElementSibling?.textContent,
+  ).toBe("Unavailable");
+  expect(
+    within(dialog).queryByLabelText("Not applicable: no execution queued"),
+  ).toBeNull();
+  view.unmount();
   model.dispose();
 });
 

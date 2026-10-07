@@ -8717,5 +8717,150 @@
       "schedules": true,
       "ui": true
     }
+  },
+  {
+    "name": "build-historical-duration-estimate",
+    "schema": "ApiExecutionTimelineV1",
+    "value": {
+      "build": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "state": "SUCCEEDED",
+      "plan": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "queued_us": "0",
+      "started_us": null,
+      "finished_us": "10",
+      "wall_duration_us": "10",
+      "initial_queue_wait_us": null,
+      "resource_wait_us": null,
+      "eta_us": null,
+      "critical_path": {
+        "duration_ns": "0",
+        "jobs": [
+          "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        ]
+      },
+      "job_counts": [
+        {
+          "state": "CACHED",
+          "count": "1"
+        }
+      ],
+      "jobs": [
+        {
+          "job": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "state": "CACHED",
+          "duration_ns": null,
+          "attempts": []
+        }
+      ],
+      "duration_estimate": {
+        "window": "10",
+        "samples": "2",
+        "missing_samples": "0",
+        "mean_us": {
+          "numerator": "9007199254740993",
+          "denominator": "2"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "build-estimate-rejects-floating-counts",
+    "schema": "ApiExecutionTimelineV1",
+    "value": {
+      "build": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "state": "SUCCEEDED",
+      "plan": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "queued_us": "0",
+      "started_us": null,
+      "finished_us": "10",
+      "wall_duration_us": "10",
+      "initial_queue_wait_us": null,
+      "resource_wait_us": null,
+      "eta_us": null,
+      "critical_path": {
+        "duration_ns": "0",
+        "jobs": [
+          "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        ]
+      },
+      "job_counts": [
+        {
+          "state": "CACHED",
+          "count": "1"
+        }
+      ],
+      "jobs": [
+        {
+          "job": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "state": "CACHED",
+          "duration_ns": null,
+          "attempts": []
+        }
+      ],
+      "duration_estimate": {
+        "window": "10",
+        "samples": "2",
+        "missing_samples": "0",
+        "mean_us": {
+          "numerator": 9007199254740993,
+          "denominator": "2"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "build-estimate-rejects-unknown-fields",
+    "schema": "ApiExecutionTimelineV1",
+    "value": {
+      "build": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "state": "SUCCEEDED",
+      "plan": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "queued_us": "0",
+      "started_us": null,
+      "finished_us": "10",
+      "wall_duration_us": "10",
+      "initial_queue_wait_us": null,
+      "resource_wait_us": null,
+      "eta_us": null,
+      "critical_path": {
+        "duration_ns": "0",
+        "jobs": [
+          "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        ]
+      },
+      "job_counts": [
+        {
+          "state": "CACHED",
+          "count": "1"
+        }
+      ],
+      "jobs": [
+        {
+          "job": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "dataset": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "state": "CACHED",
+          "duration_ns": null,
+          "attempts": []
+        }
+      ],
+      "duration_estimate": {
+        "window": "10",
+        "samples": "2",
+        "missing_samples": "0",
+        "mean_us": {
+          "numerator": "9007199254740993",
+          "denominator": "2"
+        },
+        "eta": "fake"
+      }
+    },
+    "valid": false
   }
 ]

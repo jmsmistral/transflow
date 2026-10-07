@@ -21,6 +21,8 @@ use tf_domain::{DatasetId, WorkspaceId};
 /// Latest supported runtime schema. Authoring registry versions are independent.
 pub const SCHEMA_VERSION: i64 = 16;
 
+/// Historical estimates of total build operation time.
+pub mod build_estimates;
 /// Safe read-only build history and execution evidence.
 pub mod build_read;
 /// Bounded execution history, exact metrics and Gantt projections.

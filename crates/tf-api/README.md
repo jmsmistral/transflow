@@ -283,6 +283,12 @@ use the existing authenticated read facade. Responses carry the frozen context.
   UTF-8 display excerpt and `next_offset`. Missing logs are explicitly unavailable;
   symlinked directories/files are refused. At most 128 helpers / 256 streams are
   enumerated. The existing source, branch, plan and revision fences apply.
+- Build timeline responses also include optional `duration_estimate`, an exact
+  microsecond mean plus window/sample/missing counts. It selects up to 10 earlier
+  successful builds with the same workspace, output branch and exact dataset job
+  set, completed by the selected build's acceptance time. The historical total wall
+  duration includes cache/queue overhead; missing selected timings leave the mean
+  null. It is an approximate operation estimate, not execution duration or an ETA.
 - `metrics?from_us=...&to_us=...`: half-open UTC **build acceptance** window;
   optional local `dataset`, `materialized_any=true`, `window=10` (1–1000).
   Returns build/job state counts, executed jobs, attempts, committed materializations,

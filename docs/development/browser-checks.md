@@ -52,6 +52,18 @@ its tooltip contains only status, date/time to the minute and rounded seconds.
 It must omit raw nanoseconds and attempt identifiers. Applying a same-day range
 and navigating from a job detail back with Show summary retain their behavior.
 
+## Build report controls and cached timing
+
+Open a Build report with earlier comparable successful builds. Estimated must show
+an approximate historical total duration and expose its cohort/sample explanation.
+The status filter, path input and chart-mode buttons share a height and centre
+vertically; the status filter has an accessible name without a visible label.
+Open a cached-only build: Started and Ended display the same completion time,
+Queue wait shows a not-applicable dash, and no synthetic attempt/bar or execution
+duration appears. A first build without historical samples retains an unavailable
+estimate; noncached missing starts/waits remain unavailable. Status/path filtering
+and active-build refresh still work.
+
 ## Persistent review workspaces
 
 For owner review sessions, create feature-specific synthetic workspaces under the

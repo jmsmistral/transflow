@@ -243,6 +243,13 @@ cache-only timelines contain no synthetic attempt/duration. Six shared fixtures
 cover exact large values, numeric/unknown-field rejection and cached timelines.
 Existing immutable plan/check/process evidence retains its JSON carrier.
 
+Build timelines optionally expose `duration_estimate`: an exact microsecond mean
+of up to 10 earlier successful total build operations on the same workspace,
+branch and dataset job set, plus window/sample/missing counts. Missing selected
+timing leaves the mean null. This historical estimate includes cache/queue overhead
+and remains separate from execution durations and the still-null absolute ETA.
+Three shared cases cover its large exact ratio and invalid numeric/unknown fields.
+
 T082 aligns `ApiCapabilitiesV1` with existing advertised event/preview/query limits
 and boolean contributor-UI availability. Two cases bring the shared corpus to 312.
 The browser now uses the same authored schema for runtime response validation;

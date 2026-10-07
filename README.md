@@ -154,6 +154,12 @@ heading sits beside the date filters; Mean precedes Median, with durations round
 to two decimals. Point tooltips show status, date/time and duration.
 Live timing updates preserve graph membership, positions, selection and camera;
 historical versions are labelled explicitly rather than as branch fallbacks.
+
+Build report estimates use up to 10 earlier successful builds on the same branch
+with the same dataset job set. The approximate total duration includes operation
+overhead and exposes its sample count; insufficient timing evidence stays
+unavailable. Cached-only builds show completion time as Started and a not-applicable
+Queue wait, while retaining no execution duration or Gantt interval.
 T088 adds status, freshness, duration, rows, files, physical size, output health and
 build-role colouring with compact node labels and legends counting visible unique
 nodes. Zero, Unknown and No health checks remain distinct; failed jobs do not erase
