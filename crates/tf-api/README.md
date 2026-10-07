@@ -30,6 +30,12 @@ bind the context, route and filters. Refresh the context and restart pagination
 on conflict. Pages default to 50 and cap at 200; graph pages default to 100 and
 cap at 500, with `expand=true` required when the selected graph exceeds 500 nodes.
 
+The metadata revision excludes saved-view audits and routine scheduler clock/event
+observation audits. Those durable cursor updates do not change catalogue or
+inspection data. Schedule lifecycle/dispatch audits, committed events, branch/head
+changes and phase intervals still fence reads; observation does not relax mutation
+or frozen-plan guards.
+
 Delivered reads include datasets, exact dataset details, retained versions,
 branches, branch-filtered build history, exact builds, lineage, saved plans and
 captured source. Catalogue filters are `filter` (path substring), `origin`, `id`,

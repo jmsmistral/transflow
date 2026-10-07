@@ -201,6 +201,8 @@ T095 executes scheduled builds through the shared guarded pipeline while
 `transflow serve` is running. It observes committed events and cron ticks, resolves
 the saved source selector at dispatch, and preserves the occurrence's output
 branch, fallback policies, parameters, retry settings and exact event input pins.
+Routine clock/event observation keeps catalogue search and inspection contexts
+valid; actual lifecycle, publication and phase changes still invalidate them.
 Retained non-Git snapshots and clean Git refs require registered identities and
 never change the foreground checkout. Mutable working-tree capture permits
 additive registration only when the definition explicitly enables it. Failed

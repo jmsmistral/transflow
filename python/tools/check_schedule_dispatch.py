@@ -183,6 +183,31 @@ def exercise(cli: Path, root: Path, python: str) -> list[str]:
             "include_resets": False,
         }
         schedule, _ = save(client, automatic, paused=False)
+        context = client.call("GET", "/api/v1/context", query={"branch": "scheduled-out"})["data"]
+        observed = rows(
+            "SELECT count(*) FROM audit_log WHERE operation='schedule_clock_observed' "
+            "AND json_extract(evidence_json,'$.schedule')=?",
+            schedule,
+        )[0][0]
+        deadline = time.monotonic() + 10
+        while (
+            rows(
+                "SELECT count(*) FROM audit_log WHERE operation='schedule_clock_observed' "
+                "AND json_extract(evidence_json,'$.schedule')=?",
+                schedule,
+            )[0][0]
+            <= observed
+        ):
+            assert time.monotonic() < deadline, "No foreground clock observation committed"
+            time.sleep(0.02)
+        page = client.call(
+            "GET",
+            "/api/v1/datasets",
+            query={"branch": "scheduled-out", "context": context["fingerprint"], "fuzzy": ""},
+        )
+        assert page["context"] == context, page
+        assert {d["path"] for d in page["data"]["entries"]} >= {"raw/items", "curated/left"}
+        cases.append("idle schedule observation preserves context-bound catalogue search")
         command("build", "raw/items", "--branch", "scheduled-base", "--python", python, "--force")
         finished = wait(schedule)
         assert finished[0][0] == "SUCCEEDED", finished

@@ -41,6 +41,11 @@ Preserve existing review workspaces; remove them only when the owner requests
 cleanup. Stop any coordinator started for verification before handing the workspace
 back, and report its path and the observed checks.
 
+For a workspace with an active schedule, leave the coordinator observing while
+opening and filtering Catalogue, adding a dataset to the graph and inspecting its
+preview. Routine clock/event cursor audits must not cause context-conflict errors.
+Confirm separately that an actual publication still refreshes the displayed head.
+
 ## Dataset inspection (T085)
 
 On a real synthetic coordinator, select a published local dataset and open the

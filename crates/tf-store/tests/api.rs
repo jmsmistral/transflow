@@ -1,7 +1,60 @@
 //! Security and durable-state regression coverage.
 use serde_json::json;
+use sqlx::{Connection, SqliteConnection, sqlite::SqliteConnectOptions};
 use tf_domain::{DatasetId, DatasetKey, VersionId, WorkspaceId};
 use tf_store::{Reader, Store, api::Receipt};
+
+#[tokio::test]
+async fn scheduler_observation_audits_preserve_context_but_lifecycle_audits_invalidate_it()
+-> Result<(), Box<dyn std::error::Error>> {
+    let dir = std::env::temp_dir().join(format!(
+        "tf-api-observation-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir)?;
+    let path = dir.join("catalog.sqlite");
+    let store = Store::open(&path).await?;
+    let mut reader = Reader::open_existing(&path).await?;
+    let mut writer =
+        SqliteConnection::connect_with(&SqliteConnectOptions::new().filename(&path)).await?;
+    let initial = reader.api_revision().await?;
+    for operation in ["schedule_clock_observed", "schedule_events_scanned"] {
+        sqlx::query("INSERT INTO audit_log(operation,evidence_json,wall_time_us) VALUES(?,'{}',1)")
+            .bind(operation)
+            .execute(&mut writer)
+            .await?;
+        assert_eq!(reader.api_revision().await?, initial);
+    }
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM audit_log")
+            .fetch_one(&mut writer)
+            .await?,
+        2
+    );
+    let mut previous = initial;
+    for operation in [
+        "schedule_saved",
+        "schedule.observation_failed",
+        "schedule_occurrence_queued",
+        "plan.accept",
+    ] {
+        sqlx::query("INSERT INTO audit_log(operation,evidence_json,wall_time_us) VALUES(?,'{}',2)")
+            .bind(operation)
+            .execute(&mut writer)
+            .await?;
+        let current = reader.api_revision().await?;
+        assert_ne!(current, previous);
+        previous = current;
+    }
+    writer.close().await?;
+    reader.close().await?;
+    store.close().await?;
+    std::fs::remove_dir_all(dir)?;
+    Ok(())
+}
 
 #[tokio::test]
 async fn dataset_inspection_reads_creation_and_latest_foreign_provenance()

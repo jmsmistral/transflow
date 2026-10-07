@@ -79,7 +79,9 @@ impl Reader {
     pub async fn api_revision(&mut self) -> Result<String> {
         // Publication may make an attempt terminal just before its final phase is closed.
         // Fence that timing-only update as well as lifecycle events.
-        let r=sqlx::query("SELECT (SELECT coalesce(max(sequence),0) FROM events),(SELECT count(*) FROM data_branches),(SELECT coalesce(sum(revision),0) FROM data_branches),(SELECT count(*) FROM dataset_versions),(SELECT count(*) FROM foreign_versions),(SELECT count(*) FROM audit_log WHERE operation!='graph_view_saved'),(SELECT count(*) FROM phase_intervals),(SELECT count(*) FROM phase_intervals WHERE finished_at_us IS NOT NULL)").fetch_one(&mut self.db).await?;
+        // Saved view edits and scheduler observation cursors do not change these
+        // read models. Keep their audits without expiring every browsing context.
+        let r=sqlx::query("SELECT (SELECT coalesce(max(sequence),0) FROM events),(SELECT count(*) FROM data_branches),(SELECT coalesce(sum(revision),0) FROM data_branches),(SELECT count(*) FROM dataset_versions),(SELECT count(*) FROM foreign_versions),(SELECT count(*) FROM audit_log WHERE operation NOT IN ('graph_view_saved','schedule_clock_observed','schedule_events_scanned')),(SELECT count(*) FROM phase_intervals),(SELECT count(*) FROM phase_intervals WHERE finished_at_us IS NOT NULL)").fetch_one(&mut self.db).await?;
         Ok((0..8)
             .map(|i| r.try_get::<i64, _>(i).map(|n| n.to_string()))
             .collect::<std::result::Result<Vec<_>, _>>()?
