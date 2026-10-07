@@ -1,0 +1,105 @@
+{
+  "tasks": [
+    "T085",
+    "T086",
+    "T087",
+    "T088",
+    "T089",
+    "T090",
+    "T091",
+    "T092",
+    "T093",
+    "T094",
+    "T095"
+  ],
+  "date": "2026-10-08",
+  "owner_request": "Please push - I'll confirm the CI jobs status. Please mark all tasks upto this point as completed.",
+  "status": "Completed for the delivered task scopes on recorded local evidence; remote CI is pending owner confirmation.",
+  "implementation_qualified_revision": "0bea8ab1cda8630c124f21054ab1891d7f46cbbe",
+  "specification_behavior_revision": "614fed8dc2be2ed17e6c4a3db560b42f09bed725",
+  "evidence": {
+    "T085": [
+      "t085-copy-interaction-macos-arm64.json",
+      "t085-grid-refinement-macos-arm64.json",
+      "t085-macos-arm64.json",
+      "t085-multiselection-macos-arm64.json",
+      "t085-notice-macos-arm64.json",
+      "t085-refinement-macos-arm64.json"
+    ],
+    "T086": [
+      "t086-build-code-refinement.json",
+      "t086-build-modal.json",
+      "t086-build-presentation.json",
+      "t086-history-build-context.json",
+      "t086-history-duration-placement.json",
+      "t086-history-navigation.json",
+      "t086-history-ui-review.json",
+      "t086-live-overlay-recovery.json",
+      "t086-macos-arm64.json",
+      "t086-timestamp-labels.json"
+    ],
+    "T087": [
+      "t087-build-planner.json",
+      "t087-preview-refinement.json"
+    ],
+    "T088": [
+      "t088-overlays-t089-qualification.json"
+    ],
+    "T089": [
+      "t088-overlays-t089-qualification.json",
+      "t086-live-overlay-recovery.json"
+    ],
+    "T090": [
+      "t090-cli-fixture-correction.json",
+      "t090-macos-arm64.json"
+    ],
+    "T091": [
+      "t091-macos-arm64.json"
+    ],
+    "T092": [
+      "t092-macos-arm64.json"
+    ],
+    "T093": [
+      "t093-macos-arm64.json"
+    ],
+    "T094": [
+      "t094-macos-arm64.json"
+    ],
+    "T095": [
+      "t095-macos-arm64.json"
+    ]
+  },
+  "followups": [
+    "t086-live-overlay-recovery.json",
+    "t086-build-presentation.json",
+    "t090-cli-fixture-correction.json",
+    "VERIFICATION.md#t095-catalogue-context-correction-2026-10-07"
+  ],
+  "scope_boundaries": [
+    "T088 dataset facets and multi-role renderer are locally qualified. Selecting saved schedules and supplying their recorded roles to the canvas is the T098 schedule editor integration, not claimed complete.",
+    "T089 timing/browser qualification is measured macOS desktop evidence, not universal 60-fps, native editor or cross-platform conformance.",
+    "T031 native VS Code/Emacs qualification and automatic editor overlays remain deferred by owner instruction.",
+    "T096 onward remains unimplemented; full overlap/cycle policy, scheduling CLI/editor and G2/G3 acceptance remain outstanding.",
+    "Historical pending-CI notes are superseded only for local task completion. No original or current CI result is inferred.",
+    "Only completion documentation changed in this batch; unchanged application suites are not repeated."
+  ],
+  "ci": {
+    "status": "pending owner confirmation",
+    "monitor": "owner",
+    "polled": false
+  },
+  "completion_checks": {
+    "scope": "Documentation-only completion metadata, 2026-10-08 on macOS arm64/Python 3.14.7.",
+    "specification": "Passed; all 123 tasks parsed, 94 completed, links/fences/traceability valid.",
+    "checker_regressions": "Passed: 44 tests.",
+    "safety": "Passed: 27 regressions, generated-contract drift, public-file and offline dependency inventory checks.",
+    "diff_review": "Both repository whitespace checks passed; only task completion documentation and the paired receipt changed.",
+    "commands": [
+      "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests",
+      "PYTHON=\"$PWD/target/python/py314/bin/python\" bash tools/check-safety.sh",
+      "git diff --check",
+      "git -C ../transflow-spec diff --check"
+    ]
+  }
+}
