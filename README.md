@@ -24,6 +24,8 @@ last-save time in `YYYY-MM-DD HH:mm` format. New starts an empty lineage, with a
 custom discard dialog protecting unsaved changes. Opening in the same effective
 branch context preserves the picker and canvas until membership is ready.
 Legend rows select matching visible nodes.
+The branch picker closes on outside clicks and Escape. Native controls and text
+selection follow the chosen light/dark theme, including highlighted code.
 
 ## Intended experience
 

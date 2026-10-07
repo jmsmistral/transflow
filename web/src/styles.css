@@ -35,10 +35,13 @@ button:disabled {
   --accent: #176553;
   --soft: #edf5f2;
   --focus: #397569;
+  --selection-bg: #d5e8f5;
+  --selection-ink: #18344b;
   --xy-selection-background-color: #39756912;
   --xy-selection-border: 1px solid var(--focus);
   background: var(--bg);
   color: var(--ink);
+  color-scheme: light;
   height: 100dvh;
   min-height: 500px;
   display: flex;
@@ -53,7 +56,13 @@ button:disabled {
   --accent: #8dddd0;
   --focus: #9cbeb6;
   --soft: #243b39;
+  --selection-bg: #305a78;
+  --selection-ink: #f4f7fb;
   color-scheme: dark;
+}
+.app ::selection {
+  background-color: var(--selection-bg);
+  color: var(--selection-ink);
 }
 a {
   color: inherit;

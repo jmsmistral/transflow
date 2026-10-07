@@ -1,5 +1,5 @@
 import { Icon } from "./Icons";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { ApiMetadataPageV1 } from "./generated/contracts";
 import type { Workspace, WorkspaceState } from "./workspace";
 import { Button } from "./components";
@@ -38,8 +38,20 @@ export function BranchControls({
   const [add, setAdd] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
+  const picker = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (open) searchInput.current?.focus();
+    if (!open) return;
+    searchInput.current?.focus();
+    const outside = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !picker.current?.contains(event.target)
+      )
+        setOpen(false);
+    };
+    // Other widgets may stop bubbling pointer events; dismissal must still work.
+    document.addEventListener("pointerdown", outside, true);
+    return () => document.removeEventListener("pointerdown", outside, true);
   }, [open]);
   const drag = useRef<number | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -108,6 +120,16 @@ export function BranchControls({
 
   const branch = state.selection.branch;
   const ready = state.kind === "ready";
+  const pickerKey = (event: KeyboardEvent<HTMLElement>) => {
+    if (open && event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(false);
+      picker.current
+        ?.querySelector<HTMLButtonElement>('[aria-controls="branch-menu"]')
+        ?.focus();
+    }
+  };
   useEffect(() => {
     if (editing) dialog.current?.showModal();
     else dialog.current?.close();
@@ -127,11 +149,12 @@ export function BranchControls({
   };
   return (
     <div className="branch-controls">
-      <div className="branch-picker">
+      <div className="branch-picker" ref={picker}>
         <Button
           aria-label={`Branch: ${branch}`}
           aria-expanded={open}
           aria-controls="branch-menu"
+          onKeyDown={pickerKey}
           onClick={() => {
             setOpen(!open);
             setSearch("");
@@ -150,12 +173,9 @@ export function BranchControls({
             <label>
               Search branches
               <input
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") setOpen(false);
-                }}
-
                 ref={searchInput}
                 aria-label="Search branches"
+                onKeyDown={pickerKey}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -172,6 +192,7 @@ export function BranchControls({
                     key={name}
                     aria-pressed={branch === name}
                     disabled={!ready}
+                    onKeyDown={pickerKey}
                     onClick={() => {
                       setOpen(false);
                       void workspace.select({

@@ -114,6 +114,43 @@ test("keyboard tabs and resize controls preserve panel state across branch chang
   workspace.dispose();
 });
 
+test("branch picker dismisses on outside clicks, keeps inside/hover interaction, and restores Escape focus", async () => {
+  const { Workspace } = await import("./workspace");
+  const { Client } = await import("./api/client");
+  const { fixtureTransport } = await import("./test-fixtures");
+  const workspace = new Workspace(new Client(fixtureTransport()));
+  await workspace.connect("launch");
+  const user = userEvent.setup();
+  render(
+    <>
+      <App workspace={workspace} />
+      <button onPointerDown={(event) => event.stopPropagation()}>
+        Outside widget
+      </button>
+    </>,
+  );
+  const trigger = screen.getByRole("button", { name: "Branch: master" });
+  const catalogue = screen.getByRole("button", { name: "Catalogue" });
+  await user.click(trigger);
+  await user.hover(catalogue);
+  expect(screen.getByRole("dialog", { name: "Branch selection" })).toBeTruthy();
+  await user.click(screen.getByRole("textbox", { name: "Search branches" }));
+  expect(screen.getByRole("dialog", { name: "Branch selection" })).toBeTruthy();
+  await user.click(catalogue);
+  expect(screen.queryByRole("dialog", { name: "Branch selection" })).toBeNull();
+  expect(document.activeElement).toBe(catalogue);
+  expect(screen.getByRole("heading", { name: "Catalogue" })).toBeTruthy();
+  await user.click(trigger);
+  await user.click(screen.getByRole("button", { name: "Outside widget" }));
+  expect(screen.queryByRole("dialog", { name: "Branch selection" })).toBeNull();
+  await user.click(trigger);
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("dialog", { name: "Branch selection" })).toBeNull();
+  expect(document.activeElement).toBe(trigger);
+  expect(workspace.snapshot().selection.branch).toBe("master");
+  workspace.dispose();
+});
+
 test("dataset selection clears old labels immediately and renders names only as text", async () => {
   const { Workspace } = await import("./workspace");
   const { Client } = await import("./api/client");

@@ -31,6 +31,16 @@ the bearer token.
 
 Keep private reference screenshots and credentials out of committed evidence.
 
+## Branch picker and theme controls
+
+Open the branch picker. Moving the pointer outside it must keep it open, as must
+clicking its search field. Clicking a different widget or the canvas must close it and
+still activate the clicked control. Escape closes it and restores branch-button
+focus. Verify both light and dark themes: unchecked build-strategy radios must use
+the selected app theme, and selected code text must retain legible foreground and
+background colours across syntax tokens. The system colour preference must not
+override the explicit app theme.
+
 ## Persistent review workspaces
 
 For owner review sessions, create feature-specific synthetic workspaces under the
