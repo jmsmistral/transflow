@@ -85,8 +85,34 @@ export function useBuildClock(active: boolean) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!active) return;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
+    const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    let last = -Infinity;
+    const tick = (time: number) => {
+      // Keep React work bounded while CSS interpolates between clock samples.
+      if (time - last >= 100) {
+        last = time;
+        setNow(Date.now());
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    const stop = () => {
+      cancelAnimationFrame(frame);
+      clearInterval(timer);
+    };
+    const start = () => {
+      stop();
+      last = -Infinity;
+      if (motion?.matches) timer = setInterval(() => setNow(Date.now()), 1000);
+      else frame = requestAnimationFrame(tick);
+    };
+    start();
+    motion?.addEventListener("change", start);
+    return () => {
+      stop();
+      motion?.removeEventListener("change", start);
+    };
   }, [active]);
   return BigInt(now) * 1000n;
 }

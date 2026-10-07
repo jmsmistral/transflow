@@ -59,6 +59,7 @@ export class GraphModel {
   };
   private listeners = new Set<() => void>();
   private request: AbortController | undefined;
+  private metadataRequest: AbortController | undefined;
   private generation = 0;
   private pendingAdds = new Set<string>();
   private viewSelector = "";
@@ -79,12 +80,14 @@ export class GraphModel {
     const sync = (): void => {
       const state = this.workspace.snapshot();
       if (state.kind !== "ready") {
+        this.metadataRequest?.abort();
         this.cancel();
         this.cache.reset();
         return;
       }
       const changed = state.value.context.fingerprint !== this.state.context;
       if (changed) {
+        this.metadataRequest?.abort();
         this.cancel();
         this.cache.reset();
       }
@@ -114,16 +117,11 @@ export class GraphModel {
             return { ...fresh, publication: "unknown" };
           }),
         });
-        if (identities.length)
-          void this.reopen(identities).catch((error) => {
-            if (this.state.context === context)
-              this.set({
-                message:
-                  error instanceof Error
-                    ? error.message
-                    : "Updated graph metadata is unavailable.",
-              });
-          });
+        if (identities.length) {
+          const metadata = new AbortController();
+          this.metadataRequest = metadata;
+          void this.refreshMetadata(identities, context, metadata.signal);
+        }
       }
       if (this.state.context !== context)
         this.set({
@@ -150,11 +148,76 @@ export class GraphModel {
     const unsubscribe = this.workspace.subscribe(sync);
     sync();
     return () => {
+      this.metadataRequest?.abort();
       unsubscribe();
       this.cancel();
       this.cache.reset();
     };
   };
+  /** Runtime facts refresh independently of user traversal/selection actions. */
+  private async refreshMetadata(
+    ids: readonly string[],
+    context: string,
+    signal: AbortSignal,
+  ): Promise<void> {
+    const current = () => !signal.aborted && this.state.context === context;
+    for (let attempt = 0; attempt < 3 && current(); attempt++) {
+      try {
+        const nodes = new Map<string, ApiLineageNodeV1>();
+        const edges = new Map<string, GraphEdgeV1>();
+        for (let offset = 0; offset < ids.length; offset += 100) {
+          const scope = await this.cache.lookup(
+            ids.slice(offset, offset + 100),
+          );
+          if (!current()) return;
+          for (const node of scope.nodes) nodes.set(node.identity, node);
+          for (const edge of scope.edges) edges.set(edgeId(edge), edge);
+        }
+        if (ids.some((id) => !nodes.has(id)))
+          throw new Error(
+            "A visible dataset is unavailable in the updated context.",
+          );
+        const visible = new Set(this.state.nodes.map((n) => n.identity));
+        // Merge facts into current membership. A concurrent add/remove must not
+        // cancel metadata refresh or be undone by its earlier node list.
+        this.set({
+          nodes: this.state.nodes.map(
+            (node) => nodes.get(node.identity) ?? node,
+          ),
+          edges: [
+            ...this.state.edges.filter((edge) => !nodes.has(edge.consumer)),
+            ...[...edges.values()].filter(
+              (edge) => visible.has(edge.parent) && visible.has(edge.consumer),
+            ),
+          ],
+        });
+        return;
+      } catch (error) {
+        if (!current()) return;
+        const conflict =
+          (error instanceof ApiFailure && error.kind === "conflict") ||
+          (error instanceof Error && error.name === "AbortError");
+        if (!conflict || attempt === 2) {
+          this.set({
+            message:
+              error instanceof Error
+                ? error.message
+                : "Updated graph metadata is unavailable.",
+          });
+          return;
+        }
+        await new Promise<void>((resolve) => {
+          const done = () => {
+            clearTimeout(timer);
+            signal.removeEventListener("abort", done);
+            resolve();
+          };
+          const timer = setTimeout(done, 500 * (attempt + 1));
+          signal.addEventListener("abort", done, { once: true });
+        });
+      }
+    }
+  }
   /** Restore visual membership only; metadata always comes from the selected coordinator context. */
   async reopen(ids: readonly string[]): Promise<void> {
     this.cancel();

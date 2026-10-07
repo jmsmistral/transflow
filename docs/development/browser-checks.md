@@ -75,6 +75,16 @@ and ellipses for longer paths. The first track starts 12 pixels after that colum
 the time axis aligns with the tracks. Bars have square corners and no glyphs.
 Hover recorded/open bars to check duration units and the explicit elapsed label.
 
+Run a forced multi-job build and watch live bar edges between clock samples.
+Elapsed intervals should move smoothly, while completed phase facts remain exact.
+Check reduced-motion behaviour separately. After publication, Build status should
+recover to the backend job state; preserve positions, selection and any nodes
+added/removed during metadata refresh. A failed latest metadata read remains
+explicit, and a changed branch must not receive the previous branch's overlays.
+In the Build-focused review fixture, keep the demo schedule paused for isolated
+manual tests. Older manual and scheduled entries are separate builds; preserve
+both. Each manual build contributes one job row per dataset.
+
 ## Persistent review workspaces
 
 For owner review sessions, create feature-specific synthetic workspaces under the

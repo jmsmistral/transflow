@@ -1,0 +1,38 @@
+{
+  "task": "T086/T088 live Build animation and canvas metadata recovery",
+  "date": "2026-10-08",
+  "implementation_base": "4bfc9c91fd10c1fea1e539b51dc1a660193386b7",
+  "specification_base": "ebed2c15164b22ad1c5b394def548586b31ea1ec",
+  "diagnosis": {
+    "extra_history_row": "Manual build 6ada4f41-747f-4d5a-869f-b3233459884a and scheduled build 293fc95b-b1b0-494f-b4e1-a075816c2e7d were separate accepted builds. The raw/items publication triggered the unpaused Daily customer reconciliation demo schedule. Neither history was deleted or hidden.",
+    "unknown_status": "Backend lineage traversal and lookup returned Succeeded for all four nodes. Isolated manual builds displayed Succeeded. Deterministic tests exposed a canvas refresh failure path: context conflicts or concurrent graph actions could leave cleared overlays without replacement. Refresh now retries transient conflicts and merges metadata independently of traversal generations. The exact screenshot timing was not reproduced."
+  },
+  "changes": [
+    "Frame-timed elapsed samples at a bounded 100-ms cadence plus 100-ms linear left/width interpolation; terminal charts use recorded coordinates without transitions.",
+    "Reduced-motion preferences use discrete one-second elapsed updates without transitions; preference changes and completion/unmount clean up clocks.",
+    "Metadata refresh retries at most three times with 500/1000-ms backoff, keeps context fencing, and preserves concurrently added/removed node membership and camera/selection.",
+    "Paused only the Build-focused demo schedule through its guarded API. The final demo job now sleeps ten seconds for visible animation review; data output is unchanged. Instructions/setup defaults were updated."
+  ],
+  "checks": {
+    "focused": "50 focused graph, execution and clock tests passed before adding the final cleanup regression.",
+    "web": "Full web gate passed with 539 tests, typecheck, strict lint, formatting, production worker probes and reproducible 16-asset builds.",
+    "metadata": "Tests cover transient recovery, deterministic failure, bounded repeated conflicts, disconnect cleanup and concurrent add/remove preservation. Existing branch/context, camera and selection regressions also passed.",
+    "browser": "Internal Browser with real coordinator: forced four-job builds stayed visible through completion, all four nodes/legend displayed Succeeded afterwards, and completed bars had zero transition duration. Plan-bound report/history reads verified four distinct dataset jobs and exactly one History row per dataset for build dffdd550-4c44-45cc-aa56-5e4217f66593.",
+    "animation": "160 live rendered-geometry samples observed 106 width changes across 50 target changes; 106 samples had interpolated widths between targets. Active transitions were 0.1s and terminal transitions were 0s.",
+    "documentation": "Specification validation, all 44 checker regressions and diff checks passed.",
+    "safety": "Safety baseline and all 27 regressions passed."
+  },
+  "research": [
+    "https://www.palantir.com/docs/foundry/pipeline-builder/outputs-deliver-pipeline/index.html",
+    "https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/CSS_JavaScript_animation_performance",
+    "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Performance/CSS"
+  ],
+  "limits": [
+    "Public Palantir docs did not establish its animation implementation; this is an independently implemented browser technique, not a claim to reproduce proprietary code.",
+    "Geometry sampling verifies interpolation for this four-job macOS review, not universal 60-fps performance or other platforms. Reduced-motion changes are deterministic-test evidence.",
+    "Rust/Python application code, database formats and generated contracts are unchanged; their full gates were not repeated.",
+    "The updated fixture setup helper was syntax-checked; fresh creation was not rerun over the preserved existing workspace.",
+    "No push or CI polling was performed."
+  ],
+  "cleanup": "Owned diagnostic/final coordinators exited, all temporary Browser tabs closed, one-use launch link removed. Persistent review workspace and its complete history remain."
+}

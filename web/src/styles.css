@@ -2640,6 +2640,16 @@ revo-grid.preview-grid
   overflow: hidden;
   border-radius: 0;
 }
+.build-gantt[data-live="true"] .phase-bar {
+  transition:
+    left 100ms linear,
+    width 100ms linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .build-gantt[data-live="true"] .phase-bar {
+    transition: none;
+  }
+}
 .gantt-time-axis {
   grid-column: 2;
   display: flex;

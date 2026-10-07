@@ -474,7 +474,11 @@ export function BuildGantt({
         ? ["Most critical", "On critical path", "Non-critical"]
         : [...new Set(timeline.jobs.map((j) => j.state))];
   return (
-    <section className="build-gantt" aria-label="Build Gantt chart">
+    <section
+      className="build-gantt"
+      aria-label="Build Gantt chart"
+      data-live={active}
+    >
       <div className="phase-legend">
         {legend.map((label, i) => (
           <span key={label}>

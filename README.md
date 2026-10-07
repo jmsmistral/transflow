@@ -166,6 +166,10 @@ selection, Escape and outside-click dismissal. Gantt names use a shared column
 sized to their text, capped at 240 pixels with ellipses; square bars show status
 through the legend and table. Bar tooltips end with a duration in seconds,
 minutes or hours; open bars explicitly label their live elapsed time.
+Live bars interpolate between frame-timed elapsed-clock samples for smooth movement;
+reduced-motion preferences use discrete updates. Completed charts use recorded
+timing directly. Canvas status/metadata refresh recovers from transient context
+conflicts without interrupting graph edits or restoring removed nodes.
 T088 adds status, freshness, duration, rows, files, physical size, output health and
 build-role colouring with compact node labels and legends counting visible unique
 nodes. Zero, Unknown and No health checks remain distinct; failed jobs do not erase
