@@ -45,9 +45,13 @@ export function ViewEditor({
     const previous = window.document.activeElement;
     const element = dialog.current;
     if (element && !element.open) element.showModal();
-    (
-      element?.querySelector<HTMLElement>('input:not([type="checkbox"])') ??
-      element?.querySelector<HTMLElement>("button:not(:disabled)")
+    const firstButton = element?.querySelector<HTMLElement>(
+      "button:not(:disabled)",
+    );
+    (panel === "save" || panel === "copy"
+      ? firstButton
+      : (element?.querySelector<HTMLElement>('input:not([type="checkbox"])') ??
+        firstButton)
     )?.focus();
     return () => {
       element?.close();
@@ -210,11 +214,7 @@ export function ViewEditor({
     setError("");
     setArtifact(null);
     if (next === "save" || next === "copy") {
-      setName(
-        next === "copy"
-          ? `${record?.name ?? "Untitled lineage"} copy`.slice(0, 200)
-          : "",
-      );
+      setName("");
       setCopyId(crypto.randomUUID());
     }
     if (next === "open") {
@@ -424,24 +424,23 @@ export function ViewEditor({
             )}
             {(panel === "save" || panel === "copy") && (
               <>
-                <label>
-                  Lineage name
-                  <input
-                    ref={(input) => input?.focus()}
-                    maxLength={200}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onKeyDown={(event) => {
-                      if (
-                        event.key === "Enter" &&
-                        name.trim() &&
-                        !busy &&
-                        visual.nodes.length <= 500
-                      )
-                        void run(() => save(panel === "copy"));
-                    }}
-                  />
-                </label>
+                <input
+                  className="lineage-name-input"
+                  aria-label="Lineage name"
+                  placeholder="Enter lineage view name…"
+                  maxLength={200}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === "Enter" &&
+                      name.trim() &&
+                      !busy &&
+                      visual.nodes.length <= 500
+                    )
+                      void run(() => save(panel === "copy"));
+                  }}
+                />
                 {visual.nodes.length > 500 && (
                   <p>
                     Save supports at most 500 datasets. Remove some from the

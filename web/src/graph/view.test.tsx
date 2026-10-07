@@ -150,6 +150,15 @@ test("saved view controls preserve edits on conflict and only issue a view mutat
   );
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   expect(screen.queryByLabelText("Description")).toBeNull();
+  expect(screen.queryByText("Lineage name")).toBeNull();
+  expect(
+    screen.getByPlaceholderText("Enter lineage view name…"),
+  ).toHaveProperty("value", "");
+  expect(
+    screen
+      .getByRole("button", { name: "Save lineage" })
+      .hasAttribute("disabled"),
+  ).toBe(true);
   fireEvent.change(screen.getByLabelText("Lineage name"), {
     target: { value: "Analysis" },
   });
@@ -197,6 +206,14 @@ test("saved view controls preserve edits on conflict and only issue a view mutat
   fireEvent.click(screen.getByRole("button", { name: "Lineage actions" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "Save as" }));
   expect(screen.queryByLabelText("Description")).toBeNull();
+  expect(
+    screen.getByPlaceholderText("Enter lineage view name…"),
+  ).toHaveProperty("value", "");
+  expect(
+    screen
+      .getByRole("button", { name: "Save lineage" })
+      .hasAttribute("disabled"),
+  ).toBe(true);
   fireEvent.change(screen.getByLabelText("Lineage name"), {
     target: { value: "Copy" },
   });

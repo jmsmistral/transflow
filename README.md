@@ -16,6 +16,8 @@ Package installation and workspace environment checks reject other minors.
 Lineage review now includes directional parent/child placement, focus-scoped Cmd/Ctrl+A, a Resource Type colour legend showing only visible node categories, and bounded metadata caching for immediate cached additions. The Align toolbar toggle optionally snaps node drags to the canvas grid; free movement is the default. The fallback-branch dialog presents an ordered view-local policy. Uncached metadata still requires a coordinator read. Existing positions and the camera stay unchanged. A newer canvas selection takes precedence over delayed catalogue selection.
 
 Saved lineages retain node positions and membership, while pan/zoom stays transient.
+Save and Save as request a name in an empty field with “Enter lineage view name…”
+as its hint; the hint hides on focus, and saving requires a nonblank name.
 Opening a lineage centres its node bounds at 100% zoom. The lineage picker supports
 live fuzzy name search and shows each saved branch, compact version label and
 last-save time in `YYYY-MM-DD HH:mm` format. New starts an empty lineage, with a

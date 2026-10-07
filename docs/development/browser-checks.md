@@ -46,6 +46,16 @@ opening and filtering Catalogue, adding a dataset to the graph and inspecting it
 preview. Routine clock/event cursor audits must not cause context-conflict errors.
 Confirm separately that an actual publication still refreshes the displayed head.
 
+## Saved lineage naming (T084)
+
+Open Save for a new lineage and Save as for an existing one. Each must show an
+empty full-width field with “Enter lineage view name…” and no visible name label
+or prefilled copy name. The field retains its accessible name. Click or Tab into
+it and confirm the hint disappears; blur an empty field and confirm it returns.
+Empty and whitespace-only names keep Save lineage disabled. Enter a name and
+verify keyboard saving and a new saved identity for Save as. Cancelling preserves
+the current view and returns focus to the initiating control.
+
 ## Dataset inspection (T085)
 
 On a real synthetic coordinator, select a published local dataset and open the

@@ -1926,6 +1926,9 @@ revo-grid.preview-grid
   flex: 1;
   min-width: 0;
 }
+.lineage-name-input:focus::placeholder {
+  color: transparent;
+}
 .view-editor p {
   font-size: 13px;
 }
