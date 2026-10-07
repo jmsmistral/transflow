@@ -37,10 +37,19 @@ test("retained counts and duration ratios preserve precision above the JS intege
   expect(seconds({ numerator: "10000001", denominator: "2" })).toBe("0.005 s");
   expect(seconds(null)).toBe("Unavailable");
   expect(seconds("0")).toBe("0.000 s");
+  expect(seconds("9007199254740993123", 2)).toBe("9007199254.74 s");
+  expect(seconds("2564999999", 2)).toBe("2.56 s");
+  expect(seconds("2565000000", 2)).toBe("2.57 s");
+  expect(seconds({ numerator: "19950000000", denominator: "2" }, 2)).toBe(
+    "9.98 s",
+  );
+  expect(seconds(null, 2)).toBe("Unavailable");
+  expect(seconds("0", 2)).toBe("0.00 s");
   expect(percent({ numerator: "1", denominator: "3" })).toBe("33.33%");
   expect(percent(null)).toBe("Unavailable");
   expect(position(9007199254741000100n, 9007199254741000000n, 1000n)).toBe(10);
   expect(timestamp("1700000000123456")).toBe("2023-11-14 22:13:20");
+  expect(timestamp("1700000000123456", "minute")).toBe("2023-11-14 22:13");
 });
 test("source diff preserves both complete captures, including insertion and identical files", () => {
   expect(sourceDiff("a\nb\nc", "a\nx\nc")).toEqual([

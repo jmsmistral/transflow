@@ -149,6 +149,9 @@ its overall build status and total job count,
 including builds where another dataset failed. The header identifies the selected lineage branch. History dates use
 `YYYY-MM-DD`; both From and To dates are included, with UTC calendar boundaries.
 History and Build timestamps omit the timezone suffix while retaining UTC values.
+History rows and duration-point tooltips show time to the minute. Its Summary
+heading sits beside the date filters; Mean precedes Median, with durations rounded
+to two decimals. Point tooltips show status, date/time and duration.
 Live timing updates preserve graph membership, positions, selection and camera;
 historical versions are labelled explicitly rather than as branch fallbacks.
 T088 adds status, freshness, duration, rows, files, physical size, output health and

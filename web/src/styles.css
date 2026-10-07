@@ -2189,6 +2189,8 @@ revo-grid.preview-grid
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  word-spacing: 6px;
+  font-variant-numeric: tabular-nums;
 }
 .history-job-duration {
   margin-left: auto;
@@ -2229,11 +2231,22 @@ revo-grid.preview-grid
 .status-cached {
   color: #5184b5;
 }
+.history-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  flex-wrap: wrap;
+}
+.history-summary-header h3 {
+  margin: 0;
+  font-size: 13px;
+}
 .metrics-range {
   display: flex;
   align-items: flex-end;
   gap: 12px;
-  padding: 8px 12px;
+  margin-left: auto;
   flex-wrap: wrap;
 }
 .metrics-range label {

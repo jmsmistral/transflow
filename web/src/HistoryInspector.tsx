@@ -173,8 +173,8 @@ export function HistoryInspector({
               >
                 <Status state={job.state} />
                 <span className="history-entry-copy">
-                  <strong title={timestamp(job.created_us)}>
-                    {timestamp(job.created_us)}
+                  <strong title={timestamp(job.created_us, "minute")}>
+                    {timestamp(job.created_us, "minute")}
                   </strong>
                   <small title={job.id}>
                     {job.state} ·{" "}
@@ -191,7 +191,7 @@ export function HistoryInspector({
                 </span>
                 {job.state !== "CACHED" && (
                   <small className="history-job-duration" title="Job duration">
-                    ({seconds(job.duration_ns)})
+                    ({seconds(job.duration_ns, 2)})
                   </small>
                 )}
               </button>
@@ -221,41 +221,44 @@ export function HistoryInspector({
               />
             ) : (
               <>
-                <form
-                  className="metrics-range"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    if (validRange) setRange({ from, to });
-                  }}
-                >
-                  <label>
-                    From
-                    <input
-                      type="text"
-                      placeholder="YYYY-MM-DD"
-                      pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
-                      title="YYYY-MM-DD"
-                      value={from}
-                      onChange={(event) => setFrom(event.target.value)}
-                      required
-                    />
-                  </label>
-                  <label>
-                    To
-                    <input
-                      type="text"
-                      placeholder="YYYY-MM-DD"
-                      pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
-                      title="YYYY-MM-DD"
-                      value={to}
-                      onChange={(event) => setTo(event.target.value)}
-                      required
-                    />
-                  </label>
-                  <Button type="submit" disabled={!validRange}>
-                    Apply
-                  </Button>
-                </form>
+                <div className="history-summary-header">
+                  <h3>Summary</h3>
+                  <form
+                    className="metrics-range"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      if (validRange) setRange({ from, to });
+                    }}
+                  >
+                    <label>
+                      From
+                      <input
+                        type="text"
+                        placeholder="YYYY-MM-DD"
+                        pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
+                        title="YYYY-MM-DD"
+                        value={from}
+                        onChange={(event) => setFrom(event.target.value)}
+                        required
+                      />
+                    </label>
+                    <label>
+                      To
+                      <input
+                        type="text"
+                        placeholder="YYYY-MM-DD"
+                        pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
+                        title="YYYY-MM-DD"
+                        value={to}
+                        onChange={(event) => setTo(event.target.value)}
+                        required
+                      />
+                    </label>
+                    <Button type="submit" disabled={!validRange}>
+                      Apply
+                    </Button>
+                  </form>
+                </div>
                 {metrics ? (
                   <>
                     <div className="metrics-summary">
@@ -270,12 +273,12 @@ export function HistoryInspector({
                         }
                       />
                       <Metric
-                        label="Median duration"
-                        value={seconds(metrics.median_ns)}
+                        label={`Mean · latest ${metrics.trailing_window} successes`}
+                        value={seconds(metrics.trailing_mean_ns, 2)}
                       />
                       <Metric
-                        label={`Mean · latest ${metrics.trailing_window} successes`}
-                        value={seconds(metrics.trailing_mean_ns)}
+                        label="Median duration"
+                        value={seconds(metrics.median_ns, 2)}
                       />
                       <Metric
                         label="Measured / missing"
@@ -355,7 +358,7 @@ function DurationChart({
           <line x1="58" y1="12" x2="58" y2="145" stroke="currentColor" />
           <line x1="58" y1="145" x2="685" y2="145" stroke="currentColor" />
           <text x="2" y="18">
-            {seconds(max.toString())}
+            {seconds(max.toString(), 2)}
           </text>
           <text x="20" y="145">
             0 s
@@ -372,7 +375,7 @@ function DurationChart({
               <text x="70" y="174">
                 Mean of latest {metrics.trailing_samples} successful
                 materializations in this range:{" "}
-                {seconds(metrics.trailing_mean_ns)}
+                {seconds(metrics.trailing_mean_ns, 2)}
               </text>
             </>
           )}
@@ -396,9 +399,8 @@ function DurationChart({
               r="4"
             >
               <title>
-                {sample.state} · {timestamp(sample.accepted)} ·{" "}
-                {seconds(sample.duration_ns)} ({sample.duration_ns} ns) ·
-                attempt {sample.attempt}
+                {sample.state} · {timestamp(sample.accepted, "minute")} ·{" "}
+                {seconds(sample.duration_ns, 2)}
               </title>
             </circle>
           ))}

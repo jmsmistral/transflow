@@ -124,6 +124,7 @@ async function fixture(
   historyJob: ApiHistoryJobV1 = job,
   control: {
     timeline?: () => Partial<ApiExecutionTimelineV1>;
+    metrics?: Partial<ApiExecutionMetricsV1>;
     trigger?: ExecutionJsonV1;
     fail?: boolean;
   } = {},
@@ -191,7 +192,15 @@ async function fixture(
           );
         if (path.endsWith("/metrics"))
           return Promise.resolve(
-            json({ ...metrics, from_us: query.from_us, to_us: query.to_us }, c),
+            json(
+              {
+                ...metrics,
+                ...control.metrics,
+                from_us: query.from_us,
+                to_us: query.to_us,
+              },
+              c,
+            ),
           );
         if (path.endsWith("/timeline") && control.fail)
           return Promise.reject(new Error("offline"));
@@ -423,6 +432,77 @@ test("history identifies the selected branch and submits inclusive ISO calendar 
   expect(screen.queryByText(/Build acceptance cohort/)).toBeNull();
   fireEvent.change(to, { target: { value: "2024-02-28" } });
   expect(apply).toHaveProperty("disabled", true);
+  model.dispose();
+});
+test("history summary uses compact minute timestamps, rounded durations and concise point tooltips", async () => {
+  const duration = "2564999999";
+  const { model, state } = await fixture(
+    false,
+    {
+      ...job,
+      state: "SUCCEEDED",
+      build_state: "SUCCEEDED",
+      duration_ns: duration,
+      attempts: job.attempts.map((timing) => ({
+        ...timing,
+        state: "SUCCEEDED",
+        duration_ns: duration,
+      })),
+    },
+    {
+      metrics: {
+        build_states: [{ state: "SUCCEEDED", count: "1" }],
+        job_states: [{ state: "SUCCEEDED", count: "1" }],
+        materializations: "1",
+        failure_rate: { numerator: "0", denominator: "1" },
+        duration_samples: "1",
+        median_ns: { numerator: duration, denominator: "1" },
+        trailing_mean_ns: { numerator: duration, denominator: "1" },
+        trailing_samples: "1",
+      },
+    },
+  );
+  const { container } = render(
+    <HistoryInspector workspace={model} state={state} onVersion={() => {}} />,
+  );
+  expect(await screen.findByText("0.00%")).toBeTruthy();
+  expect(screen.getByTitle("2023-11-14 22:13").textContent).toBe(
+    "2023-11-14 22:13",
+  );
+  expect(screen.getByTitle("Job duration").textContent).toBe("(2.56 s)");
+  const heading = screen.getByRole("heading", { name: "Summary" });
+  expect(
+    heading.parentElement?.contains(
+      screen.getByRole("textbox", { name: "From" }),
+    ),
+  ).toBe(true);
+  expect(
+    Array.from(
+      container.querySelectorAll(".metric small"),
+      (el) => el.textContent,
+    ),
+  ).toEqual([
+    "Builds",
+    "Failure rate",
+    "Mean · latest 10 successes",
+    "Median duration",
+    "Measured / missing",
+  ]);
+  fireEvent.change(screen.getByRole("textbox", { name: "From" }), {
+    target: { value: "2023-11-14" },
+  });
+  fireEvent.change(screen.getByRole("textbox", { name: "To" }), {
+    target: { value: "2023-11-14" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+  const chart = await screen.findByRole("img", {
+    name: "Measured attempt durations by build acceptance time",
+  });
+  const tooltip = chart.querySelector("circle title")?.textContent;
+  expect(tooltip).toBe("SUCCEEDED · 2023-11-14 22:13 · 2.56 s");
+  expect(tooltip).not.toContain(" ns");
+  expect(tooltip).not.toContain(attempt);
+  expect(chart.textContent).not.toContain("2.565");
   model.dispose();
 });
 test("Gantt uses recorded phases and exposes retained failure evidence in the owning plan", async () => {

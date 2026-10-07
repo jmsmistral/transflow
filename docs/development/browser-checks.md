@@ -41,6 +41,17 @@ the selected app theme, and selected code text must retain legible foreground an
 background colours across syntax tokens. The system colour preference must not
 override the explicit app theme.
 
+## History summary presentation
+
+Select a dataset with measured jobs and open History. Row dates and times must
+have visible spacing and omit seconds; row durations use two decimals. Summary
+sits on the left of the date-filter row, with From/To/Apply grouped on the right
+and wrapping within a narrow panel. Mean comes before Median; both metrics,
+the chart axis and mean caption use two decimal places. Hover a duration point:
+its tooltip contains only status, date/time to the minute and rounded seconds.
+It must omit raw nanoseconds and attempt identifiers. Applying a same-day range
+and navigating from a job detail back with Show summary retain their behavior.
+
 ## Persistent review workspaces
 
 For owner review sessions, create feature-specific synthetic workspaces under the

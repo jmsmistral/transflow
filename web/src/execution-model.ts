@@ -27,23 +27,29 @@ export function historyDate(us: string, inclusiveEnd = false): string {
   return new Date(Number(ms)).toISOString().slice(0, 10);
 }
 
-/** Display rounding uses integer arithmetic; retained nanoseconds remain available in titles. */
+/** Display rounding uses integer arithmetic without changing retained measurements. */
 export function seconds(
   value: string | ApiExactRatioV1 | null | undefined,
+  decimals: 2 | 3 = 3,
 ): string {
   if (value == null) return "Unavailable";
   const n = BigInt(typeof value === "string" ? value : value.numerator);
   const d = typeof value === "string" ? 1n : BigInt(value.denominator);
   if (d <= 0n) return "Unavailable";
-  const ms = (n + d * 500000n) / (d * 1000000n);
-  return `${ms / 1000n}.${(ms % 1000n).toString().padStart(3, "0")} s`;
+  const scale = 10n ** BigInt(decimals);
+  const unit = 1000000000n / scale;
+  const rounded = (n + (d * unit) / 2n) / (d * unit);
+  return `${rounded / scale}.${(rounded % scale).toString().padStart(decimals, "0")} s`;
 }
 export function percent(value: ApiExactRatioV1 | null): string {
   if (!value || BigInt(value.denominator) === 0n) return "Unavailable";
   const n = (BigInt(value.numerator) * 10000n) / BigInt(value.denominator);
   return `${n / 100n}.${(n % 100n).toString().padStart(2, "0")}%`;
 }
-export function timestamp(us: string | null | undefined): string {
+export function timestamp(
+  us: string | null | undefined,
+  precision: "minute" | "second" = "second",
+): string {
   if (us == null) return "Unavailable";
   const milliseconds = BigInt(us) / 1000n;
   if (milliseconds > 8640000000000000n || milliseconds < -8640000000000000n)
@@ -51,7 +57,7 @@ export function timestamp(us: string | null | undefined): string {
   return new Date(Number(milliseconds))
     .toISOString()
     .replace("T", " ")
-    .slice(0, 19);
+    .slice(0, precision === "minute" ? 16 : 19);
 }
 export function short(id: string | null | undefined): string {
   return id?.slice(0, 8) ?? "Unavailable";
