@@ -43,7 +43,7 @@ impl Context {
             etag: Some(self.fingerprint.clone()),
         }
     }
-    fn capture(&self) -> Result<SourceSnapshot> {
+    pub(crate) fn capture(&self) -> Result<SourceSnapshot> {
         SourceSnapshot::open(
             &self.root.join(".transflow/runtime/source-snapshots"),
             self.source.ok_or_else(E::missing)?,

@@ -35,33 +35,51 @@ pub(crate) async fn guard(
         serde_json::from_str(&r.try_get::<String, _>(0)?).map_err(|_| invalid())?;
     let payload: Value =
         serde_json::from_str(&r.try_get::<String, _>(1)?).map_err(|_| invalid())?;
+    let active: i64 = sqlx::query_scalar("SELECT count(*) FROM schedule_occurrences o JOIN builds b ON b.id=o.build_id WHERE o.schedule_id=? AND b.state IN ('QUEUED','RUNNING','WAITING','STARTING')")
+        .bind(pending.schedule.to_string()).fetch_one(&mut *db).await?;
+    if active != 0 && pending.execution["policies"]["allow_overlapping_builds"] != true {
+        return Err(invalid());
+    }
     if execution != pending.execution || payload != pending.payload {
         return Err(invalid());
     }
     Ok(())
 }
 impl Store {
-    /// One eligible pending occurrence. Conservative serial dispatch until overlap policies land.
+    /// One eligible pending occurrence; frozen overlap policy controls same-schedule admission.
     pub async fn next_schedule_dispatch(
         &mut self,
         workspace: WorkspaceId,
         at_us: i64,
     ) -> crate::Result<Option<Pending>> {
-        let r=sqlx::query("SELECT o.id,o.schedule_id,o.execution_json,o.payload_json FROM schedule_occurrences o JOIN schedules s ON s.id=o.schedule_id WHERE s.workspace_id=? AND o.disposition='QUEUED' AND o.build_id IS NULL AND length(o.execution_json)<=262144 AND length(o.payload_json)<=262144 AND (json_extract(o.payload_json,'$.manual')=1 OR (s.paused=0 AND s.needs_review=0 AND s.deleted_at_us IS NULL)) AND NOT EXISTS(SELECT 1 FROM builds WHERE state IN ('QUEUED','RUNNING','WAITING','STARTING')) AND (json_extract(o.payload_json,'$.manual')=1 OR NOT EXISTS(SELECT 1 FROM schedule_occurrences previous JOIN builds b ON b.id=previous.build_id WHERE previous.schedule_id=o.schedule_id AND b.finished_at_us IS NOT NULL AND b.finished_at_us + CAST(json_extract(o.execution_json,'$.policies.minimum_delay_seconds') AS INTEGER)*1000000 > ?)) ORDER BY o.logical_fire_at_us,o.id LIMIT 1")
-            .bind(workspace.to_string()).bind(at_us).fetch_optional(&mut self.db).await?;
-        r.map(|r| {
-            Ok(Pending {
-                occurrence: r.try_get::<String, _>(0)?.parse().map_err(|_| invalid())?,
-                schedule: r.try_get::<String, _>(1)?.parse().map_err(|_| invalid())?,
-                execution: serde_json::from_str(&r.try_get::<String, _>(2)?)
-                    .map_err(|_| invalid())?,
-                payload: serde_json::from_str(&r.try_get::<String, _>(3)?)
-                    .map_err(|_| invalid())?,
-            })
-        })
-        .transpose()
+        Ok(self
+            .schedule_dispatch_candidates(workspace, at_us)
+            .await?
+            .into_iter()
+            .next())
     }
-    /// Conservative causal guard while complete overlap/static-cycle policy is developed.
+    /// Bounded candidate batch; an overlapping writer cannot starve disjoint later requests.
+    pub async fn schedule_dispatch_candidates(
+        &mut self,
+        workspace: WorkspaceId,
+        at_us: i64,
+    ) -> crate::Result<Vec<Pending>> {
+        let r=sqlx::query("SELECT o.id,o.schedule_id,o.execution_json,o.payload_json FROM schedule_occurrences o JOIN schedules s ON s.id=o.schedule_id WHERE s.workspace_id=? AND o.disposition='QUEUED' AND o.build_id IS NULL AND length(o.execution_json)<=262144 AND length(o.payload_json)<=262144 AND (json_extract(o.payload_json,'$.manual')=1 OR (s.paused=0 AND s.needs_review=0 AND s.deleted_at_us IS NULL)) AND (json_extract(o.execution_json,'$.policies.allow_overlapping_builds')=1 OR NOT EXISTS(SELECT 1 FROM schedule_occurrences active JOIN builds b ON b.id=active.build_id WHERE active.schedule_id=o.schedule_id AND b.state IN ('QUEUED','RUNNING','WAITING','STARTING'))) AND (json_extract(o.payload_json,'$.manual')=1 OR NOT EXISTS(SELECT 1 FROM schedule_occurrences previous JOIN builds b ON b.id=previous.build_id WHERE previous.schedule_id=o.schedule_id AND b.finished_at_us IS NOT NULL AND b.finished_at_us + CAST(json_extract(o.execution_json,'$.policies.minimum_delay_seconds') AS INTEGER)*1000000 > ?)) ORDER BY o.logical_fire_at_us,o.id LIMIT 100")
+            .bind(workspace.to_string()).bind(at_us).fetch_all(&mut self.db).await?;
+        r.into_iter()
+            .map(|r| {
+                Ok(Pending {
+                    occurrence: r.try_get::<String, _>(0)?.parse().map_err(|_| invalid())?,
+                    schedule: r.try_get::<String, _>(1)?.parse().map_err(|_| invalid())?,
+                    execution: serde_json::from_str(&r.try_get::<String, _>(2)?)
+                        .map_err(|_| invalid())?,
+                    payload: serde_json::from_str(&r.try_get::<String, _>(3)?)
+                        .map_err(|_| invalid())?,
+                })
+            })
+            .collect()
+    }
+    /// Bounded causal ancestry guard; manual requests explicitly bypass automatic retrigger rules.
     /// Never redispatch a schedule already present in its accepted build ancestry.
     pub async fn check_schedule_dispatch_ancestry(
         &mut self,
@@ -73,6 +91,32 @@ impl Store {
         let max = pending.execution["policies"]["max_consecutive_builds"]
             .as_u64()
             .ok_or_else(invalid)?;
+        // A queued external evidence burst is bounded independently of causal hop depth.
+        // A later event after the previous build finished begins a fresh burst.
+        let ready: Option<i64> =
+            sqlx::query_scalar("SELECT logical_fire_at_us FROM schedule_occurrences WHERE id=?")
+                .bind(pending.occurrence.to_string())
+                .fetch_optional(&mut self.db)
+                .await?;
+        if let Some(mut ready) = ready {
+            let previous: Vec<(i64, i64, String)> = sqlx::query_as("SELECT o.logical_fire_at_us,b.finished_at_us,o.payload_json FROM schedule_occurrences o JOIN builds b ON b.id=o.build_id WHERE o.schedule_id=? AND b.finished_at_us IS NOT NULL ORDER BY b.finished_at_us DESC,b.id DESC LIMIT 100")
+                .bind(pending.schedule.to_string()).fetch_all(&mut self.db).await?;
+            let mut consecutive = 1u64;
+            for (fired, finished, payload) in previous {
+                if ready > finished {
+                    break;
+                }
+                let payload: Value = serde_json::from_str(&payload).map_err(|_| invalid())?;
+                if payload["manual"] == true {
+                    break;
+                }
+                consecutive += 1;
+                if consecutive > max {
+                    return Err(invalid());
+                }
+                ready = fired;
+            }
+        }
         let mut queue = std::collections::VecDeque::new();
         let correlations = |payload: &Value| -> crate::Result<Vec<String>> {
             let tokens = payload["tokens"].as_array().ok_or_else(invalid)?;
@@ -85,13 +129,20 @@ impl Store {
                 .map(str::to_owned)
                 .collect())
         };
-        queue.extend(correlations(&pending.payload)?);
-        let mut seen = std::collections::BTreeSet::new();
-        let mut scheduled = 0;
-        while let Some(build) = queue.pop_front() {
-            if !seen.insert(build.clone()) {
+        queue.extend(
+            correlations(&pending.payload)?
+                .into_iter()
+                .map(|id| (id, 0u64)),
+        );
+        let mut seen = std::collections::BTreeMap::new();
+        while let Some((build, depth)) = queue.pop_front() {
+            if depth >= 16 {
+                return Err(invalid());
+            }
+            if seen.get(&build).is_some_and(|old| *old >= depth) {
                 continue;
             }
+            seen.insert(build.clone(), depth);
             if seen.len() > 1000 {
                 return Err(invalid());
             }
@@ -104,11 +155,17 @@ impl Store {
             if let Some(trigger) = trigger {
                 let trigger: Value = serde_json::from_str(&trigger).map_err(|_| invalid())?;
                 if trigger["kind"] == "schedule" {
-                    scheduled += 1;
-                    if trigger["schedule_id"] == pending.schedule.to_string() || scheduled >= max {
+                    if trigger["schedule_id"] == pending.schedule.to_string()
+                        || depth + 1 >= max
+                        || depth + 1 >= 16
+                    {
                         return Err(invalid());
                     }
-                    queue.extend(correlations(&trigger["evidence"])?);
+                    queue.extend(
+                        correlations(&trigger["evidence"])?
+                            .into_iter()
+                            .map(|id| (id, depth + 1)),
+                    );
                 }
             }
         }

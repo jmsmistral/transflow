@@ -64,6 +64,10 @@ export function BuildDetail({
           {...evidence}
           dataset={dataset}
           onClose={() => setOpen(false)}
+          onOpenSchedule={(id) => {
+            setOpen(false);
+            workspace.requestSchedule(id);
+          }}
         />
       )}
     </>
@@ -75,12 +79,14 @@ export function BuildModal({
   refresh,
   dataset,
   onClose,
+  onOpenSchedule,
 }: {
   result: BuildEvidence | undefined;
   error: string;
   refresh: () => void;
   dataset: Pick<ApiDatasetV1, "path">;
   onClose: () => void;
+  onOpenSchedule?: (id: string) => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const title = useId();
@@ -115,7 +121,11 @@ export function BuildModal({
         </p>
       )}
       {result ? (
-        <BuildReport evidence={result} refresh={refresh} />
+        <BuildReport
+          evidence={result}
+          refresh={refresh}
+          onOpenSchedule={onOpenSchedule}
+        />
       ) : (
         <Empty>Loading plan-bound build evidence…</Empty>
       )}
@@ -125,9 +135,11 @@ export function BuildModal({
 function BuildReport({
   evidence,
   refresh,
+  onOpenSchedule,
 }: {
   evidence: BuildEvidence;
   refresh: () => void;
+  onOpenSchedule: ((id: string) => void) | undefined;
 }) {
   const { timeline, report, scope } = evidence;
   const active = !terminalBuild(timeline.state);
@@ -264,9 +276,24 @@ function BuildReport({
                 field(trigger, "schedule_id") ??
                 "Retained schedule trigger"}
             </strong>
-            <h4>When to build</h4>
-            <Evidence>{trigger}</Evidence>
-            <p>Schedule conditions and recent builds are unavailable.</p>
+            <p>
+              {property(trigger, "manual") === true
+                ? "Manually requested scheduled build"
+                : "Scheduled build from accepted occurrence evidence"}
+            </p>
+            {onOpenSchedule && field(trigger, "schedule_id") && (
+              <Button
+                onClick={() =>
+                  onOpenSchedule(field(trigger, "schedule_id") ?? "")
+                }
+              >
+                View schedule
+              </Button>
+            )}
+            <details>
+              <summary>Accepted trigger evidence</summary>
+              <Evidence>{trigger}</Evidence>
+            </details>
           </section>
         )}
       </aside>

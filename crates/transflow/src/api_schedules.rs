@@ -23,6 +23,15 @@ fn error(e: Error) -> E {
             error.details = serde_json::json!({"current_etag":current_etag});
             error
         }
+        Error::Cycle { path } => {
+            let mut error = E::new(
+                422,
+                "TF_API_SCHEDULE_CYCLE",
+                "This schedule would create an automatic trigger cycle; change its targets or conditions",
+            );
+            error.details = serde_json::json!({"schedule_path":path});
+            error
+        }
         Error::Limit => E::new(
             409,
             "TF_API_SCHEDULE_LIMIT",
@@ -34,30 +43,103 @@ fn error(e: Error) -> E {
     }
 }
 pub(crate) fn read(root: &Path, workspace: WorkspaceId, r: &Request) -> Result<Reply> {
-    if r.query.keys().any(|key| key != "after") {
-        return Err(E::invalid());
-    }
     let rt = api_read::runtime()?;
     let value = rt.block_on(async {
         let mut rd = api_read::reader(root).await?;
         let result = if r.path == "/api/v1/schedules" {
+            if r.query.keys().any(|key| key != "after") {
+                return Err(E::invalid());
+            }
             let after = r.query.get("after").map(String::as_str).unwrap_or("");
             if !after.is_empty() {
                 after.parse::<ScheduleId>().map_err(|_| E::invalid())?;
             }
             rd.schedules(workspace, after).await.map_err(error)
         } else {
-            if !r.query.is_empty() {
-                return Err(E::invalid());
-            }
-            let id = r
+            let tail = r
                 .path
                 .strip_prefix("/api/v1/schedules/")
                 .ok_or_else(E::invalid)?;
-            rd.schedule(workspace, id.parse().map_err(|_| E::invalid())?)
-                .await
-                .map_err(error)?
-                .ok_or_else(E::missing)
+            let (id, action) = tail.split_once('/').unwrap_or((tail, ""));
+            let id = id.parse::<ScheduleId>().map_err(|_| E::invalid())?;
+            match action {
+                "history" => {
+                    if r.query
+                        .keys()
+                        .any(|key| !matches!(key.as_str(), "after" | "limit"))
+                    {
+                        return Err(E::invalid());
+                    }
+                    let after = r
+                        .query
+                        .get("after")
+                        .map(|v| v.parse())
+                        .transpose()
+                        .map_err(|_| E::invalid())?;
+                    let limit = r
+                        .query
+                        .get("limit")
+                        .map(|v| v.parse())
+                        .transpose()
+                        .map_err(|_| E::invalid())?
+                        .unwrap_or(50usize);
+                    if !(1..=100).contains(&limit) {
+                        return Err(E::invalid());
+                    }
+                    if !rd.schedule_presence(workspace, id).await.map_err(bad)? {
+                        return Err(E::missing());
+                    }
+                    rd.schedule_history(workspace, id, after, limit)
+                        .await
+                        .map_err(history_error)
+                }
+                "metrics" => {
+                    if r.query
+                        .keys()
+                        .any(|key| !matches!(key.as_str(), "from_us" | "to_us" | "window"))
+                    {
+                        return Err(E::invalid());
+                    }
+                    let from = r
+                        .query
+                        .get("from_us")
+                        .ok_or_else(E::invalid)?
+                        .parse()
+                        .map_err(|_| E::invalid())?;
+                    let to = r
+                        .query
+                        .get("to_us")
+                        .ok_or_else(E::invalid)?
+                        .parse()
+                        .map_err(|_| E::invalid())?;
+                    let window = r
+                        .query
+                        .get("window")
+                        .map(|v| v.parse())
+                        .transpose()
+                        .map_err(|_| E::invalid())?
+                        .unwrap_or(10usize);
+                    if from < 0 || to <= from || !(1..=1000).contains(&window) {
+                        return Err(E::invalid());
+                    }
+                    if !rd.schedule_presence(workspace, id).await.map_err(bad)? {
+                        return Err(E::missing());
+                    }
+                    rd.schedule_metrics(workspace, id, from, to, window)
+                        .await
+                        .map_err(history_error)
+                }
+                "" => {
+                    if !r.query.is_empty() {
+                        return Err(E::invalid());
+                    }
+                    rd.schedule(workspace, id)
+                        .await
+                        .map_err(error)?
+                        .ok_or_else(E::missing)
+                }
+                _ => Err(E::missing()),
+            }
         };
         rd.close().await.map_err(bad)?;
         result
@@ -68,6 +150,17 @@ pub(crate) fn read(root: &Path, workspace: WorkspaceId, r: &Request) -> Result<R
         context: None,
         etag,
     })
+}
+fn history_error(error: tf_store::StoreError) -> E {
+    if matches!(error, tf_store::StoreError::InvalidRequest) {
+        E::new(
+            409,
+            "TF_API_SCHEDULE_HISTORY_LIMIT",
+            "The retained schedule evidence exceeds its supported reading limits or cursor scope",
+        )
+    } else {
+        bad(error)
+    }
 }
 pub(crate) fn save(
     owner: &mut RuntimeOwner,
@@ -148,6 +241,7 @@ pub(crate) fn save(
     };
     let normalized =
         tf_protocol::schedule::Definition::decode(definition).map_err(|_| E::invalid())?;
+    crate::api_schedule_ui::clock_definition(&normalized)?;
     validate_source(owner.workspace_root(), workspace, &normalized)?;
     let now = i64::try_from(
         std::time::SystemTime::now()
@@ -220,6 +314,10 @@ fn control(
         .and_then(|s| s.split_once('/'))
         .ok_or_else(E::invalid)?;
     let action = match action {
+        "delete" => {
+            tf_protocol::validate_document("ApiEmptyV1", &r.body).map_err(|_| E::invalid())?;
+            Action::Delete
+        }
         "pause" => {
             tf_protocol::validate_document("ApiEmptyV1", &r.body).map_err(|_| E::invalid())?;
             Action::Pause

@@ -201,3 +201,85 @@ async fn automatic_pause_guard_and_frozen_evidence_conflict()
     store.close().await?;
     Ok(())
 }
+
+#[tokio::test]
+async fn causal_hops_and_consecutive_external_bursts_are_bounded()
+-> Result<(), Box<dyn std::error::Error>> {
+    let tree = support::filesystem::ScratchDirectory::new()?;
+    let path = tree.path().join("causal.sqlite");
+    let mut store = Store::open(&path).await?;
+    let workspace = id(1).parse()?;
+    store
+        .register_workspace(workspace, "causal-fixture", 0)
+        .await?;
+    let mut db = support::database::connect(&path).await?;
+    sqlx::query(
+        "INSERT INTO schedules VALUES(?,?,'causal','{}','etag','epoch',0,0,0,'test',0,NULL)",
+    )
+    .bind(id(5))
+    .bind(id(1))
+    .execute(&mut db)
+    .await?;
+    let mut parent: Option<String> = None;
+    for n in 40..56 {
+        let plan = id(n + 60);
+        sqlx::query("INSERT INTO build_plans VALUES(?,'ACCEPTED',NULL,'{}','{}','{}','[]','[]','[]','digest',NULL)").bind(&plan).execute(&mut db).await?;
+        let trigger = json!({"kind":"schedule","schedule_id":id(n + 100),"evidence":{"tokens":parent.as_ref().map(|id|vec![json!({"build_id":id})]).unwrap_or_default()}});
+        sqlx::query("INSERT INTO builds(id,plan_id,trigger_json,requested_by,state,created_at_us,finished_at_us) VALUES(?,?,?,'schedule','FAILED',0,10)").bind(id(n)).bind(plan).bind(trigger.to_string()).execute(&mut db).await?;
+        parent = Some(id(n));
+    }
+    let mut pending = Pending {
+        occurrence: id(6).parse()?,
+        schedule: id(5).parse()?,
+        execution: json!({"policies":{"max_consecutive_builds":100}}),
+        payload: json!({"tokens":[{"build_id":id(54)}]}),
+    };
+    store.check_schedule_dispatch_ancestry(&pending).await?;
+    pending.payload["tokens"][0]["build_id"] = json!(id(55));
+    assert!(
+        store
+            .check_schedule_dispatch_ancestry(&pending)
+            .await
+            .is_err(),
+        "the runtime hop ceiling is independent of a larger configured burst limit"
+    );
+    pending.payload = json!({"tokens":[]});
+    pending.execution["policies"]["max_consecutive_builds"] = json!(1);
+    sqlx::query(
+        "INSERT INTO schedule_occurrences VALUES(?,?,'epoch','prior',0,'{}','{}','SUCCEEDED',?)",
+    )
+    .bind(id(7))
+    .bind(id(5))
+    .bind(id(40))
+    .execute(&mut db)
+    .await?;
+    sqlx::query(
+        "INSERT INTO schedule_occurrences VALUES(?,?,'epoch','queued',5,'{}','{}','QUEUED',NULL)",
+    )
+    .bind(id(6))
+    .bind(id(5))
+    .execute(&mut db)
+    .await?;
+    assert!(
+        store
+            .check_schedule_dispatch_ancestry(&pending)
+            .await
+            .is_err(),
+        "external evidence queued during the previous build still belongs to the bounded drain"
+    );
+    pending.occurrence = id(8).parse()?;
+    sqlx::query(
+        "INSERT INTO schedule_occurrences VALUES(?,?,'epoch','fresh',11,'{}','{}','QUEUED',NULL)",
+    )
+    .bind(id(8))
+    .bind(id(5))
+    .execute(&mut db)
+    .await?;
+    store.check_schedule_dispatch_ancestry(&pending).await?;
+    pending.occurrence = id(6).parse()?;
+    pending.payload["manual"] = json!(true);
+    store.check_schedule_dispatch_ancestry(&pending).await?;
+    db.close().await?;
+    store.close().await?;
+    Ok(())
+}

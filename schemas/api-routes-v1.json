@@ -533,5 +533,88 @@
     "query": [],
     "mutation": true,
     "context": false
+  },
+  {
+    "path": "/api/v1/schedules/{id}/history",
+    "method": "GET",
+    "response": "ApiScheduleHistoryV1",
+    "request": null,
+    "query": [
+      "after",
+      "limit"
+    ],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/schedules/{id}/metrics",
+    "method": "GET",
+    "response": "ApiScheduleMetricsV1",
+    "request": null,
+    "query": [
+      "from_us",
+      "to_us",
+      "window"
+    ],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/schedules/{id}/delete",
+    "method": "POST",
+    "response": "ApiScheduleDeletedV1",
+    "request": "ApiEmptyV1",
+    "query": [],
+    "mutation": true,
+    "context": false
+  },
+  {
+    "path": "/api/v1/schedules/defaults",
+    "method": "GET",
+    "response": "ScheduleDefinitionV1",
+    "request": null,
+    "query": [
+      "branch",
+      "fallback",
+      "context"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/schedules/{schedule}/roles",
+    "method": "GET",
+    "response": "ApiScheduleRolesV1",
+    "request": null,
+    "query": [
+      "branch",
+      "fallback",
+      "context",
+      "after"
+    ],
+    "mutation": false,
+    "context": true
+  },
+  {
+    "path": "/api/v1/schedules/clock-preview",
+    "method": "POST",
+    "response": "ApiScheduleClockPreviewV1",
+    "request": "ScheduleDefinitionV1",
+    "query": [],
+    "mutation": false,
+    "context": false
+  },
+  {
+    "path": "/api/v1/schedules/preview",
+    "method": "POST",
+    "response": "PlanResultV1",
+    "request": "ScheduleDefinitionV1",
+    "query": [
+      "branch",
+      "fallback",
+      "context"
+    ],
+    "mutation": true,
+    "context": true
   }
 ]

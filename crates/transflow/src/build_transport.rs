@@ -24,11 +24,16 @@ pub(crate) struct Submission {
     pub args: Vec<String>,
     pub reply: SyncSender<Value>,
 }
+pub(crate) struct ScheduleSubmission {
+    pub value: Value,
+    pub reply: SyncSender<Value>,
+}
 pub(crate) struct Endpoint {
     pub commands: Mailbox,
     pub cancel_sender: SyncSender<CancelCommand>,
     pub providers: crate::provider::Mailbox,
     pub requests: Receiver<Submission>,
+    pub schedules: Receiver<ScheduleSubmission>,
     pub busy: Arc<AtomicBool>,
     stop: Arc<AtomicBool>,
     thread: Option<std::thread::JoinHandle<()>>,
@@ -75,6 +80,7 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
     let (commands, rx) = mpsc::sync_channel(16);
     let (providers, provider_rx) = mpsc::sync_channel(16);
     let (requests, submissions) = mpsc::sync_channel(1);
+    let (schedule_sender, schedules) = mpsc::sync_channel(1);
     let cancel_sender = commands.clone();
     let thread = std::thread::spawn(move || {
         while !stopped.load(Ordering::Acquire) {
@@ -101,6 +107,7 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
                                         | "build"
                                         | "args"
                                         | "provider"
+                                        | "schedule"
                                 )
                             })
                         }) {
@@ -133,6 +140,36 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
                                     .map_err(|_| failure("coordinator control queue is full"))?;
                                 let result=rx.recv_timeout(Duration::from_secs(10)).map_err(|_|failure("cancellation acknowledgement timed out; inspect build state"))?.map_err(failure)?;
                                 Ok(json!({"ok":true,"disposition":format!("{result:?}")}))
+                            }
+                            Some("schedule") if persistent => {
+                                if occupied.swap(true, Ordering::AcqRel) {
+                                    return Err(failure(
+                                        "The coordinator is preparing another request; retry shortly",
+                                    ));
+                                }
+                                let (tx, rx) = mpsc::sync_channel(1);
+                                if schedule_sender
+                                    .try_send(ScheduleSubmission {
+                                        value: request["schedule"].clone(),
+                                        reply: tx,
+                                    })
+                                    .is_err()
+                                {
+                                    occupied.store(false, Ordering::Release);
+                                    return Err(failure("The schedule control queue is full"));
+                                }
+                                loop {
+                                    match rx.recv_timeout(Duration::from_millis(100)) {
+                                        Ok(value) => return Ok(value),
+                                        Err(mpsc::RecvTimeoutError::Timeout)
+                                            if !stopped.load(Ordering::Acquire) => {}
+                                        _ => {
+                                            return Err(failure(
+                                                "The coordinator stopped before acknowledging the schedule action",
+                                            ));
+                                        }
+                                    }
+                                }
                             }
                             Some("submit") if persistent => {
                                 let args: Vec<String> =
@@ -186,6 +223,7 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
         commands: Arc::new(Mutex::new(rx)),
         providers: Arc::new(Mutex::new(provider_rx)),
         requests: submissions,
+        schedules,
         busy,
         stop,
         thread: Some(thread),

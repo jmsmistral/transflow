@@ -7,6 +7,7 @@ mod api_overlays;
 mod api_preview;
 mod api_query;
 mod api_read;
+mod api_schedule_ui;
 mod api_schedules;
 mod api_views;
 mod branch;
@@ -36,6 +37,7 @@ pub mod reconcile;
 /// Fenced startup reconciliation and authenticated orphan cleanup.
 pub mod recovery;
 mod replay;
+mod schedule_cli;
 mod schedule_dispatch;
 mod serve;
 use std::{
@@ -68,10 +70,11 @@ fn command() -> clap::Command {
     use clap::{Arg, ArgAction};
     clap::Command::new("transflow")
         .about("A local build system for dataframe datasets (development scaffold)")
-        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Plan, why, graph traversal, dataset builds, execution history and retained replay are available. Serve runs an authenticated loopback API and CLI coordinator. The workspace UI and schedules remain later work.")
+        .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Plan, why, graph traversal, dataset builds, execution history and retained replay are available. Serve runs an authenticated loopback API and CLI coordinator. Scheduling commands manage saved definitions and guarded actions; serve activates automatic dispatch.")
         .subcommands(inspection_cli::commands())
         .subcommand(external::command())
         .subcommand(build_cli::command())
+        .subcommand(schedule_cli::command())
         .subcommand(clap::Command::new("serve").disable_help_flag(true).about("Run the authenticated loopback coordinator").arg(Arg::new("port").long("port").default_value("0").value_parser(clap::value_parser!(u16))).arg(Arg::new("open").long("open").action(ArgAction::SetTrue)).arg(Arg::new("ui-dir").long("ui-dir").help("Serve an explicitly built contributor UI directory")))
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
         .subcommand(clap::Command::new("branch").disable_help_flag(true).subcommand_required(true).about("List and manage data branches independently of Git")
@@ -250,7 +253,8 @@ pub fn run(
     match command().try_get_matches_from(args) {
         Ok(matches) => {
             if !matches.get_flag("help") && !matches.get_flag("version") {
-                if let Some((name @ ("build" | "serve"), args)) = matches.subcommand() {
+                if let Some((name @ ("build" | "serve" | "schedule"), args)) = matches.subcommand()
+                {
                     let mut context = context.clone();
                     if context.workspace.is_none()
                         && let Ok(current) = std::env::current_dir()
@@ -262,6 +266,8 @@ pub fn run(
                     }
                     let result = if name == "serve" {
                         serve::execute(matches.get_one::<String>("workspace"), intent.json, args)
+                    } else if name == "schedule" {
+                        schedule_cli::execute(args, matches.get_one::<String>("workspace"))
                     } else {
                         build_cli::execute(
                             args,
@@ -284,7 +290,7 @@ pub fn run(
                             let diagnostic = if let Some(validation) = error.validation() {
                                 validation.diagnostic(&redactor)?
                             } else {
-                                Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Build operation could not complete")?,redactor.text(&error.to_string())?,redactor.text("Inspect the selected workspace, retained build evidence and coordinator status before retrying.")?)
+                                Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text(if name=="schedule" {"Schedule operation could not complete"} else {"Build operation could not complete"})?,redactor.text(&error.to_string())?,redactor.text("Inspect the selected workspace, retained build evidence and coordinator status before retrying.")?)
                             };
                             errors.push(diagnostic);
                             (ExitStatus::Failure, None, String::new())
@@ -292,7 +298,11 @@ pub fn run(
                     };
                     if intent.json {
                         let envelope = if let Some(value) = value {
-                            CliEnvelope::execution(&version, &context, value, status, &errors)?
+                            if name == "schedule" {
+                                CliEnvelope::schedule(&version, &context, value)?
+                            } else {
+                                CliEnvelope::execution(&version, &context, value, status, &errors)?
+                            }
                         } else {
                             CliEnvelope::failure(&version, status, &context, &errors)?
                         };

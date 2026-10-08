@@ -6,6 +6,9 @@ use tf_exec::ownership::RuntimeOwner;
 /// untouched queues, captured source and diagnostics. Never guess a retry for interrupted code.
 pub async fn recover(owner: &mut RuntimeOwner) -> Result<(), Error> {
     owner.validate_paths().map_err(failure)?;
+    if owner.recovery_completed() {
+        return Ok(());
+    }
     let root = owner.workspace_root().to_owned();
     let workspace = owner.workspace_id().map_err(failure)?;
     let session = owner.registration().session().map_err(failure)?;
@@ -42,6 +45,7 @@ pub async fn recover(owner: &mut RuntimeOwner) -> Result<(), Error> {
             "Registry recovery conflicts with current authoring files; inspect the retained journal",
         ));
     }
+    owner.finish_recovery();
     Ok(())
 }
 

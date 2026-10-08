@@ -43,6 +43,17 @@ pub const CLI_CAPABILITIES: &[&str] = &[
     "build.replay",
     "coordinator.cli",
     "coordinator.http.v1",
+    "schedule.create",
+    "schedule.update",
+    "schedule.list",
+    "schedule.show",
+    "schedule.run",
+    "schedule.pause",
+    "schedule.resume",
+    "schedule.history",
+    "schedule.metrics",
+    "schedule.export",
+    "schedule.delete",
 ];
 /// Successful informational operation.
 #[derive(Clone, Copy, Debug)]
@@ -262,6 +273,15 @@ impl CliEnvelope {
             errors.iter().map(diagnostic).collect(),
         )
     }
+    /// Successful schedule operation with the same validated JSON/human data projection.
+    pub fn schedule(
+        version: &SafeText,
+        ctx: &RequestContext,
+        result: Value,
+    ) -> Result<Self, ProtocolError> {
+        validate_document("ScheduleResultV1", &result)?;
+        Self::encode(version, ExitStatus::Success, ctx, result, Vec::new())
+    }
     fn encode(
         version: &SafeText,
         status: ExitStatus,
@@ -271,7 +291,7 @@ impl CliEnvelope {
     ) -> Result<Self, ProtocolError> {
         let complete_inspection = matches!(
             result["kind"].as_str(),
-            Some("graph" | "plan" | "why" | "execution")
+            Some("graph" | "plan" | "why" | "execution" | "schedule")
         );
         let value = json!({"format_version":CLI_ENVELOPE_VERSION,"product_version":version.as_str(),
             "capabilities":CLI_CAPABILITIES,"outcome":match status {ExitStatus::Success=>"success",ExitStatus::Interrupted=>"canceled",_=>"failure"},

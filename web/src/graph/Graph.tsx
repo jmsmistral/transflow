@@ -218,6 +218,7 @@ export function GraphExplorer({
   addRequest,
   selectRequest,
   planPreview,
+  scheduleRoles,
   titleHost,
   actionsHost,
 }: {
@@ -228,6 +229,7 @@ export function GraphExplorer({
   cataloguePaths?: readonly string[];
   selectRequest?: { paths: readonly string[]; revision: number } | null;
   planPreview?: import("../generated/contracts").PlanResultV1 | null;
+  scheduleRoles?: import("../generated/contracts").ApiScheduleRolesV1 | null;
   addRequest?: { paths: readonly string[]; revision: number } | null;
   onVisible?: (identities: readonly string[]) => void;
   onSelection?: (nodes: readonly ApiLineageNodeV1[], context: string) => void;
@@ -285,7 +287,10 @@ export function GraphExplorer({
       }
       const ready = workspace.snapshot();
       if (ready.kind !== "ready") throw new Error("The context changed.");
-      setOpened({ view, context: ready.value.context.fingerprint });
+      // Saved view identity follows the retained canvas, not transient timing
+      // revisions or a new capture published by a build on the same selector.
+      const canvas = model.snapshot();
+      setOpened({ view, context: canvas.visualContext ?? canvas.context });
     },
     [model, workspace],
   );
@@ -347,7 +352,11 @@ export function GraphExplorer({
         <GraphView
           titleHost={titleHost ?? null}
           actionsHost={actionsHost ?? null}
-          opened={opened?.context === fingerprint ? opened.view : null}
+          opened={
+            opened?.context === (graph.visualContext ?? graph.context)
+              ? opened.view
+              : null
+          }
           onOpen={openView}
           onNew={newView}
           dark={dark}
@@ -357,6 +366,7 @@ export function GraphExplorer({
           active={ready}
           selectRequest={selectRequest ?? null}
           planPreview={planPreview ?? null}
+          scheduleRoles={scheduleRoles ?? null}
           focusRequest={focusRequest ?? null}
           {...(onSelection ? { onSelection } : {})}
         />
@@ -377,6 +387,7 @@ function GraphView({
   active,
   selectRequest,
   planPreview,
+  scheduleRoles,
   focusRequest,
   onSelection,
 }: {
@@ -392,6 +403,7 @@ function GraphView({
   active: boolean;
   selectRequest: { paths: readonly string[]; revision: number } | null;
   planPreview: import("../generated/contracts").PlanResultV1 | null;
+  scheduleRoles: import("../generated/contracts").ApiScheduleRolesV1 | null;
   focusRequest: { path: string; revision: number } | null;
   onSelection?: (nodes: readonly ApiLineageNodeV1[], context: string) => void;
 }) {
@@ -542,6 +554,33 @@ function GraphView({
     },
     [model, selectNodes],
   );
+  const roleNode = useCallback(
+    (node: ApiLineageNodeV1): ApiLineageNodeV1 => {
+      const roles = scheduleRoles?.nodes.find(
+        (n) => n.identity === node.identity,
+      )?.roles;
+      if (!scheduleRoles) return node;
+      return {
+        ...node,
+        overlay: {
+          version: null,
+          rows: null,
+          files: null,
+          bytes: null,
+          latest_attempt: null,
+          freshness: "unknown",
+          reasons: [],
+          health: "Unavailable",
+          input_failed: false,
+          durations: null,
+          ...node.overlay,
+          roles: roles ?? [],
+        },
+      };
+    },
+    [scheduleRoles],
+  );
+  const paintColour = scheduleRoles ? "roles" : colour;
   const datasetNodes: DatasetNode[] = useMemo(
     () =>
       graph.nodes.map((node, index) => ({
@@ -564,8 +603,8 @@ function GraphView({
         ariaLabel: `${label(node)}, ${node.external ? "read-only foreign boundary" : "dataset"}`,
         data: {
           value: node,
-          colour,
-          paint: paint(node, colour, planPreview),
+          colour: paintColour,
+          paint: paint(roleNode(node), paintColour, planPreview),
           workspace,
           busy: graph.busy,
           parentsExpanded: model.expanded(node, "upstream"),
@@ -586,7 +625,8 @@ function GraphView({
     [
       graph.nodes,
       planPreview,
-      colour,
+      paintColour,
+      roleNode,
       graph.busy,
       model,
       workspace,
@@ -931,11 +971,11 @@ function GraphView({
           label="Node colouring"
           items={colourOptions.map(([key, name]) => ({
             label: name,
-            selected: colour === key,
+            selected: paintColour === key,
             action: () => setColour(key),
           }))}
         >
-          {colourOptions.find(([key]) => key === colour)?.[1] ??
+          {colourOptions.find(([key]) => key === paintColour)?.[1] ??
             "Resource Type"}
         </Menu>
         {legendOpen && (
@@ -944,7 +984,7 @@ function GraphView({
             {[
               ...new Map(
                 graph.nodes.map((n) => {
-                  const p = paint(n, colour, planPreview);
+                  const p = paint(roleNode(n), paintColour, planPreview);
                   return [p.key, p];
                 }),
               ).values(),
@@ -956,7 +996,9 @@ function GraphView({
                     new Set(
                       graph.nodes
                         .filter(
-                          (n) => paint(n, colour, planPreview).key === p.key,
+                          (n) =>
+                            paint(roleNode(n), paintColour, planPreview).key ===
+                            p.key,
                         )
                         .map((n) => n.identity),
                     ),
@@ -969,21 +1011,24 @@ function GraphView({
                 <span className="muted">
                   {
                     graph.nodes.filter(
-                      (n) => paint(n, colour, planPreview).key === p.key,
+                      (n) =>
+                        paint(roleNode(n), paintColour, planPreview).key ===
+                        p.key,
                     ).length
                   }
                 </span>
               </Button>
             ))}
             <p className="sr-only">
-              {basis(colour)} Counts cover {graph.nodes.length} visible nodes.
-              {colour === "roles" && planPreview
+              {basis(paintColour)} Counts cover {graph.nodes.length} visible
+              nodes.
+              {paintColour === "roles" && planPreview
                 ? ` Complete plan: ${planPreview.writes.length} jobs, ${planPreview.targets.length} targets.`
                 : ""}
             </p>
-            <span className="legend-counts" title={basis(colour)}>
+            <span className="legend-counts" title={basis(paintColour)}>
               {graph.nodes.length} visible nodes
-              {colour === "roles" && planPreview
+              {paintColour === "roles" && planPreview
                 ? ` · Plan: ${planPreview.writes.length} jobs, ${planPreview.targets.length} targets`
                 : ""}
             </span>

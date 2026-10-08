@@ -1,3 +1,4 @@
+import { Schedules } from "./Schedules";
 import { BuildPlanner } from "./BuildPlanner";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
@@ -65,6 +66,9 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     paths: readonly string[];
     revision: number;
   } | null>(null);
+  const [scheduleRoles, setScheduleRoles] = useState<
+    import("./generated/contracts").ApiScheduleRolesV1 | null
+  >(null);
   const [planPreview, setPlanPreview] = useState<
     import("./generated/contracts").PlanResultV1 | null
   >(null);
@@ -117,6 +121,10 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     },
     [workspace],
   );
+  const [scheduleRequest, setScheduleRequest] = useState<{
+    id: string;
+    revision: number;
+  } | null>(null);
   const [dark, setDark] = useState(false);
   const [right, setRight] = useState(26),
     [bottom, setBottom] = useState(32);
@@ -124,6 +132,18 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     [bottomOpen, setBottomOpen] = useState(false);
   const [mode, setMode] = useState<string>("Catalogue"),
     [tab, setTab] = useState<string>("Preview");
+  useEffect(
+    () =>
+      workspace.subscribeSchedule((id) => {
+        setMode("Schedules");
+        setInspectorOpen(true);
+        setScheduleRequest((old) => ({
+          id,
+          revision: (old?.revision ?? 0) + 1,
+        }));
+      }),
+    [workspace],
+  );
   const ready = state.kind === "ready" ? state.value : null;
   const selectedNodes =
     ready && graphSelection.visual === visualContext(ready.context)
@@ -261,7 +281,12 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 focusRequest={focusRequest}
                 addRequest={addRequest}
                 selectRequest={selectRequest}
-                planPreview={mode === "Build planner" ? planPreview : null}
+                planPreview={
+                  mode === "Build planner" || mode === "Schedules"
+                    ? planPreview
+                    : null
+                }
+                scheduleRoles={mode === "Schedules" ? scheduleRoles : null}
                 cataloguePaths={cataloguePaths}
                 titleHost={titleHost}
                 actionsHost={actionsHost}
@@ -403,6 +428,23 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                         revision: (old?.revision ?? 0) + 1,
                       }));
                     }}
+                    onAdd={(paths) =>
+                      setAddRequest((old) => ({
+                        paths,
+                        revision: (old?.revision ?? 0) + 1,
+                      }))
+                    }
+                  />
+                ) : mode === "Schedules" && state.kind === "ready" ? (
+                  <Schedules
+                    key={`${state.value.context.workspace}:${state.value.context.branch}`}
+                    workspace={workspace}
+                    state={state}
+                    selected={selectedNodes}
+                    visible={visible}
+                    focusRequest={scheduleRequest}
+                    onRoles={setScheduleRoles}
+                    onPlan={setPlanPreview}
                     onAdd={(paths) =>
                       setAddRequest((old) => ({
                         paths,

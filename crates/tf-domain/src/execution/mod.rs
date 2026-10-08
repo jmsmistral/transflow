@@ -172,6 +172,12 @@ pub enum FailureClass {
     WorkerUnavailable,
     /// Explicit transient I/O failure after the old attempt is fenced out.
     TransientIo,
+    /// A worker process exited unsuccessfully without a validated data violation.
+    WorkerCrash,
+    /// Explicit retryable provider availability signal; exact-input protections remain.
+    ProviderUnavailable,
+    /// Explicit retryable resource availability signal.
+    ResourceUnavailable,
     /// Deterministic input violation.
     InputViolation,
     /// Deterministic output violation.
@@ -189,7 +195,14 @@ pub enum FailureClass {
 }
 impl FailureClass {
     fn transient(self) -> bool {
-        matches!(self, Self::WorkerUnavailable | Self::TransientIo)
+        matches!(
+            self,
+            Self::WorkerUnavailable
+                | Self::TransientIo
+                | Self::WorkerCrash
+                | Self::ProviderUnavailable
+                | Self::ResourceUnavailable
+        )
     }
 }
 /// Safe immutable failure evidence retained even after a later retry succeeds.

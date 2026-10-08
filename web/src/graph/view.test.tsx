@@ -593,3 +593,126 @@ test.each([false, true])(
     workspace.dispose();
   },
 );
+
+test.each([false, true])(
+  "saved lineage identity survives runtime refresh with new capture %s and clears on a branch switch",
+  async (newCapture) => {
+    const saved = {
+      ...doc(),
+      revision: 1,
+      selector: { branch: "master", fallback: ["public"] },
+    };
+    const base = fixtureTransport((path, q) => {
+      if (path === "/api/v1/views")
+        return Promise.resolve(
+          json({
+            views: [
+              {
+                id: saved.id,
+                name: saved.name,
+                revision: saved.revision,
+                branch: "master",
+                saved_at_us: "1700000000000000",
+              },
+            ],
+            next_cursor: null,
+          }),
+        );
+      if (path.startsWith("/api/v1/views/"))
+        return Promise.resolve(json(saved));
+      if (path === "/api/v1/lineage")
+        return Promise.resolve(
+          json(
+            {
+              nodes: [node],
+              edges: [],
+              next_cursor: null,
+              total_nodes: 1,
+              total_edges: 0,
+              remaining_nodes: 0,
+              remaining_edges: 0,
+              omitted_nodes: 0,
+              omitted_edges: 0,
+              scope_complete: true,
+              external_expanded: false,
+            },
+            context(q.branch),
+          ),
+        );
+      return;
+    });
+    let refreshed = false;
+    const transport: typeof fetch = async (url, init) => {
+      const response = await base(url, init);
+      if (!refreshed) return response;
+      const value = (await response.json()) as {
+        data: unknown;
+        context: ReturnType<typeof context> | null;
+      };
+      const request = JSON.parse(String(init?.body)) as {
+        path?: string;
+        query?: { branch?: string };
+      };
+      const c = {
+        ...context(request.query?.branch),
+        runtime_revision: "2",
+        fingerprint: "f".repeat(64),
+        ...(newCapture
+          ? {
+              source: saved.id,
+              registry: "b".repeat(64),
+              graph: "e".repeat(64),
+            }
+          : {}),
+      };
+      return json(
+        request.path === "/api/v1/context" ? c : value.data,
+        value.context === null ? null : c,
+      );
+    };
+    const workspace = new Workspace(new Client(transport));
+    await workspace.connect("launch");
+    const rendered = render(<GraphExplorer workspace={workspace} />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Lineage actions" }),
+    );
+    fireEvent.click(screen.getByRole("menuitem", { name: "Open lineage" }));
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `Open ${saved.name}, version ${saved.revision}`,
+      }),
+    );
+    await screen.findByText(saved.name);
+    await waitFor(() =>
+      expect(
+        rendered.container
+          .querySelector(".react-flow__viewport")
+          ?.getAttribute("style"),
+      ).not.toBe("transform: translate(0px,0px) scale(1);"),
+    );
+    const viewport = rendered.container
+      .querySelector(".react-flow__viewport")
+      ?.getAttribute("style");
+    refreshed = true;
+    await act(async () => workspace.refresh());
+    await waitFor(() =>
+      expect(rendered.container.querySelectorAll(".dataset-node")).toHaveLength(
+        1,
+      ),
+    );
+    expect(screen.getByText(saved.name)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Save" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+    expect(
+      rendered.container
+        .querySelector(".react-flow__viewport")
+        ?.getAttribute("style"),
+    ).toBe(viewport);
+    await act(async () => workspace.select({ branch: "review" }));
+    await waitFor(() => expect(screen.queryByText(saved.name)).toBeNull());
+    rendered.unmount();
+    workspace.dispose();
+  },
+);

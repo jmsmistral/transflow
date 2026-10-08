@@ -23,6 +23,8 @@ pub enum Action {
     Pause,
     /// Release held work under frozen policies; optionally replay bounded retained events.
     Resume(Option<Replay>),
+    /// Tombstone the definition; retained history, manual requests and running work remain.
+    Delete,
     /// Queue an independent manual request, even while paused.
     Run,
 }
@@ -271,16 +273,42 @@ impl Store {
         let current = row(&mut tx, r.workspace, r.id)
             .await?
             .ok_or(Error::Missing)?;
-        if current["etag"] != r.etag || current["needs_review"] == true {
+        if current["etag"] != r.etag
+            || (current["needs_review"] == true && !matches!(r.action, Action::Delete))
+        {
             return Err(Error::Conflict {
                 current_etag: current["etag"].as_str().map(str::to_owned),
             });
+        }
+        if matches!(r.action, Action::Delete) {
+            sqlx::query("UPDATE schedules SET deleted_at_us=? WHERE id=? AND workspace_id=? AND deleted_at_us IS NULL")
+                .bind(r.at_us).bind(r.id.to_string()).bind(r.workspace.to_string()).execute(&mut *tx).await.map_err(StoreError::from)?;
+            let canceled=sqlx::query("UPDATE schedule_occurrences SET disposition='CANCELED' WHERE schedule_id=? AND build_id IS NULL AND disposition IN ('ACCEPTED','QUEUED','HELD') AND json_extract(payload_json,'$.manual') IS NOT 1")
+                .bind(r.id.to_string()).execute(&mut *tx).await.map_err(StoreError::from)?.rows_affected();
+            sqlx::query("DELETE FROM trigger_tokens WHERE schedule_id=? AND consumed_by IS NULL")
+                .bind(r.id.to_string())
+                .execute(&mut *tx)
+                .await
+                .map_err(StoreError::from)?;
+            sqlx::query("INSERT INTO audit_log(operation,evidence_json,wall_time_us) VALUES('schedule_deleted',?,?)")
+                .bind(json!({"schedule":r.id.to_string(),"actor":r.actor,"request_id":r.key.to_string(),"canceled_automatic":canceled.to_string()}).to_string()).bind(r.at_us).execute(&mut *tx).await.map_err(StoreError::from)?;
+            let response = json!({"data":{"id":r.id.to_string(),"deleted":true,"retained_history":true,"canceled_automatic":canceled.to_string()},"context":null,"etag":null});
+            sqlx::query("INSERT INTO api_operations(id,digest,response_json) VALUES(?,?,?)")
+                .bind(r.key.to_string())
+                .bind(r.digest)
+                .bind(response.to_string())
+                .execute(&mut *tx)
+                .await
+                .map_err(StoreError::from)?;
+            tx.commit().await.map_err(StoreError::from)?;
+            return Ok(response);
         }
         let def = Definition::decode(&current["definition"]).map_err(|_| invalid())?;
         let epoch = current["trigger_epoch"].as_str().ok_or_else(invalid)?;
         let paused = current["paused"] == true;
         let mut changes = json!([]);
         let (operation, data) = match r.action {
+            Action::Delete => return Err(invalid()),
             Action::Run => {
                 if pending(&mut tx, r.id).await? >= i64::from(def.policies.max_pending) {
                     return Err(Error::Limit);

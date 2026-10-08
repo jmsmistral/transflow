@@ -2198,7 +2198,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2278,7 +2289,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2358,7 +2380,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2438,7 +2471,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2518,7 +2562,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2598,7 +2653,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2678,7 +2744,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2758,7 +2835,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2838,7 +2926,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2894,7 +2993,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -5694,7 +5804,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -5775,7 +5896,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -5880,7 +6012,18 @@
         "build.cancel",
         "build.replay",
         "coordinator.cli",
-        "coordinator.http.v1"
+        "coordinator.http.v1",
+        "schedule.create",
+        "schedule.update",
+        "schedule.list",
+        "schedule.show",
+        "schedule.run",
+        "schedule.pause",
+        "schedule.resume",
+        "schedule.history",
+        "schedule.metrics",
+        "schedule.export",
+        "schedule.delete"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -8860,6 +9003,230 @@
         },
         "eta": "fake"
       }
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-history-empty",
+    "schema": "ApiScheduleHistoryV1",
+    "value": {
+      "schedule_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "occurrences": [],
+      "next_cursor": null
+    },
+    "valid": true
+  },
+  {
+    "name": "schedule-history-bad-cursor",
+    "schema": "ApiScheduleHistoryV1",
+    "value": {
+      "schedule_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "occurrences": [],
+      "next_cursor": "bad"
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-delete-history-retained",
+    "schema": "ApiScheduleDeletedV1",
+    "value": {
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "deleted": true,
+      "retained_history": true,
+      "canceled_automatic": "0"
+    },
+    "valid": true
+  },
+  {
+    "name": "schedule-delete-no-history-forbidden",
+    "schema": "ApiScheduleDeletedV1",
+    "value": {
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "deleted": true,
+      "retained_history": false,
+      "canceled_automatic": "0"
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-metrics-empty",
+    "schema": "ApiScheduleMetricsV1",
+    "value": {
+      "schedule_id": "00000000-0000-4000-8000-000000000001",
+      "from_us": "0",
+      "to_us": "1",
+      "cohort": "occurrence_ready",
+      "duration_unit": "us",
+      "occurrences": "0",
+      "dispositions": [],
+      "builds": "0",
+      "jobs": "0",
+      "attempts": "0",
+      "failure_rate": null,
+      "duration_samples": "0",
+      "missing_duration_samples": "0",
+      "median_us": null,
+      "trailing_mean_us": null,
+      "trailing_window": "10",
+      "trailing_samples": "0",
+      "ignored_event_matches": "0",
+      "clock_ticks": [],
+      "evidence_cohort": "observed_in_range"
+    },
+    "valid": true
+  },
+  {
+    "name": "schedule-metrics-number",
+    "schema": "ApiScheduleMetricsV1",
+    "value": {
+      "schedule_id": "00000000-0000-4000-8000-000000000001",
+      "from_us": "0",
+      "to_us": "1",
+      "cohort": "occurrence_ready",
+      "duration_unit": "us",
+      "occurrences": "0",
+      "dispositions": [],
+      "builds": 0,
+      "jobs": "0",
+      "attempts": "0",
+      "failure_rate": null,
+      "duration_samples": "0",
+      "missing_duration_samples": "0",
+      "median_us": null,
+      "trailing_mean_us": null,
+      "trailing_window": "10",
+      "trailing_samples": "0",
+      "ignored_event_matches": "0",
+      "clock_ticks": [],
+      "evidence_cohort": "observed_in_range"
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-cli-result",
+    "schema": "ScheduleResultV1",
+    "value": {
+      "kind": "schedule",
+      "operation": "metrics",
+      "data": {
+        "schedule_id": "00000000-0000-4000-8000-000000000001",
+        "from_us": "0",
+        "to_us": "1",
+        "cohort": "occurrence_ready",
+        "duration_unit": "us",
+        "occurrences": "0",
+        "dispositions": [],
+        "builds": "0",
+        "jobs": "0",
+        "attempts": "0",
+        "failure_rate": null,
+        "duration_samples": "0",
+        "missing_duration_samples": "0",
+        "median_us": null,
+        "trailing_mean_us": null,
+        "trailing_window": "10",
+        "trailing_samples": "0",
+        "ignored_event_matches": "0",
+        "clock_ticks": [],
+        "evidence_cohort": "observed_in_range"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "schedule-cli-unknown-operation",
+    "schema": "ScheduleResultV1",
+    "value": {
+      "kind": "schedule",
+      "operation": "watch",
+      "data": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-roles-simultaneous",
+    "schema": "ApiScheduleRolesV1",
+    "value": {
+      "schedule_id": "00000000-0000-4000-8000-000000000001",
+      "etag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "basis": "saved_definition",
+      "nodes": [
+        {
+          "identity": "dataset:00000000-0000-4000-8000-000000000001:00000000-0000-4000-8000-000000000002",
+          "paths": [
+            "review/item"
+          ],
+          "roles": [
+            "target",
+            "trigger"
+          ]
+        }
+      ],
+      "total": "1",
+      "next_cursor": null
+    },
+    "valid": true
+  },
+  {
+    "name": "schedule-roles-lossy-enum",
+    "schema": "ApiScheduleRolesV1",
+    "value": {
+      "schedule_id": "00000000-0000-4000-8000-000000000001",
+      "etag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "basis": "saved_definition",
+      "nodes": [
+        {
+          "identity": "dataset:00000000-0000-4000-8000-000000000001:00000000-0000-4000-8000-000000000002",
+          "paths": [
+            "review/item"
+          ],
+          "roles": [
+            "either_target_or_trigger"
+          ]
+        }
+      ],
+      "total": "1",
+      "next_cursor": null
+    },
+    "valid": false
+  },
+  {
+    "name": "schedule-clock-offset-preview",
+    "schema": "ApiScheduleClockPreviewV1",
+    "value": {
+      "leaves": [
+        {
+          "id": "morning",
+          "fires": [
+            {
+              "at_us": "1",
+              "local": "2026-10-08T09:00:00+04:00",
+              "timezone": "Asia/Dubai",
+              "tzdb_version": "2025b"
+            }
+          ]
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "schedule-clock-number",
+    "schema": "ApiScheduleClockPreviewV1",
+    "value": {
+      "leaves": [
+        {
+          "id": "morning",
+          "fires": [
+            {
+              "at_us": 1,
+              "local": "2026-10-08T09:00:00+04:00",
+              "timezone": "Asia/Dubai",
+              "tzdb_version": "2025b"
+            }
+          ]
+        }
+      ]
     },
     "valid": false
   }

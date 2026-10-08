@@ -688,8 +688,20 @@ fn run_inner(
                             terminal_seen.get_or_insert(now);
                         }
                     }
-                    if reader.eof && guard.terminal.is_none() {
+                    if reader.eof && guard.terminal.is_none() && reader.partial() {
                         return Err(Failure::Protocol);
+                    }
+                    // A clean EOF may precede the kernel's exit observation by a tick.
+                    // Malformed/truncated frames have already failed above. Keep a live
+                    // peer that closes its channel bounded; after reaping, a genuine
+                    // nonzero exit is distinguished from a missing-success terminal.
+                    if reader.eof && guard.terminal.is_none() {
+                        let at = *terminal_seen.get_or_insert(now);
+                        if now.duration_since(at) >= Duration::from_millis(100)
+                            && !owned.exited()?
+                        {
+                            return Err(Failure::Protocol);
+                        }
                     }
                 }
             }

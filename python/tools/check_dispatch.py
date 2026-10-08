@@ -434,6 +434,37 @@ def end(left, right):
         from check_schedule_dispatch import exercise as exercise_schedules
 
         cases.extend(exercise_schedules(cli, root, sys.executable))
+        from check_schedule_overlap import exercise as exercise_overlap
+
+        # The previous Git/registry adversarial fixtures intentionally leave tooling
+        # generations behind. Qualify concurrency in its own fresh managed workspace.
+        concurrent_root = Path(temporary).resolve() / "overlap-workspace"
+        subprocess.run([cli, "init", concurrent_root], check=True, capture_output=True)
+        (concurrent_root / "requirements.in").write_text((root / "requirements.in").read_text())
+        lock_environment(
+            concurrent_root,
+            "requirements.in",
+            "requirements.lock",
+            "3.14",
+            wheelhouse=wheelhouse,
+            offline=True,
+        )
+        sync_environment(
+            concurrent_root,
+            "requirements.in",
+            "requirements.lock",
+            "3.14",
+            wheel,
+            "0.0.0.dev0",
+            wheelhouse=wheelhouse,
+            offline=True,
+        )
+        with (concurrent_root / "workspace.toml").open("a") as concurrent_configuration_stream:
+            concurrent_configuration_stream.write("\n[execution]\nmax_jobs=2\ncpu_tokens=2\n")
+        (concurrent_root / "transflow.local.toml").write_text(
+            "[python]\nexecutable=" + json.dumps(sys.executable) + "\n"
+        )
+        cases.extend(exercise_overlap(cli, concurrent_root, sys.executable))
         print(json.dumps({"cases": cases, "passed": len(cases)}))
 
 

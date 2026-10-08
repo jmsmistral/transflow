@@ -871,56 +871,69 @@ test("Gantt orders started jobs first, updates open spans and freezes completed 
   model.dispose();
 });
 
-test("scheduled active modal exposes retained trigger and disables critical path", async () => {
-  const { model, state } = await fixture(false, job, {
-    trigger: {
-      kind: "schedule",
-      name: "Daily fixture",
-      schedule_id: "fixture-schedule",
-    },
-    timeline: () => ({
-      state: "RUNNING",
-      finished_us: null,
-      critical_path: null,
-    }),
-  });
-  const scope = await model.scope(
-    { branch: state.selection.branch, plan },
-    new AbortController().signal,
-  );
-  const timeline = await scope.read(
-    "ApiExecutionTimelineV1",
-    `/api/v1/builds/${build}/timeline`,
-  );
-  const report = await scope.read("ExecutionJsonV1", `/api/v1/builds/${build}`);
-  const view = render(
-    <BuildModal
-      result={{ timeline, report, scope }}
-      error=""
-      refresh={() => {}}
-      dataset={
-        state.value.dataset ??
-        (() => {
-          throw new Error("Missing dataset");
-        })()
-      }
-      onClose={() => {}}
-    />,
-  );
-  expect(screen.getByText("Build schedule")).toBeTruthy();
-  expect(screen.getByText("Daily fixture")).toBeTruthy();
-  expect(screen.getByRole("button", { name: "Critical path" })).toHaveProperty(
-    "disabled",
-    true,
-  );
-  expect(screen.getByText("Live · updates automatically")).toBeTruthy();
-  fireEvent.change(screen.getByRole("textbox", { name: "Dataset path" }), {
-    target: { value: "no-such-dataset" },
-  });
-  expect(screen.getByText("No jobs match these filters.")).toBeTruthy();
-  view.unmount();
-  model.dispose();
-});
+test.each([false, true])(
+  "scheduled active modal exposes retained trigger with manual request %s and disables critical path",
+  async (manual) => {
+    const { model, state } = await fixture(false, job, {
+      trigger: {
+        kind: "schedule",
+        name: "Daily fixture",
+        schedule_id: "fixture-schedule",
+        manual,
+      },
+      timeline: () => ({
+        state: "RUNNING",
+        finished_us: null,
+        critical_path: null,
+      }),
+    });
+    const scope = await model.scope(
+      { branch: state.selection.branch, plan },
+      new AbortController().signal,
+    );
+    const timeline = await scope.read(
+      "ApiExecutionTimelineV1",
+      `/api/v1/builds/${build}/timeline`,
+    );
+    const report = await scope.read(
+      "ExecutionJsonV1",
+      `/api/v1/builds/${build}`,
+    );
+    const view = render(
+      <BuildModal
+        result={{ timeline, report, scope }}
+        error=""
+        refresh={() => {}}
+        dataset={
+          state.value.dataset ??
+          (() => {
+            throw new Error("Missing dataset");
+          })()
+        }
+        onClose={() => {}}
+      />,
+    );
+    expect(screen.getByText("Build schedule")).toBeTruthy();
+    expect(screen.getByText("Daily fixture")).toBeTruthy();
+    expect(
+      screen.getByText(
+        manual
+          ? "Manually requested scheduled build"
+          : "Scheduled build from accepted occurrence evidence",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Critical path" }),
+    ).toHaveProperty("disabled", true);
+    expect(screen.getByText("Live · updates automatically")).toBeTruthy();
+    fireEvent.change(screen.getByRole("textbox", { name: "Dataset path" }), {
+      target: { value: "no-such-dataset" },
+    });
+    expect(screen.getByText("No jobs match these filters.")).toBeTruthy();
+    view.unmount();
+    model.dispose();
+  },
+);
 
 test("job transaction metadata stays pinned to its own version without changing Preview", async () => {
   const { model, state, calls } = await fixture(false, {

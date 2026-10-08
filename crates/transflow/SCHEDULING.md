@@ -1,11 +1,11 @@
-# Persistent scheduled dispatch (T095)
+# Persistent scheduled dispatch
 
 Start the foreground coordinator with `transflow --workspace <path> serve`.
 While it is running, saved unpaused schedules observe committed events and cron
 ticks. The authenticated schedule API can also queue an independent manual request
 while paused. Stopping the coordinator stops observation; restarting applies the
 saved missed-tick policy and reconciles accepted builds before dispatching new work.
-The scheduling CLI and editor are later tasks.
+The [schedule guide](SCHEDULES.md) documents the CLI and lineage editor.
 
 The dispatch path uses the ordinary source discovery, structural validation,
 planning, reservation, installed-worker execution, checks and publication services.
@@ -34,17 +34,23 @@ An interrupted accepted build is not submitted as a second build on restart.
 Observation processes one ID-keyset page (up to 100 schedules/1 MiB), 100 committed
 events per schedule and the existing bounded clock pass. It delivers one intended
 tick per leaf before evaluation, preserving separate catch-up occurrences. A pass
-reconciles up to 100 terminal links and accepts at most one new build. Subsequent
+reconciles up to 100 terminal links and visits at most ten queued candidates from
+a bounded page of 100. Disjoint work can be admitted while other workers compute. Subsequent
 passes continue the keyset; no schedules are silently dropped. Unresolvable clock
 definitions are marked for review without stopping unrelated schedules.
 
-Dispatch is conservatively serial until T096 implements complete overlap and
-queue policies. Automatic work respects the frozen minimum delay and rejects
-repeated schedule ancestry or the consecutive-build limit. Manual requests bypass
-those retrigger checks. Full static cycle analysis, active coalescing/queue/skip
-and overlapping-build policy remain T096. Temporary CLI and metadata-only owners
-do not activate scheduling. Idle observation does not advertise API busy status;
-already queued user commands take priority over new scheduled preparation.
+One persistent OS authority delegates execution handles while serializing short
+metadata writes. Global admission and complete write reservations permit disjoint
+builds to run concurrently. Conflicting automatic occurrences wait for reservations,
+without inventing failed jobs. Startup recovery runs once per shared owning session.
+
+Frozen policy controls same-schedule overlap and bounded pending coalescing, queues
+or skips. Compatible queued templates may be replaced atomically; manual/held/active
+work and distinct templates remain independent. Static authored cycles, causal
+ancestry, a 16-hop bound, minimum delay and bounded new-evidence bursts prevent
+automatic loops. Manual requests bypass the runtime retrigger checks. Temporary CLI
+and metadata-only owners do not activate scheduling. Observation and authenticated
+control continue during worker computation; queued user commands retain priority.
 
 See the [schedule API](../tf-api/README.md#schedule-lifecycle-actions-t094) and
-[local qualification receipt](../../docs/development/evidence/t095-macos-arm64.json).
+[local qualification receipt](../../docs/development/evidence/t096-t098-macos-arm64.json).

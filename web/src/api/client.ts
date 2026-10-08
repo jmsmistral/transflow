@@ -1,5 +1,14 @@
 import schema from "../../../schemas/contracts-v1.schema.json";
 import type {
+  ScheduleDefinitionV1,
+  ScheduleRecordV1,
+  ApiSchedulesV1,
+  ApiScheduleHistoryV1,
+  ApiScheduleMetricsV1,
+  ApiScheduleDeletedV1,
+  ScheduleRunV1,
+  ApiScheduleRolesV1,
+  ApiScheduleClockPreviewV1,
   ApiSelectionV1,
   ApiAcceptedV1,
   PlanResultV1,
@@ -31,6 +40,16 @@ import type {
 import { obj, same, validate } from "./validate";
 
 export interface Contracts {
+  ScheduleDefinitionV1: ScheduleDefinitionV1;
+  ScheduleRecordV1: ScheduleRecordV1;
+  ApiSchedulesV1: ApiSchedulesV1;
+  ApiScheduleHistoryV1: ApiScheduleHistoryV1;
+  ApiScheduleMetricsV1: ApiScheduleMetricsV1;
+  ApiScheduleDeletedV1: ApiScheduleDeletedV1;
+  ScheduleRunV1: ScheduleRunV1;
+  ApiScheduleRolesV1: ApiScheduleRolesV1;
+  ApiScheduleClockPreviewV1: ApiScheduleClockPreviewV1;
+
   ApiSelectionV1: ApiSelectionV1;
   PlanResultV1: PlanResultV1;
   ApiAcceptedV1: ApiAcceptedV1;
@@ -305,16 +324,78 @@ export class Client {
       );
     return data;
   }
+  async saveSchedule(
+    definition: ScheduleDefinitionV1,
+    record: ScheduleRecordV1 | null,
+    signal: AbortSignal,
+  ): Promise<ScheduleRecordV1> {
+    const value = await this.post(
+      record ? `/api/v1/schedules/${record.id}` : "/api/v1/schedules",
+      record
+        ? definition
+        : { id: crypto.randomUUID(), definition, paused: false },
+      signal,
+      {
+        "Idempotency-Key": crypto.randomUUID(),
+        ...(record ? { "If-Match": `"${record.etag}"` } : {}),
+      },
+      record ? "PUT" : "POST",
+    );
+    return decode("ScheduleRecordV1", value.data);
+  }
+  async scheduleAction<
+    K extends "ScheduleRecordV1" | "ScheduleRunV1" | "ApiScheduleDeletedV1",
+  >(
+    name: K,
+    record: ScheduleRecordV1,
+    action: "pause" | "resume" | "run" | "delete",
+    signal: AbortSignal,
+  ): Promise<Contracts[K]> {
+    const value = await this.post(
+      `/api/v1/schedules/${record.id}/${action}`,
+      {},
+      signal,
+      {
+        "Idempotency-Key": crypto.randomUUID(),
+        "If-Match": `"${record.etag}"`,
+      },
+    );
+    return decode(name, value.data);
+  }
+  async scheduleClock(definition: ScheduleDefinitionV1, signal: AbortSignal) {
+    return decode(
+      "ApiScheduleClockPreviewV1",
+      (await this.post("/api/v1/schedules/clock-preview", definition, signal))
+        .data,
+    );
+  }
+  async schedulePreview(
+    definition: ScheduleDefinitionV1,
+    context: ApiContextV1,
+    signal: AbortSignal,
+  ) {
+    const value = await this.post(
+      `/api/v1/schedules/preview?${new URLSearchParams({ branch: context.branch, fallback: JSON.stringify(context.fallback_policy.slice(1)), context: context.fingerprint })}`,
+      definition,
+      signal,
+      {
+        "Idempotency-Key": crypto.randomUUID(),
+        "If-Match": `"${context.fingerprint}"`,
+      },
+    );
+    return this.envelope("PlanResultV1", value, context).data;
+  }
   async response(
     path: string,
     body: unknown,
     signal: AbortSignal,
     headers: Record<string, string> = {},
+    method: "POST" | "PUT" = "POST",
   ): Promise<Response> {
     let response: Response;
     try {
       response = await this.transport(path, {
-        method: "POST",
+        method,
         credentials: "same-origin",
         cache: "no-store",
         redirect: "error",
@@ -333,19 +414,32 @@ export class Client {
         "The coordinator is disconnected. Check that it is running, then reconnect.",
       );
     }
-    if (!response.ok)
+    if (!response.ok) {
+      let detail = "";
+      if (path.startsWith("/api/v1/schedules") && response.status !== 401) {
+        try {
+          const value = obj(await response.json());
+          const error = obj(value.error);
+          if (typeof error.message === "string" && error.message.length <= 1024)
+            detail = error.message;
+        } catch {
+          /* Preserve the safe transport diagnostic for invalid responses. */
+        }
+      }
       throw new ApiFailure(
         response.status === 401
           ? "expired"
           : response.status === 409
             ? "conflict"
             : "failed",
-        response.status === 401
-          ? "This session expired. Open a fresh launch link from transflow serve --open."
-          : response.status === 409
-            ? "The selected context changed. Refresh before continuing."
-            : "The request failed. Refresh or inspect the coordinator diagnostics.",
+        detail ||
+          (response.status === 401
+            ? "This session expired. Open a fresh launch link from transflow serve --open."
+            : response.status === 409
+              ? "The selected context changed. Refresh before continuing."
+              : "The request failed. Refresh or inspect the coordinator diagnostics."),
       );
+    }
     return response;
   }
   private async post(
@@ -353,8 +447,9 @@ export class Client {
     body: unknown,
     signal: AbortSignal,
     headers: Record<string, string> = {},
+    method: "POST" | "PUT" = "POST",
   ): Promise<Record<string, unknown>> {
-    const response = await this.response(path, body, signal, headers);
+    const response = await this.response(path, body, signal, headers, method);
     if (!response.headers.get("content-type")?.startsWith("application/json"))
       throw new ApiFailure(
         "failed",

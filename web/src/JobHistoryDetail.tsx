@@ -276,6 +276,10 @@ export function JobHistoryDetail({
           {...evidence}
           dataset={dataset}
           onClose={() => setOpen(false)}
+          onOpenSchedule={(id) => {
+            setOpen(false);
+            workspace.requestSchedule(id);
+          }}
         />
       )}
     </div>

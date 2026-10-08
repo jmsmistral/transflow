@@ -36,6 +36,8 @@ fn definition(n: u8, trigger: Value) -> Value {
         .clone();
     v["name"] = json!(format!("schedule-{n}"));
     v["trigger"] = trigger;
+    // The scheduling consumer writes a distinct output; an input/output self-cycle is now invalid.
+    v["build"]["targets"][0]["dataset_id"] = json!(DatasetId::from_bytes([99; 16]).to_string());
     v
 }
 fn leaf(kind: &str, id: &str, mode: &str, resets: bool) -> Value {
@@ -48,6 +50,8 @@ async fn fixture(
     s.register_workspace(workspace(), "synthetic-root", 1)
         .await?;
     s.register_dataset(workspace(), dataset(), 2).await?;
+    s.register_dataset(workspace(), DatasetId::from_bytes([99; 16]), 2)
+        .await?;
     let mut db = support::database::connect(path).await?;
     let source = definition(5, json!({"kind":"manual"}))["build"]["source"]["snapshot_id"]
         .as_str()
@@ -752,5 +756,152 @@ async fn pending_backlog_and_payload_limits_fail_before_acceptance() -> Result {
     assert_eq!(queued.coalesced, 0);
     db.close().await?;
     s.close().await?;
+    Ok(())
+}
+
+async fn active_occurrence(db: &mut SqliteConnection, definition: &Value) -> Result {
+    let build = tf_domain::BuildId::from_bytes([201; 16]).to_string();
+    let occurrence = tf_domain::ScheduleOccurrenceId::from_bytes([202; 16]).to_string();
+    let plan = tf_domain::RequestId::from_bytes([203; 16]).to_string();
+    let mut tx = db.begin().await?;
+    sqlx::query("INSERT INTO build_plans VALUES(?,'ACCEPTED',NULL,'{}','{}','{}','[]','[]','[]','digest',NULL)")
+        .bind(&plan).execute(&mut *tx).await?;
+    sqlx::query("INSERT INTO schedule_occurrences VALUES(?,?,'active','active-evidence',15,'{}',?,'RUNNING',NULL)")
+        .bind(&occurrence).bind(sid(5).to_string()).bind(json!({"build":definition["build"],"policies":definition["policies"]}).to_string()).execute(&mut *tx).await?;
+    sqlx::query("INSERT INTO builds(id,plan_id,occurrence_id,trigger_json,requested_by,state,created_at_us) VALUES(?,?,?,'{}','fixture','RUNNING',15)")
+        .bind(&build).bind(plan).bind(&occurrence).execute(&mut *tx).await?;
+    sqlx::query("UPDATE schedule_occurrences SET build_id=? WHERE id=?")
+        .bind(build)
+        .bind(occurrence)
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    Ok(())
+}
+#[tokio::test]
+async fn overlap_policies_preserve_evidence_and_never_replace_running_work() -> Result {
+    for policy in ["coalesce_latest", "queue", "skip"] {
+        let dir = ScratchDirectory::new()?;
+        let (mut store, mut db) = fixture(&dir.path().join("overlap.sqlite")).await?;
+        let mut value = definition(5, leaf("dataset_published", "published", "pin", false));
+        value["policies"]["overlap_policy"] = json!(policy);
+        value["policies"]["max_pending"] = json!(1);
+        let saved = save(&mut store, 5, &value, false).await?;
+        active_occurrence(&mut db, &value).await?;
+        let epoch = saved["trigger_epoch"].as_str().unwrap();
+        publish(&mut db, 10, 1, "publication", 20).await?;
+        scan(&mut store, epoch, 30).await?;
+        let first = store
+            .queue_schedule_occurrence(workspace(), sid(5), epoch, 30)
+            .await?
+            .unwrap();
+        let original: (String, String) = sqlx::query_as(
+            "SELECT execution_json,payload_json FROM schedule_occurrences WHERE id=?",
+        )
+        .bind(first.occurrence.to_string())
+        .fetch_one(&mut db)
+        .await?;
+        publish(&mut db, 11, 2, "publication", 40).await?;
+        scan(&mut store, epoch, 50).await?;
+        let next = store
+            .queue_schedule_occurrence(workspace(), sid(5), epoch, 50)
+            .await?;
+        let first_state: String =
+            sqlx::query_scalar("SELECT disposition FROM schedule_occurrences WHERE id=?")
+                .bind(first.occurrence.to_string())
+                .fetch_one(&mut db)
+                .await?;
+        match policy {
+            "coalesce_latest" => {
+                assert_eq!(first_state, "COALESCED");
+                let next = next.unwrap();
+                let last: (String,String) = sqlx::query_as("SELECT disposition,json_extract(payload_json,'$.input_pins[0].version_id') FROM schedule_occurrences WHERE id=?")
+                    .bind(next.occurrence.to_string()).fetch_one(&mut db).await?;
+                assert_eq!(last, ("QUEUED".into(), version(11).to_string()));
+            }
+            "queue" => {
+                assert_eq!(first_state, "QUEUED");
+                assert!(
+                    next.is_none(),
+                    "full bounded queue retains the new unconsumed evidence"
+                );
+            }
+            "skip" => {
+                assert_eq!(first_state, "SKIPPED");
+                assert!(next.is_some());
+                let reasons: i64 = sqlx::query_scalar("SELECT count(*) FROM audit_log WHERE operation='schedule.overlap' AND json_extract(evidence_json,'$.disposition')='SKIPPED'").fetch_one(&mut db).await?;
+                assert_eq!(reasons, 2);
+            }
+            _ => unreachable!(),
+        }
+        let unchanged: (String, String) = sqlx::query_as(
+            "SELECT execution_json,payload_json FROM schedule_occurrences WHERE id=?",
+        )
+        .bind(first.occurrence.to_string())
+        .fetch_one(&mut db)
+        .await?;
+        assert_eq!(original, unchanged);
+        let running: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM schedule_occurrences WHERE disposition='RUNNING'",
+        )
+        .fetch_one(&mut db)
+        .await?;
+        assert_eq!(running, 1);
+        db.close().await?;
+        store.close().await?;
+    }
+    Ok(())
+}
+#[tokio::test]
+async fn overlap_rollback_keeps_previous_pending_and_tokens_then_retry_replaces_once() -> Result {
+    let dir = ScratchDirectory::new()?;
+    let (mut store, mut db) = fixture(&dir.path().join("rollback.sqlite")).await?;
+    let value = definition(5, leaf("dataset_published", "published", "pin", false));
+    let saved = save(&mut store, 5, &value, false).await?;
+    let epoch = saved["trigger_epoch"].as_str().unwrap();
+    active_occurrence(&mut db, &value).await?;
+    publish(&mut db, 10, 1, "publication", 20).await?;
+    scan(&mut store, epoch, 30).await?;
+    let first = store
+        .queue_schedule_occurrence(workspace(), sid(5), epoch, 30)
+        .await?
+        .unwrap();
+    publish(&mut db, 11, 2, "publication", 40).await?;
+    scan(&mut store, epoch, 50).await?;
+    sqlx::raw_sql("CREATE TRIGGER overlap_injected BEFORE INSERT ON schedule_occurrences BEGIN SELECT RAISE(ABORT,'injected overlap'); END;").execute(&mut db).await?;
+    assert!(
+        store
+            .queue_schedule_occurrence(workspace(), sid(5), epoch, 50)
+            .await
+            .is_err()
+    );
+    let state: String =
+        sqlx::query_scalar("SELECT disposition FROM schedule_occurrences WHERE id=?")
+            .bind(first.occurrence.to_string())
+            .fetch_one(&mut db)
+            .await?;
+    assert_eq!(state, "QUEUED");
+    let pending: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM trigger_tokens WHERE consumed_by IS NULL")
+            .fetch_one(&mut db)
+            .await?;
+    assert_eq!(pending, 1);
+    sqlx::raw_sql("DROP TRIGGER overlap_injected")
+        .execute(&mut db)
+        .await?;
+    assert!(
+        store
+            .queue_schedule_occurrence(workspace(), sid(5), epoch, 50)
+            .await?
+            .is_some()
+    );
+    assert!(
+        store
+            .queue_schedule_occurrence(workspace(), sid(5), epoch, 50)
+            .await?
+            .is_none()
+    );
+    db.close().await?;
+    store.close().await?;
     Ok(())
 }

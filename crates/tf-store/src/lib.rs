@@ -4,6 +4,7 @@ mod migrations;
 mod path;
 /// Durable event matching and exact schedule-token evidence, without dispatch.
 pub mod schedule_events;
+pub mod schedule_history;
 /// Single-snapshot schedule definitions and frozen occurrence evidence.
 pub mod schedules;
 /// Explicit, revisioned presentation state; never execution authority.
@@ -411,4 +412,6 @@ pub mod schedule_clock;
 pub mod schedule_lifecycle;
 
 /// Guarded scheduled build linking and terminal reconciliation.
+mod schedule_cycles;
 pub mod schedule_dispatch;
+pub mod schedule_overlap;

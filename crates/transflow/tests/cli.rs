@@ -43,7 +43,7 @@ fn version_is_the_actual_development_package_version() -> Result<(), Box<dyn Err
 #[test]
 fn unavailable_commands_and_invalid_flags_fail() -> Result<(), Box<dyn Error>> {
     for args in [
-        vec!["schedule", "list"],
+        vec!["schedule", "unknown-command"],
         vec!["build", "x", "--unknown"],
         vec!["--unknown"],
     ] {

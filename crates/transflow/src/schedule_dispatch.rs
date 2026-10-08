@@ -59,8 +59,8 @@ async fn pass(
         ));
     }
     let workspace = owner.workspace_id().map_err(failure)?;
-    let now = crate::preparation::now().map_err(failure)?;
     let mut owned = owner.open_store().await.map_err(failure)?;
+    let now = crate::preparation::now().map_err(failure)?;
     let store = owned.repository().map_err(failure)?;
     store
         .reconcile_schedule_dispatches(workspace, now)
@@ -118,18 +118,23 @@ async fn pass(
             .map_err(failure)?;
     }
     let pending = store
-        .next_schedule_dispatch(workspace, now)
+        .schedule_dispatch_candidates(workspace, now)
         .await
         .map_err(failure)?;
     owned.close().await.map_err(failure)?;
     // A command queued during observation keeps priority. Empty observation does not report busy.
-    if let Some(pending) = pending
-        && busy
+    for pending in pending.into_iter().take(10) {
+        if !busy
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
             .is_ok()
-    {
+        {
+            break;
+        }
         let result = async {
             if let Err(error) = dispatch(owner, workspace, &pending).await {
+                if error.waiting_for_writes() {
+                    return Ok(());
+                }
                 let safe = tf_domain::diagnostic::Redactor::default()
                     .text(&error.to_string())
                     .map_err(failure)?;
@@ -170,6 +175,18 @@ async fn dispatch(
     ancestry.map_err(|_|failure("Automatic schedule dispatch was stopped by its causal ancestry or consecutive-build limit; inspect the trigger and use an explicit manual request"))?;
     let definition=Definition::decode(&json!({"format_version":1,"name":"Scheduled dispatch","description":"","trigger":{"kind":"manual"},"build":pending.execution["build"],"policies":pending.execution["policies"]})).map_err(failure)?;
     let build = definition.build;
+    let (request, mut options) = template_request(workspace, &build)?;
+    options.scheduled = Some(pending.clone());
+    let plan = build_plan::prepare_inner(owner, request, options).await?;
+    build_plan::accept_inner(owner, plan.id.parse().map_err(failure)?).await?;
+    Ok(())
+}
+
+/// One scope adapter for automatic dispatch and informational schedule previews.
+pub(crate) fn template_request(
+    workspace: WorkspaceId,
+    build: &tf_protocol::schedule::BuildTemplate,
+) -> Result<(build_plan::Request, build_plan::Options), Error> {
     let registry_capture = &build.source;
     let refs = |v: &[tf_protocol::schedule::Dataset]| -> Result<Vec<String>, Error> {
         v.iter()
@@ -233,10 +250,8 @@ async fn dispatch(
         require_current: build.require_current,
         timeout_seconds: Some(build.timeout_seconds.into()),
         validation_timeout_seconds: Some(build.validation_timeout_seconds.into()),
-        scheduled: Some(pending.clone()),
+        scheduled: None,
         ..Default::default()
     };
-    let plan = build_plan::prepare_inner(owner, request, options).await?;
-    build_plan::accept_inner(owner, plan.id.parse().map_err(failure)?).await?;
-    Ok(())
+    Ok((request, options))
 }

@@ -97,6 +97,14 @@ export class Workspace {
     selection: { branch: "master" },
   };
   private listeners = new Set<() => void>();
+  private scheduleListeners = new Set<(id: string) => void>();
+  requestSchedule = (id: string): void => {
+    for (const listener of this.scheduleListeners) listener(id);
+  };
+  subscribeSchedule = (listener: (id: string) => void): (() => void) => {
+    this.scheduleListeners.add(listener);
+    return () => this.scheduleListeners.delete(listener);
+  };
   private request: AbortController | undefined;
   private connection: AbortController | undefined;
   private epoch = 0;

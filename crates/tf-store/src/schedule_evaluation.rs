@@ -182,7 +182,13 @@ pub(crate) async fn queue(
     let expression = tree(&def.trigger, &mut leaves);
     let pending: i64 = sqlx::query_scalar("SELECT count(*) FROM (SELECT id FROM schedule_occurrences WHERE schedule_id=? AND disposition IN ('ACCEPTED','QUEUED','HELD') LIMIT 101)")
             .bind(id.to_string()).fetch_one(&mut *db).await.map_err(StoreError::from)?;
-    if pending >= i64::from(def.policies.max_pending) {
+    let active: i64 = sqlx::query_scalar("SELECT count(*) FROM schedule_occurrences o JOIN builds b ON b.id=o.build_id WHERE o.schedule_id=? AND b.state IN ('QUEUED','RUNNING','WAITING','STARTING')")
+        .bind(id.to_string()).fetch_one(&mut *db).await.map_err(StoreError::from)?;
+    if pending >= i64::from(def.policies.max_pending)
+        && (active == 0
+            || def.policies.allow_overlapping_builds
+            || def.policies.overlap_policy != "coalesce_latest")
+    {
         return Ok(None);
     }
     let pending_tokens: i64 = sqlx::query_scalar("SELECT count(*) FROM (SELECT id FROM trigger_tokens WHERE schedule_id=? AND trigger_epoch=? AND consumed_by IS NULL LIMIT 100001)")
@@ -352,15 +358,25 @@ pub(crate) async fn queue(
         return Err(Error::Limit);
     }
     let execution = json!({"build":value["build"],"policies":value["policies"]});
-    sqlx::query("INSERT INTO schedule_occurrences(id,schedule_id,trigger_epoch,evidence_digest,logical_fire_at_us,payload_json,execution_json,disposition) VALUES(?,?,?,?,?,?,?,'QUEUED')")
-            .bind(occurrence.to_string()).bind(id.to_string()).bind(epoch).bind(&evidence_digest).bind(chosen.ready_at_us).bind(encoded_payload).bind(execution.to_string()).execute(&mut *db).await.map_err(StoreError::from)?;
+    let disposition = crate::schedule_overlap::apply(
+        db,
+        id,
+        &def,
+        &execution,
+        chosen.ready_at_us,
+        occurrence,
+        now_us,
+    )
+    .await?;
+    sqlx::query("INSERT INTO schedule_occurrences(id,schedule_id,trigger_epoch,evidence_digest,logical_fire_at_us,payload_json,execution_json,disposition) VALUES(?,?,?,?,?,?,?,?)")
+            .bind(occurrence.to_string()).bind(id.to_string()).bind(epoch).bind(&evidence_digest).bind(chosen.ready_at_us).bind(encoded_payload).bind(execution.to_string()).bind(disposition).execute(&mut *db).await.map_err(StoreError::from)?;
     for index in &chosen.selected {
         let leaf = names.get(*index).ok_or(Error::Evidence)?;
         sqlx::query("UPDATE trigger_tokens SET consumed_by=? WHERE schedule_id=? AND trigger_epoch=? AND leaf_id=? AND consumed_by IS NULL AND (expires_at_us IS NULL OR expires_at_us>?) AND CAST(json_extract(payload_json,'$.occurred_at_us') AS INTEGER)<=?")
                 .bind(occurrence.to_string()).bind(id.to_string()).bind(epoch).bind(leaf).bind(now_us).bind(now_us).execute(&mut *db).await.map_err(StoreError::from)?;
     }
     sqlx::query("INSERT INTO audit_log(operation,evidence_json,wall_time_us) VALUES('schedule_occurrence_queued',?,?)")
-            .bind(json!({"schedule":id.to_string(),"trigger_epoch":epoch,"occurrence":occurrence.to_string(),"evidence_digest":evidence_digest,"selected":chosen.selected.len(),"coalesced":total_coalesced.to_string()}).to_string()).bind(now_us).execute(&mut *db).await.map_err(StoreError::from)?;
+            .bind(json!({"schedule":id.to_string(),"trigger_epoch":epoch,"occurrence":occurrence.to_string(),"evidence_digest":evidence_digest,"selected":chosen.selected.len(),"coalesced":total_coalesced.to_string(),"disposition":disposition}).to_string()).bind(now_us).execute(&mut *db).await.map_err(StoreError::from)?;
     Ok(Some(Queued {
         occurrence,
         evidence_digest,

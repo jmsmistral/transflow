@@ -41,6 +41,8 @@ fn definition(n: u8, trigger: Value) -> Value {
         .clone();
     v["name"] = json!(format!("schedule-{n}"));
     v["trigger"] = trigger;
+    // An automatic consumer must not publish its own triggering input.
+    v["build"]["targets"][0]["dataset_id"] = json!(DatasetId::from_bytes([99; 16]).to_string());
     v
 }
 fn leaf(kind: &str, id: &str, mode: &str, resets: bool) -> Value {
@@ -53,6 +55,8 @@ async fn fixture(
     s.register_workspace(workspace(), "synthetic-root", 1)
         .await?;
     s.register_dataset(workspace(), dataset(), 2).await?;
+    s.register_dataset(workspace(), DatasetId::from_bytes([99; 16]), 2)
+        .await?;
     let mut db = support::database::connect(path).await?;
     let source = definition(5, json!({"kind":"manual"}))["build"]["source"]["snapshot_id"]
         .as_str()

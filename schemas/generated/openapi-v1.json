@@ -7301,6 +7301,1017 @@
           }
         }
       }
+    },
+    "/api/v1/schedules/{id}/history": {
+      "get": {
+        "operationId": "get_api_v1_schedules_id_history",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiScheduleHistoryV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "schedule_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "occurrences": [],
+                    "next_cursor": null
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/schedules/{id}/metrics": {
+      "get": {
+        "operationId": "get_api_v1_schedules_id_metrics",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiScheduleMetricsV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "schedule_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "from_us": "0",
+                    "to_us": "0",
+                    "cohort": "occurrence_ready",
+                    "duration_unit": "us",
+                    "occurrences": "0",
+                    "dispositions": [],
+                    "builds": "0",
+                    "jobs": "0",
+                    "attempts": "0",
+                    "failure_rate": null,
+                    "duration_samples": "0",
+                    "missing_duration_samples": "0",
+                    "median_us": null,
+                    "trailing_mean_us": null,
+                    "trailing_window": "0",
+                    "trailing_samples": "0",
+                    "ignored_event_matches": "0",
+                    "clock_ticks": [],
+                    "evidence_cohort": "observed_in_range"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "from_us",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_us",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/schedules/{id}/delete": {
+      "post": {
+        "operationId": "post_api_v1_schedules_id_delete",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiScheduleDeletedV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "deleted": true,
+                    "retained_history": true,
+                    "canceled_automatic": "0"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          {
+            "name": "X-Transflow-CSRF",
+            "in": "header",
+            "required": false,
+            "description": "Required for browser session mutations, except initial exchange",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiEmptyV1"
+              },
+              "example": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedules/defaults": {
+      "get": {
+        "operationId": "get_api_v1_schedules_defaults",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ScheduleDefinitionV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "branch": "example",
+                    "source": null,
+                    "registry": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "runtime_revision": "example",
+                    "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "selection": {
+                      "kind": "retained_current",
+                      "id": null,
+                      "digest": null
+                    },
+                    "graph": null,
+                    "freshness": "unknown",
+                    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "fallback_policy": []
+                  },
+                  "data": {
+                    "format_version": 1,
+                    "name": "x",
+                    "description": "example",
+                    "build": {
+                      "source": {
+                        "kind": "fixed_snapshot",
+                        "snapshot_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                      },
+                      "data_branch": "x",
+                      "fallback_branches": [],
+                      "input_fallback_policy": {
+                        "default": [],
+                        "rules": {}
+                      },
+                      "provider_fallback_policies": {},
+                      "targets": [
+                        {
+                          "workspace_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                          "dataset_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                        }
+                      ],
+                      "build_mode": "full",
+                      "boundaries": [],
+                      "exclusions": [],
+                      "refresh_sources": [],
+                      "parameters": {},
+                      "force": false,
+                      "require_current": false,
+                      "timeout_seconds": 0,
+                      "validation_timeout_seconds": 0
+                    },
+                    "trigger": {
+                      "kind": "manual"
+                    },
+                    "policies": {
+                      "max_attempts": 1,
+                      "retryable_classes": [],
+                      "abort_on_failure": false,
+                      "overlap_policy": "coalesce_latest",
+                      "max_pending": 1,
+                      "allow_overlapping_builds": false,
+                      "misfire_policy": "skip",
+                      "max_catch_up": 1,
+                      "token_window_seconds": null,
+                      "acknowledge_no_expiry": false,
+                      "max_consecutive_builds": 1,
+                      "minimum_delay_seconds": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/schedules/{schedule}/roles": {
+      "get": {
+        "operationId": "get_api_v1_schedules_schedule_roles",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiScheduleRolesV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "branch": "example",
+                    "source": null,
+                    "registry": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "runtime_revision": "example",
+                    "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "selection": {
+                      "kind": "retained_current",
+                      "id": null,
+                      "digest": null
+                    },
+                    "graph": null,
+                    "freshness": "unknown",
+                    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "fallback_policy": []
+                  },
+                  "data": {
+                    "schedule_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "etag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "basis": "saved_definition",
+                    "nodes": [],
+                    "total": "0",
+                    "next_cursor": null
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "schedule",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/schedules/clock-preview": {
+      "post": {
+        "operationId": "post_api_v1_schedules_clock-preview",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ApiScheduleClockPreviewV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": null,
+                  "data": {
+                    "leaves": []
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Transflow-CSRF",
+            "in": "header",
+            "required": false,
+            "description": "Required for browser session mutations, except initial exchange",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleDefinitionV1"
+              },
+              "example": {
+                "format_version": 1,
+                "name": "x",
+                "description": "example",
+                "build": {
+                  "source": {
+                    "kind": "fixed_snapshot",
+                    "snapshot_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                  },
+                  "data_branch": "x",
+                  "fallback_branches": [],
+                  "input_fallback_policy": {
+                    "default": [],
+                    "rules": {}
+                  },
+                  "provider_fallback_policies": {},
+                  "targets": [
+                    {
+                      "workspace_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                      "dataset_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                    }
+                  ],
+                  "build_mode": "full",
+                  "boundaries": [],
+                  "exclusions": [],
+                  "refresh_sources": [],
+                  "parameters": {},
+                  "force": false,
+                  "require_current": false,
+                  "timeout_seconds": 0,
+                  "validation_timeout_seconds": 0
+                },
+                "trigger": {
+                  "kind": "manual"
+                },
+                "policies": {
+                  "max_attempts": 1,
+                  "retryable_classes": [],
+                  "abort_on_failure": false,
+                  "overlap_policy": "coalesce_latest",
+                  "max_pending": 1,
+                  "allow_overlapping_builds": false,
+                  "misfire_policy": "skip",
+                  "max_catch_up": 1,
+                  "token_window_seconds": null,
+                  "acknowledge_no_expiry": false,
+                  "max_consecutive_builds": 1,
+                  "minimum_delay_seconds": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedules/preview": {
+      "post": {
+        "operationId": "post_api_v1_schedules_preview",
+        "responses": {
+          "200": {
+            "description": "Context-bound result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "request_id",
+                    "context",
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request_id": {
+                      "$ref": "#/components/schemas/Uuid"
+                    },
+                    "context": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ApiContextV1"
+                        }
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PlanResultV1"
+                    }
+                  }
+                },
+                "example": {
+                  "request_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                  "context": {
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "branch": "example",
+                    "source": null,
+                    "registry": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "runtime_revision": "example",
+                    "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "selection": {
+                      "kind": "retained_current",
+                      "id": null,
+                      "digest": null
+                    },
+                    "graph": null,
+                    "freshness": "unknown",
+                    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "fallback_policy": []
+                  },
+                  "data": {
+                    "kind": "plan",
+                    "workspace": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "source": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "branch": "example",
+                    "source_selector": {
+                      "kind": "working_tree"
+                    },
+                    "source_commit": null,
+                    "plan_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "created_us": "example",
+                    "expires_us": "example",
+                    "mode": "Full",
+                    "force": false,
+                    "targets": [],
+                    "boundaries": [],
+                    "exclusions": [],
+                    "refresh_sources": [],
+                    "fallback_override": null,
+                    "boundary_policy": "require_available",
+                    "branch_would_be_created": false,
+                    "pending_registrations": [],
+                    "writes": [],
+                    "reads": [],
+                    "freshness": [],
+                    "warnings": [],
+                    "producer_execution": false,
+                    "authoring_changed": false,
+                    "freshness_context": "selected_branch_heads"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Typed safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorV1"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "origin_workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Transflow-CSRF",
+            "in": "header",
+            "required": false,
+            "description": "Required for browser session mutations, except initial exchange",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleDefinitionV1"
+              },
+              "example": {
+                "format_version": 1,
+                "name": "x",
+                "description": "example",
+                "build": {
+                  "source": {
+                    "kind": "fixed_snapshot",
+                    "snapshot_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                  },
+                  "data_branch": "x",
+                  "fallback_branches": [],
+                  "input_fallback_policy": {
+                    "default": [],
+                    "rules": {}
+                  },
+                  "provider_fallback_policies": {},
+                  "targets": [
+                    {
+                      "workspace_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                      "dataset_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                    }
+                  ],
+                  "build_mode": "full",
+                  "boundaries": [],
+                  "exclusions": [],
+                  "refresh_sources": [],
+                  "parameters": {},
+                  "force": false,
+                  "require_current": false,
+                  "timeout_seconds": 0,
+                  "validation_timeout_seconds": 0
+                },
+                "trigger": {
+                  "kind": "manual"
+                },
+                "policies": {
+                  "max_attempts": 1,
+                  "retryable_classes": [],
+                  "abort_on_failure": false,
+                  "overlap_policy": "coalesce_latest",
+                  "max_pending": 1,
+                  "allow_overlapping_builds": false,
+                  "misfire_policy": "skip",
+                  "max_catch_up": 1,
+                  "token_window_seconds": null,
+                  "acknowledge_no_expiry": false,
+                  "max_consecutive_builds": 1,
+                  "minimum_delay_seconds": 1
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8672,7 +9683,18 @@
                   "build.cancel",
                   "build.replay",
                   "coordinator.cli",
-                  "coordinator.http.v1"
+                  "coordinator.http.v1",
+                  "schedule.create",
+                  "schedule.update",
+                  "schedule.list",
+                  "schedule.show",
+                  "schedule.run",
+                  "schedule.pause",
+                  "schedule.resume",
+                  "schedule.history",
+                  "schedule.metrics",
+                  "schedule.export",
+                  "schedule.delete"
                 ]
               },
               "context": {
@@ -8738,6 +9760,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/ImportPublicationResultV1"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ScheduleResultV1"
                   }
                 ]
               },
@@ -8808,7 +9833,18 @@
                   "build.cancel",
                   "build.replay",
                   "coordinator.cli",
-                  "coordinator.http.v1"
+                  "coordinator.http.v1",
+                  "schedule.create",
+                  "schedule.update",
+                  "schedule.list",
+                  "schedule.show",
+                  "schedule.run",
+                  "schedule.pause",
+                  "schedule.resume",
+                  "schedule.history",
+                  "schedule.metrics",
+                  "schedule.export",
+                  "schedule.delete"
                 ]
               },
               "context": {
@@ -8842,6 +9878,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/ExternalResultV1"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ScheduleResultV1"
                   }
                 ]
               },
@@ -8912,7 +9951,18 @@
                   "build.cancel",
                   "build.replay",
                   "coordinator.cli",
-                  "coordinator.http.v1"
+                  "coordinator.http.v1",
+                  "schedule.create",
+                  "schedule.update",
+                  "schedule.list",
+                  "schedule.show",
+                  "schedule.run",
+                  "schedule.pause",
+                  "schedule.resume",
+                  "schedule.history",
+                  "schedule.metrics",
+                  "schedule.export",
+                  "schedule.delete"
                 ]
               },
               "context": {
@@ -8933,6 +9983,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/ExecutionResultV1"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ScheduleResultV1"
                   }
                 ]
               },
@@ -15648,7 +16701,14 @@
             "$ref": "#/components/schemas/Count"
           },
           "schedule_occurrences": {
-            "type": "null"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
           },
           "jobs": {
             "$ref": "#/components/schemas/Count"
@@ -17137,6 +18197,506 @@
           "logical_fire_at_us",
           "disposition",
           "manual"
+        ],
+        "additionalProperties": false
+      },
+      "ScheduleHistoryEntryV1": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "ready_us": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "disposition": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "build": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          },
+          "branch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              }
+            ]
+          },
+          "build_state": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            ]
+          },
+          "manual": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "started_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "finished_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "wall_duration_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "jobs": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "attempts": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "coalesced_tokens": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "plan": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          },
+          "source": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "ready_us",
+          "disposition",
+          "build",
+          "branch",
+          "build_state",
+          "manual",
+          "started_us",
+          "finished_us",
+          "wall_duration_us",
+          "jobs",
+          "attempts",
+          "coalesced_tokens",
+          "plan",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "ApiScheduleHistoryV1": {
+        "type": "object",
+        "properties": {
+          "schedule_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleHistoryEntryV1"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "next_cursor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            ]
+          }
+        },
+        "required": [
+          "schedule_id",
+          "occurrences",
+          "next_cursor"
+        ],
+        "additionalProperties": false
+      },
+      "ApiScheduleMetricsV1": {
+        "type": "object",
+        "properties": {
+          "schedule_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "from_us": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "to_us": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "cohort": {
+            "const": "occurrence_ready"
+          },
+          "duration_unit": {
+            "const": "us"
+          },
+          "occurrences": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "dispositions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiStateCountV1"
+            },
+            "maxItems": 32,
+            "minItems": 0
+          },
+          "builds": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "jobs": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "attempts": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "failure_rate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiExactRatioV1"
+              }
+            ]
+          },
+          "duration_samples": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "missing_duration_samples": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "median_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiExactRatioV1"
+              }
+            ]
+          },
+          "trailing_mean_us": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiExactRatioV1"
+              }
+            ]
+          },
+          "trailing_window": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "trailing_samples": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "ignored_event_matches": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "clock_ticks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiStateCountV1"
+            },
+            "maxItems": 32,
+            "minItems": 0
+          },
+          "evidence_cohort": {
+            "const": "observed_in_range"
+          }
+        },
+        "required": [
+          "schedule_id",
+          "from_us",
+          "to_us",
+          "cohort",
+          "duration_unit",
+          "occurrences",
+          "dispositions",
+          "builds",
+          "jobs",
+          "attempts",
+          "failure_rate",
+          "duration_samples",
+          "missing_duration_samples",
+          "median_us",
+          "trailing_mean_us",
+          "trailing_window",
+          "trailing_samples",
+          "ignored_event_matches",
+          "clock_ticks",
+          "evidence_cohort"
+        ],
+        "additionalProperties": false
+      },
+      "ApiScheduleDeletedV1": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "deleted": {
+            "const": true
+          },
+          "retained_history": {
+            "const": true
+          },
+          "canceled_automatic": {
+            "$ref": "#/components/schemas/Count"
+          }
+        },
+        "required": [
+          "id",
+          "deleted",
+          "retained_history",
+          "canceled_automatic"
+        ],
+        "additionalProperties": false
+      },
+      "ScheduleResultV1": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "schedule"
+          },
+          "operation": {
+            "enum": [
+              "create",
+              "update",
+              "list",
+              "show",
+              "run",
+              "pause",
+              "resume",
+              "history",
+              "metrics",
+              "export",
+              "delete"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ExecutionJsonV1"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "operation",
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "ApiScheduleRolesV1": {
+        "type": "object",
+        "properties": {
+          "schedule_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "etag": {
+            "$ref": "#/components/schemas/Sha256"
+          },
+          "basis": {
+            "const": "saved_definition"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "identity": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "paths": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  },
+                  "minItems": 0,
+                  "maxItems": 100
+                },
+                "roles": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "target",
+                      "trigger",
+                      "excluded",
+                      "boundary"
+                    ]
+                  },
+                  "minItems": 0,
+                  "maxItems": 4
+                }
+              },
+              "required": [
+                "identity",
+                "paths",
+                "roles"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0,
+            "maxItems": 1000
+          },
+          "total": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "next_cursor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              }
+            ]
+          }
+        },
+        "required": [
+          "schedule_id",
+          "etag",
+          "basis",
+          "nodes",
+          "total",
+          "next_cursor"
+        ],
+        "additionalProperties": false
+      },
+      "ApiScheduleClockPreviewV1": {
+        "type": "object",
+        "properties": {
+          "leaves": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "fires": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "at_us": {
+                        "$ref": "#/components/schemas/Count"
+                      },
+                      "local": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "timezone": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                      },
+                      "tzdb_version": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 32
+                      }
+                    },
+                    "required": [
+                      "at_us",
+                      "local",
+                      "timezone",
+                      "tzdb_version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 0,
+                  "maxItems": 5
+                }
+              },
+              "required": [
+                "id",
+                "fires"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0,
+            "maxItems": 64
+          }
+        },
+        "required": [
+          "leaves"
         ],
         "additionalProperties": false
       }

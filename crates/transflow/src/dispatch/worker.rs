@@ -228,12 +228,22 @@ pub(super) fn classify(c: &lifecycle::Completion<'_>) -> tf_domain::execution::F
         if r.outcome == Err(tf_exec::supervisor::Failure::Unavailable) {
             return C::WorkerUnavailable;
         }
+        if r.outcome == Err(tf_exec::supervisor::Failure::Exit) && r.terminal.is_none() {
+            return C::WorkerCrash;
+        }
         if r.outcome == Err(tf_exec::supervisor::Failure::Worker)
             && let Some(frame) = &r.terminal
         {
             let m = &frame.as_json()["message"];
             if m["code"] == "transient_io" && m["retryable"] == true {
                 return C::TransientIo;
+            }
+            if m["retryable"] == true {
+                match m["code"].as_str() {
+                    Some("provider_unavailable") => return C::ProviderUnavailable,
+                    Some("resource_unavailable") => return C::ResourceUnavailable,
+                    _ => {}
+                }
             }
             return match m["code"].as_str() {
                 Some("input_schema" | "output_schema") => C::InvalidSchema,

@@ -238,7 +238,7 @@ export function basis(colour: Colour): string {
             : colour === "health"
               ? "Published output checks; input failures are separate badges."
               : colour === "roles"
-                ? "Active build preview. Schedule roles unavailable until scheduling is enabled."
+                ? "Saved schedule roles and active scope preview. Badges retain simultaneous roles."
                 : colour === "freshness"
                   ? "Shared freshness evidence. Unverified bytes or policies remain unknown."
                   : "Visible nodes only.";

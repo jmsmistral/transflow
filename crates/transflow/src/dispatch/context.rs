@@ -110,8 +110,9 @@ pub(super) fn prepare(
             .retryable_classes
             .iter()
             .map(|c| match c.as_str() {
-                "worker_unavailable" => Ok(FailureClass::WorkerUnavailable),
-                "transient_io" => Ok(FailureClass::TransientIo),
+                "worker_crash" => Ok(FailureClass::WorkerCrash),
+                "provider_unavailable" => Ok(FailureClass::ProviderUnavailable),
+                "resource_unavailable" => Ok(FailureClass::ResourceUnavailable),
                 _ => Err(fail("Invalid scheduled retry class")),
             })
             .collect::<Result<std::collections::BTreeSet<_>>>()?;

@@ -34,7 +34,7 @@ fn runtime_assertions_agree_with_all_shared_schema_cases() {
     let cases: Vec<Value> =
         serde_json::from_str(include_str!("../../../schemas/fixtures/conformance.json")).unwrap();
     // Build duration estimates add three exact-ratio/invalid-field fixtures.
-    assert_eq!(cases.len(), 354);
+    assert_eq!(cases.len(), 366);
     for case in cases {
         assert_eq!(
             validate_document(case["schema"].as_str().unwrap(), &case["value"]).is_ok(),

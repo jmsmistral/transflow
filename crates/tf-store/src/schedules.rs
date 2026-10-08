@@ -17,6 +17,12 @@ pub enum Error {
         /// Current opaque guard when the schedule exists.
         current_etag: Option<String>,
     },
+    /// Static automatic dependency cycle; saved definitions remain untouched.
+    #[error("The schedule would create an automatic trigger cycle: {path:?}")]
+    Cycle {
+        /// Ordered schedule identities, including the repeated endpoint.
+        path: Vec<String>,
+    },
     /// Missing retained schedule or required source.
     #[error("The schedule or its required retained source is unavailable")]
     Missing,
@@ -69,7 +75,10 @@ pub(crate) async fn row(
     id: ScheduleId,
 ) -> Result<Option<Value>, Error> {
     let r=sqlx::query("SELECT id,etag,trigger_epoch,paused,needs_review,definition_json,saved_at_us FROM schedules WHERE workspace_id=? AND id=? AND deleted_at_us IS NULL AND length(definition_json)<=262144").bind(workspace.to_string()).bind(id.to_string()).fetch_optional(db).await.map_err(StoreError::from)?;
-    r.map(|r|Ok(json!({"id":r.try_get::<String,_>(0).map_err(StoreError::from)?,"etag":r.try_get::<String,_>(1).map_err(StoreError::from)?,"trigger_epoch":r.try_get::<String,_>(2).map_err(StoreError::from)?,"paused":r.try_get::<i64,_>(3).map_err(StoreError::from)?==1,"needs_review":r.try_get::<i64,_>(4).map_err(StoreError::from)?==1,"definition":serde_json::from_str::<Value>(&r.try_get::<String,_>(5).map_err(StoreError::from)?).map_err(|_|bad())?,"saved_at_us":r.try_get::<i64,_>(6).map_err(StoreError::from)?.to_string()}))).transpose()
+    r.map(|r| {
+        let definition: Value=serde_json::from_str(&r.try_get::<String,_>(5).map_err(StoreError::from)?).map_err(|_|bad())?;
+        Ok(json!({"id":r.try_get::<String,_>(0).map_err(StoreError::from)?,"etag":r.try_get::<String,_>(1).map_err(StoreError::from)?,"trigger_epoch":r.try_get::<String,_>(2).map_err(StoreError::from)?,"paused":r.try_get::<i64,_>(3).map_err(StoreError::from)?==1,"needs_review":r.try_get::<i64,_>(4).map_err(StoreError::from)?==1,"definition":definition,"saved_at_us":r.try_get::<i64,_>(6).map_err(StoreError::from)?.to_string()}))
+    }).transpose()
 }
 impl Store {
     /// Replace the current snapshot atomically with audit/token reset and optional API receipt.
@@ -143,6 +152,8 @@ impl Store {
                 return Err(Error::Missing);
             }
         }
+        crate::schedule_cycles::validate(&mut tx, request.workspace, request.id, &definition)
+            .await?;
         let (etag, epoch): (String, String) =
             sqlx::query_as("SELECT lower(hex(randomblob(32))),lower(hex(randomblob(32)))")
                 .fetch_one(&mut *tx)

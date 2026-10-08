@@ -7,6 +7,7 @@ use std::{
     net::{SocketAddr, TcpListener},
     os::unix::fs::MetadataExt,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 use tf_domain::{CoordinatorSessionId, WorkspaceId};
 
@@ -127,20 +128,31 @@ impl Registration {
         &self.nonce
     }
 }
-/// Non-cloneable lock guard. The OS releases ownership even when the process is killed.
-/// Runtime/lock files remain on disk; stale metadata is not evidence of a live owner.
+/// One OS-held lock shared only by execution handles of this coordinator session.
+struct SessionLock {
+    file: File,
+    writer: Arc<tokio::sync::Mutex<()>>,
+    recovered: std::sync::atomic::AtomicBool,
+}
+impl std::ops::Deref for SessionLock {
+    type Target = File;
+    fn deref(&self) -> &File {
+        &self.file
+    }
+}
+impl Drop for SessionLock {
+    fn drop(&mut self) {
+        // Explicitly unlock the final session handle even if a fork inherited the descriptor.
+        let _ = self.file.unlock();
+    }
+}
+/// Non-cloneable session authority. Delegation retains the same OS lock and identity;
+/// it never acquires or registers a second coordinator.
 pub struct RuntimeOwner {
-    lock: File,
+    lock: Arc<SessionLock>,
     directory: File,
     registration: Registration,
-}
-impl Drop for RuntimeOwner {
-    fn drop(&mut self) {
-        // Explicit unlock releases the open-file-description lock even if a concurrent
-        // fork inherited a descriptor before CLOEXEC closes it in the child.
-        // Drop cannot report errors; closing the descriptor remains the fallback.
-        let _ = self.lock.unlock();
-    }
+    delegated: bool,
 }
 fn held_else_release(file: &File) -> Result<bool> {
     if lock(file)? {
@@ -297,9 +309,39 @@ impl RuntimeOwner {
             http_endpoint: None,
         };
         Ok(Self {
-            lock: lock_file,
+            lock: Arc::new(SessionLock {
+                file: lock_file,
+                writer: Arc::new(tokio::sync::Mutex::new(())),
+                recovered: std::sync::atomic::AtomicBool::new(false),
+            }),
             directory,
             registration,
+            delegated: false,
+        })
+    }
+    /// Whether successful startup recovery already ran for this shared session.
+    pub fn recovery_completed(&self) -> bool {
+        self.lock
+            .recovered
+            .load(std::sync::atomic::Ordering::Acquire)
+    }
+    /// Record complete startup fencing/cleanup; never call after partial recovery.
+    pub fn finish_recovery(&self) {
+        self.lock
+            .recovered
+            .store(true, std::sync::atomic::Ordering::Release);
+    }
+    /// Delegate an execution handle inside this persistent coordinator. SQLite transactions,
+    /// complete write-set reservations and publication fences still serialize conflicting writes.
+    /// The final handle releases the one OS lock; a delegate cannot publish endpoint metadata.
+    pub fn execution_handle(&self) -> Result<Self> {
+        self.registration.mode.require_persistent()?;
+        self.validate_paths()?;
+        Ok(Self {
+            lock: self.lock.clone(),
+            directory: self.directory.try_clone()?,
+            registration: self.registration.clone(),
+            delegated: true,
         })
     }
     /// Verify that this live writer still owns the same workspace, runtime and lock inode.
@@ -341,6 +383,9 @@ impl RuntimeOwner {
         self.persist_registration(registration)
     }
     fn persist_registration(&mut self, registration: Registration) -> Result<()> {
+        if self.delegated {
+            return Err(OwnershipError::Invalid);
+        }
         let bytes = serde_json::to_vec(&registration).map_err(|_| OwnershipError::Invalid)?;
         let name = format!("runtime-{}.tmp", registration.session);
         let mut temp = open_at(
@@ -368,18 +413,25 @@ impl RuntimeOwner {
     pub fn registration(&self) -> &Registration {
         &self.registration
     }
-    /// Open the sole owned store. Its mutable borrow keeps this guard alive and prevents a second open.
+    /// Open a store tied to this session handle. Its mutable borrow retains authority;
+    /// SQLite serializes transactions across delegates under the same coordinator session.
     pub async fn open_store(&mut self) -> Result<OwnedStore<'_>> {
+        let writer = self.lock.writer.clone().lock_owned().await;
         self.validate_paths()?;
         let store =
             tf_store::Store::open(&self.registration.runtime.path.join("catalog.sqlite")).await?;
-        Ok(OwnedStore { store, owner: self })
+        Ok(OwnedStore {
+            store,
+            owner: self,
+            _writer: writer,
+        })
     }
 }
 /// Database lifetime tied to its OS-held ownership guard.
 pub struct OwnedStore<'a> {
     store: tf_store::Store,
     owner: &'a mut RuntimeOwner,
+    _writer: tokio::sync::OwnedMutexGuard<()>,
 }
 impl OwnedStore<'_> {
     /// Access the serialized repository after revalidating directory/lock identity.
@@ -459,6 +511,44 @@ mod tests {
         os::unix::fs::PermissionsExt,
         process::{Command, Stdio},
     };
+
+    #[test]
+    fn delegates_retain_one_authority_until_the_last_handle_closes()
+    -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let root = std::env::temp_dir().join(format!("tf-delegated-lock-{}", std::process::id()));
+        fs::create_dir_all(root.join(".transflow/runtime"))?;
+        fs::set_permissions(
+            root.join(".transflow/runtime"),
+            fs::Permissions::from_mode(0o700),
+        )?;
+        let workspace = WorkspaceId::from_bytes([7; 16]);
+        let owner = RuntimeOwner::acquire(&root, workspace, CoordinatorMode::Persistent)?;
+        let mut delegate = owner.execution_handle()?;
+        assert_eq!(
+            delegate.registration.session()?,
+            owner.registration.session()?
+        );
+        assert!(
+            delegate
+                .register_http_endpoint(SocketAddr::from(([127, 0, 0, 1], 1234)))
+                .is_err()
+        );
+        drop(owner);
+        assert!(matches!(
+            RuntimeOwner::acquire(&root, workspace, CoordinatorMode::Persistent),
+            Err(OwnershipError::Owned)
+        ));
+        delegate.validate_paths()?;
+        drop(delegate);
+        let temporary = RuntimeOwner::acquire(&root, workspace, CoordinatorMode::Temporary)?;
+        assert!(matches!(
+            temporary.execution_handle(),
+            Err(OwnershipError::PersistentRequired)
+        ));
+        drop(temporary);
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
 
     #[test]
     fn explicit_unlock_releases_a_descriptor_inherited_by_a_live_child()

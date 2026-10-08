@@ -671,3 +671,38 @@ def validate_ApiScheduleResumeV1(value: object) -> None:
 def validate_ScheduleRunV1(value: object) -> None:
     """Assert the ScheduleRunV1 contract, including custom formats."""
     validate_document("ScheduleRunV1", value)
+
+
+def validate_ScheduleHistoryEntryV1(value: object) -> None:
+    """Assert the ScheduleHistoryEntryV1 contract, including custom formats."""
+    validate_document("ScheduleHistoryEntryV1", value)
+
+
+def validate_ApiScheduleHistoryV1(value: object) -> None:
+    """Assert the ApiScheduleHistoryV1 contract, including custom formats."""
+    validate_document("ApiScheduleHistoryV1", value)
+
+
+def validate_ApiScheduleMetricsV1(value: object) -> None:
+    """Assert the ApiScheduleMetricsV1 contract, including custom formats."""
+    validate_document("ApiScheduleMetricsV1", value)
+
+
+def validate_ApiScheduleDeletedV1(value: object) -> None:
+    """Assert the ApiScheduleDeletedV1 contract, including custom formats."""
+    validate_document("ApiScheduleDeletedV1", value)
+
+
+def validate_ScheduleResultV1(value: object) -> None:
+    """Assert the ScheduleResultV1 contract, including custom formats."""
+    validate_document("ScheduleResultV1", value)
+
+
+def validate_ApiScheduleRolesV1(value: object) -> None:
+    """Assert the ApiScheduleRolesV1 contract, including custom formats."""
+    validate_document("ApiScheduleRolesV1", value)
+
+
+def validate_ApiScheduleClockPreviewV1(value: object) -> None:
+    """Assert the ApiScheduleClockPreviewV1 contract, including custom formats."""
+    validate_document("ApiScheduleClockPreviewV1", value)

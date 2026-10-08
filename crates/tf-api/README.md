@@ -409,7 +409,7 @@ must be retained locally, and working-tree capture must be explicitly selected.
 Fallback policies are explicit definition fields. Browser PUTs require the same
 session, Origin and CSRF protections as other mutations. No schedule definition
 history is retained. Evaluation and lifecycle services are delivered; persistent
-dispatch, the scheduling CLI and lineage schedule editor remain later tasks.
+dispatch, the scheduling CLI and lineage schedule editor are composed by T095–T098.
 
 ## Schedule lifecycle actions (T094)
 
@@ -438,3 +438,28 @@ when available. Full dispatch-time overlap/queue/cycle policy remains T096,
 while CLI/editor integrations remain T097/T098. T095 now composes these
 requests into [persistent dispatch](../transflow/SCHEDULING.md); authenticated
 capabilities report `schedules: true`. Temporary owners do not activate scheduling.
+
+## Schedule history, metrics and editor reads (T097–T098)
+
+- `GET /api/v1/schedules/{id}/history`: newest-ready first, UUID `after`, `limit` 1–100.
+  History remains available after tombstoning, with explicit unknown timing and build links.
+- `GET /api/v1/schedules/{id}/metrics`: required `from_us`/`to_us`, optional `window` 1–1000.
+  Cohort is occurrence-ready time; successful operation durations include cache reuse.
+  Ignored matches use observation time and clock dispositions use intended tick time.
+- `POST /api/v1/schedules/{id}/delete`: empty body, edit ETag and idempotency key.
+  Cancels unstarted automatic requests; retains manual/active work and historical evidence.
+- `GET /api/v1/schedules/defaults`: current branch/source context, validated source selector
+  and explicit input defaults; no producer execution or implicit schedule save.
+- `GET /api/v1/schedules/{id}/roles`: context-bound saved role facts, unique identity order,
+  up to 1,000 nodes per page; `after`, `total`, `next_cursor` and the saved ETag are explicit.
+- `POST /api/v1/schedules/clock-preview`: a complete typed definition; returns five next
+  times per cron leaf with local offset, timezone and bundled rule version. No clock state changes.
+- `POST /api/v1/schedules/preview`: typed definition with foreground context/edit headers.
+  Shared source/branch/input-policy planning only. The retained draft cannot be accepted
+  as a build; manual Run on the saved schedule owns durable occurrence acceptance.
+
+Definitions with unsupported timezone/cron resolution fail Save. Literal editor routes
+have precedence over schedule-ID templates. All routes use the existing session/Origin/
+CSRF protections and closed generated request/response contracts. No file-watching import
+or schedule-definition version history is introduced. CLI commands use these same save and
+control services through authenticated local coordinator transport.

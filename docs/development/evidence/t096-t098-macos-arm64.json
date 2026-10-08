@@ -1,0 +1,106 @@
+{
+  "tasks": [
+    "T096",
+    "T097",
+    "T098"
+  ],
+  "date": "2026-10-08",
+  "platform": "macOS arm64",
+  "implementation_base": "522dd2ebf59eabf76983945e32ab7488602472a5",
+  "specification_base": "0596262dde5bc8e357d32b96ae40f82404aa09d9",
+  "specification": "1.1.3",
+  "runtime_schema": 16,
+  "qualification": "local task scope",
+  "scope": "Overlap, queues and loop guards; shared scheduling CLI/history/metrics; lineage schedule editor and role facts",
+  "local_verification": {
+    "rust": "484 unit/integration tests plus one doctest; final locked offline workspace and standalone-storage compilation, formatting, all-target Clippy and boundary regressions passed after the IPC execution-delegate bound",
+    "python": "Python 3.14.7: 1053 tests plus lint/format/type/package gate passed",
+    "installed_cli_api": "Final 59 installed-worker CLI/authenticated API tests passed after the execution-delegate queue bound",
+    "web": "559 tests across 23 files; strict type/lint/format, production worker probes and reproducible 16-asset builds passed after final view/date/summary and manual-trigger presentation corrections",
+    "native_dispatch": "Final 53 real installed-worker cases passed, including concurrent observation/control, reservation waits, frozen overlap/crash retry and bounded IPC execution-delegate queue",
+    "foreign": "17 real provider/consumer cases passed; no provider code execution or input replication",
+    "conformance": "366 shared fixtures passed in Rust, Python and web gates",
+    "documents": "Specification checker passed: 123 tasks, 97 complete; all 44 document checker regressions passed",
+    "safety": "27 safety regressions plus generated drift, public-file and offline inventory checks passed: 643 unchanged locked package versions, two active exceptions and one registered generated contract"
+  },
+  "coverage": {
+    "T096": [
+      "Atomic frozen overlap queue/coalesce/skip policy, bounded evidence accounting and injected rollback",
+      "Compatible pending replacement preserves manual, held and active work and separates distinct accepted templates",
+      "Static authored target/event and schedule-success cycles reject in the save transaction; branch-qualified independent references remain valid",
+      "Independent 16-hop causal bound, repeated ancestry and queued evidence burst limits; new external evidence resets after completion and manual work remains explicit",
+      "One persistent OS authority and serialized writer own delegated active builds; session recovery runs once and never kills concurrently active workers",
+      "Real gated disjoint builds overlap; conflicts retain queued occurrences with no failed jobs or duplicate build links",
+      "Clean EOF followed by a proved nonzero worker exit is retryable worker_crash; malformed/incomplete/authentication traffic remains nonretryable",
+      "IPC acceptance also retains excess accepted work in the durable queue while execution delegates are occupied; it resumes successfully after capacity releases"
+    ],
+    "T097": [
+      "Human and JSON schedule create/update/list/show/run/pause/resume/history/metrics/export/delete share guarded services and authenticated persistent transport",
+      "Private non-overwriting export, explicit validated reimport, stale edit guards and no watched-file overwrite",
+      "Paused manual request remains paused and owns exactly one occurrence/build link",
+      "Paged tombstone history; atomic deletion cancels only unstarted automatic work while preserving manual requests, active builds and retained evidence",
+      "Exact occurrence-ready operation metrics distinguish disposition/build/job/attempt counts, successful cache reuse, missing timing/completion ordering and failure-rate denominators",
+      "Ignored matches by observation time and clock dispositions by intended time are separately labelled bounded cohorts"
+    ],
+    "T098": [
+      "Graph-related and all-workspace lists; selected-node target/trigger split and simultaneous saved roles with hidden resource counts",
+      "Backend saved-role pages use source/policy plus saved ETag fences, independent of unrelated runtime timing transitions",
+      "Shared real scope preview includes hidden planned jobs and boundaries and cannot be accepted as an ad-hoc build",
+      "Typed nested time/event editor, stable condition IDs, offset/timezone previews, source/data branch and fallback policies with explicit operational settings",
+      "Cancel preserves the saved definition; guarded Save replaces it; edit conflict retains the draft and explicit reload discards it",
+      "Automatic occurrence history/summary and retained build reports; report navigation preserves foreground branch and dataset selection",
+      "Saved lineage identity remains associated through runtime/new-capture refresh on the same canvas and clears after a branch switch"
+    ]
+  },
+  "browser": {
+    "tool": "Codex internal Browser via CUA; real foreground coordinator and installed workers",
+    "fixture": "Persistent synthetic t098-schedules workspace; four dataset producers and three paused definitions",
+    "observed": [
+      "Empty graph related-list notice and explicit workspace-wide schedules; restored saved Scheduling review lineage",
+      "Related definitions, selected-node split lists, simultaneous target/trigger badges and unique visible legend counts",
+      "Hidden complete-scope preview yields four jobs and explicit addition of missing ancestors without losing graph geometry",
+      "Cancel leaves the original name; guarded Save replaces the reviewed description and retains the source/data policy",
+      "Five weekday intended times display Asia/Dubai +04:00 and bundled timezone rules; light/dark switches are centered and legible",
+      "Run now leaves Daily delivery paused; one new four-job occurrence updates history and metrics automatically with no stale-context error",
+      "Retained report shows Build of schedule Daily delivery, actual chronological jobs and measured estimate; View schedule returns to the same saved definition",
+      "Delete confirmation opens and Cancel preserves the fixture definition",
+      "Final four-job completion preserves Scheduling review name and exact node/viewport styles; summary dates use ISO text inputs and the existing duration-summary metric layout"
+    ],
+    "final_saved_view_refresh": "Final real four-job manual occurrence succeeded; saved lineage name remained visible, node/viewport DOM geometry was unchanged and no alerts appeared"
+  },
+  "iteration_fixes": [
+    "Explicit zero-length schema array bounds satisfy all validators without changing saved record shape",
+    "No-replay resume sends an empty body rather than invalid null replay fields",
+    "Native concurrency fixture uses a fresh workspace and explicitly matched interpreter, independent of earlier intentional editor/Git corruption fixtures",
+    "Clean socket EOF receives a bounded exit-status observation; actual process exit remains distinct from protocol/authentication failures",
+    "Saved roles fence visual source/policy and edit ETag instead of the whole runtime revision",
+    "Saved-view association follows retained canvas identity instead of a changing runtime fingerprint",
+    "Reviewed schema/route input hashes refreshed; dependency lockfiles unchanged",
+    "Bounded execution delegates also cover accepted IPC builds; pending work remains in SQLite rather than starting unlimited waiting threads",
+    "Schedule summary reuses ISO date controls and the existing wrapped metric layout",
+    "Manual-trigger presentation reads the persisted boolean instead of treating it as a string"
+  ],
+  "commands": [
+    "bash tools/check-rust.sh",
+    "bash tools/check-python.sh",
+    "bash tools/check-cli.sh",
+    "bash tools/check-web.sh",
+    "target/python/py314/bin/python -I -B python/tools/check_dispatch.py target/debug/examples/dispatch_probe target/debug/transflow target/qualification/t068-wheels/transflow-0.0.0.dev0-py3-none-any.whl target/qualification/wheelhouse",
+    "target/python/py314/bin/python -I -B python/tools/check_foreign.py (installed local wheel and offline wheelhouse)",
+    "npm --prefix web run test -- src/graph/view.test.tsx src/graph/Graph.test.tsx",
+    "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+    "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests",
+    "PYTHON=target/python/py314/bin/python bash tools/check-safety.sh",
+    "git diff --check (both repositories)"
+  ],
+  "limits": [
+    "Foreground serve only; no background system service installed",
+    "Static authored membership analysis is bounded; implicit/dynamic paths retain runtime causal defenses",
+    "Metric/read budgets refuse oversized cohorts instead of silently truncating",
+    "No schedule definition version history, runtime migration or spec version bump",
+    "Full G2 operational-alpha qualification remains T099; native editor qualification remains owner-deferred",
+    "Other platforms and remote CI have not been verified in this local receipt"
+  ],
+  "ci": "pending owner confirmation; not polled",
+  "verification_scope": "Final Rust/CLI gates cover the execution-delegate correction; final web gate covers saved-view association and ISO/wrapped-summary presentation; unchanged Python/provider gates remain applicable, with focused changed-helper Ruff/mypy checks. Native dispatch and final documents/safety are recorded separately."
+}

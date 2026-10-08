@@ -133,13 +133,29 @@ impl Application for Service {
         {
             return crate::api_views::read(&self.root, &r);
         }
+        if r.path == "/api/v1/schedules/clock-preview" && r.method == "POST" {
+            return crate::api_schedule_ui::clock(&r);
+        }
+        if r.method == "GET"
+            && (r.path == "/api/v1/schedules/defaults" || r.path.ends_with("/roles"))
+        {
+            return crate::api_schedule_ui::read(&self.root, self.workspace, &r);
+        }
         if r.method == "GET" && crate::api_schedules::matches(&r.path) {
             return crate::api_schedules::read(&self.root, self.workspace, &r);
         }
         if r.method == "GET" {
             return api_read::read(&self.root, self.workspace, &r);
         }
-        api_read::keys(&r, &[])?;
+        if crate::api_schedules::matches(&r.path) {
+            if r.path == "/api/v1/schedules/preview" {
+                api_read::keys(&r, &[])?;
+            } else {
+                api_read::keys(&r, &["replay_after_event", "replay_limit"])?;
+            }
+        } else {
+            api_read::keys(&r, &[])?;
+        }
         if r.path == "/api/v1/validations" || r.path == "/api/v1/catalog/diff" {
             let c = api_read::context(&self.root, self.workspace, &r)?;
             let body: Preparation =
@@ -320,6 +336,7 @@ impl Selection {
         };
         let options = crate::build_plan::Options {
             scheduled: None,
+            schedule_preview: None,
             git_ref: self.git_ref,
             require_current: self.require_current,
             timeout_seconds: self.timeout_seconds,
@@ -358,6 +375,9 @@ fn execute(owner: &mut RuntimeOwner, r: &Request) -> Result<Reply> {
     }
     let key = r.key.ok_or_else(E::invalid)?;
     let digest = request_digest(r)?;
+    if r.path == "/api/v1/schedules/preview" {
+        return crate::api_schedule_ui::preview(owner, r);
+    }
     if crate::api_schedules::matches(&r.path) {
         return crate::api_schedules::save(owner, r, &api_read::runtime()?, &digest);
     }

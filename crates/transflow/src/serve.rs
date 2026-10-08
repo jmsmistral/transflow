@@ -12,6 +12,90 @@ use std::{
     },
     time::Duration,
 };
+#[derive(Default)]
+struct ActiveBuilds(Vec<ActiveBuild>);
+struct ActiveBuild {
+    build: tf_domain::BuildId,
+    cancel: tf_exec::supervisor::Cancellation,
+    handle: std::thread::JoinHandle<Result<crate::dispatch::Completion, Error>>,
+}
+impl ActiveBuilds {
+    fn contains(&self, build: tf_domain::BuildId) -> bool {
+        self.0.iter().any(|active| active.build == build)
+    }
+    fn start(
+        &mut self,
+        owner: &tf_exec::ownership::RuntimeOwner,
+        build: tf_domain::BuildId,
+        json_mode: bool,
+        endpoint: &crate::build_transport::Endpoint,
+        admission: &tf_exec::admission::Admission,
+    ) -> Result<(), Error> {
+        // IPC acceptance may arrive while every execution delegate is occupied.
+        // Keep that accepted build in SQLite's queue instead of spawning an
+        // unbounded number of threads waiting for producer admission.
+        if self.contains(build) || self.0.len() >= admission.capacity().jobs as usize {
+            return Ok(());
+        }
+        let delegate = owner.execution_handle().map_err(failure)?;
+        let cancel = tf_exec::supervisor::Cancellation::default();
+        let signal = cancel.clone();
+        let commands = endpoint.commands.clone();
+        let providers = endpoint.providers.clone();
+        let admission = admission.clone();
+        let handle = std::thread::Builder::new()
+            .name(format!("build-{build}"))
+            .spawn(move || {
+                let rt = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .map_err(failure)?;
+                rt.block_on(build_cli::execute_with_cancellation(
+                    delegate,
+                    build,
+                    json_mode,
+                    commands,
+                    providers,
+                    Some(admission),
+                    signal,
+                ))
+            })
+            .map_err(failure)?;
+        self.0.push(ActiveBuild {
+            build,
+            cancel,
+            handle,
+        });
+        Ok(())
+    }
+    fn reap(&mut self) -> Result<(), Error> {
+        let mut index = 0;
+        while index < self.0.len() {
+            if self.0[index].handle.is_finished() {
+                let active = self.0.swap_remove(index);
+                let completion = active
+                    .handle
+                    .join()
+                    .map_err(|_| failure("Build execution thread failed"))??;
+                completion.result.map_err(failure)?;
+            } else {
+                index += 1;
+            }
+        }
+        Ok(())
+    }
+}
+impl Drop for ActiveBuilds {
+    fn drop(&mut self) {
+        for active in &self.0 {
+            active.cancel.cancel();
+        }
+        // Keep the shared OS authority alive until every worker has drained and cleaned up.
+        for active in self.0.drain(..) {
+            let _ = active.handle.join();
+        }
+    }
+}
 pub(crate) fn execute(
     explicit: Option<&String>,
     json_mode: bool,
@@ -52,35 +136,6 @@ pub(crate) fn execute(
             signal.store(true, Ordering::Release);
         }
     });
-    loop {
-        let queued = rt.block_on(async {
-            let mut s = owner.open_store().await.map_err(failure)?;
-            let q = s
-                .repository()
-                .map_err(failure)?
-                .next_queued_build()
-                .await
-                .map_err(failure)?;
-            s.close().await.map_err(failure)?;
-            Ok::<_, Error>(q)
-        })?;
-        let Some(build) = queued else {
-            break;
-        };
-        if stopped.load(Ordering::Acquire) {
-            break;
-        }
-        let c = rt.block_on(build_cli::execute_commands(
-            owner,
-            build,
-            json_mode,
-            endpoint.commands.clone(),
-            endpoint.providers.clone(),
-            Some(admission.clone()),
-        ))?;
-        owner = c.owner;
-        c.result.map_err(failure)?;
-    }
     endpoint.busy.store(false, Ordering::Release);
     let (service, commands) = crate::api::service(
         workspace.root().to_owned(),
@@ -131,12 +186,23 @@ pub(crate) fn execute(
         );
         eprintln!("HTTP API: http://{}", http.address());
     }
+    let mut active = ActiveBuilds::default();
     let mut schedule_after = String::new();
     let mut schedule_next = std::time::Instant::now();
     while !stopped.load(Ordering::Acquire) {
+        active.reap()?;
         service.queries.tick();
         crate::provider::drain(&mut owner, &rt, &endpoint.providers)?;
         crate::api::drain(&mut owner, &commands, &endpoint.busy).map_err(failure)?;
+        if let Ok(request) = endpoint.schedules.try_recv() {
+            let result = crate::schedule_cli::mutate(&mut owner, request.value);
+            let response = match result {
+                Ok(data) => json!({"ok":true,"data":data}),
+                Err(error) => json!({"ok":false,"error":error.to_string()}),
+            };
+            let _ = request.reply.try_send(response);
+            endpoint.busy.store(false, Ordering::Release);
+        }
         if std::time::Instant::now() >= schedule_next {
             let (completion, next) = rt.block_on(crate::schedule_dispatch::advance(
                 owner,
@@ -159,19 +225,11 @@ pub(crate) fn execute(
             s.close().await.map_err(failure)?;
             Ok::<_, Error>(q)
         })?;
-        if let Some(build) = queued {
-            endpoint.busy.store(true, Ordering::Release);
-            let c = rt.block_on(build_cli::execute_commands(
-                owner,
-                build,
-                json_mode,
-                endpoint.commands.clone(),
-                endpoint.providers.clone(),
-                Some(admission.clone()),
-            ))?;
-            owner = c.owner;
-            c.result.map_err(failure)?;
-            endpoint.busy.store(false, Ordering::Release);
+        if let Some(build) = queued
+            && !active.contains(build)
+            && active.0.len() < admission.capacity().jobs as usize
+        {
+            active.start(&owner, build, json_mode, &endpoint, &admission)?;
         }
         if let Ok(request) = endpoint.requests.try_recv() {
             let parsed = crate::command().try_get_matches_from(
@@ -199,16 +257,7 @@ pub(crate) fn execute(
                     let _ = request
                         .reply
                         .try_send(json!({"ok":true,"build":accepted.build.to_string()}));
-                    let c = rt.block_on(build_cli::execute_commands(
-                        owner,
-                        accepted.build,
-                        json_mode,
-                        endpoint.commands.clone(),
-                        endpoint.providers.clone(),
-                        Some(admission.clone()),
-                    ))?;
-                    owner = c.owner;
-                    c.result.map_err(failure)?;
+                    active.start(&owner, accepted.build, json_mode, &endpoint, &admission)?;
                 }
                 Err(error) => {
                     let _ = request

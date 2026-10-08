@@ -16,7 +16,7 @@ pub(crate) fn route(method: &str, path: &str) -> Result<&'static Value, ApiError
         .as_array()
         .ok_or_else(ApiError::internal)?
         .iter()
-        .find(|v| {
+        .filter(|v| {
             if v["method"] != method {
                 return false;
             }
@@ -29,8 +29,18 @@ pub(crate) fn route(method: &str, path: &str) -> Result<&'static Value, ApiError
                 && a.zip(b)
                     .all(|(a, b)| a == b || (a.starts_with('{') && !b.is_empty()))
         })
+        // Reserved literal routes (e.g. schedule defaults) take precedence over IDs.
+        .max_by_key(|v| {
+            v["path"]
+                .as_str()
+                .unwrap_or("")
+                .split('/')
+                .filter(|s| !s.starts_with('{'))
+                .count()
+        })
         .ok_or_else(ApiError::missing)
 }
+
 pub(crate) fn validate(name: &str, value: &Value) -> Result<(), ApiError> {
     tf_protocol::validate_document(name, value).map_err(|_| ApiError::invalid())
 }
@@ -46,4 +56,19 @@ pub(crate) fn response(route: &Value, value: &Value) -> Result<(), ApiError> {
         value,
     )
     .map_err(|_| ApiError::internal())
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn literal_schedule_routes_precede_identity_templates() -> Result<(), super::ApiError> {
+        let defaults = super::route("GET", "/api/v1/schedules/defaults")?;
+        assert_eq!(defaults["response"], "ScheduleDefinitionV1");
+        let record = super::route(
+            "GET",
+            "/api/v1/schedules/00000000-0000-4000-8000-000000000001",
+        )?;
+        assert_eq!(record["response"], "ScheduleRecordV1");
+        Ok(())
+    }
 }

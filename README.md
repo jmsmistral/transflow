@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. [External datasets](crates/transflow/EXTERNAL.md) support explicit registration, provider-owned resolution, leased direct reads without input replication, consumer checks, provider-dependent exact pins/replay and read-only upstream provenance (T069–T072). Foreign producer code never runs in consumer builds. Ordinary builds refresh retained catalogue browsing metadata; fixed Git-ref builds and replay preserve the current browse view. The [G1 qualification matrix](docs/development/g1-qualification.md) records core coverage and later-gate exclusions. The authenticated [loopback HTTP API](crates/tf-api/README.md) provides contextual catalogue/version/source reads, validation/diffs, plans and guarded lifecycle/build commands (T074–T076), resumable committed events and bounded exact-version previews (T077–T078). External previews read provider files directly under renewable leases. The workspace UI, scheduling, other transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
+**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. [External datasets](crates/transflow/EXTERNAL.md) support explicit registration, provider-owned resolution, leased direct reads without input replication, consumer checks, provider-dependent exact pins/replay and read-only upstream provenance (T069–T072). Foreign producer code never runs in consumer builds. Ordinary builds refresh retained catalogue browsing metadata; fixed Git-ref builds and replay preserve the current browse view. The [G1 qualification matrix](docs/development/g1-qualification.md) records core coverage and later-gate exclusions. The authenticated [loopback HTTP API](crates/tf-api/README.md) provides contextual catalogue/version/source reads, validation/diffs, plans and guarded lifecycle/build commands (T074–T076), resumable committed events and bounded exact-version previews (T077–T078). External previews read provider files directly under renewable leases. The contributor workspace UI and persistent scheduling are available; additional transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
 
 Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
 Package installation and workspace environment checks reject other minors.
@@ -103,7 +103,7 @@ T081 adds [execution history and metrics APIs](crates/tf-api/README.md#execution
 separate versions, attempts and cache reuse; recorded phase timelines and critical
 paths; exact medians, trailing averages and failure rates with sample counts.
 Historical inspection uses captured source. Unknown timings and ETA remain explicit;
-charts and schedule occurrence metrics follow in later tasks.
+charts and schedule occurrence metrics are available in the contributor UI and scheduling API.
 
 T083 adds the [interactive dataset graph](web/README.md#graph-exploration-t083):
 keyboard-accessible exploration, depth and path queries, explicit bounded batches,
@@ -177,7 +177,7 @@ published-data availability. Duration modes use the last successful materializat
 or the latest ten successful publications, excluding cache reuse. Median uses
 measured samples; mean remains unknown when any selected timing is missing.
 Metadata-only browsing cannot certify currentness or foreign bytes. Build
-preview roles remain independent badges; schedule roles arrive with scheduling.
+preview and saved-schedule roles remain independent badges, including simultaneous target and trigger membership.
 T089 adds Cmd/Ctrl+K catalogue search, Cmd/Ctrl+S view saving and cancelable graph
 loads, with context-fenced hover/overlay refreshes. The separate dataset-list view
 remains removed. A public synthetic fixture and opt-in measurement build document
@@ -187,7 +187,7 @@ T090 adds authenticated schedule definition storage: list/read/create and guarde
 replacement of one current snapshot, with stable dataset IDs, explicit code source,
 output branch and frozen fallback policies. Conflicting edits return the current
 ETag. Accepted occurrence templates survive subsequent edits. Automatic dispatch
-and the schedule UI are later tasks; event/evaluation foundations are described
+and the schedule UI were delivered by T095–T098; event/evaluation foundations are described
 below. See the
 [schedule API](crates/tf-api/README.md#schedule-definition-storage-t090).
 
@@ -210,7 +210,7 @@ next-five UTC/local previews, durable intended-tick identities and clock cursors
 Sleep/restart observation follows skip, latest-per-leaf coalescing or bounded
 catch-up, with missed/ignored counts. Backward clock jumps never lower the cursor.
 The [clock services](crates/tf-schedule/README.md) are composed into persistent
-observation by T095; the schedule editor remains later work.
+observation by T095; T098 supplies the typed schedule editor and timezone previews.
 
 T094 adds authenticated, guarded **pause/resume/run-now** API actions. Pause holds
 pending automatic requests, and resume applies their frozen expiry/queue/coalescing
@@ -232,9 +232,8 @@ additive registration only when the definition explicitly enables it. Failed
 preparation records a failed occurrence without launching a job. Restart recovery
 keeps the unique occurrence/build link and emits schedule success once.
 
-This foreground backend currently dispatches serially, with conservative ancestry
-and consecutive-build safeguards. Full overlap/queue/cycle policy remains T096;
-the scheduling CLI/editor remain T097/T098. It does not install a background
+The T095 baseline dispatched serially. T096 adds disjoint concurrency, bounded
+queue/coalescing/skip and static/runtime cycle guards; T097/T098 add the scheduling CLI and editor. It does not install a background
 service. See the [dispatch guide](crates/transflow/SCHEDULING.md).
 
 T087 adds the **Build planner** inspector for the current lineage selection. With
@@ -250,11 +249,12 @@ boundaries, parameters, source policy and required checks.
 **Run build** accepts exactly the reviewed plan and opens its automatically updating
 Build report. Selection/context changes and expired plans automatically prepare a fresh preview;
 transient conflicts retry with bounded backoff. Run build stays disabled until ready. Publishing
-builds preserves node positions and camera placement. Schedule and health actions
-remain later tasks.
-The planned scheduling contract stores one current definition snapshot, overwritten
-on Save without definition history. Edit guards prevent conflicting saves; accepted
-work keeps its frozen execution settings. Scheduling implementation remains pending.
+builds preserves node positions and camera placement. Health actions remain later work.
+The [schedule inspector and CLI](crates/transflow/SCHEDULES.md) store one current definition
+snapshot, overwritten on Save without definition history. Edit guards prevent conflicting
+saves; accepted work keeps its frozen execution settings. The inspector supports related/all
+lists, compound conditions, source/branch policies, manual runs, pause/resume, deletion,
+history/metrics and backend role facts with explicit hidden-resource scope previews.
 Plain-clicking any selected lineage node narrows a multi-selection to that node.
 With no node selected or multiple nodes selected, the bottom tabs and right
 Properties panel show a centered “Select a node to view information” notice with
@@ -328,7 +328,7 @@ transflow --workspace /path/to/workspace serve --ui-dir "$PWD/web/dist" --open
 ```
 
 Use the local `target/debug/transflow` binary when it is not installed on PATH.
-Schedule/health and build-planning inspectors remain later tasks. The Vite dev
+Build planning and schedule inspectors are available; the health actions remain later tasks. The Vite dev
 preview remains disconnected; connected browsing uses the coordinator's same-origin
 session. Browser verification uses Codex’s internal Browser. Native embedded UI
 packaging remains T117.

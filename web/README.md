@@ -8,7 +8,7 @@ work by keyboard. Narrow screens stack panels; layout survives context changes
 within the page session.
 
 T083 adds the React Flow dataset graph, keyboard graph controls, typed data/validation
-edges, foreign boundaries and stable manual positioning. An off-thread ELK layout foundation is retained for future explicit layout. T084 adds saved views (below). T085 adds properties, columns and exact-version preview (below). Code/history and build/schedule actions remain later tasks. Selecting a version cannot run a build or change dataset heads.
+edges, foreign boundaries and stable manual positioning. An off-thread ELK layout foundation is retained for future explicit layout. T084 adds saved views (below). T085 adds properties, columns and exact-version preview (below). Code/history, build planning/reports and schedule actions are available. Selecting a version cannot run a build or change dataset heads.
 Metadata availability is not byte verification or freshness evidence.
 
 ## Build and connect
@@ -157,7 +157,7 @@ Documents are bounded to 500 datasets, finite coordinates within ±1,000,000,
 zoom 0.05–2 and 1 MiB. Lists page 100 summaries; reopening resolves stable dataset
 identities in bounded context-owned reads. Missing identities fail explicitly;
 there is no silent truncation. Branch following does not promise historical bytes
-or seamless live-build preview updates: code/history and build/schedule/health
+or complete G2/G3 qualification: advanced health
 inspectors remain later work.
 
 ## Dataset inspection (T085)
@@ -254,3 +254,28 @@ The live Build report opens automatically; changing the next selection or cancel
 its preview does not cancel an accepted build. Event refresh retains the last verified
 workspace through publication conflicts with capped, cancellation-aware backoff.
 The same-branch canvas keeps its membership, positions, selection and camera.
+
+## Schedule inspector (T098)
+
+Schedules shows related definitions for selected nodes, or for the visible graph when
+nothing is selected. **All workspace schedules** is an explicit alternative. Target
+and triggered-by membership remain separate, including many-to-many relationships.
+Selection does not change the executable graph, saved camera or node positions.
+
+The editor supports typed nested conditions, next intended times with timezone
+offsets, targets/scope, independent source/data branches and frozen fallback policies.
+Advanced force, retries, abort, overlap, expiry and missed-tick bounds are explicit.
+Save replaces the current snapshot under its original ETag; Cancel discards the draft.
+An edit conflict keeps the draft and offers an explicit reload. Manual Run now leaves
+paused state unchanged. Pause/Resume and confirmed deletion use guarded API actions.
+
+Saved target/trigger/exclusion/boundary facts come from the backend, with bounded
+pagination and edit/source/policy fences. Runtime job transitions do not invalidate
+unchanged saved role facts. The shared scope preview adds planned jobs/read boundaries;
+visible unique counts and complete-scope counts are separate. Hidden resources can be
+added explicitly. Temporary role coloring leaves the saved coloring and geometry intact.
+
+History/summary use persisted occurrences, exact metrics and missing timing evidence;
+active histories poll without manual refresh. Schedule build reports link back to the
+current schedule without changing the foreground branch or dataset selection.
+See the [schedule guide](../crates/transflow/SCHEDULES.md).

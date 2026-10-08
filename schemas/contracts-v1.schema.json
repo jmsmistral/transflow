@@ -1371,7 +1371,18 @@
                 "build.cancel",
                 "build.replay",
                 "coordinator.cli",
-                "coordinator.http.v1"
+                "coordinator.http.v1",
+                "schedule.create",
+                "schedule.update",
+                "schedule.list",
+                "schedule.show",
+                "schedule.run",
+                "schedule.pause",
+                "schedule.resume",
+                "schedule.history",
+                "schedule.metrics",
+                "schedule.export",
+                "schedule.delete"
               ]
             },
             "context": {
@@ -1437,6 +1448,9 @@
                 },
                 {
                   "$ref": "#/$defs/ImportPublicationResultV1"
+                },
+                {
+                  "$ref": "#/$defs/ScheduleResultV1"
                 }
               ]
             },
@@ -1507,7 +1521,18 @@
                 "build.cancel",
                 "build.replay",
                 "coordinator.cli",
-                "coordinator.http.v1"
+                "coordinator.http.v1",
+                "schedule.create",
+                "schedule.update",
+                "schedule.list",
+                "schedule.show",
+                "schedule.run",
+                "schedule.pause",
+                "schedule.resume",
+                "schedule.history",
+                "schedule.metrics",
+                "schedule.export",
+                "schedule.delete"
               ]
             },
             "context": {
@@ -1541,6 +1566,9 @@
                 },
                 {
                   "$ref": "#/$defs/ExternalResultV1"
+                },
+                {
+                  "$ref": "#/$defs/ScheduleResultV1"
                 }
               ]
             },
@@ -1611,7 +1639,18 @@
                 "build.cancel",
                 "build.replay",
                 "coordinator.cli",
-                "coordinator.http.v1"
+                "coordinator.http.v1",
+                "schedule.create",
+                "schedule.update",
+                "schedule.list",
+                "schedule.show",
+                "schedule.run",
+                "schedule.pause",
+                "schedule.resume",
+                "schedule.history",
+                "schedule.metrics",
+                "schedule.export",
+                "schedule.delete"
               ]
             },
             "context": {
@@ -1632,6 +1671,9 @@
                 },
                 {
                   "$ref": "#/$defs/ExecutionResultV1"
+                },
+                {
+                  "$ref": "#/$defs/ScheduleResultV1"
                 }
               ]
             },
@@ -8347,7 +8389,14 @@
           "$ref": "#/$defs/Count"
         },
         "schedule_occurrences": {
-          "type": "null"
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
         },
         "jobs": {
           "$ref": "#/$defs/Count"
@@ -9836,6 +9885,506 @@
         "logical_fire_at_us",
         "disposition",
         "manual"
+      ],
+      "additionalProperties": false
+    },
+    "ScheduleHistoryEntryV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "ready_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "disposition": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "build": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "branch": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            }
+          ]
+        },
+        "build_state": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          ]
+        },
+        "manual": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "started_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "finished_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "wall_duration_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "jobs": {
+          "$ref": "#/$defs/Count"
+        },
+        "attempts": {
+          "$ref": "#/$defs/Count"
+        },
+        "coalesced_tokens": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Count"
+            }
+          ]
+        },
+        "plan": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        },
+        "source": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "ready_us",
+        "disposition",
+        "build",
+        "branch",
+        "build_state",
+        "manual",
+        "started_us",
+        "finished_us",
+        "wall_duration_us",
+        "jobs",
+        "attempts",
+        "coalesced_tokens",
+        "plan",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "ApiScheduleHistoryV1": {
+      "type": "object",
+      "properties": {
+        "schedule_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "occurrences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScheduleHistoryEntryV1"
+          },
+          "maxItems": 100,
+          "minItems": 0
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Uuid"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schedule_id",
+        "occurrences",
+        "next_cursor"
+      ],
+      "additionalProperties": false
+    },
+    "ApiScheduleMetricsV1": {
+      "type": "object",
+      "properties": {
+        "schedule_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "from_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "to_us": {
+          "$ref": "#/$defs/Count"
+        },
+        "cohort": {
+          "const": "occurrence_ready"
+        },
+        "duration_unit": {
+          "const": "us"
+        },
+        "occurrences": {
+          "$ref": "#/$defs/Count"
+        },
+        "dispositions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiStateCountV1"
+          },
+          "maxItems": 32,
+          "minItems": 0
+        },
+        "builds": {
+          "$ref": "#/$defs/Count"
+        },
+        "jobs": {
+          "$ref": "#/$defs/Count"
+        },
+        "attempts": {
+          "$ref": "#/$defs/Count"
+        },
+        "failure_rate": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ApiExactRatioV1"
+            }
+          ]
+        },
+        "duration_samples": {
+          "$ref": "#/$defs/Count"
+        },
+        "missing_duration_samples": {
+          "$ref": "#/$defs/Count"
+        },
+        "median_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ApiExactRatioV1"
+            }
+          ]
+        },
+        "trailing_mean_us": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ApiExactRatioV1"
+            }
+          ]
+        },
+        "trailing_window": {
+          "$ref": "#/$defs/Count"
+        },
+        "trailing_samples": {
+          "$ref": "#/$defs/Count"
+        },
+        "ignored_event_matches": {
+          "$ref": "#/$defs/Count"
+        },
+        "clock_ticks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiStateCountV1"
+          },
+          "maxItems": 32,
+          "minItems": 0
+        },
+        "evidence_cohort": {
+          "const": "observed_in_range"
+        }
+      },
+      "required": [
+        "schedule_id",
+        "from_us",
+        "to_us",
+        "cohort",
+        "duration_unit",
+        "occurrences",
+        "dispositions",
+        "builds",
+        "jobs",
+        "attempts",
+        "failure_rate",
+        "duration_samples",
+        "missing_duration_samples",
+        "median_us",
+        "trailing_mean_us",
+        "trailing_window",
+        "trailing_samples",
+        "ignored_event_matches",
+        "clock_ticks",
+        "evidence_cohort"
+      ],
+      "additionalProperties": false
+    },
+    "ApiScheduleDeletedV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "deleted": {
+          "const": true
+        },
+        "retained_history": {
+          "const": true
+        },
+        "canceled_automatic": {
+          "$ref": "#/$defs/Count"
+        }
+      },
+      "required": [
+        "id",
+        "deleted",
+        "retained_history",
+        "canceled_automatic"
+      ],
+      "additionalProperties": false
+    },
+    "ScheduleResultV1": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "schedule"
+        },
+        "operation": {
+          "enum": [
+            "create",
+            "update",
+            "list",
+            "show",
+            "run",
+            "pause",
+            "resume",
+            "history",
+            "metrics",
+            "export",
+            "delete"
+          ]
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/ExecutionJsonV1"
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "operation",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "ApiScheduleRolesV1": {
+      "type": "object",
+      "properties": {
+        "schedule_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "etag": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "basis": {
+          "const": "saved_definition"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "identity": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1024
+                },
+                "minItems": 0,
+                "maxItems": 100
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "target",
+                    "trigger",
+                    "excluded",
+                    "boundary"
+                  ]
+                },
+                "minItems": 0,
+                "maxItems": 4
+              }
+            },
+            "required": [
+              "identity",
+              "paths",
+              "roles"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "total": {
+          "$ref": "#/$defs/Count"
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          ]
+        }
+      },
+      "required": [
+        "schedule_id",
+        "etag",
+        "basis",
+        "nodes",
+        "total",
+        "next_cursor"
+      ],
+      "additionalProperties": false
+    },
+    "ApiScheduleClockPreviewV1": {
+      "type": "object",
+      "properties": {
+        "leaves": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "fires": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at_us": {
+                      "$ref": "#/$defs/Count"
+                    },
+                    "local": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "timezone": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128
+                    },
+                    "tzdb_version": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 32
+                    }
+                  },
+                  "required": [
+                    "at_us",
+                    "local",
+                    "timezone",
+                    "tzdb_version"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 0,
+                "maxItems": 5
+              }
+            },
+            "required": [
+              "id",
+              "fires"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 64
+        }
+      },
+      "required": [
+        "leaves"
       ],
       "additionalProperties": false
     }

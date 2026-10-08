@@ -66,6 +66,47 @@ async fn fixture(path: &std::path::Path) -> std::result::Result<Store, Box<dyn s
     Ok(store)
 }
 #[tokio::test]
+async fn static_cycles_are_rejected_atomically_and_branch_roles_remain_independent() -> Result {
+    let dir = ScratchDirectory::new()?;
+    let path = dir.path().join("cycles.sqlite");
+    let mut store = fixture(&path).await?;
+    let mut first = definition();
+    let second_id = ScheduleId::from_bytes([12; 16]);
+    first["trigger"] = json!({"kind":"schedule_succeeded","id":"other","schedule_id":second_id.to_string(),"require_materialization":false});
+    let saved = store.save_schedule(save(&first, None)).await?;
+    let mut second = definition();
+    second["name"] = json!("second");
+    second["trigger"] = json!({"kind":"schedule_succeeded","id":"first","schedule_id":ids().2.to_string(),"require_materialization":false});
+    let mut request = save(&second, None);
+    request.id = second_id;
+    assert!(
+        matches!(store.save_schedule(request).await, Err(Error::Cycle { path }) if path.len()==3)
+    );
+    let mut reader = store.reader().await?;
+    assert!(reader.schedule(ids().0, second_id).await?.is_none());
+    assert_eq!(
+        reader.schedule(ids().0, ids().2).await?.unwrap()["etag"],
+        saved["etag"]
+    );
+    reader.close().await?;
+    let mut self_trigger = definition();
+    self_trigger["trigger"] = json!({"kind":"dataset_published","id":"self","dataset":{"workspace_id":ids().0.to_string(),"dataset_id":ids().1.to_string()},"branch":"master","payload_mode":"signal_only","include_resets":false});
+    assert!(matches!(
+        store
+            .save_schedule(save(&self_trigger, saved["etag"].as_str()))
+            .await,
+        Err(Error::Cycle { .. })
+    ));
+    // Target and trigger identity may legitimately coincide on different data branches.
+    self_trigger["trigger"]["branch"] = json!("feature");
+    let current = store
+        .save_schedule(save(&self_trigger, saved["etag"].as_str()))
+        .await?;
+    assert_eq!(current["definition"]["trigger"]["branch"], "feature");
+    store.close().await?;
+    Ok(())
+}
+#[tokio::test]
 async fn guarded_replacement_keeps_one_snapshot_and_accepted_execution() -> Result {
     let dir = ScratchDirectory::new()?;
     let path = dir.path().join("runtime.sqlite");

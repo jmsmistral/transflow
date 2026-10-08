@@ -632,6 +632,10 @@ function AcceptedBuild({
       {...evidence}
       dataset={{ path: accepted.plan.targets.join(", ") }}
       onClose={onClose}
+      onOpenSchedule={(id) => {
+        onClose();
+        workspace.requestSchedule(id);
+      }}
     />
   );
 }

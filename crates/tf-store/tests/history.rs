@@ -171,7 +171,8 @@ async fn retained_history_metrics_cache_retry_and_context_isolation()
         json!({"numerator":"30","denominator":"1"})
     );
     assert_eq!(m["manual_requests"], "8");
-    assert!(m["schedule_occurrences"].is_null());
+    // Scheduling is now observable: this fixture has no linked accepted occurrences.
+    assert_eq!(m["schedule_occurrences"], "0");
     let filtered = rd.execution_metrics(query(true)).await?;
     assert_eq!(filtered["builds"], "3");
     assert_eq!(

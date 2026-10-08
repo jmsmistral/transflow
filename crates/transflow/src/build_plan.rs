@@ -68,6 +68,19 @@ pub struct Options {
     pub explain: bool,
     /// Frozen scheduled occurrence, rechecked against durable evidence at persistent acceptance.
     pub scheduled: Option<tf_store::schedule_dispatch::Pending>,
+    /// Read-only schedule scope preview; cannot be accepted as an ad-hoc build.
+    pub schedule_preview: Option<tf_protocol::schedule::BuildTemplate>,
+}
+impl Options {
+    fn template(&self) -> Result<Option<tf_protocol::schedule::BuildTemplate>, Error> {
+        if let Some(pending) = &self.scheduled {
+            serde_json::from_value(pending.execution["build"].clone())
+                .map(Some)
+                .map_err(failure)
+        } else {
+            Ok(self.schedule_preview.clone())
+        }
+    }
 }
 /// Safe diagnostic retains internal errors without emitting user source or environment paths.
 #[derive(Debug, thiserror::Error)]
@@ -75,8 +88,12 @@ pub struct Options {
 pub struct Error {
     message: String,
     validation: Option<validation::ValidationError>,
+    waiting_for_writes: bool,
 }
 impl Error {
+    pub(crate) fn waiting_for_writes(&self) -> bool {
+        self.waiting_for_writes
+    }
     pub(crate) fn causal_path_limit(&self) -> bool {
         self.validation.is_none() && self.message == tf_plan::freshness::CAUSAL_PATH_LIMIT
     }
@@ -89,6 +106,7 @@ pub(crate) fn preparation_failure(error: preparation::Error) -> Error {
         preparation::Error::Validation(validation) => Error {
             message: validation.to_string(),
             validation: Some(validation),
+            waiting_for_writes: false,
         },
         error => failure(error),
     }
@@ -97,6 +115,7 @@ pub(crate) fn failure(e: impl std::fmt::Display) -> Error {
     Error {
         message: e.to_string(),
         validation: None,
+        waiting_for_writes: false,
     }
 }
 pub(crate) fn id<T: std::str::FromStr>() -> Result<T, Error> {
@@ -164,10 +183,11 @@ pub(crate) async fn prepare_inner(
         return Err(failure("workspace identity changed during inspection"));
     }
     let mut request = request;
-    let fixed = options
-        .scheduled
-        .as_ref()
-        .and_then(|s| s.execution["build"]["source"]["snapshot_id"].as_str());
+    let template = options.template()?;
+    let fixed = template.as_ref().and_then(|b| match &b.source {
+        tf_protocol::schedule::Source::FixedSnapshot { snapshot_id } => Some(snapshot_id.as_str()),
+        _ => None,
+    });
     let inspection = if let Some(snapshot) = fixed {
         preparation::inspect_fixed(
             &workspace,
@@ -221,15 +241,18 @@ pub(crate) async fn prepare_captured(
     let env = &inspection.env;
     let python = &inspection.python;
     let environment_request = &inspection.environment_request;
-    if let Some(scheduled) = &options.scheduled {
-        let source = &scheduled.execution["build"]["source"];
-        if (source["kind"] != "working_tree" || source["allow_additive_sync"] != true)
-            && !graph.candidate().pending().is_empty()
-        {
-            return Err(failure(
-                "Scheduled source has unregistered datasets; register them in the selected source before building",
-            ));
-        }
+    if let Some(template) = options.template()?
+        && !matches!(
+            template.source,
+            tf_protocol::schedule::Source::WorkingTree {
+                allow_additive_sync: true
+            }
+        )
+        && !graph.candidate().pending().is_empty()
+    {
+        return Err(failure(
+            "Scheduled source has unregistered datasets; register them in the selected source before building",
+        ));
     }
     let proposal = graph
         .candidate()
@@ -280,9 +303,7 @@ pub(crate) async fn prepare_captured(
         request.fallbacks.as_deref(),
     )
     .map_err(failure)?;
-    if let Some(scheduled) = &options.scheduled {
-        let frozen: tf_protocol::schedule::BuildTemplate =
-            serde_json::from_value(scheduled.execution["build"].clone()).map_err(failure)?;
+    if let Some(frozen) = options.template()? {
         let policies = crate::schedule_dispatch::policy(&frozen.input_fallback_policy)?;
         for binding in bindings.values_mut() {
             binding.policy = policies
@@ -580,10 +601,7 @@ pub(crate) async fn prepare_captured(
                 .ok_or_else(|| failure("missing external declaration"))?;
             let (origin, mut selection) =
                 crate::external_reads::selection(&proposed, input, &key, &request.branch)?;
-            if let Some(scheduled) = &options.scheduled {
-                let frozen: tf_protocol::schedule::BuildTemplate =
-                    serde_json::from_value(scheduled.execution["build"].clone())
-                        .map_err(failure)?;
+            if let Some(frozen) = options.template()? {
                 let provider = frozen
                     .provider_fallback_policies
                     .get(&origin.workspace_id().to_string())
@@ -762,6 +780,16 @@ pub(crate) async fn prepare_captured(
         } else {
             preparation::verify_selection(capture, &workspace, false).map_err(failure)?;
         }
+    } else if let Some(template) = &options.schedule_preview {
+        plan.context["schedule_preview"] = json!(true);
+        if matches!(
+            template.source,
+            tf_protocol::schedule::Source::FixedSnapshot { .. }
+        ) {
+            preparation::verify_retained(capture, &workspace).map_err(failure)?;
+        } else {
+            preparation::verify_selection(capture, &workspace, false).map_err(failure)?;
+        }
     } else {
         preparation::verify_selection(capture, &workspace, false).map_err(failure)?;
     }
@@ -833,6 +861,11 @@ pub(crate) async fn accept_inner(
         .await
         .map_err(|e| failure(format!("Checking build draft: {e}")))?;
     owned.close().await.map_err(failure)?;
+    if plan.context["schedule_preview"] == true {
+        return Err(failure(
+            "Schedule scope previews cannot be accepted; use Run now for a saved schedule",
+        ));
+    }
     if plan.workspace != workspace.config().id().to_string() {
         return Err(failure("saved draft belongs to another workspace"));
     }
@@ -1042,7 +1075,17 @@ pub(crate) async fn accept_inner(
     store
         .accept_draft(&plan, build, id()?, session, now)
         .await
-        .map_err(|e| failure(format!("Accepting build draft: {e}")))?;
+        .map_err(|e| {
+            let waiting = matches!(
+                e,
+                tf_store::planning::PlanError::Conflict(
+                    "another build owns an output; retry acceptance before expiry"
+                )
+            );
+            let mut error = failure(format!("Accepting build draft: {e}"));
+            error.waiting_for_writes = waiting;
+            error
+        })?;
     owned.close().await.map_err(failure)?;
     Ok(Accepted { build, plan })
 }
