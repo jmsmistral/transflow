@@ -28,8 +28,6 @@ pub enum Adapter {
     Polars,
     /// Exact canonical DuckDB validation boundary.
     DuckDbValidation,
-    /// Deferred pandas transform adapter.
-    Pandas,
     /// Deferred SQL transform adapter.
     DuckDbSql,
 }
@@ -77,7 +75,7 @@ impl NormalizedSchema {
     }
     /// Reject an unsupported engine boundary before an engine can silently cast.
     pub fn require(&self, adapter: Adapter) -> Result<(), NormalizationError> {
-        if matches!(adapter, Adapter::Pandas | Adapter::DuckDbSql) {
+        if adapter == Adapter::DuckDbSql {
             return Err(fail("$", "This transform adapter is not implemented"));
         }
         fn visit(value: &Value, adapter: Adapter, path: &str) -> Result<(), NormalizationError> {

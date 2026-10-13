@@ -17,7 +17,6 @@ the native SQLite/engine results, exact tool output and selected wheel filenames
 | Polars | 1.44.2, including matching polars-runtime-32 |
 | DuckDB | 1.5.5 |
 | PyArrow | 25.0.1 |
-| pandas / NumPy | 3.0.6 / 2.5.3 |
 | Rust Arrow / Parquet | 60.0.0 |
 | SQLx / libsqlite3-sys | 0.9.0 / 0.37.0, bundled SQLite enabled |
 | Chrono / Chrono-TZ | 0.4.45 / 0.10.4; T093 runtime resolver uses bundled IANA 2025b |
@@ -38,11 +37,20 @@ These standalone probes inform T004–T006. T004 now provides a separate
 modules in one local [transflow wheel](../../python/README.md). No package named
 Transflow was fetched from an index.
 
+## Engine scope after the owner revision
+
+The 2026-10-13 scope change removes the additional dataframe adapter and its
+four exclusive package versions. Current qualification installs only Polars,
+polars-runtime-32, DuckDB and PyArrow. Earlier reports describe the earlier
+locked environment; they are retained as historical evidence. The revised
+native run and schema/CLI regressions are recorded in the latest verification
+receipt. Other-platform results for this revised lock remain pending CI.
+
 ## Results and boundaries
 
 | Target | Python wheels | Native execution |
 |---|---|---|
-| macOS arm64, macOS 15 | 3.14: eight hash-locked wheel candidates each | Pass on macOS 15.3.1 with Python 3.14.7 |
+| macOS arm64, macOS 15 | 3.14: four retained hash-locked wheel candidates each | Pass on macOS 15.3.1 with Python 3.14.7 |
 | Linux x86-64, glibc 2.28+ wheel baseline | 3.14: eight candidates each | Passed in CI on the pinned interpreter |
 | Linux arm64, glibc 2.28+ wheel baseline | 3.14: eight candidates each | Passed in CI on the pinned interpreter |
 
@@ -57,8 +65,7 @@ DST gap, and Serde/JSON Schema generation. The wrapper also verifies that a
 nonempty output directory is rejected. This is not publication/recovery testing.
 
 Each Python native run checks Polars' lazy Parquet sink, PyArrow reads, exact
-DuckDB values, unknown-column rejection, Arrow-backed pandas without an implicit
-index, empty-file schema preservation and reading the Rust-written Parquet file.
+DuckDB values, unknown-column rejection, empty-file schema preservation and reading the Rust-written Parquet file.
 The fixture covers integers beyond JavaScript's exact range, decimal128 values,
 nanosecond timestamps, nulls and NaN. Full schema/engine conformance, timezone
 precision, subprocess control, check isolation and release wheel qualification
@@ -169,7 +176,7 @@ its T003 reports. Remote results for the new tests remain pending.
 
 [ADR-008](../../../transflow-spec/docs/adr/ADR-008.md) records engine limitations
 and required guards. Initial authoring is Polars-only; DuckDB remains internal
-validation machinery, while Pandas and SQL transform adapters are deferred.
+validation machinery, while SQL transform adapters are deferred.
 The existing cross-engine probes do not implement those adapters.
 
 

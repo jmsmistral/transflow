@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. [External datasets](crates/transflow/EXTERNAL.md) support explicit registration, provider-owned resolution, leased direct reads without input replication, consumer checks, provider-dependent exact pins/replay and read-only upstream provenance (T069–T072). Foreign producer code never runs in consumer builds. Ordinary builds refresh retained catalogue browsing metadata; fixed Git-ref builds and replay preserve the current browse view. The [G1 qualification matrix](docs/development/g1-qualification.md) records core coverage and later-gate exclusions. The authenticated [loopback HTTP API](crates/tf-api/README.md) provides contextual catalogue/version/source reads, validation/diffs, plans and guarded lifecycle/build commands (T074–T076), resumable committed events and bounded exact-version previews (T077–T078). External previews read provider files directly under renewable leases. The contributor workspace UI and persistent scheduling are available; additional transform adapters and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
+**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. [External datasets](crates/transflow/EXTERNAL.md) support explicit registration, provider-owned resolution, leased direct reads without input replication, consumer checks, provider-dependent exact pins/replay and read-only upstream provenance (T069–T072). Foreign producer code never runs in consumer builds. Ordinary builds refresh retained catalogue browsing metadata; fixed Git-ref builds and replay preserve the current browse view. The [G1 qualification matrix](docs/development/g1-qualification.md) records core coverage and later-gate exclusions. The authenticated [loopback HTTP API](crates/tf-api/README.md) provides contextual catalogue/version/source reads, validation/diffs, plans and guarded lifecycle/build commands (T074–T076), resumable committed events and bounded exact-version previews (T077–T078). External previews read provider files directly under renewable leases. The contributor workspace UI and persistent scheduling are available; the DuckDB SQL transform adapter and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
 
 Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
 Package installation and workspace environment checks reject other minors.
@@ -31,7 +31,7 @@ selection follow the chosen light/dark theme, including highlighted code.
 
 Write Python transforms, declare their input and output datasets, and build a target without managing a separate catalogue namespace for every source directory. Transflow is designed to validate the dependency graph, resolve exact input versions, run checks, preserve the previous successful output when a build fails, and explain what needs rebuilding.
 
-The intended architecture is a Rust coordinator/CLI with Python workers for Polars, pandas and DuckDB, SQLite metadata, immutable Parquet files, and a local browser UI. Git is supported but not required. Registered datasets from other workspaces will be consumed as read boundaries rather than automatically executing another workspace's code.
+The intended architecture is a Rust coordinator/CLI with Python workers for Polars and DuckDB, SQLite metadata, immutable Parquet files, and a local browser UI. Git is supported but not required. Registered datasets from other workspaces will be consumed as read boundaries rather than automatically executing another workspace's code.
 
 An example of the supported Polars authoring API is:
 
@@ -90,7 +90,7 @@ transflow serve --open          # one-time browser connection page
 ```
 
 **Initial delivery focuses on Polars transforms**, with DuckDB used internally for
-validation. Pandas and DuckDB SQL transform adapters remain later work. The
+validation. DuckDB SQL transform adapters remain later work. The
 [DuckDB feasibility probe](tools/qualification/duckdb/README.md) is contributor
 evidence. T079 adds the private [restricted SQL helper](python/worker/SQL.md),
 with a parsed AST allowlist, locked engine settings and exact-version input reads.
@@ -286,7 +286,7 @@ Keep the canonical specification in a sibling checkout directly under `~/dev/`. 
 
 Start with the [task lookup guide](../transflow-spec/START_HERE.md) and [engineering agreement](../transflow-spec/AGENTS.md), then read the selected task and its relevant contracts. [AGENTS.md](AGENTS.md) is the short agent entry point; the [verification workflow](docs/development/verification.md#verification-workflow) describes staged checks and compact logs. The specification is also hosted at [jmsmistral/transflow-spec](https://github.com/jmsmistral/transflow-spec). Detailed specification files are not duplicated here.
 
-Specification baseline: **1.1.3**. See its task ledger for intended scope; unchecked tasks are not delivered features. End users of a future installed release will not need the specification checkout.
+Specification baseline: **1.1.4**. See its task ledger for intended scope; unchecked tasks are not delivered features. End users of a future installed release will not need the specification checkout.
 
 ## Development checks
 

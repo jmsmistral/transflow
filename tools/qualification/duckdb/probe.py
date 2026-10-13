@@ -19,7 +19,6 @@ from decimal import Decimal
 from pathlib import Path
 
 import duckdb
-import pandas as pd
 import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -102,12 +101,9 @@ class CapabilityTests(unittest.TestCase):
         with self.assertRaises(duckdb.CatalogException):
             self.db.execute("SELECT * FROM ambient_table")
 
-    def test_matching_metrics_on_three_engine_materializations(self):
-        paths = {name: self.root / f"{name}.parquet" for name in ("polars", "pandas", "sql")}
+    def test_matching_metrics_on_two_engine_materializations(self):
+        paths = {name: self.root / f"{name}.parquet" for name in ("polars", "sql")}
         pl.from_arrow(self.table).lazy().sink_parquet(paths["polars"])
-        self.table.to_pandas(types_mapper=pd.ArrowDtype).to_parquet(
-            paths["pandas"], engine="pyarrow", index=False
-        )
         with duckdb.connect() as transform:
             transform.execute(
                 "COPY (SELECT * FROM read_parquet($source)) TO $output (FORMAT PARQUET)",
@@ -125,8 +121,7 @@ class CapabilityTests(unittest.TestCase):
                     ).fetchone()
                 )
         self.assertEqual(metrics[0], metrics[1])
-        self.assertEqual(metrics[0], metrics[2])
-        OBSERVATIONS["equivalent_engine_metrics"] = ["polars", "pandas_arrow_backed", "duckdb_sql"]
+        OBSERVATIONS["equivalent_engine_metrics"] = ["polars", "duckdb_sql"]
 
     def test_outside_files_network_writes_and_external_extensions_denied(self):
         output = self.root / "forbidden.parquet"
@@ -477,7 +472,7 @@ class CapabilityTests(unittest.TestCase):
 
 
 def run_child():
-    expected = {"duckdb": "1.5.5", "pyarrow": "25.0.1", "polars": "1.44.2", "pandas": "3.0.6"}
+    expected = {"duckdb": "1.5.5", "pyarrow": "25.0.1", "polars": "1.44.2"}
     versions = {name: importlib.metadata.version(name) for name in expected}
     if versions != expected or sys.version_info[:2] != (3, 14):
         raise RuntimeError(

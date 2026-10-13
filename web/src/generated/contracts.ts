@@ -33,7 +33,7 @@ export type WireValue = (ScalarValue | { readonly "type": "list"; readonly "valu
 export type ArtifactFileV1 = { readonly "path": RelativePath; readonly "sha256": Sha256; readonly "byte_length": Count; readonly "row_count": Count };
 
 // prettier-ignore
-export type ArtifactManifestV1 = { readonly "format_version": 1; readonly "logical_schema": LogicalSchemaV1; readonly "schema_fingerprint": Sha256; readonly "files": ReadonlyArray<ArtifactFileV1>; readonly "writer": { readonly "engine": ("polars" | "pandas" | "duckdb" | "import"); readonly "version": string; readonly "compression": ("uncompressed" | "snappy" | "zstd" | "preserved"); readonly "row_group_size": Count } };
+export type ArtifactManifestV1 = { readonly "format_version": 1; readonly "logical_schema": LogicalSchemaV1; readonly "schema_fingerprint": Sha256; readonly "files": ReadonlyArray<ArtifactFileV1>; readonly "writer": { readonly "engine": ("polars" | "duckdb" | "import"); readonly "version": string; readonly "compression": ("uncompressed" | "snappy" | "zstd" | "preserved"); readonly "row_group_size": Count } };
 
 // prettier-ignore
 export type CatalogEntryV1 = { readonly "key": DatasetKey; readonly "path": string; readonly "kind": ("source" | "transform" | "imported" | "external") };
@@ -330,7 +330,7 @@ export type ApiAttemptV1 = { readonly "attempt": Uuid; readonly "build": Uuid; r
 export type ApiExecutionMetricsV1 = { readonly "from_us": Count; readonly "to_us": Count; readonly "time_zone": "UTC"; readonly "duration_unit": "ns"; readonly "cohort": "build_accepted"; readonly "branch": string; readonly "dataset": (null | Uuid); readonly "materialized_any": boolean; readonly "builds": Count; readonly "build_states": ReadonlyArray<ApiStateCountV1>; readonly "manual_requests": Count; readonly "scheduled_builds": Count; readonly "schedule_occurrences": (null | Count); readonly "jobs": Count; readonly "job_states": ReadonlyArray<ApiStateCountV1>; readonly "jobs_executed": Count; readonly "attempts": Count; readonly "failure_rate": (null | ApiExactRatioV1); readonly "materializations": Count; readonly "duration_samples": Count; readonly "missing_duration_samples": Count; readonly "median_ns": (null | ApiExactRatioV1); readonly "trailing_mean_ns": (null | ApiExactRatioV1); readonly "trailing_window": Count; readonly "trailing_samples": Count };
 
 // prettier-ignore
-export type ApiLineageNodeV1 = { readonly "identity": string; readonly "paths": ReadonlyArray<string>; readonly "depth": Count; readonly "external": boolean; readonly "producer": boolean; readonly "parent_count": Count; readonly "child_count": Count; readonly "publication": ("published" | "missing" | "unknown"); readonly "resource_type": ("polars_transform" | "sql_transform" | "external" | "dataset" | "unknown" | "pandas_transform" | "source" | "imported"); readonly "overlay"?: ApiOverlayFactsV1 };
+export type ApiLineageNodeV1 = { readonly "identity": string; readonly "paths": ReadonlyArray<string>; readonly "depth": Count; readonly "external": boolean; readonly "producer": boolean; readonly "parent_count": Count; readonly "child_count": Count; readonly "publication": ("published" | "missing" | "unknown"); readonly "resource_type": ("polars_transform" | "sql_transform" | "external" | "dataset" | "unknown" | "source" | "imported"); readonly "overlay"?: ApiOverlayFactsV1 };
 
 // prettier-ignore
 export type ViewPositionV1 = { readonly "x": number; readonly "y": number };

@@ -153,7 +153,6 @@ fn storage_representability_does_not_imply_engine_support() {
             (Adapter::Parquet, parquet),
             (Adapter::Polars, polars),
             (Adapter::DuckDbValidation, duckdb),
-            (Adapter::Pandas, false),
             (Adapter::DuckDbSql, false),
         ] {
             assert_eq!(schema.require(adapter).is_ok(), ok);

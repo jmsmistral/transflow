@@ -32,7 +32,6 @@ def main() -> None:
     pq = importlib.import_module("pyarrow.parquet")
     pl = importlib.import_module("polars")
     duckdb = importlib.import_module("duckdb")
-    pd = importlib.import_module("pandas")
     cases: list[str] = []
     with tempfile.TemporaryDirectory(prefix="tf-checks-") as temporary:
         root = Path(temporary).resolve()
@@ -109,12 +108,6 @@ def main() -> None:
             path = source / "part.parquet"
             if engine == "polars":
                 pl.from_arrow(table).write_parquet(path)
-            elif engine == "pandas":
-                df = table.to_pandas(types_mapper=pd.ArrowDtype)
-                pq.write_table(
-                    pa.Table.from_pandas(df, preserve_index=False).replace_schema_metadata(None),
-                    path,
-                )
             elif engine == "sql":
                 with duckdb.connect() as db:
                     db.from_arrow(table).write_parquet(str(path))
@@ -269,7 +262,7 @@ def main() -> None:
             "ERROR",
         ]
         baseline = None
-        for engine in ("arrow", "polars", "pandas", "sql"):
+        for engine in ("arrow", "polars", "sql"):
             r = run(engine, table, checks, engine=engine, expected=expected)
             reduced = [
                 {k: c[k] for k in ("status", "exact", "failed_rows", "metrics", "error")}

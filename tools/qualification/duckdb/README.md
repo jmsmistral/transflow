@@ -33,7 +33,7 @@ Sixteen tests exercise actual DuckDB/Parquet files and engine operations:
   22 forbidden statement/function/table-access cases fail the prototype validator.
 - Exact integer/decimal/count/null/NaN aggregates, unsigned integers, empty sets,
   Arrow/Parquet round trips and equivalent metrics on synthetic Polars,
-  Arrow-backed pandas and trusted SQL materializations.
+  trusted SQL materializations.
 - Interruption after observable query startup; a one-million-row sort that
   physically spills, drains in 4,096-row batches and cleans temporary files;
   a zero spill budget fails with OutOfMemoryException.

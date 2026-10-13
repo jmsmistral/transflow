@@ -21,7 +21,6 @@ export const colourOptions: ReadonlyArray<readonly [Colour, string]> = [
 ];
 const names: Record<string, string> = {
   polars_transform: "Polars Transform",
-  pandas_transform: "pandas Transform",
   sql_transform: "SQL Transform",
   source: "Source",
   imported: "Imported Dataset",

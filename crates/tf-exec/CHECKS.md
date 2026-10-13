@@ -62,7 +62,7 @@ remain unsupported. Optional samples follow the explicit T063 policy below.
 
 Verification uses the actual Rust compiler, artifact service, packaged helper and
 DuckDB through `python/tools/check_expectations.py`, integrated into native
-qualification. Synthetic Arrow, Polars, Arrow-backed pandas and trusted SQL
+qualification. Synthetic Arrow, Polars and trusted SQL
 materializations yield identical outcomes; these are fixture writers, not new
 transform adapters. Coverage includes complete truth tables, null/NaN behavior,
 quoted identifiers and bound injection-like values, exact wide values, empty

@@ -9229,5 +9229,92 @@
       ]
     },
     "valid": false
+  },
+  {
+    "name": "manifest-rejects-removed-engine",
+    "schema": "ArtifactManifestV1",
+    "value": {
+      "format_version": 1,
+      "logical_schema": {
+        "format_version": 1,
+        "fields": [
+          {
+            "name": "id",
+            "logical_type": {
+              "type": "u64"
+            },
+            "nullable": false
+          },
+          {
+            "name": "details",
+            "logical_type": {
+              "type": "struct",
+              "fields": [
+                {
+                  "name": "items",
+                  "logical_type": {
+                    "type": "list",
+                    "element": {
+                      "name": "item",
+                      "logical_type": {
+                        "type": "decimal",
+                        "precision": 38,
+                        "scale": 4
+                      },
+                      "nullable": true
+                    }
+                  },
+                  "nullable": true
+                }
+              ]
+            },
+            "nullable": true,
+            "metadata": {
+              "description": "Synthetic"
+            }
+          }
+        ]
+      },
+      "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "files": [
+        {
+          "path": "part-000.parquet",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "byte_length": "9007199254740993",
+          "row_count": "0"
+        },
+        {
+          "path": "parts/part-001.parquet",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "byte_length": "9007199254740993",
+          "row_count": "0"
+        }
+      ],
+      "writer": {
+        "engine": "pandas",
+        "version": "1.44.2",
+        "compression": "zstd",
+        "row_group_size": "100000"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "lineage-rejects-removed-resource-type",
+    "schema": "ApiLineageNodeV1",
+    "valid": false,
+    "value": {
+      "identity": "pending:curated/items",
+      "paths": [
+        "curated/items"
+      ],
+      "depth": "0",
+      "external": false,
+      "producer": true,
+      "parent_count": "1",
+      "child_count": "0",
+      "publication": "unknown",
+      "resource_type": "pandas_transform"
+    }
   }
 ]

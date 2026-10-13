@@ -4,7 +4,7 @@ The private `execute` worker operation materializes one captured Polars producer
 It is a backend service used by future runtime dispatch, not a public `transflow
 build` command. Polars 1.44.2 is qualified on the pinned engine environment. The
 SDK still imports without Polars; execution reports a missing environment instead
-of installing dependencies. Pandas and SQL transform adapters remain later work.
+of installing dependencies. DuckDB SQL transform adapters remain later work.
 
 ## Accepted execution and immutable inputs
 

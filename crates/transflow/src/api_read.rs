@@ -745,7 +745,6 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
             } else {
                 match def.declaration["engine"].as_str() {
                     Some("polars") => "polars_transform",
-                    Some("pandas") => "pandas_transform",
                     Some("sql") | Some("duckdb") => "sql_transform",
                     _ => "unknown",
                 }

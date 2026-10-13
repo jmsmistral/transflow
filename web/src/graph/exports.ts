@@ -86,7 +86,6 @@ export function exportSvg(
     unknown: "#e8eaee",
     source: "#d5e9fb",
     imported: "#e8d9f7",
-    pandas_transform: "#e8d9f7",
     zero: "#e5e7eb",
     NoChecks: "#e5e7eb",
     Unavailable: "#e5e7eb",

@@ -20,7 +20,7 @@ and physical layouts in the [Arrow format](https://arrow.apache.org/docs/format/
 Duplicate names, extension/object types, dictionaries, maps, duration/time values,
 Date64, decimal256 and untyped-null columns require explicit conversion. Root
 engine metadata has no portable schema-level carrier and requires explicit removal;
-this prevents pandas/index metadata from silently changing the table contract.
+this prevents engine/index metadata from silently changing the table contract.
 Schema metadata has a 1 MiB budget, at most 4,096 fields and 24 nested levels.
 These metadata bounds are not a default dataframe memory cap.
 
@@ -49,7 +49,7 @@ capability/environment checks remain required.
 | Parquet storage | Portable types above; decimal scale 0 through precision; timestamps ms/us/ns. Second-resolution timestamps and negative/excess decimal scales require explicit casts. |
 | Polars | Same initial type preflight; actual engine round trips qualify primitive widths, lists/structs, naive ns and named-zone ns. Objects are rejected, never stringified. |
 | DuckDB validation | Compatible portable types; naive ns and UTC ms/us. Aware ns and non-UTC timezone labels fail before the engine can lose precision or change metadata. UTC session configuration is required. |
-| pandas / DuckDB SQL transforms | Explicitly unavailable until their later adapter tasks. Dependency probes do not enable execution. |
+| DuckDB SQL transforms | Explicitly unavailable until their later adapter tasks. Dependency probes do not enable execution. |
 
 ## Verification
 

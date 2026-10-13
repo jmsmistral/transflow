@@ -9092,7 +9092,6 @@
               "engine": {
                 "enum": [
                   "polars",
-                  "pandas",
                   "duckdb",
                   "import"
                 ]
@@ -16846,7 +16845,6 @@
               "external",
               "dataset",
               "unknown",
-              "pandas_transform",
               "source",
               "imported"
             ]

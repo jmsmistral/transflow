@@ -63,7 +63,7 @@ the draft test is discarded and the saved view/definition are preserved.
 
 ## Boundaries
 
-This is trusted-local-code, Polars operational alpha. Pandas/SQL producers and
+This is trusted-local-code, Polars operational alpha. SQL producers and
 extended G3 checks remain separate tasks. Health's recent-detail cohort is labelled
 latest 50 jobs; missing evidence stays unavailable. Queries retain at most the
 backend's bounded ephemeral results and never publish datasets. Live Gantt frame

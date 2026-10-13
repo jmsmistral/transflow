@@ -3120,8 +3120,7 @@ revo-grid.preview-grid
 .colour-source {
   background: #d5e9fb;
 }
-.colour-imported,
-.colour-pandas_transform {
+.colour-imported {
   background: #e8d9f7;
 }
 .colour-zero,
@@ -3195,7 +3194,6 @@ revo-grid.preview-grid
   background: #37414e;
 }
 .theme-dark .colour-imported,
-.theme-dark .colour-pandas_transform,
 .theme-dark .colour-never_built,
 .theme-dark .colour-boundary,
 .theme-dark .colour-cached {
