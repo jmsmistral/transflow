@@ -1,5 +1,38 @@
 # Contributor verification
 
+
+## Polars/DuckDB scope and macOS CLI framing (2026-10-13)
+
+The owner-approved engine scope is now specification 1.1.4. The unpublished
+additional dataframe adapter, reserved manifest/resource types, UI styling,
+qualification paths and four exclusive dependencies are removed. Current native
+qualification uses only Polars 1.44.2, polars-runtime-32 1.44.2, DuckDB 1.5.5 and
+PyArrow 25.0.1. DuckDB SQL producer execution remains T101; Polars execution,
+canonical DuckDB checks and interactive SQL remain available.
+
+The reported macOS workspace CI error 35 is reproduced by reading a fragmented
+CLI frame on an accepted nonblocking socket. Accepted connections now explicitly
+clear that flag before applying the existing two-second read/write timeouts.
+There is no command retry. The regression fails before the correction and passes
+afterward; a real paused schedule accepts a fragmented authenticated request and
+returns the same occurrence for an idempotent repeat.
+
+Local macOS arm64 verification passed Rust formatting, workspace/standalone
+checks, all-target Clippy, 486 Rust tests and one doc test; 1,057 Python tests with
+Ruff/format/mypy/package checks; all 60 installed-worker CLI tests; and 584 web
+tests with type/lint/format and reproducible 16-asset builds. A fresh environment
+containing none of the four removed packages passes four engine checks, 16
+DuckDB capability cases and 28 canonical expectation cases. The reviewed
+639-version OSV audit has zero findings. Specification checks/44 checker tests
+and safety/27 tests pass. The full Rust rerun followed a correction to the fixed
+conformance corpus count (366 to 368) for the two new rejection vectors.
+
+The [receipt](evidence/t100-engine-scope-and-cli-framing-macos-arm64.json) records
+commands and boundaries. Historical receipts retain their original revisions.
+New cross-platform CI remains owner-monitored; no remote success, new browser
+journey, SQL producer delivery or G3 completion is claimed.
+
+
 ## Verification workflow
 
 Work in one substantial task or two closely related tasks unless the owner
@@ -290,7 +323,7 @@ passes seven groups on Python 3.14 using PyArrow 25.0.1,
 Polars 1.44.2 and DuckDB 1.5.5. No dependency version or lock changed.
 See [local evidence](evidence/t036-macos-arm64.json) and the
 [normalization guide](../../crates/tf-store/NORMALIZATION.md). All five [CI workflows and 19 jobs](evidence/t036-ci.json) pass at implementation `c99f4c2517a557f95fdd7ba6ce38797550d10225`, paired with specification progress `13477efd082c7a71ea9d237ef6ed03a3a25d9b42`. The six native jobs also pass the production-normalizer engine probe. T036 is complete.
-Publication and quality evaluation remain later tasks; pandas/SQL transforms remain deferred.
+Publication and quality evaluation remain later tasks; SQL transforms remain deferred.
 
 ## T037 immutable artifact verification (2026-09-20)
 

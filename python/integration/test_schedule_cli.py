@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import copy
 import json
+import socket
 import sqlite3
+import struct
 import sys
 import time
 import tomllib
@@ -177,3 +179,58 @@ def test_schedule_cli_snapshot_export_guarded_actions_and_retained_history(works
         assert removed["deleted"] and removed["retained_history"]
         assert not cli(workspace, "schedule", "list")["result"]["data"]["schedules"]
         assert cli(workspace, "schedule", "history", schedule)["result"]["data"]["occurrences"]
+
+
+def test_fragmented_schedule_frame_is_accepted_once(workspace: Path) -> None:
+    source(workspace, "orders.py", DECLARATION)
+    cli(workspace, "catalog", "sync", "--python", sys.executable)
+    (workspace / "transflow.local.toml").write_text(
+        f"[python]\nexecutable={json.dumps(sys.executable)}\n"
+    )
+    path = workspace / "schedule.json"
+    path.write_text(json.dumps(definition(workspace)))
+    created = cli(workspace, "schedule", "create", "--file", str(path), "--paused")["result"][
+        "data"
+    ]
+    key = str(uuid4())
+    intent = {
+        "operation": "run",
+        "id": created["id"],
+        "definition": None,
+        "etag": created["etag"],
+        "paused": False,
+        "key": key,
+        "replay_after": None,
+        "replay_limit": None,
+    }
+    with coordinator(workspace, CLI) as registration:
+        request = json.dumps(
+            {
+                "version": 1,
+                "session": registration["session"],
+                "token": registration["nonce"],
+                "operation": "schedule",
+                "schedule": intent,
+            }
+        ).encode()
+        endpoint = registration["endpoint"].rsplit(":", 1)
+        replies = []
+        for _ in range(2):
+            with socket.create_connection((endpoint[0], int(endpoint[1])), timeout=10) as stream:
+                header = struct.pack(">I", len(request))
+                stream.sendall(header[:2])
+                time.sleep(0.05)
+                stream.sendall(header[2:] + request[:9])
+                time.sleep(0.05)
+                stream.sendall(request[9:])
+                with stream.makefile("rb") as incoming:
+                    size = incoming.read(4)
+                    assert len(size) == 4
+                    response = json.loads(incoming.read(struct.unpack(">I", size)[0]))
+            assert response["ok"], response
+            replies.append(response["data"])
+        assert replies[0] == replies[1]
+        client = Client(registration)
+        history = client.call("GET", f"/api/v1/schedules/{created['id']}/history")["data"]
+        assert [row["id"] for row in history["occurrences"]] == [replies[0]["id"]]
+        assert client.call("GET", f"/api/v1/schedules/{created['id']}")["data"]["paused"]

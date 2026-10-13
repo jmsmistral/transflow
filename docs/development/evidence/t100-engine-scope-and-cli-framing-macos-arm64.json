@@ -1,0 +1,171 @@
+{
+  "task": "T100 scope removal and macOS CLI framing correction",
+  "date": "2026-10-13",
+  "specification": "1.1.4",
+  "platform": {
+    "os": "macOS 15.3.1",
+    "architecture": "arm64",
+    "python": "3.14.7",
+    "rust": "1.98.1",
+    "node": "24.4.1",
+    "npm": "11.4.2"
+  },
+  "base_revisions": {
+    "implementation": "fdab7ab1077a7b9eecc933efc1349bd212aa0e25",
+    "specification": "0f03d741d37be715d337c3b6df981fa10add4050"
+  },
+  "engine_scope": {
+    "transform_engines": [
+      "polars",
+      "duckdb_sql"
+    ],
+    "delivered_transforms": [
+      "polars"
+    ],
+    "duckdb_sql_transform_task": "T101",
+    "removed": [
+      "unpublished pandas adapter and scratch wheel",
+      "reserved artifact writer and lineage resource types",
+      "native pandas probe paths",
+      "pandas, numpy, python-dateutil and six qualification pins"
+    ],
+    "retained_locked_packages": {
+      "polars": "1.44.2",
+      "polars-runtime-32": "1.44.2",
+      "duckdb": "1.5.5",
+      "pyarrow": "25.0.1"
+    },
+    "removed_packages_absent_in_fresh_environment": true,
+    "contract_rejection_vectors": [
+      "manifest-rejects-removed-engine",
+      "lineage-rejects-removed-resource-type"
+    ]
+  },
+  "ci_correction": {
+    "reported_job": "https://github.com/jmsmistral/transflow/actions/runs/38425777240/job/115394667437",
+    "public_job_status": "failed; Test CLI with the installed matched worker",
+    "full_remote_log_access": "Sign-in required; diagnosis used supplied screenshot and local reproduction",
+    "regression_before": "Fragmented frame on an accepted nonblocking socket fails with Resource temporarily unavailable (os error 35)",
+    "correction": "Clear nonblocking mode on accepted CLI sockets before existing finite-timeout frame reads",
+    "timeouts_seconds": {
+      "read": 2,
+      "write": 2
+    },
+    "command_retry_added": false,
+    "fragmented_frame_regression_after": "passed",
+    "native_schedule_tests": {
+      "passed": 2,
+      "coverage": [
+        "original snapshot/export/control/history journey",
+        "fragmented authenticated request and idempotent duplicate receipt create one occurrence; pause remains set"
+      ]
+    }
+  },
+  "verification": {
+    "python_gate": {
+      "passed": true,
+      "tests": 1057,
+      "typed_sources": 75
+    },
+    "web_gate": {
+      "passed": true,
+      "tests": 584,
+      "files": 26,
+      "production_assets": 16
+    },
+    "engine_native": {
+      "passed": true,
+      "checks": [
+        "polars_streaming_sink_pyarrow_roundtrip",
+        "duckdb_exact_parquet_values",
+        "duckdb_missing_column_rejected",
+        "empty_parquet_schema"
+      ]
+    },
+    "duckdb_capability": {
+      "passed": true,
+      "tests": 16
+    },
+    "canonical_expectations": {
+      "passed": true,
+      "checks": [
+        "restricted-connection",
+        "arrow",
+        "polars",
+        "sql",
+        "candidate",
+        "float-comparisons",
+        "truth-tables",
+        "empty",
+        "identifier",
+        "tuple",
+        "precision",
+        "timezone-ns",
+        "case-collision",
+        "unsupported-key",
+        "canceled",
+        "disabled",
+        "sample-cap-redaction",
+        "sample-no-allowlist",
+        "sample-precise",
+        "sample-pk",
+        "sample-ignore-null",
+        "sample-no-attribution",
+        "sample-schema-only",
+        "sample-large-cell",
+        "memory-error",
+        "timeout",
+        "spill",
+        "disk-error"
+      ]
+    },
+    "advisory_audit": {
+      "passed": true,
+      "queried_versions": 639,
+      "findings": 0
+    },
+    "spec_checker_regressions": {
+      "passed": true,
+      "tests": 44
+    },
+    "rust_gate": {
+      "passed": true,
+      "tests": 486,
+      "doc_tests": 1,
+      "boundary_tests": 12,
+      "commands": [
+        "bash tools/check-rust.sh (boundaries/format/check/standalone storage/Clippy passed; first test run stopped at stale fixture count)",
+        "cargo fmt --all -- --check",
+        "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+        "cargo test --workspace --locked --offline"
+      ],
+      "corpus_count_correction": "Two new closed-schema rejection vectors increased the corpus from 366 to 368; the fixed count was updated and the full Rust run passed."
+    },
+    "cli_gate": {
+      "passed": true,
+      "tests": 60,
+      "command": "PYTHON_CHECK=target/python/py314/bin/python bash tools/check-cli.sh",
+      "matched_worker": true
+    },
+    "spec_documents": {
+      "passed": true,
+      "version": "1.1.4",
+      "tasks": 123,
+      "completed_tasks": 99
+    },
+    "safety": {
+      "passed": true,
+      "tests": 27,
+      "dependency_versions": 639,
+      "active_exceptions": 2,
+      "generated_contracts": 1
+    }
+  },
+  "limits": [
+    "New GitHub CI is owner-monitored; no post-push polling or inferred remote success.",
+    "Native revised engine-lock execution is local macOS arm64; other-platform CI remains pending.",
+    "DuckDB SQL producer execution remains unimplemented T101; interactive queries and canonical checks are retained.",
+    "No new browser journey is claimed for removal of an unreachable reserved resource type.",
+    "Historical receipts remain evidence for their recorded revisions."
+  ]
+}

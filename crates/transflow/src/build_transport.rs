@@ -67,6 +67,17 @@ fn write(stream: &mut TcpStream, value: &Value) -> Result<(), Error> {
         .map_err(failure)?;
     stream.write_all(&bytes).map_err(failure)
 }
+fn accepted_connection(stream: &TcpStream) -> Result<(), Error> {
+    // BSD/macOS may inherit the listener's nonblocking flag. Framed reads must wait
+    // for the complete header/body under the finite socket timeouts below.
+    stream.set_nonblocking(false).map_err(failure)?;
+    stream
+        .set_read_timeout(Some(Duration::from_secs(2)))
+        .map_err(failure)?;
+    stream
+        .set_write_timeout(Some(Duration::from_secs(2)))
+        .map_err(failure)
+}
 pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<Endpoint, Error> {
     let listener = TcpListener::bind("127.0.0.1:0").map_err(failure)?;
     listener.set_nonblocking(true).map_err(failure)?;
@@ -86,9 +97,8 @@ pub(crate) fn endpoint(owner: &mut RuntimeOwner, persistent: bool) -> Result<End
         while !stopped.load(Ordering::Acquire) {
             match listener.accept() {
                 Ok((mut stream, peer)) if peer.ip().is_loopback() => {
-                    let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
-                    let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
                     let result = (|| -> Result<Value, Error> {
+                        accepted_connection(&stream)?;
                         let request = read(&mut stream)?;
                         if request["version"] != 1
                             || request["session"] != session
@@ -464,4 +474,42 @@ pub(crate) fn cancel_owned(
         crate::dispatch::cancel_unstarted(owner, rt, build).map_err(failure)?;
     }
     Ok(disposition)
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)] // Loopback regression fixture; no production path.
+mod tests {
+    use super::*;
+
+    #[test]
+    fn accepted_nonblocking_socket_waits_for_fragmented_frame() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let value = json!({"operation":"schedule","schedule":{"key":"synthetic"}});
+        let bytes = serde_json::to_vec(&value).unwrap();
+        let expected = value.clone();
+        let (ready_tx, ready_rx) = mpsc::sync_channel(1);
+        let (continue_tx, continue_rx) = mpsc::sync_channel(1);
+        let client = std::thread::spawn(move || {
+            let mut stream = TcpStream::connect(address).unwrap();
+            let header = (bytes.len() as u32).to_be_bytes();
+            stream.write_all(&header[..2]).unwrap();
+            ready_tx.send(()).unwrap();
+            continue_rx.recv().unwrap();
+            std::thread::sleep(Duration::from_millis(50));
+            stream.write_all(&header[2..]).unwrap();
+            stream.write_all(&bytes[..5]).unwrap();
+            std::thread::sleep(Duration::from_millis(50));
+            stream.write_all(&bytes[5..]).unwrap();
+        });
+        let (mut stream, _) = listener.accept().unwrap();
+        ready_rx.recv().unwrap();
+        // BSD inherits the listener flag; force it on every platform to exercise the race.
+        stream.set_nonblocking(true).unwrap();
+        accepted_connection(&stream).unwrap();
+        continue_tx.send(()).unwrap();
+        let actual = read(&mut stream);
+        client.join().unwrap();
+        assert_eq!(actual.unwrap(), expected);
+    }
 }
