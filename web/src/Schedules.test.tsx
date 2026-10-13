@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { Client } from "./api/client";
 import { Workspace } from "./workspace";
@@ -92,9 +98,9 @@ const roles: ApiScheduleRolesV1 = {
     },
   ],
 };
-async function setup(conflict = false) {
+async function setup(conflict = false, withHistory = false) {
   const mutations: { method: string; headers: Headers; body: unknown }[] = [];
-  const base = fixtureTransport((path) => {
+  const base = fixtureTransport((path, query) => {
     if (path === "/api/v1/schedules")
       return Promise.resolve(
         json({ schedules: [record], next_cursor: null }, null),
@@ -102,7 +108,62 @@ async function setup(conflict = false) {
     if (path.endsWith("/roles")) return Promise.resolve(json(roles, context()));
     if (path.endsWith("/history"))
       return Promise.resolve(
-        json({ schedule_id: id, occurrences: [], next_cursor: null }, null),
+        json(
+          {
+            schedule_id: id,
+            occurrences: withHistory
+              ? [
+                  {
+                    id,
+                    ready_us: String(Date.now() * 1000),
+                    disposition: "SUCCEEDED",
+                    build: workspaceId,
+                    branch: "historical-branch",
+                    build_state: "SUCCEEDED",
+                    manual: true,
+                    started_us: "1700000000000000",
+                    finished_us: "1700000001000000",
+                    wall_duration_us: "1000000",
+                    jobs: "1",
+                    attempts: "1",
+                    coalesced_tokens: "0",
+                    plan: datasetId,
+                    source: workspaceId,
+                  },
+                ]
+              : [],
+            next_cursor: null,
+          },
+          null,
+        ),
+      );
+    if (path.endsWith("/metrics") && withHistory)
+      return Promise.resolve(
+        json(
+          {
+            schedule_id: id,
+            from_us: query.from_us,
+            to_us: query.to_us,
+            cohort: "occurrence_ready",
+            duration_unit: "us",
+            occurrences: "1",
+            dispositions: [{ state: "SUCCEEDED", count: "1" }],
+            builds: "1",
+            jobs: "1",
+            attempts: "1",
+            failure_rate: { numerator: "0", denominator: "1" },
+            duration_samples: "1",
+            missing_duration_samples: "0",
+            median_us: { numerator: "1000000", denominator: "1" },
+            trailing_mean_us: { numerator: "1000000", denominator: "1" },
+            trailing_window: "10",
+            trailing_samples: "1",
+            ignored_event_matches: "0",
+            clock_ticks: [],
+            evidence_cohort: "observed_in_range",
+          },
+          null,
+        ),
       );
     if (path.endsWith("/metrics"))
       return Promise.resolve(
@@ -316,5 +377,135 @@ test("compound editor emits typed time trees and policy switches remain accessib
     },
     policies: { allow_overlapping_builds: true },
   });
+  workspace.dispose();
+});
+
+test("focused schedule hides list controls, opens complete details and returns to the list", async () => {
+  const { workspace, state } = await setup();
+  const rendered = render(
+    <Schedules
+      workspace={workspace}
+      state={state}
+      selected={[]}
+      visible={[identity(target)]}
+      onRoles={vi.fn()}
+      onPlan={vi.fn()}
+      onAdd={vi.fn()}
+    />,
+  );
+  expect(screen.getByRole("button", { name: "New schedule" })).toBeTruthy();
+  expect(
+    screen.getByRole("textbox", { name: "Search schedules" }),
+  ).toBeTruthy();
+  fireEvent.click(await screen.findByText("Daily review"));
+  expect(screen.queryByRole("button", { name: "New schedule" })).toBeNull();
+  expect(
+    screen.queryByRole("textbox", { name: "Search schedules" }),
+  ).toBeNull();
+  expect(
+    screen.queryByRole("switch", { name: "All workspace schedules" }),
+  ).toBeNull();
+  expect(screen.queryByText("Build scope")).toBeNull();
+  expect(screen.queryByText("Missed ticks")).toBeNull();
+  const viewButton = screen.getByRole("button", { name: "View schedule" });
+  viewButton.focus();
+  fireEvent.click(viewButton);
+  const dialog = await screen.findByRole("dialog", {
+    name: "Schedule details",
+  });
+  expect(within(dialog).getByText("Build scope")).toBeTruthy();
+  expect(within(dialog).getByText("Missed ticks")).toBeTruthy();
+  expect(within(dialog).getByText(workspaceId)).toBeTruthy();
+  expect(within(dialog).getByText(/code used to build/)).toBeTruthy();
+  expect(
+    within(dialog).getByRole("heading", {
+      name: "Recent builds and occurrences",
+    }),
+  ).toBeTruthy();
+  fireEvent.click(
+    within(dialog).getByRole("button", { name: "Close schedule view" }),
+  );
+  expect(screen.queryByRole("dialog", { name: "Schedule details" })).toBeNull();
+  expect(document.activeElement).toBe(viewButton);
+  fireEvent.click(screen.getByRole("button", { name: "Schedules" }));
+  expect(
+    screen.getByRole("textbox", { name: "Search schedules" }),
+  ).toBeTruthy();
+  rendered.unmount();
+  workspace.dispose();
+});
+
+test("recent schedule build uses the retained plan and historical branch; closing restores its schedule view", async () => {
+  const { workspace, state } = await setup(false, true);
+  const scope = vi
+    .spyOn(workspace, "scope")
+    .mockRejectedValue(new Error("Retained build unavailable"));
+  const rendered = render(
+    <Schedules
+      workspace={workspace}
+      state={state}
+      selected={[]}
+      visible={[identity(target)]}
+      onRoles={vi.fn()}
+      onPlan={vi.fn()}
+      onAdd={vi.fn()}
+    />,
+  );
+  fireEvent.click(await screen.findByText("Daily review"));
+  fireEvent.click(screen.getByRole("button", { name: "View schedule" }));
+  const dialog = await screen.findByRole("dialog", {
+    name: "Schedule details",
+  });
+  fireEvent.click(
+    await within(dialog).findByRole("button", { name: "View build" }),
+  );
+  const build = await screen.findByRole("dialog", { name: "Build report" });
+  await waitFor(() =>
+    expect(scope).toHaveBeenCalledWith(
+      { branch: "historical-branch", plan: datasetId },
+      expect.any(AbortSignal),
+    ),
+  );
+  expect(within(build).getByRole("alert").textContent).toContain(
+    "Retained build unavailable",
+  );
+  expect(workspace.snapshot()).toMatchObject({
+    selection: { branch: "master" },
+  });
+  fireEvent(build, new Event("cancel", { bubbles: true, cancelable: true }));
+  expect(screen.getByRole("dialog", { name: "Schedule details" })).toBe(dialog);
+  rendered.unmount();
+  workspace.dispose();
+});
+
+test("schedule editor keeps Save and Cancel before the fields", async () => {
+  const { workspace, state } = await setup();
+  const rendered = render(
+    <ScheduleEditor
+      workspace={workspace}
+      initial={definition}
+      record={record}
+      datasets={state.value.datasets.entries}
+      schedules={[record]}
+      onSave={vi.fn()}
+      onCancel={vi.fn()}
+      onDefaults={async () => definition}
+    />,
+  );
+  const header = rendered.container.querySelector(".schedule-editor-header");
+  if (!header) throw Error("Missing editor header");
+  expect(
+    within(header as HTMLElement).getByRole("button", {
+      name: "Save schedule",
+    }),
+  ).toBeTruthy();
+  expect(
+    within(header as HTMLElement).getByRole("button", { name: "Cancel" }),
+  ).toBeTruthy();
+  expect(
+    header.compareDocumentPosition(screen.getByLabelText("Schedule name")) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  rendered.unmount();
   workspace.dispose();
 });

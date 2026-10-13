@@ -80,3 +80,17 @@ separate counts for occurrences, builds, jobs, attempts and timings. Charts disp
 only the selected history page and disclose that basis. Build reports automatically
 update while active. Informational scope previews use the shared planner and cannot
 be accepted as ad-hoc builds; use Run now on the saved schedule.
+
+## Dedicated Schedule view
+
+Select a schedule in the lineage inspector, then choose **View schedule**. The large
+modal shows its current saved definition, compound conditions, datasets, source/input
+policies, branch/fallback, execution options, summary and recent builds. **View build**
+opens the corresponding retained Build report above it; closing that report returns
+to the Schedule view. The lineage branch, selection and graph geometry are preserved.
+
+**Code source** means the code used by the schedule. A fixed snapshot uses retained
+captured code; a Git ref selects its committed code; working-tree selection captures
+the current files for each occurrence. This choice is independent of the output data
+branch. Snapshot identifiers remain available in the full view. Editor Save and Cancel
+stay at the top; saving still overwrites the single current definition under its edit guard.

@@ -1,0 +1,58 @@
+{
+  "task": "T098 owner UX follow-up",
+  "date": "2026-10-13",
+  "platform": "macOS arm64",
+  "implementation_base": "e279641c64b6de53b56a072476ddda29187f8d99",
+  "specification_base": "ce196bba9675fd06e3422f7960e289a3030d944d",
+  "specification": "1.1.3",
+  "runtime_schema": 16,
+  "scope": "Annotated schedule inspector/editor layout fixes and dedicated Schedule modal with retained Build-report navigation",
+  "changes": [
+    "Left-aligned New action and isolated list toolbar/search with space below focus outlines",
+    "Selected details hide New/Search/All-workspace controls and show blue Schedules back plus View schedule at the top",
+    "Aligned compact key/value rows, dataset cards, branch/fallback at the bottom; scope/overlap/missed ticks remain in the full view",
+    "Code source label and full-view explanation/retained identifier distinguish execution code from output data branch",
+    "Editor Save/Cancel remain in a sticky top header with accessible controls",
+    "Dedicated large modal includes full saved definition, policies, conditions, summary/chart and recent builds",
+    "Recent build opens its retained plan/source/branch report; Escape closes only the topmost Build dialog and returns to Schedule details"
+  ],
+  "local_verification": {
+    "web": "Full web gate passed 562 tests across 23 files; strict types/lint/format, production worker probes and reproducible 16-asset builds",
+    "focused": "28 schedule/execution component tests passed; final focused schedule gate passed eight tests including list/detail transitions, full view/focus restore, retained-plan failure isolation, nested cancel and editor action order",
+    "documents": "Specification/link/syntax validator passed (123 tasks, 97 complete); all 44 checker regressions passed",
+    "safety": "Privacy/generated-drift/offline inventory gate and all 27 safety regressions passed: 802 public candidate files, 643 unchanged locked package versions, two active exceptions",
+    "whitespace": "git diff --check passed in both repositories"
+  },
+  "browser": {
+    "tool": "Codex internal Browser via CUA with real coordinator and existing persistent synthetic t098-schedules workspace",
+    "observed": [
+      "Saved Scheduling review reopened with all four graph datasets",
+      "New button left matches toolbar left; focused search has 16px clearance before related-context text",
+      "Selected schedule hides list controls; blue back button computed rgb(36,95,158); every detail key/value top aligns within 1px",
+      "Dataset cards and branch/fallback at the bottom; Code source summary omits long snapshot ID from compact panel",
+      "Schedule modal shows complete current configuration, summary and three retained four-job builds with measured durations",
+      "Recent View build opens the exact retained Daily delivery report; Escape closes only Build and restores the Schedule modal",
+      "Closing Schedule restores focus to View schedule; exact graph node/viewport styles unchanged",
+      "Dark editor Save/Cancel remain visible after scrolling to Advanced options; Save top106/bottom143 within inspector top63/bottom656.5 at1280x720",
+      "Cancel discards changed name and preserves Daily delivery; dark theme returned to original light theme",
+      "Build View schedule returns to dedicated Schedule details without leaving a duplicate Build dialog"
+    ],
+    "fixture_preserved": "No new build, schedule deletion or saved definition mutation during this Browser review"
+  },
+  "commands": [
+    "npm --prefix web run typecheck",
+    "npm --prefix web run test -- src/Schedules.test.tsx src/execution-inspectors.test.tsx",
+    "bash tools/check-web.sh",
+    "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+    "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests -v",
+    "PYTHON=target/python/py314/bin/python bash tools/check-safety.sh",
+    "git diff --check (both repositories)"
+  ],
+  "limits": [
+    "Frontend and documentation changes only; existing authenticated API, scheduling/storage semantics and definition overwrite guards retained",
+    "Rust/Python/native-worker gates were not repeated for unchanged backend code; original T096-T098 receipt remains their historical qualification",
+    "Other platforms and full G2/T099 qualification are not claimed",
+    "Private owner reference images and transient review screenshot are not committed",
+    "Remote CI pending owner confirmation; no workflow polling"
+  ]
+}

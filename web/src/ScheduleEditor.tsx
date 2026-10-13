@@ -523,8 +523,20 @@ export function ScheduleEditor({
           });
       }}
     >
-      <header>
+      <header className="schedule-editor-header">
         <h3>{record ? "Edit schedule" : "Create schedule"}</h3>
+        <div className="schedule-editor-actions">
+          <Button disabled={busy} onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="button-primary"
+            disabled={busy || !!policyError || !draft.build.targets.length}
+          >
+            {busy ? "Saving…" : "Save schedule"}
+          </Button>
+        </div>
         <p className="muted">
           Save replaces the current definition. Accepted work keeps its captured
           settings.
@@ -1005,18 +1017,6 @@ export function ScheduleEditor({
           Reload saved definition (discard draft)
         </Button>
       )}
-      <footer className="schedule-actions">
-        <Button disabled={busy} onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          className="button-primary"
-          disabled={busy || !!policyError || !draft.build.targets.length}
-        >
-          {busy ? "Saving…" : "Save schedule"}
-        </Button>
-      </footer>
     </form>
   );
 }

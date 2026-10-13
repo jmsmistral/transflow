@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import type {
   ApiDatasetV1,
   ApiLineageNodeV1,
@@ -14,7 +21,14 @@ import type { Workspace } from "./workspace";
 import { visualContext } from "./workspace";
 import { Button } from "./components";
 import { Icon } from "./Icons";
-import { type Ready, Empty, Metric, Status, message } from "./execution-ui";
+import {
+  type Ready,
+  Empty,
+  Evidence,
+  Metric,
+  Status,
+  message,
+} from "./execution-ui";
 import {
   savedDefinition,
   related,
@@ -28,6 +42,129 @@ import { ScheduleEditor, Switch } from "./ScheduleEditor";
 import { historyDateRange, percent, position } from "./execution-model";
 import { useBuildEvidence } from "./build-evidence";
 import { BuildModal } from "./BuildReport";
+import {
+  ScheduleBranches,
+  ScheduleDatasets,
+  ScheduleFacts,
+  type SchedulePath,
+} from "./ScheduleDetails";
+
+function ScheduleModal({
+  workspace,
+  state,
+  record,
+  definition,
+  path,
+  actions,
+  onClose,
+}: {
+  workspace: Workspace;
+  state: Ready;
+  record: ScheduleRecordV1;
+  definition: ScheduleDefinitionV1 | null;
+  path: SchedulePath;
+  actions: ReactNode;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const title = useId();
+  useEffect(() => {
+    const previous = document.activeElement;
+    const dialog = ref.current;
+    dialog?.showModal();
+    return () => {
+      dialog?.close();
+      if (previous instanceof HTMLElement && previous.isConnected)
+        previous.focus();
+    };
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      className="build-modal schedule-modal"
+      aria-labelledby={title}
+      onCancel={(event) => {
+        // Escape belongs to the topmost dialog when a retained Build report is open.
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <header className="build-modal-header">
+        <Icon name="calendar" />
+        <h2 id={title}>Schedule details</h2>
+        <span>{definition?.name ?? "Schedule needs review"}</span>
+        <Button aria-label="Close schedule view" onClick={onClose}>
+          <Icon name="close" />
+        </Button>
+      </header>
+      <div className="schedule-modal-content schedules">
+        <aside className="schedule-modal-definition">
+          <header className="schedule-heading">
+            <h3>{definition?.name ?? "Schedule needs review"}</h3>
+            <span className="schedule-state">
+              {record.paused ? "Paused" : "Active"}
+              {record.needs_review ? " · Review required" : ""}
+            </span>
+          </header>
+          {actions}
+          {definition && (
+            <>
+              {definition.description && <p>{definition.description}</p>}
+              <h4>Datasets to build</h4>
+              <ScheduleDatasets
+                datasets={definition.build.targets}
+                path={path}
+              />
+              <h4>When to build</h4>
+              <TriggerSummary trigger={definition.trigger} paths={path} />
+              <h4>Code and build options</h4>
+              <ScheduleFacts definition={definition} full />
+              <h4>Branches</h4>
+              <ScheduleBranches definition={definition} />
+              <h4>Read boundaries</h4>
+              <ScheduleDatasets
+                datasets={definition.build.boundaries}
+                path={path}
+              />
+              <h4>Excluded datasets</h4>
+              <ScheduleDatasets
+                datasets={definition.build.exclusions}
+                path={path}
+              />
+              <h4>Refresh sources</h4>
+              <ScheduleDatasets
+                datasets={definition.build.refresh_sources}
+                path={path}
+              />
+              <details>
+                <summary>Input policies and parameters</summary>
+                <Evidence>
+                  {{
+                    input_fallback_policy:
+                      definition.build.input_fallback_policy,
+                    provider_fallback_policies:
+                      definition.build.provider_fallback_policies,
+                    parameters: definition.build.parameters,
+                  }}
+                </Evidence>
+              </details>
+            </>
+          )}
+          <details>
+            <summary>Saved definition</summary>
+            <Evidence>{record.definition}</Evidence>
+          </details>
+        </aside>
+        <main className="schedule-modal-history">
+          <ScheduleHistory
+            workspace={workspace}
+            state={state}
+            record={record}
+          />
+        </main>
+      </div>
+    </dialog>
+  );
+}
 
 function ScheduleBuild({
   workspace,
@@ -392,7 +529,7 @@ function ScheduleHistory({
           No measured build operations in this history page and date range.
         </Empty>
       )}
-      <h3>Occurrence history</h3>
+      <h3>Recent builds and occurrences</h3>
       <p className="muted">
         Newest first · operation durations ·{" "}
         {page ? "older page" : "latest page"}
@@ -491,7 +628,8 @@ export function Schedules({
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
     [revision, setRevision] = useState(0),
-    [deleting, setDeleting] = useState(false);
+    [deleting, setDeleting] = useState(false),
+    [viewOpen, setViewOpen] = useState(false);
   const [datasets, setDatasets] = useState<readonly ApiDatasetV1[]>(
       state.value.datasets.entries,
     ),
@@ -532,6 +670,7 @@ export function Schedules({
             ...previous.filter((p) => p.id !== r.data.id),
           ]);
           setChosen(r.data.id);
+          setViewOpen(true);
           setPreview(null);
           onPlan(null);
         }
@@ -733,12 +872,49 @@ export function Schedules({
   );
   const choose = (id: string) => {
     setChosen(id);
+    setViewOpen(false);
     setPreview(null);
     setRoles(null);
     onPlan(null);
     onRoles(null);
     setNotice("");
   };
+  const scheduleActions = current ? (
+    <div className="schedule-actions">
+      <Button
+        disabled={busy || current.needs_review}
+        onClick={() => {
+          void action("run");
+        }}
+      >
+        Run now
+      </Button>
+      <Button
+        disabled={busy || current.needs_review}
+        onClick={() => {
+          void action(current.paused ? "resume" : "pause");
+        }}
+      >
+        {current.paused ? "Resume" : "Pause"}
+      </Button>
+      <Button
+        disabled={busy}
+        onClick={() => {
+          setViewOpen(false);
+          if (definition) setDraft({ definition, record: current });
+          else
+            void defaults()
+              .then((d) => setDraft({ definition: d, record: current }))
+              .catch((e) => setError(message(e)));
+        }}
+      >
+        Edit
+      </Button>
+      <Button disabled={busy} onClick={() => setDeleting(true)}>
+        Delete
+      </Button>
+    </div>
+  ) : null;
   if (draft)
     return (
       <section className="schedules">
@@ -818,43 +994,51 @@ export function Schedules({
     );
   return (
     <section className="schedules">
-      <div className="schedule-actions">
-        <Button
-          className="button-primary"
-          disabled={busy}
-          onClick={() => {
-            setBusy(true);
-            setError("");
-            void defaults()
-              .then((d) => {
-                const targets = selected.flatMap((n) => {
-                  const found = datasets.find(
-                    (e) =>
-                      identity(keyOf(e)) === n.identity &&
-                      e.origin === "local" &&
-                      !e.tombstone,
-                  );
-                  return found ? [keyOf(found)] : [];
-                });
-                setDraft({
-                  definition: { ...d, build: { ...d.build, targets } },
-                  record: null,
-                });
-              })
-              .catch((e) => setError(message(e)))
-              .finally(() => setBusy(false));
-          }}
-        >
-          <Icon name="new" /> New schedule
-        </Button>
-        <Switch label="All workspace schedules" value={all} onChange={setAll} />
-      </div>
-      <input
-        aria-label="Search schedules"
-        placeholder="Search schedules…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      {!chosen && (
+        <div className="schedule-list-controls">
+          <div className="schedule-list-toolbar">
+            <Button
+              className="button-primary"
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                setError("");
+                void defaults()
+                  .then((d) => {
+                    const targets = selected.flatMap((n) => {
+                      const found = datasets.find(
+                        (e) =>
+                          identity(keyOf(e)) === n.identity &&
+                          e.origin === "local" &&
+                          !e.tombstone,
+                      );
+                      return found ? [keyOf(found)] : [];
+                    });
+                    setDraft({
+                      definition: { ...d, build: { ...d.build, targets } },
+                      record: null,
+                    });
+                  })
+                  .catch((e) => setError(message(e)))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              <Icon name="new" /> New schedule
+            </Button>
+            <Switch
+              label="All workspace schedules"
+              value={all}
+              onChange={setAll}
+            />
+          </div>
+          <input
+            aria-label="Search schedules"
+            placeholder="Search schedules…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      )}
       {!chosen && (
         <>
           <p className="muted">
@@ -933,137 +1117,41 @@ export function Schedules({
       )}
       {current && (
         <>
-          <Button
-            onClick={() => {
-              setChosen(null);
-              setPreview(null);
-              onPlan(null);
-              onRoles(null);
-              setRoles(null);
-            }}
-          >
-            <Icon name="left" /> Schedules
-          </Button>
+          <div className="schedule-detail-toolbar">
+            <Button
+              className="schedule-back"
+              onClick={() => {
+                setViewOpen(false);
+                setChosen(null);
+                setPreview(null);
+                onPlan(null);
+                onRoles(null);
+                setRoles(null);
+              }}
+            >
+              <Icon name="left" /> Schedules
+            </Button>
+            <Button onClick={() => setViewOpen(true)}>
+              <Icon name="external" /> View schedule
+            </Button>
+          </div>
           <h3>{definition?.name ?? "Schedule needs review"}</h3>
           <p className="muted">
             {current.paused ? "Paused" : "Active"}
             {current.needs_review ? " · Review required" : ""}
           </p>
-          <div className="schedule-actions">
-            <Button
-              disabled={busy || current.needs_review}
-              onClick={() => {
-                void action("run");
-              }}
-            >
-              Run now
-            </Button>
-            <Button
-              disabled={busy || current.needs_review}
-              onClick={() => {
-                void action(current.paused ? "resume" : "pause");
-              }}
-            >
-              {current.paused ? "Resume" : "Pause"}
-            </Button>
-            <Button
-              disabled={busy}
-              onClick={() => {
-                if (definition) setDraft({ definition, record: current });
-                else
-                  void defaults()
-                    .then((d) => setDraft({ definition: d, record: current }))
-                    .catch((e) => setError(message(e)));
-              }}
-            >
-              Edit
-            </Button>
-            <Button disabled={busy} onClick={() => setDeleting(true)}>
-              Delete
-            </Button>
-          </div>
+          {!viewOpen && scheduleActions}
           {definition && (
             <>
               <p>{definition.description}</p>
-              <dl className="schedule-details">
-                <dt>Data branch</dt>
-                <dd>{definition.build.data_branch}</dd>
-                <dt>Fallback order</dt>
-                <dd>
-                  {[
-                    definition.build.data_branch,
-                    ...definition.build.fallback_branches,
-                  ].join(" → ")}
-                </dd>
-                <dt>Source</dt>
-                <dd>
-                  {definition.build.source.kind === "git_ref"
-                    ? definition.build.source.ref
-                    : definition.build.source.kind === "fixed_snapshot"
-                      ? `Fixed snapshot ${definition.build.source.snapshot_id}`
-                      : "Mutable working tree"}
-                </dd>
-                <dt>Scope</dt>
-                <dd>{definition.build.build_mode}</dd>
-                <dt>Attempts / retry classes</dt>
-                <dd>
-                  {definition.policies.max_attempts} /{" "}
-                  {definition.policies.retryable_classes.join(", ") || "none"}
-                </dd>
-                <dt>Overlap</dt>
-                <dd>
-                  {definition.policies.allow_overlapping_builds
-                    ? "Allowed with write reservations"
-                    : definition.policies.overlap_policy.replaceAll("_", " ")}
-                </dd>
-                <dt>Missed ticks</dt>
-                <dd>
-                  {definition.policies.misfire_policy.replaceAll("_", " ")}
-                </dd>
-                <dt>Event expiry</dt>
-                <dd>
-                  {definition.policies.token_window_seconds === null
-                    ? "No expiry acknowledged"
-                    : `${definition.policies.token_window_seconds} s`}
-                </dd>
-                <dt>Automatic burst limit</dt>
-                <dd>
-                  {definition.policies.max_consecutive_builds} ·{" "}
-                  {definition.policies.minimum_delay_seconds} s minimum delay
-                </dd>
-              </dl>
+              <ScheduleFacts definition={definition} />
               <h4>Datasets to build</h4>
-              <ul>
-                {definition.build.targets.map((k) => (
-                  <li key={identity(k)}>{path(k)}</li>
-                ))}
-              </ul>
+              <ScheduleDatasets
+                datasets={definition.build.targets}
+                path={path}
+              />
               <h4>When to build</h4>
               <TriggerSummary trigger={definition.trigger} paths={path} />
-              <details>
-                <summary>Input policies and boundaries</summary>
-                <h4>Read boundaries</h4>
-                <ul>
-                  {definition.build.boundaries.map((k) => (
-                    <li key={identity(k)}>{path(k)}</li>
-                  ))}
-                </ul>
-                <pre>
-                  {JSON.stringify(
-                    {
-                      input_fallback_policy:
-                        definition.build.input_fallback_policy,
-                      provider_fallback_policies:
-                        definition.build.provider_fallback_policies,
-                      exclusions: definition.build.exclusions,
-                      force: definition.build.force,
-                      abort_on_failure: definition.policies.abort_on_failure,
-                    },
-                    null,
-                    2,
-                  )}
-                </pre>
-              </details>
               <div className="schedule-actions">
                 <Button
                   disabled={busy}
@@ -1115,12 +1203,24 @@ export function Schedules({
               Add hidden relevant datasets to view
             </Button>
           )}
-          <ScheduleHistory
-            key={current.id}
-            workspace={workspace}
-            state={state}
-            record={current}
-          />
+          {definition && (
+            <section className="schedule-branch-section">
+              <h4>Branches</h4>
+              <ScheduleBranches definition={definition} />
+            </section>
+          )}
+          {viewOpen && (
+            <ScheduleModal
+              key={current.id}
+              workspace={workspace}
+              state={state}
+              record={current}
+              definition={definition}
+              path={path}
+              actions={scheduleActions}
+              onClose={() => setViewOpen(false)}
+            />
+          )}
           {deleting && (
             <DeleteDialog
               name={definition?.name ?? "this schedule"}

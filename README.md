@@ -255,6 +255,8 @@ snapshot, overwritten on Save without definition history. Edit guards prevent co
 saves; accepted work keeps its frozen execution settings. The inspector supports related/all
 lists, compound conditions, source/branch policies, manual runs, pause/resume, deletion,
 history/metrics and backend role facts with explicit hidden-resource scope previews.
+The **View schedule** modal shows full schedule configuration and recent builds,
+which open retained Build reports. See the [schedule guide](crates/transflow/SCHEDULES.md).
 Plain-clicking any selected lineage node narrows a multi-selection to that node.
 With no node selected or multiple nodes selected, the bottom tabs and right
 Properties panel show a centered “Select a node to view information” notice with

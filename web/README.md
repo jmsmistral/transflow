@@ -275,6 +275,14 @@ unchanged saved role facts. The shared scope preview adds planned jobs/read boun
 visible unique counts and complete-scope counts are separate. Hidden resources can be
 added explicitly. Temporary role coloring leaves the saved coloring and geometry intact.
 
+The sidebar keeps browsing controls in the list and provides a blue Schedules back
+button in selected details. Dataset cards and aligned rows show compact information;
+branch/fallback sits at the bottom. **View schedule** opens a large dedicated modal
+with the full current definition, code-source explanation, summary and recent builds.
+Each build entry opens its retained Build report, and closing it returns to the Schedule
+view. Editor Save/Cancel stay at the top while scrolling. These views preserve the
+foreground lineage selection, node positions and camera.
+
 History/summary use persisted occurrences, exact metrics and missing timing evidence;
 active histories poll without manual refresh. Schedule build reports link back to the
 current schedule without changing the foreground branch or dataset selection.
