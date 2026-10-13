@@ -43,7 +43,7 @@ def coordinator(root: Path, cli: Path) -> Iterator[dict[str, Any]]:
         finally:
             process.send_signal(signal.SIGINT)
             out, err = process.communicate(timeout=20)
-            assert process.returncode == 0, (out, err)
+            assert process.returncode == 0, (process.returncode, out, err)
 
 
 class Client:

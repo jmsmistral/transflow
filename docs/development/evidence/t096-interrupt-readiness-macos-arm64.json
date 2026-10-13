@@ -1,0 +1,64 @@
+{
+  "tasks": ["T096"],
+  "date": "2026-10-13",
+  "platform": "macOS 15.3.1 arm64",
+  "python": "3.14.7",
+  "rust": "1.98.1",
+  "implementation_base": "5167ef8f65f6cc23c7432e5ac401f561c069cacc",
+  "specification_base": "8c089d2b9d8e1fe71b3547f6ff7398c35aefd1eb",
+  "specification": "1.1.3",
+  "runtime_schema": 16,
+  "scope": "Persistent coordinator SIGINT handling before HTTP readiness and native shutdown diagnostics",
+  "reported_ci": {
+    "url": "https://github.com/jmsmistral/transflow/actions/runs/38398633558/job/115300203371",
+    "job": "native (macos-15, 3.14.7)",
+    "head": "b1b82b1c2b82b0656de2c6d3986302b37258b1cd",
+    "conclusion": "failure",
+    "metadata": "Public job API confirms setup succeeded and Run native probes failed; the owner screenshot shows successful compilation and the shutdown assertion traceback",
+    "trace": "check_dispatch.py -> check_schedule_dispatch.py:150 -> api_client.py:46: process.returncode == 0 failed with empty stdout/stderr",
+    "limits": "Full authenticated job logs were unavailable; the screenshot does not expose the process return code. The second earlier failure is owner-reported and was not independently inspected."
+  },
+  "diagnosis": {
+    "cause": "A spawned ctrl_c future registers the OS handler only when first polled. The current-thread runtime published its HTTP registration before that poll, allowing immediate ready/stop SIGINT to terminate the process by default.",
+    "pre_change_reproduction": {
+      "workspace": "Disposable initialized workspace, matched child PID and published HTTP endpoint, no API request or delay before SIGINT",
+      "iteration": 0,
+      "returncode": -2,
+      "stdout": "",
+      "stderr": ""
+    },
+    "source_equivalence": "serve.rs and api_client.py are unchanged between the reported CI head and the local implementation base",
+    "correction": "Construct the Unix interrupt stream synchronously inside the entered Tokio runtime before HTTP readiness; the spawned receiver retains the existing graceful stop path. Propagate handler registration errors.",
+    "diagnostics": "Native coordinator shutdown assertion includes process.returncode and still requires zero."
+  },
+  "local_verification": {
+    "restart_regression": "Passed: real CLI/SQLite integration test immediately sends SIGINT on matched HTTP readiness for 12 consecutive starts; each exits zero with a STOPPED receipt and the next start reacquires authority. Owned children are reaped on success and test failure; deadlines are bounded and no delay hides the readiness race.",
+    "rust": "Formatting, locked offline workspace/standalone-storage compilation, all-target Clippy and 12 boundary regressions passed. The full workspace test run was stopped at the owner's explicit instruction (process group terminated, exit 143); no complete Rust test gate pass is claimed. The focused 12-restart regression passed separately before this run.",
+    "python": "Passed: full offline Python gate, 1053 tests, locked tooling/package checks, Ruff lint/format and strict mypy",
+    "native_dispatch": "Passed: all 53 installed-worker cases in the exact dispatch runner used by native CI, including committed schedule restart without resubmission, queued exact-version restart, missed cron restart, live cancellation, coordinator kill/orphan cleanup, concurrency and frozen crash retry",
+    "native_stderr_bytes": 0,
+    "wheel_sha256": "91d62d40537d06df7990163cb8505e80302e2460e2974c3a4c81f862d0efce9a",
+    "documents": "Passed before the owner's stop instruction: specification/link/example syntax validation, 123 tasks with 97 complete; both repository whitespace checks. Final interruption and commit notes were added without rerunning gates.",
+    "safety": "Passed before final delivery notes: all 27 safety regressions plus public-file, offline inventory and generated-contract checks; 808 public candidate files, 643 unchanged locked package versions, two active exceptions, one registered generated contract. No rerun after the owner's stop instruction."
+  },
+  "commands": [
+    "cargo test --locked --offline -p transflow --test serve",
+    "cargo build --locked --offline -p transflow --bin transflow --example dispatch_probe",
+    "PYTHON=target/python/py314/bin/python bash tools/check-rust.sh",
+    "bash tools/check-python.sh",
+    "target/python/py314/bin/python -m pip wheel --no-index --no-deps --no-build-isolation --wheel-dir target/ci-shutdown-wheels ./python",
+    "target/python/py314/bin/python -I -B python/tools/check_dispatch.py target/debug/examples/dispatch_probe target/debug/transflow target/ci-shutdown-wheels/transflow-0.0.0.dev0-py3-none-any.whl target/qualification/wheelhouse",
+    "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+    "PYTHON=target/python/py314/bin/python bash tools/check-safety.sh",
+    "git diff --check (both repositories)"
+  ],
+  "limits": [
+    "Owner explicitly requested stopping remaining gates and committing/pushing; the full Rust test run was interrupted and no further gates were started",
+    "Local macOS arm64 verification; corrected GitHub CI and Linux qualification await the owner",
+    "The affected installed-worker dispatch runner was repeated; unrelated native engine probes and unchanged frontend/Browser gates were not repeated",
+    "No workflow, dependency, storage migration, public protocol or specification version changes",
+    "No persistent review workspace was modified; disposable test workspaces and all owned coordinators were cleaned up",
+    "Full G2 operational alpha qualification remains T099"
+  ],
+  "ci": "Corrected push pending owner monitoring; no new workflow result inferred"
+}

@@ -334,6 +334,9 @@ transflow --workspace /path/to/workspace serve --ui-dir "$PWD/web/dist" --open
 ```
 
 Use the local `target/debug/transflow` binary when it is not installed on PATH.
+Ctrl-C gracefully stops the foreground coordinator and drains owned work before
+releasing workspace authority. Interrupt handling is ready before its HTTP endpoint
+is published, including immediately after a restart.
 Build planning and schedule inspectors are available; the health actions remain later tasks. The Vite dev
 preview remains disconnected; connected browsing uses the coordinator's same-origin
 session. Browser verification uses Codex’s internal Browser. Native embedded UI

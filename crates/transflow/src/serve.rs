@@ -131,8 +131,16 @@ pub(crate) fn execute(
     endpoint.busy.store(true, Ordering::Release);
     let stopped = Arc::new(AtomicBool::new(false));
     let signal = stopped.clone();
+    // Register synchronously before publishing readiness. A spawned ctrl_c()
+    // future installs its handler only when first polled, which can be after a
+    // client observes the HTTP registration and immediately sends SIGINT.
+    let mut interrupt = {
+        let _context = rt.enter();
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::interrupt())
+            .map_err(failure)?
+    };
     let _listener = rt.spawn(async move {
-        if tokio::signal::ctrl_c().await.is_ok() {
+        if interrupt.recv().await.is_some() {
             signal.store(true, Ordering::Release);
         }
     });
