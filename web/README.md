@@ -1,5 +1,28 @@
 # Transflow workspace and lineage
 
+## Operational-alpha inspectors (T099)
+
+SQL scratchpad queries the displayed immutable version as `dataset`. Run query
+retains its exact bindings, parameters and query receipt; changing selection or
+leaving the pane cancels owned active work. Results use the same typed read-only
+grid and safe clipboard format as Preview. The service's limits, truncation,
+failure and cancellation states remain visible. Result expiry does not publish
+data or substitute a moving head. Fallback data has Preview's branch warning.
+
+Data health is available in the right inspector and bottom tab. Published output
+checks are read through the version's original attempt; a recent attempted job is
+read through its owning retained plan. Consumer input failures and subsequent
+failed output checks do not replace the last-good publication's evidence.
+The recent detail cohort is explicitly limited to 50 build jobs; cached reuse
+does not invent an attempt. Provider certificates come from retained metadata
+without executing or contacting provider code.
+
+The [public demo](../examples/operational-alpha/README.md) uses real coordinator
+state and synthetic data. Schedule-role changes retain measured node dimensions
+as well as visual positions, preventing invisible nodes after controlled refreshes.
+
+## Workspace foundation
+
 T082 connects the original React interface to a local coordinator. It provides
 bounded catalogue pages, requested branch/fallback metadata, dataset and exact
 version selection, explicit retained/historical source context, connection states,

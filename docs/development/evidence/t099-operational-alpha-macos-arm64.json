@@ -1,0 +1,54 @@
+{
+  "task": "T099",
+  "date": "2026-10-13",
+  "specification": "1.1.3",
+  "runtime_schema": 16,
+  "implementation_base": "7feb246e521d73f7f5c95d730aca6556ac84e42f",
+  "specification_base": "021f34d52e534f8e4c6658aa4a22fed97a700b1a",
+  "platform": { "os": "macOS 15.3.1", "architecture": "arm64", "python": "3.14.7", "rust": "1.98.1", "hardware": "Apple M4 Max / 128 GiB / APFS" },
+  "scope": "Local integrated G2 operational alpha; G3 and all-platform release qualification remain separate",
+  "changes": [
+    "Reproducible public CLI/API synthetic four-node demo, executed/cache history, two paused schedules, master/review data branches and saved view; existing roots refuse overwrite",
+    "SQL scratchpad binds displayed immutable version with typed bounded results, parameters, original-context receipt/cancellation and fallback warning",
+    "Health panes separate version-bound output checks from plan-bound recent attempts and consumer input evidence; retained provider certificates require no provider code",
+    "Controlled graph nodes retain measured dimensions through schedule-role, color and selection refreshes without changing persisted positions"
+  ],
+  "verification": {
+    "rust": "cargo test --workspace --locked --offline: 485 unit/integration tests plus one doctest passed, including deterministic event/clock/retrigger and immediately interrupted HTTP-ready coordinator restarts",
+    "web": "bash tools/check-web.sh: 582 tests in 26 files; strict types/lint/format; production worker probes and repeatable 16 local assets passed",
+    "native_api": "python/tools/check_api.py: 17 real coordinator cases passed",
+    "native_queries": "python/tools/check_queries.py: eight real helper/coordinator cases passed serially",
+    "native_demo": "python/tools/check_alpha_demo.py: six cases passed, including real review head, refused overwrite, forced output FAIL preserving all last-good heads and blocked descendants, then source restoration",
+    "python_helpers": "Focused Ruff lint/format passed for both new demo helpers",
+    "matched_foundation": "Immediately preceding implementation base's full Python gate passed 1053 tests and installed-worker dispatch passed 53 cases; SDK/worker and backend execution code are unchanged by T099",
+    "regression": "Graph measurement test fails against pre-fix implementation and passes after retaining dimensions; inspector tests cover canceled late acceptance, pending cancel, wrong bindings/pages, expiry, escaped check names and stale selection",
+    "documents_and_safety": "Specification/link/syntax checks passed: 123 tasks, 98 complete. Safety baseline and all 27 regressions passed: 817 public candidate files, 643 locked versions, two active exceptions, one registered generated contract"
+  },
+  "browser": {
+    "tool": "Codex internal Browser with real loopback coordinator and synthetic persistent workspace",
+    "observed": [
+      "Saved four-node diamond reopens at original positions (0,150), (360,0), (360,300), (720,150), all visible; exact Preview and producing Code are readable",
+      "Hidden required resources remain in authoritative ancestor build scope; Force automatically previews and real four-job build opens its retained report/history",
+      "Schedule editor retains visible nodes and geometry; simultaneous Target/Trigger draft roles, searchable data branch and ordered fallbacks work; dirty Cancel keeps editing or discards without changing saved definition",
+      "Paused manual Run now creates one explicit occurrence without resuming automatic scheduling; dedicated Schedule modal opens nested Build report and returns on close",
+      "Completed report shows actual phases, populations and critical-path categories without fabricated compute for cache reuse",
+      "Published orders check PASS loads in bottom/right Health, recent attempted job uses owning plan, summary row tops align exactly; light/dark styling inspected",
+      "Pinned grouping query returns east 40 and west 20 as exact decimal values; forbidden file query fails; running analytical query cancels to CANCELED without an error banner",
+      "Review-branch delivery query displays master fallback warning and returns the three actual master-version rows; branch change fences old results",
+      "Final assets show explicit On violation: fail build policy instead of an ambiguous standalone FAIL label"
+    ],
+    "cleanup": "Temporary tabs closed and owned coordinator stopped after final review; persistent synthetic workspace retained"
+  },
+  "initial_findings": [
+    "Concurrent native query qualification I/O reached the unchanged 30-second deadline; serial rerun passed all eight cases. No timer was increased and no universal latency guarantee is claimed",
+    "Real Browser exposed invisible controlled nodes and recent-attempt context mismatch; both received concrete regression fixes",
+    "Real branch review exposed missing query fallback warning; it now matches Preview"
+  ],
+  "limits": [
+    "Local macOS arm64 evidence only; new GitHub CI is owner-monitored without polling",
+    "Pandas/SQL producers, extended checks, editors and complete G3/release scope remain later tasks",
+    "Recent health detail explicitly covers latest 50 jobs; absent evidence remains unavailable",
+    "Live Gantt animation uses existing clock/component qualification; this review adds no frame-rate benchmark",
+    "No protocol, dependency, storage or normative specification version change"
+  ]
+}

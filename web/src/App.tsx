@@ -16,6 +16,8 @@ import { CodeInspector } from "./CodeInspector";
 import { HistoryInspector } from "./HistoryInspector";
 import { TimelineInspector } from "./BuildInspectors";
 import { PreviewInspector, PropertiesInspector } from "./inspectors";
+import { ScratchpadInspector } from "./ScratchpadInspector";
+import { HealthInspector } from "./HealthInspector";
 
 const tabs = [
   "Preview",
@@ -430,6 +432,23 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                       selected={selectedNodes}
                     />
                   )
+                ) : mode === "Health" &&
+                  selectedNodes.length === 1 &&
+                  !inspected ? (
+                  <div className="execution-empty" role="status">
+                    Loading dataset information…
+                  </div>
+                ) : mode === "Health" &&
+                  inspectorState.kind === "ready" &&
+                  selectedNodes.length === 1 ? (
+                  <HealthInspector
+                    key={inspectionKey}
+                    workspace={workspace}
+                    state={inspectorState}
+                    node={selectedNodes[0]}
+                  />
+                ) : mode === "Health" ? (
+                  <InspectorNotice />
                 ) : mode === "Build planner" && state.kind === "ready" ? (
                   <BuildPlanner
                     workspace={workspace}
@@ -552,6 +571,24 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                   workspace={workspace}
                   state={inspectorState}
                   dark={dark}
+                />
+              ) : tab === "SQL scratchpad" &&
+                bottomOpen &&
+                inspectorState.kind === "ready" ? (
+                <ScratchpadInspector
+                  key={inspectionKey}
+                  workspace={workspace}
+                  state={inspectorState}
+                  dark={dark}
+                />
+              ) : tab === "Data health" &&
+                bottomOpen &&
+                inspectorState.kind === "ready" ? (
+                <HealthInspector
+                  key={inspectionKey}
+                  workspace={workspace}
+                  state={inspectorState}
+                  node={selectedNodes[0]}
                 />
               ) : tab === "Code" &&
                 bottomOpen &&

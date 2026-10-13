@@ -8,6 +8,7 @@ import type {
 } from "./generated/contracts";
 
 type Area = { x: number; y: number; x1: number; y1: number };
+export type GridPage = Pick<ApiPreviewV1, "schema" | "rows">;
 
 function clipboardField(value: string): string {
   // A pasted preview must never turn provider data into a spreadsheet formula.
@@ -16,7 +17,7 @@ function clipboardField(value: string): string {
 }
 
 export function previewSelectionText(
-  page: ApiPreviewV1,
+  page: GridPage,
   area: Area,
   formatCell: (value: WireValue | null) => string,
 ): string {
@@ -57,7 +58,7 @@ export function PreviewGrid({
   formatType,
   onError,
 }: {
-  page: ApiPreviewV1;
+  page: GridPage;
   path: string;
   dark: boolean;
   formatCell: (value: WireValue | null) => string;

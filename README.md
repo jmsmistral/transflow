@@ -96,8 +96,14 @@ evidence. T079 adds the private [restricted SQL helper](python/worker/SQL.md),
 with a parsed AST allowlist, locked engine settings and exact-version input reads.
 T080 adds the authenticated [query lifecycle API](crates/tf-api/README.md#interactive-queries):
 exact local/foreign versions, independent interactive limits, cancellation and temporary
-results. Foreign inputs are read directly under leases. The scratchpad UI remains
-later work; queries do not publish datasets or enable a SQL transform adapter.
+results. Foreign inputs are read directly under leases. The SQL scratchpad tab now
+queries the displayed immutable version as `dataset`, with typed results, bound
+parameters and cancellation. Queries do not publish datasets or enable a SQL
+transform adapter. Data health shows published output checks separately from recent
+attempts and consumer input failures, including retained provider certificates.
+The [operational-alpha demo](examples/operational-alpha/README.md) creates a new
+synthetic workspace with four datasets, checks, cached history, paused schedules
+and a saved lineage view for review.
 
 T081 adds [execution history and metrics APIs](crates/tf-api/README.md#execution-history-and-metrics):
 separate versions, attempts and cache reuse; recorded phase timelines and critical

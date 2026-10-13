@@ -29,6 +29,9 @@ import type {
   ApiSourceV1,
   ApiPreviewV1,
   ApiPreviewRequestV1,
+  ApiQueryRequestV1,
+  ApiQueryV1,
+  ApiQueryResultsV1,
   LogicalSchemaV1,
   ApiSessionV1,
   ApiVerifiedV1,
@@ -73,6 +76,9 @@ export interface Contracts {
   ApiVersionsV1: ApiVersionsV1;
   ApiSourceV1: ApiSourceV1;
   ApiPreviewV1: ApiPreviewV1;
+  ApiQueryRequestV1: ApiQueryRequestV1;
+  ApiQueryV1: ApiQueryV1;
+  ApiQueryResultsV1: ApiQueryResultsV1;
   LogicalSchemaV1: LogicalSchemaV1;
   ApiSessionV1: ApiSessionV1;
   ApiVerifiedV1: ApiVerifiedV1;
@@ -323,6 +329,55 @@ export class Client {
         "The preview does not match the selected version.",
       );
     return data;
+  }
+  async startQuery(
+    request: ApiQueryRequestV1,
+    context: ApiContextV1,
+    key: string,
+    signal: AbortSignal,
+  ): Promise<ApiQueryV1> {
+    decode("ApiQueryRequestV1", request);
+    const value = await this.post(
+      `/api/v1/queries?${new URLSearchParams({ branch: context.branch, context: context.fingerprint })}`,
+      request,
+      signal,
+      { "If-Match": `"${context.fingerprint}"`, "Idempotency-Key": key },
+    );
+    const job = this.envelope("ApiQueryV1", value, context).data;
+    if (
+      job.sql !== request.sql ||
+      !same(job.parameters, request.parameters) ||
+      !same(job.bindings, request.bindings)
+    )
+      throw new ApiFailure(
+        "conflict",
+        "Query bindings do not match the requested versions.",
+      );
+    return job;
+  }
+  async cancelQuery(
+    id: string,
+    context: ApiContextV1,
+    signal: AbortSignal,
+  ): Promise<ApiQueryV1> {
+    // Query receipts retain their original context even after the user changes
+    // selection. This can cancel only the owned ID, without resolving a new head.
+    const value = await this.post(
+      `/api/v1/queries/${encodeURIComponent(id)}/cancel?${new URLSearchParams({ branch: context.branch, context: context.fingerprint })}`,
+      {},
+      signal,
+      {
+        "If-Match": `"${context.fingerprint}"`,
+        "Idempotency-Key": crypto.randomUUID(),
+      },
+    );
+    const job = this.envelope("ApiQueryV1", value, context).data;
+    if (job.id !== id)
+      throw new ApiFailure(
+        "conflict",
+        "Cancellation does not match this query.",
+      );
+    return job;
   }
   async saveSchedule(
     definition: ScheduleDefinitionV1,

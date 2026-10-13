@@ -35,6 +35,7 @@ button:disabled {
   --accent: #176553;
   --soft: #edf5f2;
   --focus: #397569;
+  --danger: #ac3636;
   --selection-bg: #d5e8f5;
   --selection-ink: #18344b;
   --xy-selection-background-color: #39756912;
@@ -55,6 +56,7 @@ button:disabled {
   --line: #344957;
   --accent: #8dddd0;
   --focus: #9cbeb6;
+  --danger: #f2aaaa;
   --soft: #243b39;
   --selection-bg: #305a78;
   --selection-ink: #f4f7fb;
@@ -2030,15 +2032,29 @@ revo-grid.preview-grid
 }
 
 /* Retained execution inspectors share the compact, pane-based lineage styling. */
-.bottom-panel:has(.execution-inspector) {
+.bottom-panel:has(
+  .execution-inspector,
+  .scratchpad-inspector,
+  .health-inspector
+) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
-.bottom-panel:has(.execution-inspector) > [role="tablist"] {
+.bottom-panel:has(
+    .execution-inspector,
+    .scratchpad-inspector,
+    .health-inspector
+  )
+  > [role="tablist"] {
   flex-shrink: 0;
 }
-.bottom-panel:has(.execution-inspector) > [role="tabpanel"] {
+.bottom-panel:has(
+    .execution-inspector,
+    .scratchpad-inspector,
+    .health-inspector
+  )
+  > [role="tabpanel"] {
   flex: 1;
   min-height: 0;
   padding: 0;
@@ -3837,4 +3853,114 @@ revo-grid.preview-grid
   .schedule-detail-heading .schedule-view-label {
     display: none;
   }
+}
+.scratchpad-inspector {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+}
+.scratchpad-inspector .preview-grid-wrap {
+  flex: 0 0 220px;
+  min-height: 160px;
+}
+.scratchpad-inspector .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.scratchpad-editor {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: calc(100% - 24px);
+  min-height: 76px;
+  max-height: 180px;
+  margin: 10px 12px;
+  padding: 10px;
+  font:
+    13px/1.5 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  resize: vertical;
+}
+.scratchpad-parameters,
+.scratchpad-status {
+  padding: 4px 12px 8px;
+  font-size: 12px;
+}
+.scratchpad-parameters label {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 8px 0;
+}
+.scratchpad-parameters input {
+  flex: 1;
+  min-width: 0;
+}
+.scratchpad-status small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.scratchpad-inspector .execution-error {
+  margin: 6px 12px;
+}
+.health-inspector {
+  overflow: auto;
+  height: 100%;
+}
+.health-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.health-section h3 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+.health-summary {
+  margin: 0;
+}
+.health-summary > div {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(100px, 1fr);
+  gap: 12px;
+  margin: 8px 0;
+  align-items: start;
+}
+.health-summary dt {
+  color: var(--muted);
+  margin: 0;
+}
+.health-summary dd {
+  margin: 0;
+}
+.health-check {
+  padding: 10px 0;
+}
+.health-check + .health-check {
+  border-top: 1px solid var(--line);
+}
+.health-check-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.health-check p,
+.health-check small {
+  margin: 6px 0;
+}
+.health-outcome {
+  white-space: nowrap;
+}
+.outcome-pass {
+  color: var(--accent);
+}
+.outcome-violation,
+.outcome-error,
+.health-input-failure {
+  color: var(--danger, #ac3636);
 }

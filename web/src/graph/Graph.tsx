@@ -484,6 +484,9 @@ function GraphView({
   const [align, setAlign] = useState(false);
   const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 1 });
   const [notice, setNotice] = useState("");
+  const [measurements, setMeasurements] = useState<
+    ReadonlyMap<string, { width: number; height: number }>
+  >(() => new Map());
   const [history] = useState(() => new ViewHistory());
   const [, refreshHistory] = useState(0);
   const dragging = useRef(false);
@@ -637,6 +640,7 @@ function GraphView({
       graph.nodes.map((node, index) => ({
         id: node.identity,
         type: "dataset",
+        measured: measurements.get(node.identity) ?? {},
         className: planPreview
           ? planPreview.writes.some(
               (w) =>
@@ -676,6 +680,7 @@ function GraphView({
       })),
     [
       graph.nodes,
+      measurements,
       planPreview,
       paintColour,
       roleNode,
@@ -723,6 +728,35 @@ function GraphView({
     return positions.stop;
   }, [positions, graph.nodes, graph.edges, graph.placement, active]);
   const changes = (updates: NodeChange<CanvasNode>[]) => {
+    // Controlled nodes are reconstructed when colours/roles/selection change.
+    // Carry actual dimensions forward so xyflow does not hide an unchanged node
+    // while waiting for a resize notification that may never arrive.
+    setMeasurements((previous) => {
+      const ids = new Set(graph.nodes.map((node) => node.identity));
+      const retained = new Map([...previous].filter(([id]) => ids.has(id)));
+      let next = retained.size === previous.size ? undefined : retained;
+      for (const change of updates) {
+        if (
+          change.type !== "dimensions" ||
+          !ids.has(change.id) ||
+          !change.dimensions ||
+          !Number.isFinite(change.dimensions.width) ||
+          !Number.isFinite(change.dimensions.height) ||
+          change.dimensions.width <= 0 ||
+          change.dimensions.height <= 0
+        )
+          continue;
+        const current = (next ?? previous).get(change.id);
+        if (
+          current?.width === change.dimensions.width &&
+          current.height === change.dimensions.height
+        )
+          continue;
+        next ??= new Map(previous);
+        next.set(change.id, change.dimensions);
+      }
+      return next ?? previous;
+    });
     for (const change of updates)
       if (change.type === "position" && change.position) {
         const position = change.position;

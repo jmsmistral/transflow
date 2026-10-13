@@ -125,7 +125,7 @@ function date(us?: string): string {
 function display(value?: string): string {
   return value ?? "Unknown";
 }
-function typeName(type: LogicalType): string {
+export function typeName(type: LogicalType): string {
   if (type.type === "decimal")
     return `decimal(${type.precision}, ${type.scale})`;
   if (type.type === "timestamp")
@@ -287,7 +287,14 @@ export function PropertiesInspector({
           </p>
           <h4>Data health</h4>
           <p className="muted">
-            Output checks unavailable · Latest attempt unavailable
+            Output checks:{" "}
+            {graphNode?.overlay?.version === meta?.version
+              ? graphNode?.overlay?.health === "NoChecks"
+                ? "No output checks"
+                : (graphNode?.overlay?.health ?? "Unavailable")
+              : "Unavailable"}{" "}
+            · Latest attempt:{" "}
+            {graphNode?.overlay?.latest_attempt ?? "Unavailable"}
           </p>
         </>
       )}
@@ -295,7 +302,7 @@ export function PropertiesInspector({
   );
 }
 
-function wire(value: WireValue | null): string {
+export function wire(value: WireValue | null): string {
   if (value === null) return "Unavailable";
   if (value.type === "null") return "NULL";
   if (value.type === "list") return `[${value.values.map(wire).join(", ")}]`;
