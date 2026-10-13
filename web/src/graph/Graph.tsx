@@ -22,12 +22,22 @@ import {
   ReactFlowProvider,
   useReactFlow,
   useStoreApi,
+  useStore,
   type Node,
   type NodeProps,
   type NodeChange,
   type Edge,
 } from "@xyflow/react";
-import type { GraphViewV1, ApiLineageNodeV1 } from "../generated/contracts";
+import {
+  identity,
+  triggerDatasets,
+  type ScheduleEditSession,
+} from "../schedule-model";
+import type {
+  GraphViewV1,
+  ApiLineageNodeV1,
+  ApiOverlayFactsV1,
+} from "../generated/contracts";
 import type { Workspace } from "../workspace";
 import { Icon } from "../Icons";
 import { Button } from "../components";
@@ -65,6 +75,7 @@ type DatasetNode = Node<
     onPath: boolean;
     colour: Colour;
     paint: Paint;
+    hideUnknown: boolean;
     expand: (
       node: ApiLineageNodeV1,
       direction: Exploration["direction"],
@@ -158,15 +169,17 @@ function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
       </button>
       {children &&
         arrow("downstream", data.childrenExpanded, data.value.child_count)}
-      {data.colour !== "resource" && data.colour !== "publication" && (
-        <span className="node-overlay-label" title={data.paint.detail}>
-          {data.paint.label === data.paint.detail
-            ? data.paint.label
-            : data.colour === "freshness"
+      {data.colour !== "resource" &&
+        data.colour !== "publication" &&
+        !(data.hideUnknown && data.paint.key === "unknown") && (
+          <span className="node-overlay-label" title={data.paint.detail}>
+            {data.paint.label === data.paint.detail
               ? data.paint.label
-              : data.paint.detail}
-        </span>
-      )}
+              : data.colour === "freshness"
+                ? data.paint.label
+                : data.paint.detail}
+          </span>
+        )}
       {data.paint.badges.length > 0 && (
         <span className="node-overlay-badges">
           {data.paint.badges.map((b) => (
@@ -219,6 +232,8 @@ export function GraphExplorer({
   selectRequest,
   planPreview,
   scheduleRoles,
+  scheduleEdit,
+  scheduleActive,
   titleHost,
   actionsHost,
 }: {
@@ -230,6 +245,8 @@ export function GraphExplorer({
   selectRequest?: { paths: readonly string[]; revision: number } | null;
   planPreview?: import("../generated/contracts").PlanResultV1 | null;
   scheduleRoles?: import("../generated/contracts").ApiScheduleRolesV1 | null;
+  scheduleEdit?: ScheduleEditSession | null;
+  scheduleActive?: boolean;
   addRequest?: { paths: readonly string[]; revision: number } | null;
   onVisible?: (identities: readonly string[]) => void;
   onSelection?: (nodes: readonly ApiLineageNodeV1[], context: string) => void;
@@ -367,6 +384,8 @@ export function GraphExplorer({
           selectRequest={selectRequest ?? null}
           planPreview={planPreview ?? null}
           scheduleRoles={scheduleRoles ?? null}
+          scheduleEdit={scheduleEdit ?? null}
+          scheduleActive={scheduleActive ?? false}
           focusRequest={focusRequest ?? null}
           {...(onSelection ? { onSelection } : {})}
         />
@@ -388,6 +407,8 @@ function GraphView({
   selectRequest,
   planPreview,
   scheduleRoles,
+  scheduleEdit,
+  scheduleActive,
   focusRequest,
   onSelection,
 }: {
@@ -404,6 +425,8 @@ function GraphView({
   selectRequest: { paths: readonly string[]; revision: number } | null;
   planPreview: import("../generated/contracts").PlanResultV1 | null;
   scheduleRoles: import("../generated/contracts").ApiScheduleRolesV1 | null;
+  scheduleEdit: ScheduleEditSession | null;
+  scheduleActive: boolean;
   focusRequest: { path: string; revision: number } | null;
   onSelection?: (nodes: readonly ApiLineageNodeV1[], context: string) => void;
 }) {
@@ -445,6 +468,17 @@ function GraphView({
   const [toolsOpen, setToolsOpen] = useState(false);
   const flow = useReactFlow<CanvasNode>();
   const flowStore = useStoreApi();
+  const canvasWidth = useStore((s) => s.width);
+  const liveTransform = useStore((s) => s.transform);
+  const toolbarWidth = Math.min(300, Math.max(180, canvasWidth - 24));
+  const toolbarBounds = flow.getNodesBounds([...selected]);
+  const toolbarLeft =
+    (toolbarBounds.x + toolbarBounds.width / 2) * liveTransform[2] +
+    liveTransform[0] -
+    toolbarWidth / 2;
+  const toolbarShift =
+    Math.max(12, Math.min(canvasWidth - toolbarWidth - 12, toolbarLeft)) -
+    toolbarLeft;
   const [legendOpen, setLegendOpen] = useState(false);
   const [colour, setColour] = useState<Colour>("resource");
   const [align, setAlign] = useState(false);
@@ -556,10 +590,26 @@ function GraphView({
   );
   const roleNode = useCallback(
     (node: ApiLineageNodeV1): ApiLineageNodeV1 => {
-      const roles = scheduleRoles?.nodes.find(
+      let roles: ApiOverlayFactsV1["roles"] = scheduleRoles?.nodes.find(
         (n) => n.identity === node.identity,
       )?.roles;
-      if (!scheduleRoles) return node;
+      if (scheduleEdit) {
+        const d = scheduleEdit.definition;
+        const draftRoles: NonNullable<ApiOverlayFactsV1["roles"]>[number][] =
+          [];
+        if (d.build.targets.some((k) => identity(k) === node.identity))
+          draftRoles.push("target");
+        if (
+          triggerDatasets(d.trigger).some((k) => identity(k) === node.identity)
+        )
+          draftRoles.push("trigger");
+        if (d.build.boundaries.some((k) => identity(k) === node.identity))
+          draftRoles.push("boundary");
+        if (d.build.exclusions.some((k) => identity(k) === node.identity))
+          draftRoles.push("excluded");
+        roles = draftRoles;
+      }
+      if (!scheduleRoles && !scheduleEdit) return node;
       return {
         ...node,
         overlay: {
@@ -578,9 +628,10 @@ function GraphView({
         },
       };
     },
-    [scheduleRoles],
+    [scheduleRoles, scheduleEdit],
   );
-  const paintColour = scheduleRoles ? "roles" : colour;
+  const paintColour =
+    scheduleRoles || scheduleEdit || scheduleActive ? "roles" : colour;
   const datasetNodes: DatasetNode[] = useMemo(
     () =>
       graph.nodes.map((node, index) => ({
@@ -605,6 +656,7 @@ function GraphView({
           value: node,
           colour: paintColour,
           paint: paint(roleNode(node), paintColour, planPreview),
+          hideUnknown: !!scheduleRoles || !!scheduleEdit || scheduleActive,
           workspace,
           busy: graph.busy,
           parentsExpanded: model.expanded(node, "upstream"),
@@ -627,6 +679,9 @@ function GraphView({
       planPreview,
       paintColour,
       roleNode,
+      scheduleRoles,
+      scheduleEdit,
+      scheduleActive,
       graph.busy,
       model,
       workspace,
@@ -831,6 +886,17 @@ function GraphView({
       >
         {chosen.length} {chosen.length === 1 ? "node" : "nodes"} selected
       </button>
+      {scheduleEdit && (
+        <div className="schedule-edit-status" role="status">
+          <span>
+            <Icon name="calendar" /> Editing schedule ·{" "}
+            {scheduleEdit.definition.name || "New schedule"}
+          </span>
+          <Button disabled={scheduleEdit.busy} onClick={scheduleEdit.exit}>
+            Exit schedule
+          </Button>
+        </div>
+      )}
       <GraphNotice
         key={`${graph.busy}:${graph.message}:${layout.error}:${notice}`}
         message={graph.message || layout.error || notice}
@@ -930,6 +996,53 @@ function GraphView({
           colorMode={dark ? "dark" : "light"}
         >
           <Background gap={20} />
+          {scheduleEdit && (
+            <NodeToolbar
+              nodeId={[...selected]}
+              isVisible={chosen.length > 0}
+              position={Position.Bottom}
+              offset={12}
+            >
+              <div
+                className="schedule-graph-actions"
+                style={{
+                  width: toolbarWidth,
+                  transform: `translateX(${toolbarShift}px)`,
+                }}
+                role="group"
+                aria-label="Schedule draft roles"
+              >
+                <span>
+                  Mark {chosen.length} selected{" "}
+                  {chosen.length === 1 ? "node" : "nodes"}
+                </span>
+                <Button
+                  disabled={
+                    scheduleEdit.busy ||
+                    !chosen.some((n) => !n.external && n.producer)
+                  }
+                  onClick={() => scheduleEdit.act("target", chosen)}
+                >
+                  <Icon name="table" />
+                  Target
+                </Button>
+                <Button
+                  disabled={scheduleEdit.busy}
+                  onClick={() => scheduleEdit.act("trigger", chosen)}
+                >
+                  <Icon name="calendar" />
+                  Trigger
+                </Button>
+                <Button
+                  disabled={scheduleEdit.busy}
+                  onClick={() => scheduleEdit.act("clear", chosen)}
+                >
+                  <Icon name="remove" />
+                  Clear
+                </Button>
+              </div>
+            </NodeToolbar>
+          )}
           <Controls showInteractive={false} showFitView={false}>
             <ControlButton
               title="Fit view"

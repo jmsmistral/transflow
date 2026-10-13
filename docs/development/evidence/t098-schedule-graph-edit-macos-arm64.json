@@ -1,0 +1,64 @@
+{
+  "task": "T098 schedule graph editing and branch UX follow-up",
+  "date": "2026-10-13",
+  "platform": "macOS arm64",
+  "implementation_base": "14e2731e1802e1e5372b64f104f5857b9b658ffc",
+  "specification_base": "7e82adb341281d8de372d388f1abe583cfe072df",
+  "specification": "1.1.3",
+  "runtime_schema": 16,
+  "scope": "Annotated schedule sidebar, searchable live branch and mini fallback controls, draft-only graph role editing, guarded unsaved exit and post-save runtime-context recovery",
+  "changes": [
+    "Full-width blue Schedules back above heading; View schedule aligns with name and description immediately beneath the name",
+    "Hover/focus information beside every detail label; expiry and delays use hours/minutes/seconds",
+    "Remove preview/default-reset buttons and leaked complete-scope notices; compact condition copy omits pins without changing their semantics",
+    "Hide irrelevant Unknown labels while a specific schedule is active; retain simultaneous role badges and saved coloring",
+    "Complete live workspace branch pagination, deleted-name exclusion, search across the complete result, 200-item displayed pages, abort and repeated-cursor failure guards",
+    "Mini ordered fallback editor with add, drag, up/down and removal; changes remain independent of foreground branch and named/provider input policies",
+    "Target-only 180px scroll frame, Add selected nodes, graph Target/Trigger/Clear actions and bottom Exit schedule status strip",
+    "Graph actions preserve qualified identity and unaffected trigger IDs, normalize empty/single-child groups and remain draft-only until validated ETag Save",
+    "Dirty Exit/back/Cancel offers Keep editing, Discard changes or Save and exit; branch switching and inspector dismissal cannot silently drop the draft",
+    "Successful schedule writes refresh verified runtime context before later graph/branch reads; avoids stale context conflicts after Save",
+    "Root target/condition sections use separators; graph action toolbar is clamped inside canvas and info help remains inside the inspector"
+  ],
+  "local_verification": {
+    "web": "Final bash tools/check-web.sh passed 570 tests across 24 files, strict types/lint/format, production worker diamond/error probes and reproducible 16-asset builds",
+    "focused": "41 schedule/branch/graph tests passed after the final graph toolbar change, including multi-page search, deleted exclusion, cursor failures/retry, fallback ordering, exact ETag, unsaved exit, qualified role edits and advanced runtime fence refresh",
+    "documents": "Specification/link/syntax validator passed (123 tasks, 97 complete); all 44 checker regressions passed",
+    "safety": "Privacy/generated-drift/offline inventory gate and all 27 safety regressions passed: 805 public candidate files, 643 unchanged locked package versions, two active exceptions, one registered generated contract",
+    "whitespace": "git diff --check passed in both repositories"
+  },
+  "browser": {
+    "tool": "Codex internal Browser via CUA, real coordinator, final rebuilt assets and persistent synthetic t098-schedules workspace",
+    "observed": [
+      "Saved Scheduling review opens four graph datasets and three paused schedules; scope-preview/default-reset controls are absent",
+      "Back is full width above Schedules; name/description precede actions; View schedule aligns at the name top and becomes an accessible glyph in narrow panels",
+      "Active schedule paints Target/Trigger labels without unrelated Unknown tags; expiry renders 24 h; detail label/value tops align",
+      "Focus reveals event-expiry help entirely inside the inspector: tooltip x975.20..1195.20 within inspector x947.20..1280",
+      "Selected curated/right adds as a target without saving; Trigger adds a stable publication leaf alongside the existing published leaf; Clear removes both memberships and retains the original condition",
+      "Target list contains only curated/left and the explicitly added curated/right; computed height180px and left/right section borders0px with top separator1px",
+      "Exit opens three choices; Keep editing preserves the draft, Save and exit persists the target and returns to browsing, and Discard changes restores saved roles",
+      "Two guarded target edits verify acceptance and restore the original target; two guarded description edits reproduce and verify the runtime-fence fix and restore the original description",
+      "Immediate graph selection after Save and subsequent live branch search remain Connected on master",
+      "Search mas finds the real fixture live branch master, Escape closes the picker, and foreground branch stays master",
+      "Final graph toolbar bounds x478..778 are inside canvas x0..900.20; Target/Trigger/Clear remain visible in light and dark themes",
+      "All owned coordinators stopped and temporary tabs closed; no new builds, schedule deletion or producer/saved-view writes"
+    ],
+    "fixture_preserved": "Current schedule definition and paused state restored; guarded save audit/trigger epochs remain as truthful verification history",
+    "multiple_branches": "The real fixture has one live branch. Multi-page/deleted/failure and fallback add/reorder/remove cases are deterministic component checks, not claimed as multi-branch real-coordinator journeys"
+  },
+  "commands": [
+    "bash tools/check-web.sh",
+    "npm --prefix web run test -- src/Schedules.test.tsx src/ScheduleBranchesEditor.test.tsx src/graph/graph.test.tsx",
+    "target/python/py314/bin/python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+    "target/python/py314/bin/python -B -m unittest discover -s ../transflow-spec/tools/tests -v",
+    "PYTHON=target/python/py314/bin/python bash tools/check-safety.sh",
+    "git diff --check (both repositories)"
+  ],
+  "limits": [
+    "Frontend/documentation changes only; Rust/Python execution, wire contracts, storage schema, accepted occurrence snapshots and exact event binding remain unchanged",
+    "Native backend suites not repeated for unchanged implementation; earlier T096-T098 receipt remains their historical evidence",
+    "T099/full G2 and other-platform qualification remain outstanding",
+    "Private reference images and transient synthetic review screenshots are not committed",
+    "Remote CI pending owner confirmation; no CI polling"
+  ]
+}

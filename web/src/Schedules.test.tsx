@@ -1,5 +1,6 @@
 import {
   render,
+  act,
   screen,
   fireEvent,
   waitFor,
@@ -21,12 +22,17 @@ import type {
   ScheduleDefinitionV1,
   ScheduleRecordV1,
   ApiScheduleRolesV1,
+  ApiLineageNodeV1,
 } from "./generated/contracts";
 import {
   related,
   savedDefinition,
   identity,
   duration,
+  editGraphRoles,
+  triggerDatasets,
+  secondsLabel,
+  type ScheduleEditSession,
   minute,
 } from "./schedule-model";
 const target = { workspace_id: workspaceId, dataset_id: datasetId };
@@ -98,7 +104,12 @@ const roles: ApiScheduleRolesV1 = {
     },
   ],
 };
-async function setup(conflict = false, withHistory = false) {
+async function setup(
+  conflict = false,
+  withHistory = false,
+  advanceContext = false,
+) {
+  let revision = 1;
   const mutations: { method: string; headers: Headers; body: unknown }[] = [];
   const base = fixtureTransport((path, query) => {
     if (path === "/api/v1/schedules")
@@ -182,6 +193,7 @@ async function setup(conflict = false, withHistory = false) {
     if (String(url) === "/api/v1/schedules/clock-preview")
       return json({ leaves: [] }, null);
     if (String(url) === `/api/v1/schedules/${id}`) {
+      if (advanceContext) revision++;
       mutations.push({
         method: init?.method ?? "",
         headers: new Headers(init?.headers),
@@ -205,7 +217,34 @@ async function setup(conflict = false, withHistory = false) {
             null,
           );
     }
-    return base(url, init);
+    const response = await base(url, init);
+    if (advanceContext && String(url) === "/api/v1/read") {
+      const request = JSON.parse(String(init?.body)) as {
+        path: string;
+        query: Record<string, string>;
+      };
+      const value = (await response.json()) as {
+        context: ReturnType<typeof context> | null;
+        data: unknown;
+      };
+      const live = {
+        ...context(),
+        runtime_revision: String(revision),
+        fingerprint: (revision === 1 ? "d" : "e").repeat(64),
+      };
+      if (request.query.context && request.query.context !== live.fingerprint)
+        return new Response(
+          JSON.stringify({
+            error: { message: "The selected context changed" },
+          }),
+          { status: 409 },
+        );
+      return json(
+        request.path === "/api/v1/context" ? live : value.data,
+        value.context ? live : null,
+      );
+    }
+    return response;
   };
   const workspace = new Workspace(new Client(transport));
   await workspace.connect("test");
@@ -285,15 +324,16 @@ test("cancel leaves the saved snapshot intact; save uses PUT and the original ET
       schedules={[record]}
       onSave={save}
       onCancel={cancel}
-      onDefaults={async () => definition}
     />,
   );
   fireEvent.change(screen.getByLabelText("Schedule name"), {
     target: { value: "Edited" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  expect(cancel).toHaveBeenCalled();
+  expect(cancel).not.toHaveBeenCalled();
   expect(mutations.length).toBe(0);
+  fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
+  expect(cancel).toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Save schedule" }));
   await waitFor(() => expect(mutations.length).toBe(1));
   expect(mutations[0]?.method).toBe("PUT");
@@ -321,7 +361,6 @@ test("edit conflicts preserve the draft and explain which saved definition must 
         await workspace.client.saveSchedule(d, record, signal);
       }}
       onCancel={vi.fn()}
-      onDefaults={async () => definition}
     />,
   );
   fireEvent.change(screen.getByLabelText("Schedule name"), {
@@ -351,7 +390,6 @@ test("compound editor emits typed time trees and policy switches remain accessib
       schedules={[record]}
       onSave={save}
       onCancel={vi.fn()}
-      onDefaults={async () => definition}
     />,
   );
   fireEvent.change(screen.getByLabelText("Condition type"), {
@@ -489,7 +527,6 @@ test("schedule editor keeps Save and Cancel before the fields", async () => {
       schedules={[record]}
       onSave={vi.fn()}
       onCancel={vi.fn()}
-      onDefaults={async () => definition}
     />,
   );
   const header = rendered.container.querySelector(".schedule-editor-header");
@@ -507,5 +544,183 @@ test("schedule editor keeps Save and Cancel before the fields", async () => {
       Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
   rendered.unmount();
+  workspace.dispose();
+});
+
+const graphNode = (dataset_id: string, external = false): ApiLineageNodeV1 => ({
+  identity: identity({ workspace_id: workspaceId, dataset_id }),
+  paths: [`data/${dataset_id}`],
+  depth: "0",
+  external,
+  producer: !external,
+  resource_type: "source",
+  publication: "unknown",
+  parent_count: "0",
+  child_count: "0",
+});
+test("graph role drafts retain qualified identities and untouched typed trigger leaves; duplicates do not create extra leaves", () => {
+  const second = graphNode(id),
+    foreign = {
+      ...graphNode(datasetId, true),
+      identity: identity({ workspace_id: id, dataset_id: datasetId }),
+    };
+  const added = editGraphRoles(
+    definition,
+    "trigger",
+    [second, foreign, second],
+    () => "added",
+  );
+  expect(added.trigger.kind).toBe("and");
+  if (added.trigger.kind !== "and") throw Error("compound trigger");
+  expect(added.trigger.children[0]).toBe(definition.trigger);
+  expect(added.trigger.children[1]).toMatchObject({
+    id: "added",
+    branch: "output",
+    payload_mode: "pin",
+  });
+  expect(triggerDatasets(added.trigger)).toHaveLength(3);
+  expect(editGraphRoles(added, "trigger", [second])).toBe(added);
+  const targets = editGraphRoles(definition, "target", [
+    second,
+    foreign,
+    second,
+  ]);
+  expect(targets.build.targets).toHaveLength(2);
+  expect(targets.build.source).toBe(definition.build.source);
+  expect(definition.build.targets).toEqual([target]);
+});
+test("Clear removes dataset membership and normalizes nested trigger groups while retaining remaining IDs and clock policy", () => {
+  const second = graphNode(id),
+    clock = {
+      kind: "cron",
+      id: "clock",
+      expression: "0 9 * * *",
+      timezone: "Asia/Dubai",
+      duplicate_time: "both",
+    } as const;
+  const compound: ScheduleDefinitionV1 = {
+    ...definition,
+    trigger: {
+      kind: "or",
+      children: [
+        clock,
+        {
+          kind: "and",
+          children: [
+            definition.trigger,
+            {
+              kind: "dataset_published",
+              id: "second",
+              dataset: { workspace_id: workspaceId, dataset_id: id },
+              branch: "input",
+              payload_mode: "pin",
+              include_resets: true,
+            },
+          ],
+        },
+      ],
+    },
+  };
+  const cleared = editGraphRoles(compound, "clear", [
+    graphNode(datasetId),
+    second,
+  ]);
+  expect(cleared.trigger).toEqual(clock);
+  expect(cleared.build.targets).toEqual([]);
+  expect(
+    editGraphRoles(definition, "clear", [graphNode(datasetId)]).trigger,
+  ).toEqual({ kind: "manual" });
+  expect(secondsLabel(86400)).toBe("24 h");
+  expect(secondsLabel(3661)).toBe("1 h 1 min 1 s");
+  expect(secondsLabel(60)).toBe("1 min");
+  expect(secondsLabel(0)).toBe("0 s");
+});
+test("graph editing shows only targets, changes no saved state before Save, and Exit can keep editing or save with the original ETag", async () => {
+  const { workspace, state, mutations } = await setup();
+  let session: ScheduleEditSession | null = null;
+  const cancel = vi.fn(),
+    second = graphNode(id);
+  const onEdit = (s: ScheduleEditSession | null) => {
+    session = s;
+  };
+  const save = vi.fn(async (d: ScheduleDefinitionV1, signal: AbortSignal) => {
+    await workspace.client.saveSchedule(d, record, signal);
+  });
+  render(
+    <ScheduleEditor
+      workspace={workspace}
+      initial={definition}
+      record={record}
+      datasets={state.value.datasets.entries}
+      schedules={[record]}
+      selected={[second]}
+      onEdit={onEdit}
+      onSave={save}
+      onCancel={cancel}
+    />,
+  );
+  expect(
+    screen.queryByRole("button", {
+      name: "Use workspace source and input defaults",
+    }),
+  ).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Add 1 selected node" }));
+  expect(
+    within(
+      screen.getByRole("region", { name: "Datasets to build" }),
+    ).getAllByRole("listitem"),
+  ).toHaveLength(2);
+  expect(mutations).toHaveLength(0);
+  if (!session) throw Error("missing edit session");
+  const edit = session as ScheduleEditSession;
+  act(() => edit.act("trigger", [second]));
+  expect(screen.getAllByLabelText("Condition ID")).toHaveLength(2);
+  act(() => edit.exit());
+  await screen.findByRole("dialog", { name: "Save schedule changes?" });
+  fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+  expect(cancel).not.toHaveBeenCalled();
+  expect(mutations).toHaveLength(0);
+  act(() => edit.exit());
+  fireEvent.click(screen.getByRole("button", { name: "Save and exit" }));
+  await waitFor(() => expect(mutations).toHaveLength(1));
+  expect(save.mock.calls[0]?.[0].build.targets).toHaveLength(2);
+  expect(mutations[0]?.headers.get("If-Match")).toBe(`"${record.etag}"`);
+  workspace.dispose();
+});
+
+test("guarded schedule Save refreshes its advanced runtime fence before graph selection and live branch reads", async () => {
+  const { workspace, state, mutations } = await setup(false, false, true);
+  render(
+    <Schedules
+      workspace={workspace}
+      state={state}
+      selected={[]}
+      visible={[identity(target)]}
+      onRoles={vi.fn()}
+      onPlan={vi.fn()}
+      onAdd={vi.fn()}
+    />,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Daily review Paused · output" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  fireEvent.change(screen.getByLabelText("Description"), {
+    target: { value: "Reviewed" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save schedule" }));
+  await waitFor(() =>
+    expect(screen.getByRole("status").textContent).toContain("Schedule saved"),
+  );
+  expect(mutations).toHaveLength(1);
+  const refreshed = workspace.snapshot();
+  if (refreshed.kind !== "ready")
+    throw Error("save lost the verified workspace");
+  expect(refreshed.value.context.runtime_revision).toBe("2");
+  await expect(
+    workspace.read("ApiMetadataPageV1", "/api/v1/branches"),
+  ).resolves.toMatchObject({
+    entries: [{ name: "master" }, { name: "feature" }],
+  });
   workspace.dispose();
 });

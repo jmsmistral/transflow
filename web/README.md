@@ -265,18 +265,23 @@ Selection does not change the executable graph, saved camera or node positions.
 The editor supports typed nested conditions, next intended times with timezone
 offsets, targets/scope, independent source/data branches and frozen fallback policies.
 Advanced force, retries, abort, overlap, expiry and missed-tick bounds are explicit.
-Save replaces the current snapshot under its original ETag; Cancel discards the draft.
+Save replaces the current snapshot under its original ETag. Exit/Cancel offers Save and
+exit, Discard changes or Keep editing when the draft is dirty. Successful schedule writes
+refresh the verified runtime context before later graph/branch metadata reads.
 An edit conflict keeps the draft and offers an explicit reload. Manual Run now leaves
 paused state unchanged. Pause/Resume and confirmed deletion use guarded API actions.
 
 Saved target/trigger/exclusion/boundary facts come from the backend, with bounded
 pagination and edit/source/policy fences. Runtime job transitions do not invalidate
-unchanged saved role facts. The shared scope preview adds planned jobs/read boundaries;
-visible unique counts and complete-scope counts are separate. Hidden resources can be
-added explicitly. Temporary role coloring leaves the saved coloring and geometry intact.
+unchanged saved role facts. Hidden relevant datasets can be added explicitly.
+The sidebar has no scope-preview action or persistent complete-scope notice. Irrelevant
+Unknown labels are hidden while a schedule is active. Temporary role coloring leaves
+the saved coloring and geometry intact.
 
 The sidebar keeps browsing controls in the list and provides a blue Schedules back
-button in selected details. Dataset cards and aligned rows show compact information;
+button above the heading in selected details. View schedule aligns with the name and
+description; detail labels have focus/hover help and expiry uses hours/minutes/seconds.
+Dataset cards and aligned rows show compact information;
 branch/fallback sits at the bottom. **View schedule** opens a large dedicated modal
 with the full current definition, code-source explanation, summary and recent builds.
 Each build entry opens its retained Build report, and closing it returns to the Schedule
@@ -287,3 +292,22 @@ History/summary use persisted occurrences, exact metrics and missing timing evid
 active histories poll without manual refresh. Schedule build reports link back to the
 current schedule without changing the foreground branch or dataset selection.
 See the [schedule guide](../crates/transflow/SCHEDULES.md).
+
+In Schedule edit mode, the bottom canvas status strip exposes **Exit schedule**. A
+selection toolbar offers **Target**, **Trigger** and **Clear**. The fixed-height target
+list contains only schedule targets and offers **Add selected nodes**; external or
+non-producer nodes cannot become targets. Actions update the draft with qualified
+identities. New graph triggers are publication leaves on the draft data branch with
+exact event pins; they append to an existing AND/OR group or form an AND with an
+existing leaf. Clear removes matching dataset membership and normalizes empty/single
+condition groups, preserving untouched leaf IDs and policies. Backend validation still
+owns target eligibility, cycles and acceptance. Graph selection/roles do not rewrite
+producer dependencies, canvas positions or camera.
+
+The data-branch and fallback pickers fetch every live workspace branch page, exclude
+deleted names, search the complete result and render at most 200 results per page.
+Repeated cursors, failed pages and excessive traversal fail explicitly rather than
+showing an incomplete successful list. Ordered fallbacks support drag, up/down and
+removal. These controls change the schedule draft without switching the foreground
+lineage branch or input defaults. Section separators replace outer target/condition
+borders; source/input-default reset and build-scope preview buttons are omitted.

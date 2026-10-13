@@ -1161,3 +1161,77 @@ test("a newly accepted capture preserves canvas membership and camera on the sam
   view.unmount();
   workspace.dispose();
 });
+
+test("an active schedule hides irrelevant Unknown labels and retains target/trigger badges without changing canvas geometry", async () => {
+  const root = node(`dataset:${workspaceId}:${datasetId}`),
+    other = node(`dataset:${workspaceId}:${workspaceId}`);
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path) =>
+        path.endsWith("/lineage")
+          ? Promise.resolve(json(page([root, other]), context()))
+          : undefined,
+      ),
+    ),
+  );
+  await workspace.connect("test");
+  const request = { path: root.paths[0] ?? "data/a", revision: 1 };
+  const view = render(
+    <GraphExplorer
+      workspace={workspace}
+      focusRequest={request}
+      scheduleActive
+    />,
+  );
+  await waitFor(() =>
+    expect(view.container.querySelectorAll(".react-flow__node")).toHaveLength(
+      2,
+    ),
+  );
+  expect(view.container.querySelectorAll(".node-overlay-label")).toHaveLength(
+    0,
+  );
+  const geometry = [
+    ...view.container.querySelectorAll(".react-flow__node"),
+  ].map((n) => n.getAttribute("style"));
+  view.rerender(
+    <GraphExplorer
+      workspace={workspace}
+      focusRequest={request}
+      scheduleActive
+      scheduleRoles={{
+        schedule_id: datasetId,
+        etag: "e".repeat(64),
+        basis: "saved_definition",
+        total: "1",
+        next_cursor: null,
+        nodes: [
+          {
+            identity: root.identity,
+            paths: root.paths,
+            roles: ["target", "trigger"],
+          },
+        ],
+      }}
+    />,
+  );
+  expect(view.container.querySelectorAll(".node-overlay-label")).toHaveLength(
+    1,
+  );
+  expect(
+    view.container.querySelector(".node-overlay-badges")?.textContent,
+  ).toContain("Trigger");
+  expect(
+    [...view.container.querySelectorAll(".react-flow__node")].map((n) =>
+      n.getAttribute("style"),
+    ),
+  ).toEqual(geometry);
+  view.rerender(<GraphExplorer workspace={workspace} focusRequest={request} />);
+  fireEvent.click(screen.getByRole("button", { name: "Node colouring" }));
+  fireEvent.click(screen.getByRole("menuitemradio", { name: "Build roles" }));
+  expect(view.container.querySelectorAll(".node-overlay-label")).toHaveLength(
+    2,
+  );
+  view.unmount();
+  workspace.dispose();
+});

@@ -1,4 +1,11 @@
-import { useEffect, useState, useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useId,
+  type ReactNode,
+} from "react";
 import type {
   ApiDatasetV1,
   ScheduleDefinitionV1,
@@ -7,12 +14,22 @@ import type {
   ScheduleRecordV1,
   SchedulePoliciesV1,
   ApiScheduleClockPreviewV1,
+  ApiLineageNodeV1,
 } from "./generated/contracts";
 import { Button } from "./components";
 import { Icon } from "./Icons";
 import { decode } from "./api/client";
 import type { Workspace } from "./workspace";
-import { identity, keyOf, savedDefinition } from "./schedule-model";
+import {
+  identity,
+  keyOf,
+  savedDefinition,
+  graphKey,
+  editGraphRoles,
+  type ScheduleEditSession,
+  type ScheduleGraphAction,
+} from "./schedule-model";
+import { ScheduleBranchesEditor } from "./ScheduleBranchesEditor";
 
 export function Switch({
   label,
@@ -183,6 +200,7 @@ export function TriggerEditor({
   schedules,
   branch,
   depth = 0,
+  paths,
 }: {
   value: ScheduleTriggerV1;
   onChange: (v: ScheduleTriggerV1) => void;
@@ -190,9 +208,12 @@ export function TriggerEditor({
   schedules: readonly ScheduleRecordV1[];
   branch: string;
   depth?: number;
+  paths?: ReadonlyMap<string, string>;
 }) {
   return (
-    <fieldset className="schedule-condition">
+    <fieldset
+      className={`schedule-condition ${depth === 0 ? "schedule-section" : ""}`}
+    >
       <legend>{depth === 0 ? "When to build" : "Condition"}</legend>
       <Field label="Condition type">
         <select
@@ -275,7 +296,7 @@ export function TriggerEditor({
                 (d) => identity(keyOf(d)) === identity(value.dataset),
               ) && (
                 <option value={identity(value.dataset)}>
-                  Unresolved dataset
+                  {paths?.get(identity(value.dataset)) ?? "Unresolved dataset"}
                 </option>
               )}
               {datasets
@@ -377,6 +398,7 @@ export function TriggerEditor({
                 schedules={schedules}
                 branch={branch}
                 depth={depth + 1}
+                {...(paths ? { paths } : {})}
               />
               {value.children.length > 2 && (
                 <Button
@@ -447,7 +469,8 @@ export function ScheduleEditor({
   schedules,
   onSave,
   onCancel,
-  onDefaults,
+  selected = [],
+  onEdit,
   onReload,
 }: {
   workspace: Workspace;
@@ -455,9 +478,14 @@ export function ScheduleEditor({
   record: ScheduleRecordV1 | null;
   datasets: readonly ApiDatasetV1[];
   schedules: readonly ScheduleRecordV1[];
-  onSave: (d: ScheduleDefinitionV1, signal: AbortSignal) => Promise<void>;
+  onSave: (
+    d: ScheduleDefinitionV1,
+    signal: AbortSignal,
+    exitToList?: boolean,
+  ) => Promise<void>;
   onCancel: () => void;
-  onDefaults: () => Promise<ScheduleDefinitionV1>;
+  selected?: readonly ApiLineageNodeV1[];
+  onEdit?: (session: ScheduleEditSession | null) => void;
   onReload?: (signal: AbortSignal) => Promise<void>;
 }) {
   const [draft, setDraft] = useState(initial),
@@ -465,8 +493,58 @@ export function ScheduleEditor({
     [busy, setBusy] = useState(false),
     [clock, setClock] = useState<ApiScheduleClockPreviewV1 | null>(null),
     [clockError, setClockError] = useState("");
+  const [graphPaths, setGraphPaths] = useState<ReadonlyMap<string, string>>(
+    new Map(),
+  );
+  const saveAndExit = useRef(false);
   const [policyError, setPolicyError] = useState("");
-  const [policyGeneration, setPolicyGeneration] = useState(0);
+  const [confirmExit, setConfirmExit] = useState(false);
+  const exitDialog = useRef<HTMLDialogElement>(null),
+    form = useRef<HTMLFormElement>(null),
+    cancelButton = useRef<HTMLButtonElement>(null);
+  const exitTitle = useId();
+  const act = useCallback(
+    (action: ScheduleGraphAction, nodes: readonly ApiLineageNodeV1[]) => {
+      setGraphPaths(
+        (old) =>
+          new Map([
+            ...old,
+            ...nodes.map(
+              (n) => [n.identity, n.paths[0] ?? n.identity] as const,
+            ),
+          ]),
+      );
+      setDraft((d) => editGraphRoles(d, action, nodes));
+    },
+    [],
+  );
+  const exit = useCallback(() => cancelButton.current?.click(), []);
+  useEffect(() => {
+    onEdit?.({ definition: draft, busy, act, exit });
+  }, [onEdit, draft, busy, act, exit]);
+  useEffect(() => () => onEdit?.(null), [onEdit]);
+  useEffect(() => {
+    if (confirmExit) exitDialog.current?.showModal();
+    else exitDialog.current?.close();
+  }, [confirmExit]);
+  const requestExit = () => {
+    if (
+      JSON.stringify(draft) !== JSON.stringify(initial) ||
+      policyError ||
+      form.current?.querySelector(":invalid")
+    )
+      setConfirmExit(true);
+    else onCancel();
+  };
+  const additions = selected.filter((n) => {
+    const key = graphKey(n);
+    return (
+      key &&
+      !n.external &&
+      n.producer &&
+      !draft.build.targets.some((k) => identity(k) === identity(key))
+    );
+  });
   const build = (patch: Partial<ScheduleDefinitionV1["build"]>) =>
     setDraft((d) => ({ ...d, build: { ...d.build, ...patch } }));
   const policies = (patch: Partial<SchedulePoliciesV1>) =>
@@ -501,6 +579,7 @@ export function ScheduleEditor({
   const source = draft.build.source;
   return (
     <form
+      ref={form}
       className="schedule-editor"
       onSubmit={(e) => {
         e.preventDefault();
@@ -512,25 +591,48 @@ export function ScheduleEditor({
         saveRequest.current = abort;
         void Promise.resolve()
           .then(() =>
-            onSave(decode("ScheduleDefinitionV1", draft), abort.signal),
+            onSave(
+              decode("ScheduleDefinitionV1", draft),
+              abort.signal,
+              saveAndExit.current,
+            ),
           )
           .catch((e) => {
             if (!abort.signal.aborted)
               setError(e instanceof Error ? e.message : "Schedule save failed");
           })
           .finally(() => {
-            if (!abort.signal.aborted) setBusy(false);
+            if (!abort.signal.aborted) {
+              setBusy(false);
+              saveAndExit.current = false;
+            }
           });
       }}
     >
+      <Button
+        className="schedule-back schedule-back-top"
+        disabled={busy}
+        onClick={requestExit}
+      >
+        <Icon name="left" /> Schedules
+      </Button>
       <header className="schedule-editor-header">
         <h3>{record ? "Edit schedule" : "Create schedule"}</h3>
         <div className="schedule-editor-actions">
-          <Button disabled={busy} onClick={onCancel}>
+          <button
+            type="button"
+            className="button"
+            ref={cancelButton}
+            disabled={busy}
+            onClick={requestExit}
+          >
             Cancel
-          </Button>
+          </button>
           <Button
             type="submit"
+            onClick={() => {
+              saveAndExit.current = false;
+            }}
             className="button-primary"
             disabled={busy || !!policyError || !draft.build.targets.length}
           >
@@ -556,13 +658,51 @@ export function ScheduleEditor({
           onChange={(e) => setDraft({ ...draft, description: e.target.value })}
         />
       </Field>
-      <DatasetChoices
-        label="Datasets to build"
-        value={draft.build.targets}
-        datasets={datasets}
-        local
-        onChange={(targets) => build({ targets })}
-      />
+      <section
+        className="schedule-section schedule-targets"
+        aria-label="Datasets to build"
+      >
+        <h4>Datasets to build</h4>
+        <div className="schedule-target-list" role="list">
+          {draft.build.targets.map((k) => (
+            <div className="schedule-dataset" role="listitem" key={identity(k)}>
+              <Icon name="table" />
+              <span>
+                {datasets.find((d) => identity(keyOf(d)) === identity(k))
+                  ?.path ??
+                  graphPaths.get(identity(k)) ??
+                  selected.find((n) => n.identity === identity(k))?.paths[0] ??
+                  k.dataset_id}
+              </span>
+              <Button
+                aria-label={`Remove target ${datasets.find((d) => identity(keyOf(d)) === identity(k))?.path ?? k.dataset_id}`}
+                onClick={() =>
+                  build({
+                    targets: draft.build.targets.filter(
+                      (v) => identity(v) !== identity(k),
+                    ),
+                  })
+                }
+              >
+                <Icon name="remove" />
+              </Button>
+            </div>
+          ))}
+          {!draft.build.targets.length && (
+            <p className="muted">
+              Select producer datasets on the graph to add targets.
+            </p>
+          )}
+        </div>
+        <Button
+          disabled={busy || !additions.length}
+          onClick={() => act("target", additions)}
+        >
+          <Icon name="new" />
+          Add {additions.length} selected{" "}
+          {additions.length === 1 ? "node" : "nodes"}
+        </Button>
+      </section>
       <Field label="Build scope">
         <select
           value={draft.build.build_mode}
@@ -586,27 +726,13 @@ export function ScheduleEditor({
           <option value="connecting">All connecting datasets</option>
         </select>
       </Field>
-      <Field label="Data branch">
-        <input
-          required
-          value={draft.build.data_branch}
-          onChange={(e) => build({ data_branch: e.target.value })}
-        />
-      </Field>
-      <Field label="Fallback branches (in order)">
-        <input
-          placeholder="main, stable"
-          value={draft.build.fallback_branches.join(", ")}
-          onChange={(e) =>
-            build({
-              fallback_branches: e.target.value
-                .split(",")
-                .map((v) => v.trim())
-                .filter(Boolean),
-            })
-          }
-        />
-      </Field>
+      <ScheduleBranchesEditor
+        workspace={workspace}
+        branch={draft.build.data_branch}
+        fallback={draft.build.fallback_branches}
+        onBranch={(data_branch) => build({ data_branch })}
+        onFallback={(fallback_branches) => build({ fallback_branches })}
+      />
       <Field label="Source selection">
         <select
           value={source.kind}
@@ -677,33 +803,13 @@ export function ScheduleEditor({
           />
         </>
       )}
-      <Button
-        disabled={busy}
-        onClick={() => {
-          void onDefaults()
-            .then((d) => {
-              build({
-                source: d.build.source,
-                input_fallback_policy: d.build.input_fallback_policy,
-                provider_fallback_policies: d.build.provider_fallback_policies,
-                fallback_branches: d.build.fallback_branches,
-              });
-              setPolicyError("");
-              setPolicyGeneration((n) => n + 1);
-            })
-            .catch((e) =>
-              setError(e instanceof Error ? e.message : "Defaults unavailable"),
-            );
-        }}
-      >
-        Use workspace source and input defaults
-      </Button>
       <TriggerEditor
         value={draft.trigger}
         onChange={(trigger) => setDraft({ ...draft, trigger })}
         datasets={datasets}
         schedules={schedules}
         branch={draft.build.data_branch}
+        paths={graphPaths}
       />
       {clock && clock.leaves.length > 0 && (
         <section className="schedule-clock">
@@ -938,7 +1044,6 @@ export function ScheduleEditor({
           onChange={(require_current) => build({ require_current })}
         />
         <PolicyJson
-          key={`input-${policyGeneration}`}
           label="Named input branch policies (JSON)"
           value={draft.build.input_fallback_policy}
           onChange={(v) => {
@@ -958,7 +1063,6 @@ export function ScheduleEditor({
           }}
         />
         <PolicyJson
-          key={`providers-${policyGeneration}`}
           label="Provider input policies (JSON)"
           value={draft.build.provider_fallback_policies}
           onChange={(v) => {
@@ -979,7 +1083,6 @@ export function ScheduleEditor({
           }}
         />
         <PolicyJson
-          key={`parameters-${policyGeneration}`}
           label="Parameter overrides (JSON)"
           value={draft.build.parameters}
           onChange={(v) => {
@@ -1010,13 +1113,57 @@ export function ScheduleEditor({
                   setError(e instanceof Error ? e.message : "Reload failed");
               })
               .finally(() => {
-                if (!abort.signal.aborted) setBusy(false);
+                if (!abort.signal.aborted) {
+                  setBusy(false);
+                  saveAndExit.current = false;
+                }
               });
           }}
         >
           Reload saved definition (discard draft)
         </Button>
       )}
+      <dialog
+        ref={exitDialog}
+        className="schedule-exit-dialog"
+        aria-labelledby={exitTitle}
+        onCancel={(e) => {
+          e.preventDefault();
+          setConfirmExit(false);
+        }}
+      >
+        <h2 id={exitTitle}>Save schedule changes?</h2>
+        <p>Your changes have not been saved.</p>
+        <div className="schedule-actions">
+          <Button
+            onClick={() => {
+              setConfirmExit(false);
+              cancelButton.current?.focus();
+            }}
+          >
+            Keep editing
+          </Button>
+          <Button
+            onClick={() => {
+              setConfirmExit(false);
+              onCancel();
+            }}
+          >
+            Discard changes
+          </Button>
+          <Button
+            className="button-primary"
+            disabled={busy || !!policyError || !draft.build.targets.length}
+            onClick={() => {
+              setConfirmExit(false);
+              saveAndExit.current = true;
+              form.current?.requestSubmit();
+            }}
+          >
+            Save and exit
+          </Button>
+        </div>
+      </dialog>
     </form>
   );
 }

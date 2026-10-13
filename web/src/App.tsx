@@ -1,3 +1,4 @@
+import type { ScheduleEditSession } from "./schedule-model";
 import { Schedules } from "./Schedules";
 import { BuildPlanner } from "./BuildPlanner";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
@@ -66,6 +67,10 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     paths: readonly string[];
     revision: number;
   } | null>(null);
+  const [scheduleActive, setScheduleActive] = useState(false);
+  const [scheduleEdit, setScheduleEdit] = useState<ScheduleEditSession | null>(
+    null,
+  );
   const [scheduleRoles, setScheduleRoles] = useState<
     import("./generated/contracts").ApiScheduleRolesV1 | null
   >(null);
@@ -253,6 +258,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
             Dark theme
           </Button>
           <BranchControls
+            disabled={!!scheduleEdit}
             workspace={workspace}
             state={state}
             visible={visible}
@@ -287,6 +293,8 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                     : null
                 }
                 scheduleRoles={mode === "Schedules" ? scheduleRoles : null}
+                scheduleEdit={mode === "Schedules" ? scheduleEdit : null}
+                scheduleActive={mode === "Schedules" && scheduleActive}
                 cataloguePaths={cataloguePaths}
                 titleHost={titleHost}
                 actionsHost={actionsHost}
@@ -324,6 +332,10 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 aria-label={name}
                 aria-pressed={inspectorOpen && mode === name}
                 onClick={() => {
+                  if (scheduleEdit && name !== "Schedules") {
+                    scheduleEdit.exit();
+                    return;
+                  }
                   setMode(name);
                   setInspectorOpen(true);
                 }}
@@ -352,7 +364,10 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
               }
               aria-expanded={inspectorOpen}
               aria-controls="inspector"
-              onClick={() => setInspectorOpen(!inspectorOpen)}
+              onClick={() => {
+                if (scheduleEdit) scheduleEdit.exit();
+                else setInspectorOpen(!inspectorOpen);
+              }}
             >
               <Icon name={inspectorOpen ? "collapse" : "reveal"} />
             </button>
@@ -370,7 +385,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 className={`inspector ${mode === "Catalogue" ? "catalogue-panel" : ""}`}
                 aria-label="Right inspector"
               >
-                {mode !== "Build planner" && (
+                {mode !== "Build planner" && mode !== "Schedules" && (
                   <header className="inspector-header">
                     <h2>{mode}</h2>
                   </header>
@@ -443,6 +458,8 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                     selected={selectedNodes}
                     visible={visible}
                     focusRequest={scheduleRequest}
+                    onActive={setScheduleActive}
+                    onEdit={setScheduleEdit}
                     onRoles={setScheduleRoles}
                     onPlan={setPlanPreview}
                     onAdd={(paths) =>

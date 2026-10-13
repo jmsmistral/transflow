@@ -1,6 +1,60 @@
+import { useId } from "react";
 import type { ScheduleDefinitionV1 } from "./generated/contracts";
 import { Icon } from "./Icons";
-import { identity } from "./schedule-model";
+import { identity, secondsLabel } from "./schedule-model";
+
+const detailHelp: Record<string, string> = {
+  "Data branch":
+    "The branch where this schedule publishes its dataset outputs.",
+  "Fallback order":
+    "When an input is missing on the data branch, try these branches in order. Explicit input policies remain independent.",
+  "Code source":
+    "The captured code, committed Git ref, or working files used to build datasets. This is separate from the output data branch.",
+  "Build scope":
+    "Which targets and related producers are included in the build.",
+  "Attempts / retry classes":
+    "The maximum job attempts and failure classes that are eligible for retry.",
+  "Overlapping builds":
+    "Whether separate occurrences may build concurrently, subject to write reservations.",
+  "Pending occurrences":
+    "How new occurrences wait, merge or skip while another build is active.",
+  "Maximum pending": "The maximum number of waiting occurrences.",
+  "Missed ticks": "How intended times missed during downtime are handled.",
+  "Maximum catch-up": "The limit on missed times recovered together.",
+  "Event expiry":
+    "How long matched trigger evidence remains eligible to combine with other conditions.",
+  "Automatic burst limit":
+    "The maximum consecutive automatic builds and the minimum delay between them.",
+  "Force build":
+    "Whether up-to-date target jobs execute again instead of reusing cached outputs.",
+  "Abort dependent work": "Whether a required failure stops dependent work.",
+  "Require current inputs":
+    "Whether boundary inputs must be current before accepting a build.",
+  "Transform timeout": "Maximum elapsed time allowed for transform execution.",
+  "Validation timeout": "Maximum elapsed time allowed for validation.",
+  "Additive registration":
+    "Whether validated new output declarations may be registered when capturing working files.",
+};
+function DetailLabel({ label }: { label: string }) {
+  const id = useId();
+  return (
+    <dt className="schedule-detail-label">
+      <span>{label}</span>
+      <span className="schedule-info">
+        <button
+          type="button"
+          aria-label={`About ${label.toLowerCase()}`}
+          aria-describedby={id}
+        >
+          <Icon name="info" />
+        </button>
+        <span id={id} role="tooltip">
+          {detailHelp[label]}
+        </span>
+      </span>
+    </dt>
+  );
+}
 
 type Dataset = ScheduleDefinitionV1["build"]["targets"][number];
 export type SchedulePath = (dataset: Dataset) => string;
@@ -39,9 +93,9 @@ export function ScheduleBranches({
 }) {
   return (
     <dl className="schedule-details">
-      <dt>Data branch</dt>
+      <DetailLabel label="Data branch" />
       <dd>{definition.build.data_branch}</dd>
-      <dt>Fallback order</dt>
+      <DetailLabel label="Fallback order" />
       <dd>
         {[
           definition.build.data_branch,
@@ -63,7 +117,7 @@ export function ScheduleFacts({
   const source = build.source;
   return (
     <dl className="schedule-details">
-      <dt>Code source</dt>
+      <DetailLabel label="Code source" />
       <dd>
         {source.kind === "git_ref"
           ? `Git ref ${source.ref}`
@@ -83,7 +137,7 @@ export function ScheduleFacts({
       </dd>
       {full && (
         <>
-          <dt>Build scope</dt>
+          <DetailLabel label="Build scope" />
           <dd>
             {
               {
@@ -96,7 +150,7 @@ export function ScheduleFacts({
           </dd>
         </>
       )}
-      <dt>Attempts / retry classes</dt>
+      <DetailLabel label="Attempts / retry classes" />
       <dd>
         {policies.max_attempts} /{" "}
         {policies.retryable_classes
@@ -105,48 +159,48 @@ export function ScheduleFacts({
       </dd>
       {full && (
         <>
-          <dt>Overlapping builds</dt>
+          <DetailLabel label="Overlapping builds" />
           <dd>
             {policies.allow_overlapping_builds
               ? "Allowed with write reservations"
               : "Wait for the active build"}
           </dd>
-          <dt>Pending occurrences</dt>
+          <DetailLabel label="Pending occurrences" />
           <dd>{policies.overlap_policy.replaceAll("_", " ")}</dd>
-          <dt>Maximum pending</dt>
+          <DetailLabel label="Maximum pending" />
           <dd>{policies.max_pending}</dd>
-          <dt>Missed ticks</dt>
+          <DetailLabel label="Missed ticks" />
           <dd>{policies.misfire_policy.replaceAll("_", " ")}</dd>
-          <dt>Maximum catch-up</dt>
+          <DetailLabel label="Maximum catch-up" />
           <dd>{policies.max_catch_up}</dd>
         </>
       )}
-      <dt>Event expiry</dt>
+      <DetailLabel label="Event expiry" />
       <dd>
         {policies.token_window_seconds === null
           ? "No expiry acknowledged"
-          : `${policies.token_window_seconds} s`}
+          : secondsLabel(policies.token_window_seconds)}
       </dd>
-      <dt>Automatic burst limit</dt>
+      <DetailLabel label="Automatic burst limit" />
       <dd>
-        {policies.max_consecutive_builds} · {policies.minimum_delay_seconds} s
-        minimum delay
+        {policies.max_consecutive_builds} ·{" "}
+        {secondsLabel(policies.minimum_delay_seconds)} minimum delay
       </dd>
       {full && (
         <>
-          <dt>Force build</dt>
+          <DetailLabel label="Force build" />
           <dd>{build.force ? "On" : "Off"}</dd>
-          <dt>Abort dependent work</dt>
+          <DetailLabel label="Abort dependent work" />
           <dd>{policies.abort_on_failure ? "On" : "Off"}</dd>
-          <dt>Require current inputs</dt>
+          <DetailLabel label="Require current inputs" />
           <dd>{build.require_current ? "On" : "Off"}</dd>
-          <dt>Transform timeout</dt>
-          <dd>{build.timeout_seconds} s</dd>
-          <dt>Validation timeout</dt>
-          <dd>{build.validation_timeout_seconds} s</dd>
+          <DetailLabel label="Transform timeout" />
+          <dd>{secondsLabel(build.timeout_seconds)}</dd>
+          <DetailLabel label="Validation timeout" />
+          <dd>{secondsLabel(build.validation_timeout_seconds)}</dd>
           {source.kind === "working_tree" && (
             <>
-              <dt>Additive registration</dt>
+              <DetailLabel label="Additive registration" />
               <dd>{source.allow_additive_sync ? "Allowed" : "Off"}</dd>
             </>
           )}

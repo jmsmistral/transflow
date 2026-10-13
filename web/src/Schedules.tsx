@@ -38,6 +38,7 @@ import {
   duration,
   ratio,
 } from "./schedule-model";
+import type { ScheduleEditSession } from "./schedule-model";
 import { ScheduleEditor, Switch } from "./ScheduleEditor";
 import { historyDateRange, percent, position } from "./execution-model";
 import { useBuildEvidence } from "./build-evidence";
@@ -255,7 +256,9 @@ function DeleteDialog({
 function TriggerSummary({
   trigger,
   paths,
+  compact = false,
 }: {
+  compact?: boolean;
   trigger: ScheduleDefinitionV1["trigger"];
   paths: (key: import("./generated/contracts").DatasetKey) => string;
 }) {
@@ -272,7 +275,7 @@ function TriggerSummary({
           <ul>
             {trigger.children.map((c, i) => (
               <li key={i}>
-                <TriggerSummary trigger={c} paths={paths} />
+                <TriggerSummary trigger={c} paths={paths} compact={compact} />
               </li>
             ))}
           </ul>
@@ -293,8 +296,9 @@ function TriggerSummary({
         <span>
           {paths(trigger.dataset)} ·{" "}
           {trigger.kind === "dataset_published" ? "published" : "head changed"}{" "}
-          on {trigger.branch} ·{" "}
-          {trigger.payload_mode === "pin" ? "exact version pin" : "signal only"}
+          on {trigger.branch}
+          {!compact &&
+            ` · ${trigger.payload_mode === "pin" ? "exact version pin" : "signal only"}`}
           {trigger.include_resets ? " · includes resets" : ""}
         </span>
       );
@@ -602,6 +606,8 @@ export function Schedules({
   onPlan,
   onAdd,
   focusRequest,
+  onEdit,
+  onActive,
 }: {
   workspace: Workspace;
   state: Ready;
@@ -611,6 +617,8 @@ export function Schedules({
   onPlan: (plan: PlanResultV1 | null) => void;
   onAdd: (paths: readonly string[]) => void;
   focusRequest?: { id: string; revision: number } | null;
+  onEdit?: (session: ScheduleEditSession | null) => void;
+  onActive?: (active: boolean) => void;
 }) {
   const [rows, setRows] = useState<readonly ScheduleRecordV1[]>([]),
     [next, setNext] = useState<string | null>(null),
@@ -623,7 +631,6 @@ export function Schedules({
     } | null>(null),
     [roles, setRoles] = useState<ApiScheduleRolesV1 | null>(null);
   const [roleError, setRoleError] = useState("");
-  const [preview, setPreview] = useState<PlanResultV1 | null>(null);
   const [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
@@ -641,6 +648,10 @@ export function Schedules({
     contextKey = visualContext(context);
   const current = rows.find((r) => r.id === chosen) ?? null,
     definition = current ? savedDefinition(current) : null;
+  useEffect(() => {
+    onActive?.(!!chosen || !!draft);
+  }, [onActive, chosen, draft]);
+  useEffect(() => () => onActive?.(false), [onActive]);
   const scopeNodes = selected.length
     ? selected.map((n) => n.identity)
     : visible;
@@ -671,7 +682,6 @@ export function Schedules({
           ]);
           setChosen(r.data.id);
           setViewOpen(true);
-          setPreview(null);
           onPlan(null);
         }
       })
@@ -845,6 +855,9 @@ export function Schedules({
         if (!abort.signal.aborted)
           setRows(rows.map((r) => (r.id === saved.id ? saved : r)));
       }
+      // Schedule writes advance the runtime read fence without a job event.
+      // Refresh verified context before subsequent graph/branch metadata reads.
+      if (!abort.signal.aborted) await workspace.refresh(true);
       if (!abort.signal.aborted) setRevision((n) => n + 1);
     } catch (e) {
       if (!abort.signal.aborted) setError(message(e));
@@ -853,27 +866,12 @@ export function Schedules({
     }
   };
   const relevant = new Map((roles?.nodes ?? []).map((n) => [n.identity, n]));
-  for (const write of preview?.writes ?? []) {
-    const id = `dataset:${preview?.workspace}:${write.dataset}`;
-    if (!relevant.has(id))
-      relevant.set(id, { identity: id, paths: [write.path], roles: [] });
-  }
-  for (const read of preview?.reads ?? []) {
-    const id = `dataset:${read.origin_workspace ?? preview?.workspace}:${read.dataset}`;
-    if (!relevant.has(id))
-      relevant.set(id, {
-        identity: id,
-        paths: [read.path],
-        roles: ["boundary"],
-      });
-  }
   const hidden = [...relevant.values()].filter(
     (n) => !visible.includes(n.identity),
   );
   const choose = (id: string) => {
     setChosen(id);
     setViewOpen(false);
-    setPreview(null);
     setRoles(null);
     onPlan(null);
     onRoles(null);
@@ -925,7 +923,8 @@ export function Schedules({
           record={draft.record}
           datasets={datasets}
           schedules={rows}
-          onDefaults={defaults}
+          selected={selected}
+          {...(onEdit ? { onEdit } : {})}
           onReload={async (signal) => {
             if (!draft.record) return;
             const row = (
@@ -946,19 +945,27 @@ export function Schedules({
               ...previous.filter((r) => r.id !== row.id),
             ]);
           }}
-          onCancel={() => setDraft(null)}
-          onSave={async (d, signal) => {
+          onCancel={() => {
+            setDraft(null);
+            setChosen(null);
+            setNotice("");
+            onPlan(null);
+            onRoles(null);
+          }}
+          onSave={async (d, signal, exitToList) => {
             const saved = await workspace.client.saveSchedule(
               d,
               draft.record,
               signal,
             );
             if (signal.aborted) return;
+            await workspace.refresh(true);
+            if (signal.aborted) return;
             setRows((previous) => [
               saved,
               ...previous.filter((r) => r.id !== saved.id),
             ]);
-            setChosen(saved.id);
+            setChosen(exitToList ? null : saved.id);
             setDraft(null);
             setNotice("Schedule saved. Its current definition was replaced.");
             setRevision((n) => n + 1);
@@ -994,6 +1001,25 @@ export function Schedules({
     );
   return (
     <section className="schedules">
+      {chosen && (
+        <Button
+          className="schedule-back schedule-back-top"
+          onClick={() => {
+            setViewOpen(false);
+            setChosen(null);
+            onPlan(null);
+            onRoles(null);
+            setRoles(null);
+            setNotice("");
+            setError("");
+          }}
+        >
+          <Icon name="left" /> Schedules
+        </Button>
+      )}
+      <header className="inspector-header">
+        <h2>Schedules</h2>
+      </header>
       {!chosen && (
         <div className="schedule-list-controls">
           <div className="schedule-list-toolbar">
@@ -1117,25 +1143,20 @@ export function Schedules({
       )}
       {current && (
         <>
-          <div className="schedule-detail-toolbar">
+          <div className="schedule-detail-heading">
+            <div>
+              <h3>{definition?.name ?? "Schedule needs review"}</h3>
+              {definition?.description && <p>{definition.description}</p>}
+            </div>
             <Button
-              className="schedule-back"
-              onClick={() => {
-                setViewOpen(false);
-                setChosen(null);
-                setPreview(null);
-                onPlan(null);
-                onRoles(null);
-                setRoles(null);
-              }}
+              aria-label="View schedule"
+              title="View schedule"
+              onClick={() => setViewOpen(true)}
             >
-              <Icon name="left" /> Schedules
-            </Button>
-            <Button onClick={() => setViewOpen(true)}>
-              <Icon name="external" /> View schedule
+              <Icon name="external" />
+              <span className="schedule-view-label">View schedule</span>
             </Button>
           </div>
-          <h3>{definition?.name ?? "Schedule needs review"}</h3>
           <p className="muted">
             {current.paused ? "Paused" : "Active"}
             {current.needs_review ? " · Review required" : ""}
@@ -1143,7 +1164,6 @@ export function Schedules({
           {!viewOpen && scheduleActions}
           {definition && (
             <>
-              <p>{definition.description}</p>
               <ScheduleFacts definition={definition} />
               <h4>Datasets to build</h4>
               <ScheduleDatasets
@@ -1151,37 +1171,11 @@ export function Schedules({
                 path={path}
               />
               <h4>When to build</h4>
-              <TriggerSummary trigger={definition.trigger} paths={path} />
-              <div className="schedule-actions">
-                <Button
-                  disabled={busy}
-                  onClick={() => {
-                    const abort = new AbortController();
-                    pending.current?.abort();
-                    pending.current = abort;
-                    setBusy(true);
-                    void workspace.client
-                      .schedulePreview(definition, context, abort.signal)
-                      .then((p) => {
-                        if (!abort.signal.aborted) {
-                          onPlan(p);
-                          setPreview(p);
-                          setNotice(
-                            `Complete scope: ${p.writes.length} jobs · ${p.targets.length} ${p.targets.length === 1 ? "target" : "targets"}. Cached inputs remain boundaries.`,
-                          );
-                        }
-                      })
-                      .catch((e) => {
-                        if (!abort.signal.aborted) setError(message(e));
-                      })
-                      .finally(() => {
-                        if (!abort.signal.aborted) setBusy(false);
-                      });
-                  }}
-                >
-                  Preview build scope
-                </Button>
-              </div>
+              <TriggerSummary
+                trigger={definition.trigger}
+                paths={path}
+                compact
+              />
             </>
           )}
           {roles && (

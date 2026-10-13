@@ -78,8 +78,8 @@ separate cohorts are labelled.
 The UI shows inclusive From/To calendar dates, two decimal duration display, and
 separate counts for occurrences, builds, jobs, attempts and timings. Charts display
 only the selected history page and disclose that basis. Build reports automatically
-update while active. Informational scope previews use the shared planner and cannot
-be accepted as ad-hoc builds; use Run now on the saved schedule.
+update while active. Use Run now on the saved schedule to execute its definition.
+Informational scope previews remain a CLI/API service; the sidebar omits their button.
 
 ## Dedicated Schedule view
 
@@ -94,3 +94,23 @@ captured code; a Git ref selects its committed code; working-tree selection capt
 the current files for each occurrence. This choice is independent of the output data
 branch. Snapshot identifiers remain available in the full view. Editor Save and Cancel
 stay at the top; saving still overwrites the single current definition under its edit guard.
+
+## Graph-assisted editing
+
+Choose **Edit**, then select datasets on lineage. **Add selected nodes** or **Target**
+adds eligible producer targets to a fixed-height, target-only list. The selection
+also offers **Trigger** and **Clear**. Trigger adds a publication condition on the
+draft data branch, with an exact event pin. Existing AND/OR groups retain their operator;
+an existing single condition combines with the new condition using AND. Clear removes
+that dataset's target/trigger/boundary/exclusion/refresh membership and collapses empty
+or single-child groups. Unrelated condition IDs and policies are retained. Backend
+validation still rejects invalid targets, cycles and conflicting edits.
+
+These are draft changes. **Exit schedule**, **Schedules** and **Cancel** offer Save and
+exit, Discard changes or Keep editing when there are unsaved changes. Save overwrites
+one definition under its original ETag. The data branch picker searches all live
+workspace branches, with complete API pagination and bounded result pages. The mini
+fallback editor supports add, drag, up/down and remove without switching the lineage
+branch. No source/input-default reset button is shown. Info icons beside detail labels
+explain their settings; expiry is displayed in hours, minutes or seconds. Exact pin
+wording stays in the full view/editor, while the compact condition summary omits it.

@@ -254,7 +254,10 @@ The [schedule inspector and CLI](crates/transflow/SCHEDULES.md) store one curren
 snapshot, overwritten on Save without definition history. Edit guards prevent conflicting
 saves; accepted work keeps its frozen execution settings. The inspector supports related/all
 lists, compound conditions, source/branch policies, manual runs, pause/resume, deletion,
-history/metrics and backend role facts with explicit hidden-resource scope previews.
+history/metrics and backend role facts with explicit hidden-resource counts.
+Schedule editing supports graph-selected targets and triggers, a target-only scrollable list,
+searchable live data branches and ordered fallback controls. Exit offers Save, Discard or
+Keep editing; the current definition remains unchanged until guarded Save.
 The **View schedule** modal shows full schedule configuration and recent builds,
 which open retained Build reports. See the [schedule guide](crates/transflow/SCHEDULES.md).
 Plain-clicking any selected lineage node narrows a multi-selection to that node.

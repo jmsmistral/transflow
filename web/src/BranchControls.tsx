@@ -26,10 +26,12 @@ export function BranchControls({
   workspace,
   state,
   visible,
+  disabled = false,
 }: {
   workspace: Workspace;
   state: WorkspaceState;
   visible: readonly string[];
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false),
     [search, setSearch] = useState("");
@@ -151,6 +153,7 @@ export function BranchControls({
     <div className="branch-controls">
       <div className="branch-picker" ref={picker}>
         <Button
+          disabled={disabled}
           aria-label={`Branch: ${branch}`}
           aria-expanded={open}
           aria-controls="branch-menu"
@@ -226,7 +229,12 @@ export function BranchControls({
         className="button icon-button"
         aria-label="Fallback branches"
         title="Fallback branches"
-        disabled={!ready || !!state.selection.plan || !!state.selection.version}
+        disabled={
+          disabled ||
+          !ready ||
+          !!state.selection.plan ||
+          !!state.selection.version
+        }
         onClick={() => {
           setTail(
             state.kind === "ready"
