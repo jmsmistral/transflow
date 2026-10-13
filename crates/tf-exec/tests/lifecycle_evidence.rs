@@ -14,7 +14,7 @@ fn envelope(request: &PublicationRequest, declaration: &str, required: bool) -> 
     json!({"format_version":1,"request_id":RequestId::from_bytes([99;16]).to_string(),
     "attempt_id":request.intent.attempt().to_string(),"artifact_digest":request.intent.artifact().hex(),
     "subject_version":null,"consumer_definition":"a".repeat(64),"binding":null,"phase":"output",
-    "evaluator":"duckdb-1.5.5:core-v1","semantics":"strict-null-key-v1","started_us":"5","finished_us":"10","duration_us":"5",
+    "evaluator":"duckdb-1.5.5:g3-v1","semantics":"strict-null-key-g3-v1","started_us":"5","finished_us":"10","duration_us":"5",
     "checks":[{"id":"check","name":"check","definition_digest":declaration,"status":if required{"PASS"}else{"VIOLATION"},
     "severity":if required{"FAIL"}else{"WARN"},"exact":true,"failed_rows":"1","error":null,"metrics":[],"sample":null}]})
 }

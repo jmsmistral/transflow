@@ -88,11 +88,15 @@ fn materialize<'a>(
     staging: RequestId,
     report: &mut Option<Report>,
 ) -> Result<Candidate<'a>, Error> {
-    if launch.operation != Operation::Execute || launch.request_schema != "PolarsExecutionRequestV1"
+    if launch.operation != Operation::Execute
+        || !matches!(
+            launch.request_schema,
+            "PolarsExecutionRequestV1" | "SqlExecutionRequestV1"
+        )
     {
         return Err(Error::Evidence);
     }
-    validate_document("PolarsExecutionRequestV1", &launch.request).map_err(|_| Error::Evidence)?;
+    validate_document(launch.request_schema, &launch.request).map_err(|_| Error::Evidence)?;
     let request = launch.request.clone();
     let threads = launch
         .reservation
@@ -152,7 +156,7 @@ fn materialize<'a>(
     if result["message"]["artifact_digest"].as_str() != Some(&digest.hex())
         || value["files"].as_array().map(Vec::len) != Some(1)
         || value["files"][0]["path"] != "part-00000.parquet"
-        || value["writer"]["engine"] != "polars"
+        || value["writer"]["engine"] != request["producer"]["engine"]
         || value["writer"]["compression"] != request["compression"]
         || value["writer"]["row_group_size"] != request["row_group_size"]
     {

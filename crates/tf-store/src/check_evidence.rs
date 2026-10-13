@@ -65,7 +65,32 @@ fn policy(result: &Value) -> Value {
         .unwrap_or_else(|| json!({"allowed_columns":[],"sensitive_columns":[],"max_rows":20}))
 }
 fn key(result: &Value, check: &Value, normalization: &str) -> Value {
-    json!({"definition":check["definition_digest"],"artifact":result["artifact_digest"],"version":result["subject_version"],"phase":result["phase"],"binding":result["binding"],"consumer":result["consumer_definition"],"evaluator":result["evaluator"],"semantics":result["semantics"],"normalization":normalization,"sample_policy":policy(result)})
+    json!({"definition":check["definition_digest"],"artifact":result["artifact_digest"],"version":result["subject_version"],"phase":result["phase"],"binding":result["binding"],"consumer":result["consumer_definition"],"evaluator":result["evaluator"],"semantics":result["semantics"],"normalization":normalization,"sample_policy":policy(result),"inputs":result.get("inputs").cloned().unwrap_or_else(||json!([])),"evaluation_time":result["evaluation_time"]})
+}
+pub(crate) fn validate_context_inputs(
+    result: &Value,
+    contract: &PublicationContract,
+) -> Result<()> {
+    let mut seen = BTreeSet::new();
+    if let Some(inputs) = result.get("inputs").and_then(Value::as_array) {
+        for value in inputs {
+            let alias = value["alias"].as_str().ok_or(PublicationError::Evidence)?;
+            let input = contract
+                .inputs
+                .iter()
+                .find(|i| i.alias == alias)
+                .ok_or(PublicationError::Evidence)?;
+            if !seen.insert(alias)
+                || value["dataset"]["workspace_id"] != input.dataset.workspace_id().to_string()
+                || value["dataset"]["dataset_id"] != input.dataset.dataset_id().to_string()
+                || value["version_id"] != input.version.to_string()
+                || value["artifact_digest"] != input.artifact.hex()
+            {
+                return Err(PublicationError::Evidence);
+            }
+        }
+    }
+    Ok(())
 }
 async fn guard(db: &mut SqliteConnection, c: &Context<'_>) -> Result<()> {
     publication::authority(
@@ -205,14 +230,15 @@ impl Store {
             .map_err(|_| PublicationError::Evidence)?;
         validate_document("ArtifactManifestV1", manifest)
             .map_err(|_| PublicationError::Evidence)?;
+        validate_context_inputs(result, c.contract)?;
         if result["consumer_definition"] != c.consumer_definition
             || result["attempt_id"] != c.attempt.to_string()
             || result["artifact_digest"]
                 != artifact_digest(manifest)
                     .map_err(|_| PublicationError::Evidence)?
                     .hex()
-            || result["evaluator"] != "duckdb-1.5.5:core-v1"
-            || result["semantics"] != "strict-null-key-v1"
+            || result["evaluator"] != "duckdb-1.5.5:g3-v1"
+            || result["semantics"] != "strict-null-key-g3-v1"
         {
             return Err(PublicationError::Evidence);
         }
@@ -552,6 +578,21 @@ impl Store {
         verified: &VerifiedArtifact,
     ) -> Result<Option<Certificate>> {
         validate_document("DeclarationCheckV1", q.check).map_err(|_| PublicationError::Evidence)?;
+        fn contextual(value: &Value) -> bool {
+            match value {
+                Value::Object(map) => {
+                    matches!(value["kind"].as_str(), Some("input" | "evaluation_time"))
+                        || map.values().any(contextual)
+                }
+                Value::Array(values) => values.iter().any(contextual),
+                _ => false,
+            }
+        }
+        // Cross-input and clock-dependent checks are re-evaluated under the current
+        // attempt. This single-subject certificate API cannot certify their context.
+        if contextual(&q.check["expectation"]) {
+            return Ok(None);
+        }
         validate_document("CheckSamplePolicyV1", q.sample_policy)
             .map_err(|_| PublicationError::Evidence)?;
         validate_document("Sha256", &json!(q.consumer_definition))
@@ -564,7 +605,7 @@ impl Store {
         }
         let declaration = digest(q.check)?;
         let definition = publication::gate_definition(&declaration, Some(&q.input.alias))?;
-        let value = json!({"definition":declaration,"artifact":q.input.artifact.hex(),"version":q.input.version.to_string(),"phase":"input","binding":q.input.alias,"consumer":q.consumer_definition,"evaluator":q.evaluator,"semantics":q.semantics,"normalization":q.normalization,"sample_policy":q.sample_policy});
+        let value = json!({"definition":declaration,"artifact":q.input.artifact.hex(),"version":q.input.version.to_string(),"phase":"input","binding":q.input.alias,"consumer":q.consumer_definition,"evaluator":q.evaluator,"semantics":q.semantics,"normalization":q.normalization,"sample_policy":q.sample_policy,"inputs":[],"evaluation_time":null});
         let fingerprint = digest(&value)?;
         let mut tx = self.db.begin().await?;
         publication::authority(&mut tx, workspace, session).await?;

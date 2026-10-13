@@ -49,6 +49,21 @@ fn integer(v: &Value) -> bool {
         Some("i8" | "i16" | "i32" | "i64" | "u8" | "u16" | "u32" | "u64")
     )
 }
+fn numeric(v: &Value) -> bool {
+    integer(v) || matches!(v["type"].as_str(), Some("f32" | "f64" | "decimal"))
+}
+fn finite(v: &Value, nonnegative: bool) -> Result<()> {
+    let n = v["value"]
+        .as_str()
+        .and_then(|s| s.parse::<f64>().ok())
+        .filter(|n| n.is_finite() && (!nonnegative || *n >= 0.0));
+    if !numeric(v) || n.is_none() {
+        return Err(AstError(
+            "Expected a finite numeric value or nonnegative tolerance",
+        ));
+    }
+    Ok(())
+}
 fn scalar(v: &Value, aliases: &BTreeSet<&str>) -> Result<ScalarOperand<Value>> {
     match v["kind"].as_str() {
         Some("row_count") => {
@@ -63,7 +78,19 @@ fn scalar(v: &Value, aliases: &BTreeSet<&str>) -> Result<ScalarOperand<Value>> {
             };
             Ok(ScalarOperand::Metric(ScalarMetric::RowCount(source)))
         }
-        Some("literal") if integer(&v["value"]) => Ok(ScalarOperand::Literal(v["value"].clone())),
+        Some("null_count") => Ok(ScalarOperand::Metric(ScalarMetric::NullCount(name(
+            &v["column"],
+        )?))),
+        Some("null_fraction") => Ok(ScalarOperand::Metric(ScalarMetric::NullFraction(name(
+            &v["column"],
+        )?))),
+        Some("distinct_count") => Ok(ScalarOperand::Metric(ScalarMetric::DistinctCount(name(
+            &v["column"],
+        )?))),
+        Some("literal") if numeric(&v["value"]) => {
+            finite(&v["value"], false)?;
+            Ok(ScalarOperand::Literal(v["value"].clone()))
+        }
         _ => Err(AstError("Row-count comparisons require an integer literal")),
     }
 }
@@ -125,6 +152,67 @@ fn node(
         Some("is_null") => Expectation::Row(RowPredicate::IsNull(name(&v["column"])?)),
         Some("is_finite") => Expectation::Row(RowPredicate::IsFinite(name(&v["column"])?)),
         Some("is_nan") => Expectation::Row(RowPredicate::IsNan(name(&v["column"])?)),
+        Some("approx") => {
+            finite(&v["value"], false)?;
+            finite(&v["abs_tol"], true)?;
+            finite(&v["rel_tol"], true)?;
+            Expectation::Row(RowPredicate::Approx(
+                name(&v["column"])?,
+                v["value"].clone(),
+                v["abs_tol"].clone(),
+                v["rel_tol"].clone(),
+            ))
+        }
+        Some("matches") => Expectation::Row(RowPredicate::Matches(
+            name(&v["column"])?,
+            v["pattern"]
+                .as_str()
+                .ok_or(AstError("Regex pattern is malformed"))?
+                .into(),
+            v["mode"] == "full",
+        )),
+        Some("in_dataset") => {
+            let alias = name(&v["input"]["alias"])?;
+            if !aliases.contains(alias.as_str()) {
+                return Err(AstError("Expectation references an undeclared input alias"));
+            }
+            Expectation::Row(RowPredicate::InDataset(
+                name(&v["column"])?,
+                InputAliasRef(alias),
+                name(&v["input_column"])?,
+            ))
+        }
+        Some("age_compare") => {
+            finite(&v["value"], false)?;
+            Expectation::Row(RowPredicate::Age(
+                comparison(&v["op"])?,
+                name(&v["column"])?,
+                v["value"].clone(),
+            ))
+        }
+        Some("schema_equals") => {
+            Expectation::Dataset(DatasetExpectation::SchemaEquals(v["schema"].clone()))
+        }
+        Some("group_count") => {
+            let columns = v["columns"]
+                .as_array()
+                .ok_or(AstError("Group columns are malformed"))?
+                .iter()
+                .map(name)
+                .collect::<Result<Vec<_>>>()?;
+            if columns.iter().collect::<BTreeSet<_>>().len() != columns.len()
+                || !integer(&v["value"])
+            {
+                return Err(AstError(
+                    "Group counts require unique columns and an integer bound",
+                ));
+            }
+            Expectation::Dataset(DatasetExpectation::GroupCount(
+                comparison(&v["op"])?,
+                columns,
+                v["value"].clone(),
+            ))
+        }
         Some("is_in") => {
             let values = v["values"]
                 .as_array()
@@ -163,6 +251,15 @@ fn node(
                 (ScalarOperand::Literal(_), ScalarOperand::Literal(_))
             ) {
                 return Err(AstError("Comparison requires a column or metric operand"));
+            }
+            let fraction = matches!(&left, ScalarOperand::Metric(ScalarMetric::NullFraction(_)))
+                || matches!(&right, ScalarOperand::Metric(ScalarMetric::NullFraction(_)));
+            if !fraction
+                && [&left, &right]
+                    .iter()
+                    .any(|v| matches!(v, ScalarOperand::Literal(v) if !integer(v)))
+            {
+                return Err(AstError("Count comparisons require an integer literal"));
             }
             Expectation::Dataset(DatasetExpectation::Compare(
                 comparison(&v["op"])?,
@@ -244,6 +341,28 @@ fn operand_type(v: &ColumnValue<Value>, fields: &BTreeMap<&str, &Value>) -> Resu
 }
 fn check_row(row: &RowPredicate<Value>, fields: &BTreeMap<&str, &Value>) -> Result<()> {
     match row {
+        RowPredicate::Approx(name, value, _, _) => {
+            let typ = operand_type(&ColumnValue::Column(name.clone()), fields)?;
+            if !numeric(&typ) || !compatible(&typ, &value_type(value)) {
+                return Err(AstError(
+                    "Approximate equality requires compatible numeric types",
+                ));
+            }
+        }
+        RowPredicate::Matches(name, _, _) => {
+            if operand_type(&ColumnValue::Column(name.clone()), fields)?["type"] != "string" {
+                return Err(AstError("Regex matching requires a string column"));
+            }
+        }
+        RowPredicate::InDataset(name, _, _) => {
+            operand_type(&ColumnValue::Column(name.clone()), fields)?;
+        }
+        RowPredicate::Age(_, name, _) => {
+            let typ = operand_type(&ColumnValue::Column(name.clone()), fields)?;
+            if typ["type"] != "timestamp" || typ["timezone"] != "UTC" || typ["unit"] == "ns" {
+                return Err(AstError("Relative time requires a qualified UTC timestamp"));
+            }
+        }
         RowPredicate::NonNull(name) | RowPredicate::IsNull(name) => {
             operand_type(&ColumnValue::Column(name.clone()), fields)?;
         }
@@ -286,6 +405,12 @@ fn check_row(row: &RowPredicate<Value>, fields: &BTreeMap<&str, &Value>) -> Resu
 }
 fn check_dataset(e: &DatasetExpectation<Value>, fields: &BTreeMap<&str, &Value>) -> Result<()> {
     match e {
+        DatasetExpectation::SchemaEquals(_) => (),
+        DatasetExpectation::GroupCount(_, names, _) => {
+            for name in names {
+                operand_type(&ColumnValue::Column(name.clone()), fields)?;
+            }
+        }
         DatasetExpectation::Exists(_) => (),
         DatasetExpectation::HasType(name, _) => {
             operand_type(&ColumnValue::Column(name.clone()), fields)?;
@@ -312,7 +437,18 @@ fn check_dataset(e: &DatasetExpectation<Value>, fields: &BTreeMap<&str, &Value>)
             }
         }
         DatasetExpectation::Not(child) => check_dataset(child, fields)?,
-        DatasetExpectation::Compare(..) => (),
+        DatasetExpectation::Compare(_, left, right) => {
+            for value in [left, right] {
+                if let ScalarOperand::Metric(
+                    ScalarMetric::NullCount(name)
+                    | ScalarMetric::NullFraction(name)
+                    | ScalarMetric::DistinctCount(name),
+                ) = value
+                {
+                    operand_type(&ColumnValue::Column(name.clone()), fields)?;
+                }
+            }
+        }
     }
     Ok(())
 }
@@ -357,11 +493,32 @@ fn scalar_wire(v: &ScalarOperand<Value>) -> Value {
         ScalarOperand::Metric(ScalarMetric::RowCount(source)) => {
             serde_json::json!({"kind":"row_count","input":source.as_ref().map(|s|serde_json::json!({"kind":"input","alias":s.0.as_str()}))})
         }
+        ScalarOperand::Metric(ScalarMetric::NullCount(name)) => {
+            serde_json::json!({"kind":"null_count","column":name.as_str()})
+        }
+        ScalarOperand::Metric(ScalarMetric::NullFraction(name)) => {
+            serde_json::json!({"kind":"null_fraction","column":name.as_str()})
+        }
+        ScalarOperand::Metric(ScalarMetric::DistinctCount(name)) => {
+            serde_json::json!({"kind":"distinct_count","column":name.as_str()})
+        }
     }
 }
 fn row_wire(v: &RowPredicate<Value>) -> Value {
     use serde_json::json;
     match v {
+        RowPredicate::Approx(name, value, abs, rel) => {
+            json!({"kind":"approx","column":name.as_str(),"value":value,"abs_tol":abs,"rel_tol":rel})
+        }
+        RowPredicate::Matches(name, pattern, full) => {
+            json!({"kind":"matches","column":name.as_str(),"pattern":pattern,"mode":if *full {"full"} else {"partial"}})
+        }
+        RowPredicate::InDataset(name, alias, column) => {
+            json!({"kind":"in_dataset","column":name.as_str(),"input":{"kind":"input","alias":alias.0.as_str()},"input_column":column.as_str()})
+        }
+        RowPredicate::Age(op, name, value) => {
+            json!({"kind":"age_compare","column":name.as_str(),"op":comparison_name(*op),"at":{"kind":"evaluation_time"},"value":value})
+        }
         RowPredicate::NonNull(name) => json!({"kind":"non_null","columns":[name.as_str()]}),
         RowPredicate::IsNull(name) => json!({"kind":"is_null","column":name.as_str()}),
         RowPredicate::IsFinite(name) => json!({"kind":"is_finite","column":name.as_str()}),
@@ -381,6 +538,10 @@ fn row_wire(v: &RowPredicate<Value>) -> Value {
 fn dataset_wire(v: &DatasetExpectation<Value>) -> Value {
     use serde_json::json;
     match v {
+        DatasetExpectation::SchemaEquals(schema) => json!({"kind":"schema_equals","schema":schema}),
+        DatasetExpectation::GroupCount(op, columns, value) => {
+            json!({"kind":"group_count","columns":columns.iter().map(FieldName::as_str).collect::<Vec<_>>(),"op":comparison_name(*op),"value":value})
+        }
         DatasetExpectation::Exists(name) => json!({"kind":"exists","column":name.as_str()}),
         DatasetExpectation::HasType(name, logical) => {
             json!({"kind":"has_type","column":name.as_str(),"logical_type":logical})

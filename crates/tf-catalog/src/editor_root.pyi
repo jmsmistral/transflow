@@ -13,4 +13,5 @@ from transflow.declarations import (
     Branch as Branch, Check as Check, Input as Input, Output as Output,
     TransformContext as TransformContext, transform as transform,
     source_transform as source_transform,
+    sql_transform as sql_transform,
 )

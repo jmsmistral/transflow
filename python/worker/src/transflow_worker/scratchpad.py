@@ -17,7 +17,7 @@ from typing import Any
 
 from .check_adapter import pinned_files
 from .discovery import _directory, _read
-from .environment import MANAGED_PACKAGES
+from .environment import ARROW_VERSION, MANAGED_PACKAGES
 from .polars_adapter import _file
 from .sql_policy import SqlPolicyError, require, validate_query, view_names
 from .wire import _decode, validate_document
@@ -26,7 +26,6 @@ ROWS = 1000
 BYTES = 2 * 1024 * 1024
 # This optional native dependency is pinned by the native qualification lock.
 # T080 must check availability before advertising the public scratchpad service.
-ARROW_VERSION = "25.0.1"
 
 
 def _schema(schema: Any, pa: Any) -> None:
@@ -62,7 +61,12 @@ def _schema(schema: Any, pa: Any) -> None:
 
 
 def _connect(
-    paths: dict[str, list[str]], temporary: Path, limits: dict[str, Any] | None = None
+    paths: dict[str, list[str]],
+    temporary: Path,
+    limits: dict[str, Any] | None = None,
+    *,
+    output_path: str | None = None,
+    projections: dict[str, str] | None = None,
 ) -> Any:
     limits = limits or {"threads": 1, "spill_bytes": "268435456", "memory_bytes": None}
     duckdb = importlib.import_module("duckdb")
@@ -80,7 +84,10 @@ def _connect(
     )
     try:
         settings = {
-            "allowed_paths": sorted({path for files in paths.values() for path in files}),
+            "allowed_paths": sorted(
+                {path for files in paths.values() for path in files}
+                | ({output_path} if output_path is not None else set())
+            ),
             "allowed_directories": [],
             "allowed_configs": [],
             "temp_directory": str(temporary),
@@ -96,7 +103,10 @@ def _connect(
             db.execute("SET memory_limit = ?", [f"{limits['memory_bytes']}B"])
         db.execute("SET enable_external_access = false")
         for alias, files in paths.items():
-            db.read_parquet(files, hive_partitioning=False, union_by_name=False).create_view(alias)
+            relation = db.read_parquet(files, hive_partitioning=False, union_by_name=False)
+            if projections is not None and alias in projections:
+                relation = relation.project(projections[alias])
+            relation.create_view(alias)
         db.execute("SET lock_configuration = true")
         return db
     except BaseException:

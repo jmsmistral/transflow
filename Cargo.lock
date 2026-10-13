@@ -1522,6 +1522,7 @@ name = "tf-exec"
 version = "0.0.0-dev"
 dependencies = [
  "libsqlite3-sys",
+ "num-bigint",
  "rustix",
  "serde",
  "serde_json",

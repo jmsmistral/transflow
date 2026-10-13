@@ -3,7 +3,7 @@ import type { ApiSourceV1 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
 import { Button } from "./components";
 import { SourceLines } from "./SourceLines";
-import { field, versionMetadata } from "./inspectors";
+import { field, producingSourcePath, versionMetadata } from "./inspectors";
 import { sourceDiff } from "./execution-model";
 import {
   type Ready,
@@ -23,7 +23,7 @@ async function capturedSource(
     `/api/v1/datasets/${dataset}`,
     { origin_workspace: origin },
   );
-  const path = field(definition.producer, "path"),
+  const path = producingSourcePath(definition.producer),
     source = scope.context.source;
   if (!path || !source)
     throw new Error("Producing source was not retained for this dataset.");

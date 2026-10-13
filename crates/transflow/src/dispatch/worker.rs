@@ -55,7 +55,11 @@ pub(super) fn launch(
         python,
         operation,
         request_schema: if operation == tf_protocol::Operation::Execute {
-            "PolarsExecutionRequestV1"
+            if request["producer"]["engine"] == "duckdb" {
+                "SqlExecutionRequestV1"
+            } else {
+                "PolarsExecutionRequestV1"
+            }
         } else {
             "CheckEvaluationRequestV1"
         },
@@ -148,7 +152,16 @@ pub(super) fn request(
         .collect::<Vec<_>>();
     let output = directory.join("transform");
     private(&output)?;
-    let value = json!({"format_version":1,"protocol":{"major":1,"minor":0},"request_id":new_id()?.to_string(),"attempt_id":attempt.to_string(),"auth_token":"0".repeat(64),"capture_root":p.capture.files_root(),"source_roots":p.capture.source_roots(),"files":p.capture.discovery_files(),"catalog":p.catalog,"environment_fingerprint":p.plan.environment["fingerprint"],"result_directory":output,"producer":raw,"inputs":bindings,"compression":"zstd","row_group_size":"8192","threads":threads.to_string(),"context":{"build_id":j.build().to_string(),"job_id":id.to_string(),"evaluation_time":timestamp(p.plan.created_us)?,"random_seed":"0","parameters":parameters}});
+    let mut value = json!({"format_version":1,"protocol":{"major":1,"minor":0},"request_id":new_id()?.to_string(),"attempt_id":attempt.to_string(),"auth_token":"0".repeat(64),"capture_root":p.capture.files_root(),"source_roots":p.capture.source_roots(),"files":p.capture.discovery_files(),"catalog":p.catalog,"environment_fingerprint":p.plan.environment["fingerprint"],"result_directory":output,"producer":raw,"inputs":bindings,"compression":"zstd","row_group_size":"8192","threads":threads.to_string(),"context":{"build_id":j.build().to_string(),"job_id":id.to_string(),"evaluation_time":timestamp(p.plan.created_us)?,"random_seed":"0","parameters":parameters}});
+    if raw["engine"] == "duckdb" {
+        value["memory_bytes"] = p.plan.context["resources"][&key]["memory_budget_mib"]
+            .as_str()
+            .and_then(|v| v.parse::<u64>().ok())
+            .and_then(|v| v.checked_mul(1024 * 1024))
+            .map(|v| Value::String(v.to_string()))
+            .unwrap_or(Value::Null);
+        value["spill_bytes"] = Value::String("1073741824".into());
+    }
     let checks = |v: &Value| {
         v.as_array()
             .cloned()

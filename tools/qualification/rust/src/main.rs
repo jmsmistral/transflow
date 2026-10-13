@@ -47,6 +47,13 @@ struct Report {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let wide = num_bigint::BigInt::from(1) << 1074usize;
+    require(wide.bits() == 1075, "Exact rational exponent range failed")?;
+    require(
+        num_bigint::BigInt::from(18_014_398_509_481_984u64)
+            > num_bigint::BigInt::from(6_004_799_503_160_661u64) * 3,
+        "Exact rational float threshold comparison failed",
+    )?;
     require(
         format!("{:x}", Sha256::digest(b"abc"))
             == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
@@ -191,6 +198,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         sqlite_journal_mode: journal,
         parquet_rows: 3,
         checks: [
+            "exact_rational_counts",
             "unicode_identifiers",
             "sqlite_version",
             "wal_full_foreign_keys",

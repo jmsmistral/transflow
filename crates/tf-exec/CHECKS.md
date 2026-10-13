@@ -163,3 +163,19 @@ job/build state. `publish_observed` exposes the durable intent boundary for a
 COMMITTING phase observation before installation. The ordinary `publish` wrapper
 retains its existing behavior. Executed jobs evaluate every check; whole-job cache
 hits retain their original check evidence without a fabricated new evaluation.
+
+## G3 canonical plans
+
+T102/T103 extend the closed typed compiler with scalar/group metrics, schema and
+regex checks, exact numeric predicates and pinned cross-input views. Numeric row
+plans stream bounded Arrow batches with at most 65,536 projected cells per batch;
+only counts leave the worker. They use exact rational arithmetic, not sampling.
+DuckDB still owns file reads, ordinary predicates, foreign membership and grouping.
+No NumPy/Pandas dependency or user callback is required by this path.
+
+The attempt owns every input lease and admission permit until the helper exits.
+Only referenced aliases are exposed, with unique private view names. Results
+bind each exact alias/version/artifact and validate that context against the
+publication contract. Time observes the frozen execution context and compute
+identity. Contextual input certificates are ordinary misses and are evaluated
+again. Output checks continue to read the one closed candidate sink.

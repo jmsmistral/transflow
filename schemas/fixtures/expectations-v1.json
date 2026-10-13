@@ -715,5 +715,251 @@
     },
     "aliases": [],
     "valid": false
+  },
+  {
+    "name": "g3-approx",
+    "ast": {
+      "abs_tol": {
+        "type": "f64",
+        "value": "0.01"
+      },
+      "ast_version": 1,
+      "column": "value",
+      "kind": "approx",
+      "rel_tol": {
+        "type": "f64",
+        "value": "0.01"
+      },
+      "value": {
+        "type": "f64",
+        "value": "1.0"
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"abs_tol\":{\"type\":\"f64\",\"value\":\"0.01\"},\"ast_version\":1,\"column\":\"value\",\"kind\":\"approx\",\"rel_tol\":{\"type\":\"f64\",\"value\":\"0.01\"},\"value\":{\"type\":\"f64\",\"value\":\"1.0\"}}",
+    "effective_compute_digest": "b0a947421702619168e4f38fa9e6520cb08d573025de4d76e4c271f1a32228f8"
+  },
+  {
+    "name": "g3-null-count",
+    "ast": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "left": {
+        "column": "value",
+        "kind": "null_count"
+      },
+      "op": "equals",
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "i64",
+          "value": "0"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"kind\":\"metric_compare\",\"left\":{\"column\":\"value\",\"kind\":\"null_count\"},\"op\":\"equals\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"i64\",\"value\":\"0\"}}}",
+    "effective_compute_digest": "0792f5026c42fd31221df531908e9156881510aedcf1f7083fbb90682d36c904"
+  },
+  {
+    "name": "g3-null-fraction",
+    "ast": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "left": {
+        "column": "value",
+        "kind": "null_fraction"
+      },
+      "op": "lte",
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "f64",
+          "value": "0.5"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"kind\":\"metric_compare\",\"left\":{\"column\":\"value\",\"kind\":\"null_fraction\"},\"op\":\"lte\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"f64\",\"value\":\"0.5\"}}}",
+    "effective_compute_digest": "036a4f729adce5f32b08086af84a85e8c8b3465e14639b7897eba1334cd78759"
+  },
+  {
+    "name": "g3-distinct-count",
+    "ast": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "left": {
+        "column": "value",
+        "kind": "distinct_count"
+      },
+      "op": "gt",
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "i64",
+          "value": "0"
+        }
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"kind\":\"metric_compare\",\"left\":{\"column\":\"value\",\"kind\":\"distinct_count\"},\"op\":\"gt\",\"right\":{\"kind\":\"literal\",\"value\":{\"type\":\"i64\",\"value\":\"0\"}}}",
+    "effective_compute_digest": "d19ccced952ae79c6bc29a4cfd37a1158fd3428139ed070c580c95e9b92aa8a5"
+  },
+  {
+    "name": "g3-groups",
+    "ast": {
+      "ast_version": 1,
+      "columns": [
+        "key"
+      ],
+      "kind": "group_count",
+      "op": "lte",
+      "value": {
+        "type": "i64",
+        "value": "2"
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"columns\":[\"key\"],\"kind\":\"group_count\",\"op\":\"lte\",\"value\":{\"type\":\"i64\",\"value\":\"2\"}}",
+    "effective_compute_digest": "9b35c2c1c0111299f2b74e754543b44e566edf9821fef268ca751c4d987af50c"
+  },
+  {
+    "name": "g3-regex",
+    "ast": {
+      "ast_version": 1,
+      "column": "label",
+      "kind": "matches",
+      "mode": "full",
+      "pattern": "[a-z]+"
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"column\":\"label\",\"kind\":\"matches\",\"mode\":\"full\",\"pattern\":\"[a-z]+\"}",
+    "effective_compute_digest": "6cd2a2aa3cd7031056e1f2978c0df545cf62ae478bbf11cc341ccef576182f84"
+  },
+  {
+    "name": "g3-age",
+    "ast": {
+      "ast_version": 1,
+      "at": {
+        "kind": "evaluation_time"
+      },
+      "column": "stamp",
+      "kind": "age_compare",
+      "op": "lte",
+      "value": {
+        "type": "i64",
+        "value": "3600"
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"at\":{\"kind\":\"evaluation_time\"},\"column\":\"stamp\",\"kind\":\"age_compare\",\"op\":\"lte\",\"value\":{\"type\":\"i64\",\"value\":\"3600\"}}",
+    "effective_compute_digest": "420e164ccef45288cb0548957e3508dec00961eefad3583c7da1274ef70b2bbc"
+  },
+  {
+    "name": "g3-schema",
+    "ast": {
+      "ast_version": 1,
+      "kind": "schema_equals",
+      "schema": {
+        "fields": [],
+        "format_version": 1
+      }
+    },
+    "aliases": [],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"kind\":\"schema_equals\",\"schema\":{\"fields\":[],\"format_version\":1}}",
+    "effective_compute_digest": "59cc15eb57bcda89240e96ee7b97462a432a08b3971fabbbe1ae571807e79f88"
+  },
+  {
+    "name": "g3-membership",
+    "ast": {
+      "ast_version": 1,
+      "column": "key",
+      "input": {
+        "alias": "reference",
+        "kind": "input"
+      },
+      "input_column": "id",
+      "kind": "in_dataset"
+    },
+    "aliases": [
+      "reference"
+    ],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"column\":\"key\",\"input\":{\"alias\":\"reference\",\"kind\":\"input\"},\"input_column\":\"id\",\"kind\":\"in_dataset\"}",
+    "effective_compute_digest": "3ef0fed59d5834c2bb983c9e7c7a368034cb7bf0e3ebf92d606b3066f4a2d27b"
+  },
+  {
+    "name": "g3-two-inputs",
+    "ast": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "left": {
+        "input": {
+          "alias": "previous",
+          "kind": "input"
+        },
+        "kind": "row_count"
+      },
+      "op": "lt",
+      "right": {
+        "input": {
+          "alias": "current",
+          "kind": "input"
+        },
+        "kind": "row_count"
+      }
+    },
+    "aliases": [
+      "previous",
+      "current"
+    ],
+    "valid": true,
+    "canonical": "{\"ast_version\":1,\"kind\":\"metric_compare\",\"left\":{\"input\":{\"alias\":\"previous\",\"kind\":\"input\"},\"kind\":\"row_count\"},\"op\":\"lt\",\"right\":{\"input\":{\"alias\":\"current\",\"kind\":\"input\"},\"kind\":\"row_count\"}}",
+    "effective_compute_digest": "3d78279c3a3180c165ebfc99323743d2b996e3e9806a14d16ad37e152aa7a5e6"
+  },
+  {
+    "name": "g3-negative-tolerance",
+    "ast": {
+      "abs_tol": {
+        "type": "f64",
+        "value": "-1.0"
+      },
+      "ast_version": 1,
+      "column": "value",
+      "kind": "approx",
+      "rel_tol": {
+        "type": "f64",
+        "value": "0.01"
+      },
+      "value": {
+        "type": "f64",
+        "value": "1.0"
+      }
+    },
+    "aliases": [],
+    "valid": false
+  },
+  {
+    "name": "g3-undeclared-membership",
+    "ast": {
+      "ast_version": 1,
+      "column": "key",
+      "input": {
+        "alias": "reference",
+        "kind": "input"
+      },
+      "input_column": "id",
+      "kind": "in_dataset"
+    },
+    "aliases": [],
+    "valid": false
   }
 ]

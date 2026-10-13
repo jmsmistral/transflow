@@ -100,7 +100,9 @@ pub(super) fn prepare(
         .iter()
         .try_fold(false, |found, f| -> Result<bool> {
             let bytes = std::fs::read(capture.files_root().join(text(f, "path")?)).map_err(fail)?;
-            Ok(found || bytes.windows(3).any(|w| w == b"ctx"))
+            Ok(found
+                || bytes.windows(3).any(|w| w == b"ctx")
+                || bytes.windows(15).any(|w| w == b"evaluation_time"))
         })?;
     let (retry, abort_on_failure) = if let Some(scheduled) = plan.context.get("schedule") {
         use tf_domain::execution::FailureClass;
@@ -160,8 +162,10 @@ pub(super) fn prepare(
                 "declared secret delivery is not available in this dispatcher",
             ));
         }
-        if raw["engine"] != "polars" {
-            return Err(fail("this dispatcher requires a Polars producer"));
+        if raw["engine"] != "polars" && raw["engine"] != "duckdb" {
+            return Err(fail(
+                "this dispatcher requires a supported Polars or SQL producer",
+            ));
         }
         let resolved = &plan.context["resources"][&w.dataset];
         let cap = tf_exec::admission::Capacity {

@@ -15,12 +15,25 @@ use std::{
     path::PathBuf,
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
+use tf_domain::{DatasetKey, VersionId};
 use tf_protocol::{
     Operation,
     canonical::{DigestKind, content_digest},
     validate_document,
 };
 use tf_store::artifacts::{ArtifactStore, Candidate, VerifiedArtifact};
+
+/// Borrowed exact alias binding. The attempt retains its read lease and job permit.
+pub struct Input<'a> {
+    /// Declared alias; identical datasets under different aliases stay distinct.
+    pub alias: &'a str,
+    /// Planned logical dataset identity.
+    pub dataset: DatasetKey,
+    /// Exact version pinned before validation.
+    pub version: VersionId,
+    /// Strictly verified immutable bytes, borrowed through helper cleanup.
+    pub artifact: &'a VerifiedArtifact,
+}
 
 /// Artifact lifetime/lease authority remains with the caller through helper cleanup.
 pub enum Subject<'a> {
@@ -110,9 +123,21 @@ fn read_result(directory: &std::path::Path) -> Result<Value, Error> {
 /// parameters are overwritten from the typed checks and verified subject. An attempt-wide
 /// input/output validation Budget is mandatory; successive helpers reuse it. No fresh timer.
 pub fn run(
+    launch: Launch,
+    subject: Subject<'_>,
+    checks: &[Value],
+    cancel: Cancellation,
+) -> Result<Completion, Error> {
+    run_bound(launch, subject, checks, &[], None, cancel)
+}
+
+/// Evaluate cross-input checks using only these pinned bindings and the frozen clock.
+pub fn run_bound(
     mut launch: Launch,
     subject: Subject<'_>,
     checks: &[Value],
+    inputs: &[Input<'_>],
+    evaluation_time: Option<&Value>,
     cancel: Cancellation,
 ) -> Result<Completion, Error> {
     let start = Instant::now();
@@ -164,8 +189,62 @@ pub fn run(
     {
         return Err(Error::Evidence);
     }
+    fn referenced(value: &Value, aliases: &mut std::collections::BTreeSet<String>) {
+        match value {
+            Value::Object(map) => {
+                if value["kind"] == "input"
+                    && let Some(alias) = value["alias"].as_str()
+                {
+                    aliases.insert(alias.to_owned());
+                }
+                for child in map.values() {
+                    referenced(child, aliases);
+                }
+            }
+            Value::Array(children) => {
+                for child in children {
+                    referenced(child, aliases);
+                }
+            }
+            _ => (),
+        }
+    }
+    let mut aliases = std::collections::BTreeSet::new();
+    for check in checks {
+        referenced(&check["expectation"], &mut aliases);
+    }
+    let declared = inputs
+        .iter()
+        .map(|i| i.alias)
+        .collect::<std::collections::BTreeSet<_>>();
+    if declared.len() != inputs.len() {
+        return Err(Error::Evidence);
+    }
+    let mut binding_values = vec![];
+    let mut compiler_inputs = BTreeMap::new();
+    for input in inputs.iter().filter(|i| aliases.contains(i.alias)) {
+        let root = Subject::Pinned(input.artifact).root()?;
+        let manifest = input.artifact.manifest();
+        let view = format!("__tf_input_{}", binding_values.len());
+        compiler_inputs.insert(
+            input.alias.to_owned(),
+            json!({"view":view,"schema":manifest["logical_schema"]}),
+        );
+        binding_values.push(json!({"alias":input.alias,"dataset":{"workspace_id":input.dataset.workspace_id().to_string(),"dataset_id":input.dataset.dataset_id().to_string()},"version_id":input.version.to_string(),"artifact_root":root,"artifact_digest":input.artifact.digest().hex(),"manifest":manifest}));
+    }
+    launch.request["inputs"] = json!(binding_values);
+    launch.request["evaluation_time"] = evaluation_time.cloned().unwrap_or(Value::Null);
     let supported = compiler::schema_supported(&manifest["logical_schema"]);
-    let mut plan = compiler::compile(checks, &manifest["logical_schema"]);
+    let mut plan = if compiler_inputs.is_empty() && launch.request["evaluation_time"].is_null() {
+        compiler::compile(checks, &manifest["logical_schema"])
+    } else {
+        compiler::compile_bound(
+            checks,
+            &manifest["logical_schema"],
+            &compiler_inputs,
+            &launch.request["evaluation_time"],
+        )
+    };
     for n in &mut plan.nodes {
         if let Err(e) = supported {
             *n = Err(e);
@@ -311,6 +390,9 @@ pub fn run(
                     }
                 }
                 subject.root()?; // No result may certify changed bytes.
+                for input in inputs.iter().filter(|i| aliases.contains(i.alias)) {
+                    Subject::Pinned(input.artifact).root()?;
+                }
                 Ok((rows.clone(), sampled.clone()))
             })();
             match parsed {
@@ -378,7 +460,22 @@ pub fn run(
         }
         outcomes.push(json!({"id":c["id"],"name":c["name"],"definition_digest":content_digest(DigestKind::Compute,c).map_err(|_|Error::Evidence)?.hex(),"status":status,"severity":c["on_error"],"exact":exact,"failed_rows":failed,"error":error,"metrics":metrics,"sample":sample}));
     }
-    let result = json!({"format_version":1,"request_id":request["request_id"],"attempt_id":request["attempt_id"],"artifact_digest":digest,"subject_version":request["subject_version"],"consumer_definition":request["consumer_definition"],"binding":request["binding"],"phase":phase,"evaluator":"duckdb-1.5.5:core-v1","semantics":"strict-null-key-v1","started_us":started,"finished_us":finished,"duration_us":elapsed,"checks":outcomes,"sample_policy":policy});
+    let mut result = json!({"format_version":1,"request_id":request["request_id"],"attempt_id":request["attempt_id"],"artifact_digest":digest,"subject_version":request["subject_version"],"consumer_definition":request["consumer_definition"],"binding":request["binding"],"phase":phase,"evaluator":"duckdb-1.5.5:g3-v1","semantics":"strict-null-key-g3-v1","started_us":started,"finished_us":finished,"duration_us":elapsed,"checks":outcomes,"sample_policy":policy});
+    if !binding_values.is_empty() {
+        result["inputs"] = json!(binding_values.iter().map(|v|json!({"alias":v["alias"],"dataset":v["dataset"],"version_id":v["version_id"],"artifact_digest":v["artifact_digest"]})).collect::<Vec<_>>());
+    }
+    fn observes_time(value: &Value) -> bool {
+        match value {
+            Value::Object(map) => {
+                value["kind"] == "evaluation_time" || map.values().any(observes_time)
+            }
+            Value::Array(values) => values.iter().any(observes_time),
+            _ => false,
+        }
+    }
+    if checks.iter().any(observes_time) {
+        result["evaluation_time"] = request["evaluation_time"].clone();
+    }
     validate_document("CheckEvaluationResultV1", &result).map_err(|_| Error::Contract("result"))?;
     Ok(Completion {
         manifest: manifest.clone(),

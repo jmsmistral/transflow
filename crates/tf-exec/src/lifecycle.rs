@@ -170,8 +170,7 @@ fn declarations(resolved: &[Value], declared: &Value) -> Result<(), Error> {
 }
 fn preflight(r: &Request, inputs: &[VerifiedArtifact]) -> Result<AttemptId, Error> {
     r.contract.canonical()?;
-    validate_document("PolarsExecutionRequestV1", &r.execute.request)
-        .map_err(|_| Error::Contract)?;
+    validate_document(r.execute.request_schema, &r.execute.request).map_err(|_| Error::Contract)?;
     let request = &r.execute.request;
     let bindings = request["inputs"].as_array().ok_or(Error::Contract)?;
     let declared = request["producer"]["inputs"]
@@ -279,6 +278,19 @@ pub fn run<'a>(
         let consumer = content_digest(DigestKind::Compute, &request.execute.request["producer"])
             .map_err(|_| Error::Contract)?
             .hex();
+        let check_inputs = request
+            .contract
+            .inputs
+            .iter()
+            .zip(inputs)
+            .map(|(binding, artifact)| checks::Input {
+                alias: &binding.alias,
+                dataset: binding.dataset,
+                version: binding.version,
+                artifact,
+            })
+            .collect::<Vec<_>>();
+        let evaluation_time = request.execute.request["context"]["evaluation_time"].clone();
         let mut evaluate = |phase,
                             alias: Option<&str>,
                             version: Option<String>,
@@ -300,7 +312,14 @@ pub fn run<'a>(
                 phase,
             });
             launch.reservation = Some(reservation.worker()?);
-            let result = checks::run(launch, subject, checks, cancel.clone())?;
+            let result = checks::run_bound(
+                launch,
+                subject,
+                checks,
+                &check_inputs,
+                Some(&evaluation_time),
+                cancel.clone(),
+            )?;
             Ok(result)
         };
         if cancel.requested() {

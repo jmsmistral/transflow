@@ -223,8 +223,10 @@ fn invariant(name: &str, v: &Value) -> bool {
                             *s,
                             "diagnostic.note.v1"
                                 | "discovery.v1"
+                                | "duckdb.execute.v1"
                                 | "polars.execute.v1"
                                 | "expectation.ast.v1"
+                                | "expectation.g3.v1"
                                 | "expectation.core.v1"
                                 | "duckdb.checks.v1"
                                 | "duckdb.samples.v1"

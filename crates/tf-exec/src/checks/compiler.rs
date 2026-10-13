@@ -10,10 +10,52 @@ pub(super) enum Node {
     Row(usize, usize, Vec<Self>),
     Key(usize, usize, usize),
     Fixed(bool),
-    Count(Comparison, Option<i128>, Option<i128>, usize),
+    Scalar(Comparison, ScalarPlan, ScalarPlan),
+    Group(usize),
     Boolean(BooleanOp, Vec<Self>),
     Not(Box<Self>),
     Every(Box<Self>),
+}
+#[derive(Clone)]
+pub(super) enum ScalarPlan {
+    Literal(Value),
+    Metric(usize, bool),
+}
+impl Node {
+    fn remap(&mut self, indices: &BTreeMap<usize, usize>) -> Result<()> {
+        let index = |value: &mut usize| -> Result<()> {
+            *value = *indices.get(value).ok_or("plan_index")?;
+            Ok(())
+        };
+        match self {
+            Self::Row(q, _, children) => {
+                index(q)?;
+                for child in children {
+                    child.remap(indices)?;
+                }
+            }
+            Self::Key(q, _, key) => {
+                index(q)?;
+                index(key)?;
+            }
+            Self::Scalar(_, a, b) => {
+                for operand in [a, b] {
+                    if let ScalarPlan::Metric(q, _) = operand {
+                        index(q)?;
+                    }
+                }
+            }
+            Self::Group(q) => index(q)?,
+            Self::Boolean(_, children) => {
+                for child in children {
+                    child.remap(indices)?;
+                }
+            }
+            Self::Not(child) | Self::Every(child) => child.remap(indices)?,
+            Self::Fixed(_) => (),
+        }
+        Ok(())
+    }
 }
 pub(super) struct Plan {
     pub queries: Vec<Value>,
@@ -22,6 +64,9 @@ pub(super) struct Plan {
 #[derive(Clone)]
 struct Compiler {
     fields: BTreeMap<String, Value>,
+    schema: Value,
+    inputs: BTreeMap<String, Value>,
+    evaluation_time: Value,
     queries: Vec<Value>,
     expressions: Vec<String>,
     parameters: Vec<Value>,
@@ -40,6 +85,118 @@ fn operator(op: Comparison) -> &'static str {
         Comparison::Equals => "=",
         Comparison::NotEquals => "<>",
     }
+}
+fn integer_type(value: &Value) -> bool {
+    matches!(
+        value["type"].as_str(),
+        Some("i8" | "i16" | "i32" | "i64" | "u8" | "u16" | "u32" | "u64")
+    )
+}
+fn numeric_row(row: &RowPredicate<Value>) -> bool {
+    match row {
+        RowPredicate::Approx(..) | RowPredicate::Age(..) => true,
+        RowPredicate::Boolean(_, children) => children.iter().any(numeric_row),
+        RowPredicate::Not(child) => numeric_row(child),
+        _ => false,
+    }
+}
+// Reviewed RE2 subset: ASCII literals, dot, anchors, classes, plain groups,
+// alternation and greedy ?, * and +. No flags, backreferences or lookaround.
+fn regex_subset(pattern: &str) -> Result<()> {
+    if !pattern.is_ascii() || pattern.len() > 1024 {
+        return Err("unsupported_regex");
+    }
+    let mut group = 0u32;
+    let mut class = false;
+    let mut class_tokens: Vec<Option<char>> = vec![];
+    let mut escaped = false;
+    let mut atom = false;
+    let mut quantified = false;
+    for c in pattern.chars() {
+        if escaped {
+            if !"dDsSwWnrt\\.^$|?*+()[]-".contains(c) {
+                return Err("unsupported_regex");
+            }
+            if class {
+                class_tokens.push(None);
+            }
+            escaped = false;
+            atom = true;
+            quantified = false;
+            continue;
+        }
+        if c == '\\' {
+            escaped = true;
+            continue;
+        }
+        if class {
+            if c == ']' {
+                let body = if class_tokens.first() == Some(&Some('^')) {
+                    &class_tokens[1..]
+                } else {
+                    class_tokens.as_slice()
+                };
+                if body.is_empty() {
+                    return Err("unsupported_regex");
+                }
+                for (index, token) in body.iter().enumerate() {
+                    if *token == Some('-') && index > 0 && index + 1 < body.len() {
+                        match (body[index - 1], body[index + 1]) {
+                            (Some(start), Some(end)) if start <= end => (),
+                            _ => return Err("unsupported_regex"),
+                        }
+                    }
+                }
+                class = false;
+                atom = true;
+            } else if c == '[' {
+                return Err("unsupported_regex");
+            } else {
+                class_tokens.push(Some(c));
+            }
+            continue;
+        }
+        match c {
+            '[' => {
+                class = true;
+                class_tokens.clear();
+                quantified = false;
+            }
+            '(' => {
+                group += 1;
+                atom = false;
+                quantified = false;
+            }
+            ')' if group > 0 => {
+                group -= 1;
+                atom = true;
+                quantified = false;
+            }
+            ')' | ']' | '{' | '}' => return Err("unsupported_regex"),
+            '*' | '+' | '?' => {
+                if !atom || quantified {
+                    return Err("unsupported_regex");
+                }
+                quantified = true;
+            }
+            '|' => {
+                atom = false;
+                quantified = false;
+            }
+            '^' | '$' => {
+                atom = false;
+                quantified = false;
+            }
+            _ => {
+                atom = true;
+                quantified = false;
+            }
+        }
+    }
+    if group != 0 || class || escaped {
+        return Err("unsupported_regex");
+    }
+    Ok(())
 }
 /// Reject known lossy engine mappings, including DuckDB's case-insensitive column lookup.
 pub(super) fn schema_supported(schema: &Value) -> Result<()> {
@@ -80,6 +237,84 @@ pub(super) fn schema_supported(schema: &Value) -> Result<()> {
     fields(schema["fields"].as_array().ok_or("schema")?)
 }
 impl Compiler {
+    fn exact_row(&mut self, row: &RowPredicate<Value>, columns: &mut Vec<String>) -> Result<Value> {
+        Ok(match row {
+            RowPredicate::Approx(name, value, absolute, relative) => {
+                let typ = self.fields.get(name.as_str()).ok_or("missing_column")?;
+                let float = matches!(typ["type"].as_str(), Some("f32" | "f64"));
+                let column = columns.len();
+                let value_column = quote(name.as_str());
+                columns.push(if float {
+                    value_column
+                } else {
+                    format!("CAST({value_column} AS VARCHAR)")
+                });
+                json!({"kind":if float {"approx_float"} else {"approx_decimal"},"column":column,"value":value,"abs_tol":absolute,"rel_tol":relative})
+            }
+            RowPredicate::Age(op, name, value) => {
+                if *op != Comparison::Lte
+                    || self.evaluation_time["type"] != "timestamp"
+                    || self.evaluation_time["timezone"] != "UTC"
+                {
+                    return Err("evaluation_time");
+                }
+                let clock = self.literal(&self.evaluation_time.clone())?;
+                let column = columns.len();
+                columns.push(format!("CAST((CAST(epoch_us({clock}) AS HUGEINT)-CAST(epoch_us({}) AS HUGEINT)) AS VARCHAR)",quote(name.as_str())));
+                json!({"kind":"age","column":column,"value":value})
+            }
+            RowPredicate::Boolean(op, children) => {
+                json!({"kind":if *op == BooleanOp::All {"all"} else {"any"},"children":children.iter().map(|c|self.exact_row(c,columns)).collect::<Result<Vec<_>>>()?})
+            }
+            RowPredicate::Not(child) => {
+                json!({"kind":"not","child":self.exact_row(child,columns)?})
+            }
+            _ => {
+                let column = columns.len();
+                columns.push(self.row_sql(row)?);
+                json!({"kind":"boolean","column":column})
+            }
+        })
+    }
+    fn scalar(&mut self, operand: &ScalarOperand<Value>) -> Result<ScalarPlan> {
+        let metric = match operand {
+            ScalarOperand::Literal(value) => return Ok(ScalarPlan::Literal(value.clone())),
+            ScalarOperand::Metric(metric) => metric,
+        };
+        let mut fraction = false;
+        let (aggregate, view): (String, String) = match metric {
+            ScalarMetric::RowCount(None) => ("count(*)".into(), "subject".into()),
+            ScalarMetric::RowCount(Some(alias)) => {
+                let input = self
+                    .inputs
+                    .get(alias.0.as_str())
+                    .ok_or("undeclared_input")?;
+                schema_supported(&input["schema"])?;
+                (
+                    "count(*)".into(),
+                    quote(input["view"].as_str().ok_or("input_view")?),
+                )
+            }
+            ScalarMetric::NullCount(name) | ScalarMetric::NullFraction(name) => {
+                fraction = matches!(metric, ScalarMetric::NullFraction(_));
+                (
+                    format!(
+                        "count(*) FILTER (WHERE {} IS NULL){}",
+                        quote(name.as_str()),
+                        if fraction { ",count(*)" } else { "" }
+                    ),
+                    "subject".into(),
+                )
+            }
+            ScalarMetric::DistinctCount(name) => (
+                format!("count(DISTINCT {})", quote(name.as_str())),
+                "subject".into(),
+            ),
+        };
+        let index = self.queries.len();
+        self.queries.push(json!({"sql":format!("SELECT {aggregate} FROM {view}"),"parameters":[],"width":if fraction {2} else {1}}));
+        Ok(ScalarPlan::Metric(index, fraction))
+    }
     fn flush(&mut self) {
         if self.expressions.is_empty() {
             return;
@@ -106,6 +341,15 @@ impl Compiler {
             self.flush();
         }
         self.remaining = self.remaining.checked_sub(1).ok_or("plan_limit")?;
+        if numeric_row(row) {
+            let saved = std::mem::take(&mut self.parameters);
+            let mut columns = vec![];
+            let plan = self.exact_row(row, &mut columns)?;
+            let parameters = std::mem::replace(&mut self.parameters, saved);
+            let index = self.queries.len();
+            self.queries.push(json!({"sql":format!("SELECT {} FROM subject",columns.join(",")),"parameters":parameters,"width":3,"row_plan":plan,"row_columns":columns.len()}));
+            return Ok((index, 0));
+        }
         let expr = self.row_sql(row)?;
         let slot = self.expressions.len();
         self.expressions.push(expr);
@@ -198,6 +442,52 @@ impl Compiler {
     }
     fn row_sql(&mut self, r: &RowPredicate<Value>) -> Result<String> {
         Ok(match r {
+            RowPredicate::Approx(..) | RowPredicate::Age(..) => {
+                return Err("numeric_plan_required");
+            }
+            RowPredicate::Matches(name, pattern, full) => {
+                regex_subset(pattern)?;
+                let pattern = self.literal(&json!({"type":"string","value":pattern}))?;
+                format!(
+                    "{}({}, {pattern}, 'c')",
+                    if *full {
+                        "regexp_full_match"
+                    } else {
+                        "regexp_matches"
+                    },
+                    quote(name.as_str())
+                )
+            }
+            RowPredicate::InDataset(name, alias, foreign) => {
+                let input = self
+                    .inputs
+                    .get(alias.0.as_str())
+                    .ok_or("undeclared_input")?;
+                schema_supported(&input["schema"])?;
+                let fields = input["schema"]["fields"].as_array().ok_or("input_schema")?;
+                let remote = fields
+                    .iter()
+                    .find(|f| f["name"] == foreign.as_str())
+                    .ok_or("missing_input_column")?;
+                let local = self.fields.get(name.as_str()).ok_or("missing_column")?;
+                if !(local == &remote["logical_type"]
+                    || integer_type(local) && integer_type(&remote["logical_type"]))
+                    || matches!(local["type"].as_str(), Some("list" | "struct"))
+                {
+                    return Err("input_type");
+                }
+                let lhs = format!("subject.{}", quote(name.as_str()));
+                let rhs = format!("reference.{}", quote(foreign.as_str()));
+                let view = quote(input["view"].as_str().ok_or("input_view")?);
+                let comparison = if matches!(local["type"].as_str(), Some("f32" | "f64")) {
+                    format!("{rhs} = {lhs} AND NOT isnan({rhs}) AND NOT isnan({lhs})")
+                } else {
+                    format!("{rhs} = {lhs}")
+                };
+                format!(
+                    "(CASE WHEN {lhs} IS NULL THEN NULL ELSE EXISTS(SELECT 1 FROM {view} AS reference WHERE {comparison}) END)"
+                )
+            }
             RowPredicate::NonNull(n) => format!("({} IS NOT NULL)", quote(n.as_str())),
             RowPredicate::IsNull(n) => format!("({} IS NULL)", quote(n.as_str())),
             RowPredicate::IsFinite(n) => format!("isfinite({})", quote(n.as_str())),
@@ -258,6 +548,21 @@ impl Compiler {
     fn visit(&mut self, e: &DatasetExpectation<Value>) -> Result<Node> {
         self.remaining = self.remaining.checked_sub(1).ok_or("plan_limit")?;
         Ok(match e {
+            DatasetExpectation::SchemaEquals(schema) => Node::Fixed(&self.schema == schema),
+            DatasetExpectation::GroupCount(op, names, value) => {
+                let index = self.queries.len();
+                let before = self.parameters.len();
+                let bound = self.literal(value)?;
+                let parameters = self.parameters.split_off(before);
+                let bound = bound.replace(&format!("${}", before + 1), "$1");
+                let columns = names
+                    .iter()
+                    .map(|n| quote(n.as_str()))
+                    .collect::<Vec<_>>()
+                    .join(",");
+                self.queries.push(json!({"sql":format!("SELECT count(*),count(*) FILTER (WHERE NOT(n {} {bound})) FROM (SELECT count(*) AS n FROM subject GROUP BY {columns}) AS groups" ,operator(*op)),"parameters":parameters,"width":2}));
+                Node::Group(index)
+            }
             DatasetExpectation::Exists(n) => Node::Fixed(self.fields.contains_key(n.as_str())),
             DatasetExpectation::HasType(n, t) => {
                 Node::Fixed(self.fields.get(n.as_str()) == Some(t))
@@ -281,22 +586,7 @@ impl Compiler {
                 Node::Key(q, s, index)
             }
             DatasetExpectation::Compare(op, a, b) => {
-                fn scalar(v: &ScalarOperand<Value>) -> Result<Option<i128>> {
-                    match v {
-                        ScalarOperand::Metric(ScalarMetric::RowCount(None)) => Ok(None),
-                        ScalarOperand::Metric(_) => Err("unsupported_cross_input"),
-                        ScalarOperand::Literal(v) => v["value"]
-                            .as_str()
-                            .ok_or("literal")?
-                            .parse()
-                            .map(Some)
-                            .map_err(|_| "literal"),
-                    }
-                }
-                let (a, b) = (scalar(a)?, scalar(b)?);
-                // A constant true predicate shares the count scan with row checks.
-                let (q, _) = self.slot(&RowPredicate::Boolean(BooleanOp::All, vec![]))?;
-                Node::Count(*op, a, b, q)
+                Node::Scalar(*op, self.scalar(a)?, self.scalar(b)?)
             }
             DatasetExpectation::Boolean(op, children) => Node::Boolean(
                 *op,
@@ -310,6 +600,14 @@ impl Compiler {
     }
 }
 pub(super) fn compile(checks: &[Value], schema: &Value) -> Plan {
+    compile_bound(checks, schema, &BTreeMap::new(), &Value::Null)
+}
+pub(super) fn compile_bound(
+    checks: &[Value],
+    schema: &Value,
+    inputs: &BTreeMap<String, Value>,
+    clock: &Value,
+) -> Plan {
     let fields = schema["fields"]
         .as_array()
         .into_iter()
@@ -318,6 +616,9 @@ pub(super) fn compile(checks: &[Value], schema: &Value) -> Plan {
         .collect();
     let mut c = Compiler {
         fields,
+        schema: schema.clone(),
+        inputs: inputs.clone(),
+        evaluation_time: clock.clone(),
         queries: vec![Value::Null],
         expressions: vec![],
         parameters: vec![],
@@ -328,7 +629,11 @@ pub(super) fn compile(checks: &[Value], schema: &Value) -> Plan {
     for check in checks {
         let checkpoint = c.clone();
         let result = (|| {
-            let ast = decode(&check["expectation"], &Default::default()).map_err(|_| "ast")?;
+            let ast = decode(
+                &check["expectation"],
+                &inputs.keys().map(String::as_str).collect(),
+            )
+            .map_err(|_| "ast")?;
             validate_schema(&ast, schema).map_err(|_| "type_or_column")?;
             let node = match ast {
                 Expectation::Row(r) => c.row_node(&r)?,
@@ -342,10 +647,24 @@ pub(super) fn compile(checks: &[Value], schema: &Value) -> Plan {
         nodes.push(result);
     }
     c.flush();
-    // A trailing reserved batch is unused; references always point to filled queries.
-    if c.queries.last() == Some(&Value::Null) {
-        c.queries.pop();
+    // Scalar-only plans leave the row batch unused. Remove every reservation and
+    // remap typed references, preserving fixed-only plans without a worker scan.
+    let indices = c
+        .queries
+        .iter()
+        .enumerate()
+        .filter(|(_, q)| !q.is_null())
+        .enumerate()
+        .map(|(new, (old, _))| (old, new))
+        .collect();
+    for node in &mut nodes {
+        if let Ok(value) = node
+            && let Err(error) = value.remap(&indices)
+        {
+            *node = Err(error);
+        }
     }
+    c.queries.retain(|q| !q.is_null());
     Plan {
         queries: c.queries,
         nodes,
@@ -372,7 +691,7 @@ pub(super) fn samples(checks: &[Value], schema: &Value, policy: &Value) -> Vec<O
         let requested = check["sample_rows"].as_str()?.parse::<u64>().ok()?;
         if requested == 0 { return None; }
         let limit = requested.min(policy["max_rows"].as_u64().unwrap_or(20)).min(20);
-        let mut c = Compiler { fields:fields.iter().filter_map(|f|Some((f["name"].as_str()?.into(),f["logical_type"].clone()))).collect(),queries:vec![],expressions:vec![],parameters:vec![],batch:0,remaining:4096 };
+        let mut c = Compiler { schema:schema.clone(), inputs:BTreeMap::new(), evaluation_time:Value::Null, fields:fields.iter().filter_map(|f|Some((f["name"].as_str()?.into(),f["logical_type"].clone()))).collect(),queries:vec![],expressions:vec![],parameters:vec![],batch:0,remaining:4096 };
         let ast = decode(&check["expectation"], &Default::default()).ok()?;
         validate_schema(&ast,schema).ok()?;
         let select = columns.iter().map(|f| {
@@ -382,6 +701,7 @@ pub(super) fn samples(checks: &[Value], schema: &Value, policy: &Value) -> Vec<O
         let mut source = "subject".to_owned();
         let predicate = match ast {
             Expectation::Row(r) | Expectation::Dataset(DatasetExpectation::Every(r)) => {
+                if numeric_row(&r) { return None; }
                 let sql = c.row_sql(&r).ok()?;
                 Some(format!("({sql}) IS {}", if check["null_policy"]=="ignore" {"FALSE"} else {"NOT TRUE"}))
             },

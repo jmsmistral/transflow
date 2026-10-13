@@ -127,6 +127,7 @@ async function fixture(
     metrics?: Partial<ApiExecutionMetricsV1>;
     trigger?: ExecutionJsonV1;
     fail?: boolean;
+    sql?: boolean;
   } = {},
 ) {
   const calls: { path: string; query: Record<string, string> }[] = [];
@@ -163,6 +164,9 @@ async function fixture(
                       path: query.version
                         ? "src/producing.py"
                         : "src/current.py",
+                      ...(control.sql
+                        ? { sql_source: { path: "src/producing.sql" } }
+                        : {}),
                     },
               },
               c,
@@ -177,9 +181,11 @@ async function fixture(
                 source: workspaceId,
                 path: query.path,
                 offset: 0,
-                text: query.version
-                  ? "# producing\ndef items(): return 1"
-                  : "# current\ndef items(): return 2",
+                text: control.sql
+                  ? "SELECT * FROM rows"
+                  : query.version
+                    ? "# producing\ndef items(): return 1"
+                    : "# current\ndef items(): return 2",
                 next_offset: null,
                 git: { branch: "master", commit: "abcd", dirty: true },
               },
@@ -340,6 +346,26 @@ test("producing source uses the exact version definition, current and diff are e
   expect(document.querySelector(".diff-added code")?.textContent).toBe(
     "+ # current",
   );
+  model.dispose();
+});
+test("SQL code uses the captured SQL file rather than its Python registration", async () => {
+  const { model, state, calls } = await fixture(false, job, { sql: true });
+  render(<CodeInspector workspace={model} state={state} />);
+  expect(await screen.findByText("src/producing.sql")).toBeTruthy();
+  expect(screen.getByText("SELECT").className).toBe("syntax-keyword");
+  expect(calls.find((c) => c.path.includes("/source/"))?.query).toMatchObject({
+    version: versionId,
+    path: "src/producing.sql",
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Latest saved version" }));
+  await waitFor(() =>
+    expect(calls.filter((c) => c.path.includes("/source/")).length).toBe(2),
+  );
+  expect(
+    calls
+      .filter((c) => c.path.includes("/source/"))
+      .every((c) => c.query.path === "src/producing.sql"),
+  ).toBe(true);
   model.dispose();
 });
 test("missing retained producer is unavailable and never replaced with current code", async () => {

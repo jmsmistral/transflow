@@ -11,6 +11,7 @@ import json
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Literal as TypingLiteral
 from typing import overload
 
@@ -87,6 +88,48 @@ class ColumnRef:
             }
         )
 
+    def approx(self, value: object, *, abs_tol: object, rel_tol: object) -> RowPredicate:
+        return RowPredicate._from_node(
+            {
+                "kind": "approx",
+                "column": self.name,
+                "value": _literal_value(value).to_wire()["value"],
+                "abs_tol": _literal_value(abs_tol).to_wire()["value"],
+                "rel_tol": _literal_value(rel_tol).to_wire()["value"],
+            }
+        )
+
+    def matches(self, pattern: str, *, mode: TypingLiteral["partial", "full"]) -> RowPredicate:
+        return RowPredicate._from_node(
+            {"kind": "matches", "column": self.name, "pattern": pattern, "mode": mode}
+        )
+
+    def in_dataset(self, alias: str, *, column: str) -> RowPredicate:
+        _name(alias)
+        _name(column)
+        return RowPredicate._from_node(
+            {
+                "kind": "in_dataset",
+                "column": self.name,
+                "input": {"kind": "input", "alias": alias},
+                "input_column": column,
+            }
+        )
+
+    def null_count(self) -> ScalarMetric:
+        return ScalarMetric(metric="null_count", column=self.name)
+
+    def null_fraction(self) -> ScalarMetric:
+        return ScalarMetric(metric="null_fraction", column=self.name)
+
+    def distinct_count(self) -> ScalarMetric:
+        return ScalarMetric(metric="distinct_count", column=self.name)
+
+    def age_seconds_at(self, at: EvaluationTime) -> AgeMetric:
+        if not isinstance(at, EvaluationTime):
+            raise DeclarationError("Age requires the frozen E.evaluation_time()")
+        return AgeMetric(self.name)
+
     def gt(self, value: object) -> RowPredicate:
         return compare(self, "gt", value if isinstance(value, ColumnRef) else _literal_value(value))
 
@@ -130,12 +173,25 @@ class InputAliasRef:
 @dataclass(frozen=True, slots=True)
 class ScalarMetric:
     source: InputAliasRef | None = None
+    metric: str = "row_count"
+    column: str | None = None
 
     def __post_init__(self) -> None:
         if self.source is not None and not isinstance(self.source, InputAliasRef):
             raise DeclarationError("Metric source must be a declared input reference")
+        if self.metric not in {"row_count", "null_count", "null_fraction", "distinct_count"}:
+            raise DeclarationError("Unknown scalar metric")
+        if self.metric == "row_count":
+            if self.column is not None:
+                raise DeclarationError("Row count does not take a column")
+        elif self.source is not None or self.column is None:
+            raise DeclarationError("Column metrics require a local column without an input source")
+        else:
+            _name(self.column)
 
     def to_wire(self) -> dict[str, object]:
+        if self.metric != "row_count":
+            return {"kind": self.metric, "column": self.column}
         return {
             "kind": "row_count",
             "input": None if self.source is None else {"kind": "input", "alias": self.source.alias},
@@ -170,6 +226,87 @@ class ScalarMetric:
         return compare(
             self, "not_equals", value if isinstance(value, ScalarMetric) else _literal_value(value)
         )
+
+
+@dataclass(frozen=True, slots=True)
+class EvaluationTime:
+    """A symbolic frozen attempt clock; never reads the author's wall clock."""
+
+
+@dataclass(frozen=True, slots=True)
+class AgeMetric:
+    column: str
+
+    def lte(self, value: object) -> RowPredicate:
+        return RowPredicate._from_node(
+            {
+                "kind": "age_compare",
+                "column": self.column,
+                "op": "lte",
+                "at": {"kind": "evaluation_time"},
+                "value": _literal_value(value).to_wire()["value"],
+            }
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SchemaRef:
+    def equals(self, value: object) -> DatasetExpectation:
+        return DatasetExpectation._from_node(
+            {"kind": "schema_equals", "schema": json.loads(frozen_json(value, "LogicalSchemaV1"))}
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class GroupMetric:
+    columns: tuple[str, ...]
+
+    def count(self) -> GroupMetric:
+        return self
+
+    def _compare(self, op: Comparison, value: object) -> DatasetExpectation:
+        return DatasetExpectation._from_node(
+            {
+                "kind": "group_count",
+                "columns": list(self.columns),
+                "op": op,
+                "value": _literal_value(value).to_wire()["value"],
+            }
+        )
+
+    def gt(self, value: object) -> DatasetExpectation:
+        return self._compare("gt", value)
+
+    def gte(self, value: object) -> DatasetExpectation:
+        return self._compare("gte", value)
+
+    def lt(self, value: object) -> DatasetExpectation:
+        return self._compare("lt", value)
+
+    def lte(self, value: object) -> DatasetExpectation:
+        return self._compare("lte", value)
+
+    def equals(self, value: object) -> DatasetExpectation:
+        return self._compare("equals", value)
+
+    def not_equals(self, value: object) -> DatasetExpectation:
+        return self._compare("not_equals", value)
+
+
+def evaluation_time() -> EvaluationTime:
+    return EvaluationTime()
+
+
+def schema() -> SchemaRef:
+    return SchemaRef()
+
+
+def group_by(*columns: str) -> GroupMetric:
+    for column in columns:
+        _name(column)
+    if not columns or len(set(columns)) != len(columns):
+        raise DeclarationError("Group columns must be nonempty and unique")
+    return GroupMetric(columns)
 
 
 @dataclass(frozen=True, slots=True, init=False)
@@ -254,6 +391,49 @@ def _validate(node: dict[str, object], depth: int = 0, *, budget: list[int]) -> 
         raise DeclarationError("Expectation exceeds its depth or node limit")
     budget[0] -= 1
     kind = node["kind"]
+    if kind in ("approx", "age_compare"):
+        names = ("value", "abs_tol", "rel_tol") if kind == "approx" else ("value",)
+        for key in names:
+            value = node[key]
+            if not isinstance(value, dict) or value["type"] not in {
+                "i8",
+                "i16",
+                "i32",
+                "i64",
+                "u8",
+                "u16",
+                "u32",
+                "u64",
+                "f32",
+                "f64",
+                "decimal",
+            }:
+                raise DeclarationError("Approximation and age require finite numeric values")
+            number = Decimal(str(value["value"]))
+            if not number.is_finite() or key != "value" and number < 0:
+                raise DeclarationError("Tolerances must be nonnegative and finite")
+        return "row"
+    if kind in ("matches", "in_dataset"):
+        return "row"
+    if kind == "schema_equals":
+        return "dataset"
+    if kind == "group_count":
+        columns = node["columns"]
+        value = node["value"]
+        if not isinstance(columns, list) or len(set(columns)) != len(columns):
+            raise DeclarationError("Group columns must be unique")
+        if not isinstance(value, dict) or value["type"] not in {
+            "i8",
+            "i16",
+            "i32",
+            "i64",
+            "u8",
+            "u16",
+            "u32",
+            "u64",
+        }:
+            raise DeclarationError("Group counts require integer comparisons")
+        return "dataset"
     if kind in ("non_null", "primary_key"):
         columns = node["columns"]
         if (
@@ -284,6 +464,7 @@ def _validate(node: dict[str, object], depth: int = 0, *, budget: list[int]) -> 
         if builtins.all(v["kind"] == "literal" for v in operands):
             raise DeclarationError("Comparison requires a column or metric operand")
         if kind == "metric_compare":
+            fraction = builtins.any(v["kind"] == "null_fraction" for v in operands)
             for operand in operands:
                 if operand["kind"] == "literal" and operand["value"]["type"] not in (
                     "i8",
@@ -294,6 +475,7 @@ def _validate(node: dict[str, object], depth: int = 0, *, budget: list[int]) -> 
                     "u16",
                     "u32",
                     "u64",
+                    *(("f32", "f64", "decimal") if fraction else ()),
                 ):
                     raise DeclarationError("Row-count comparisons require an integer literal")
         elif builtins.any(

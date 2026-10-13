@@ -448,8 +448,10 @@ fn run_inner(
             [
                 "discovery.v1".to_owned(),
                 "polars.execute.v1".to_owned(),
+                "duckdb.execute.v1".to_owned(),
                 "expectation.ast.v1".to_owned(),
                 "expectation.core.v1".to_owned(),
+                "expectation.g3.v1".to_owned(),
                 "duckdb.checks.v1".to_owned(),
                 "duckdb.samples.v1".to_owned(),
                 "duckdb.query.v1".to_owned(),

@@ -41,7 +41,7 @@ fn envelope(
     input: bool,
     sample: Option<&str>,
 ) -> Value {
-    json!({"format_version":1,"request_id":r.intent.attempt().to_string(),"attempt_id":r.intent.attempt().to_string(),"artifact_digest":r.intent.artifact().hex(),"subject_version":if input {json!(VersionId::from_bytes([9;16]).to_string())} else {Value::Null},"consumer_definition":"c".repeat(64),"binding":if input {json!("items")} else {Value::Null},"phase":if input {"input"} else {"output"},"evaluator":"duckdb-1.5.5:core-v1","semantics":"strict-null-key-v1","started_us":"5","finished_us":"10","duration_us":"5","sample_policy":policy(),"checks":[{"id":d["id"],"name":d["name"],"definition_digest":hash(d),"status":status,"severity":d["on_error"],"exact":status!="ERROR","failed_rows":if status=="ERROR" {Value::Null} else {json!(if status=="PASS" {"0"} else {"1"})},"error":if status=="ERROR" {json!("evaluator_failure")} else {Value::Null},"metrics":[],"sample":sample}]})
+    json!({"format_version":1,"request_id":r.intent.attempt().to_string(),"attempt_id":r.intent.attempt().to_string(),"artifact_digest":r.intent.artifact().hex(),"subject_version":if input {json!(VersionId::from_bytes([9;16]).to_string())} else {Value::Null},"consumer_definition":"c".repeat(64),"binding":if input {json!("items")} else {Value::Null},"phase":if input {"input"} else {"output"},"evaluator":"duckdb-1.5.5:g3-v1","semantics":"strict-null-key-g3-v1","started_us":"5","finished_us":"10","duration_us":"5","sample_policy":policy(),"checks":[{"id":d["id"],"name":d["name"],"definition_digest":hash(d),"status":status,"severity":d["on_error"],"exact":status!="ERROR","failed_rows":if status=="ERROR" {Value::Null} else {json!(if status=="PASS" {"0"} else {"1"})},"error":if status=="ERROR" {json!("evaluator_failure")} else {Value::Null},"metrics":[],"sample":sample}]})
 }
 async fn setup(h: &mut Harness, d: &Value, input: bool) -> PublicationContract {
     let mut c = contract();
@@ -152,8 +152,8 @@ fn input_certificate_reuse_preserves_original_times_and_rejects_changed_identity
                 check: &d,
                 consumer_definition: &consumer,
                 sample_policy: &policy(),
-                evaluator: "duckdb-1.5.5:core-v1",
-                semantics: "strict-null-key-v1",
+                evaluator: "duckdb-1.5.5:g3-v1",
+                semantics: "strict-null-key-g3-v1",
                 normalization: NORMALIZATION,
             };
             let mut store = h.owner.as_mut().unwrap().open_store().await.unwrap();

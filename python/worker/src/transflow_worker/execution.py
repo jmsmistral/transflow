@@ -19,7 +19,12 @@ from .wire import ControlFrame, ProtocolError, _decode, validate_document, write
 
 def serve(request_path: Path, socket_path: Path) -> int:
     request = _decode(_read(request_path, 1024 * 1024, private=True))
-    validate_document("PolarsExecutionRequestV1", request)
+    validate_document(
+        "SqlExecutionRequestV1"
+        if request.get("producer", {}).get("engine") == "duckdb"
+        else "PolarsExecutionRequestV1",
+        request,
+    )
     check_compatibility(
         protocol_major=request["protocol"]["major"], protocol_minor=request["protocol"]["minor"]
     )
@@ -46,6 +51,9 @@ def serve(request_path: Path, socket_path: Path) -> int:
 
 
 def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
+    engine_capability = (
+        "duckdb.execute.v1" if request["producer"]["engine"] == "duckdb" else "polars.execute.v1"
+    )
     sequence = 0
     lock = threading.Lock()
     stopped = threading.Event()
@@ -61,9 +69,10 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                     "sequence": str(sequence),
                     "message": message,
                     "required_capabilities": [
-                        "polars.execute.v1",
+                        engine_capability,
                         "expectation.ast.v1",
                         "expectation.core.v1",
+                        "expectation.g3.v1",
                     ],
                     "extensions": [],
                 }
@@ -84,14 +93,24 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
         {
             "type": "hello",
             "operation": "execute",
-            "capabilities": ["polars.execute.v1", "expectation.ast.v1", "expectation.core.v1"],
+            "capabilities": [
+                engine_capability,
+                "expectation.ast.v1",
+                "expectation.core.v1",
+                "expectation.g3.v1",
+            ],
         }
     )
     thread = threading.Thread(target=heartbeat, daemon=True)
     thread.start()
     try:
         send({"type": "phase", "phase": "setup"})
-        manifest = execute(request, send)
+        if request["producer"]["engine"] == "duckdb":
+            from .sql_adapter import execute as sql_execute
+
+            manifest = sql_execute(request, send)
+        else:
+            manifest = execute(request, send)
         stopped.set()
         thread.join()
         send(
@@ -110,7 +129,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
             if isinstance(exc, DiscoveryError)
             else ExecutionError(
                 "transient_io" if isinstance(exc, TransientIOError) else "execution",
-                "Polars execution failed; inspect the captured producer and retained logs",
+                "Transform execution failed; inspect the captured producer and retained logs",
                 request["producer"]["path"],
                 request["producer"]["line"],
                 type(exc).__name__,

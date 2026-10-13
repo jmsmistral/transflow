@@ -24,6 +24,7 @@ MAX_TEXT = 16 * 1024 * 1024
 # Canonical validation is a runtime service, even when user code imports only Polars.
 # Keep this standard-library module self-contained: the CLI embeds it before install.
 MANAGED_PACKAGES = {"duckdb": "1.5.5"}
+ARROW_VERSION = "25.0.1"
 
 
 class EnvironmentError(ValueError):

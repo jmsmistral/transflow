@@ -9316,5 +9316,442 @@
       "publication": "unknown",
       "resource_type": "pandas_transform"
     }
+  },
+  {
+    "name": "g3-approx",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "abs_tol": {
+        "type": "f64",
+        "value": "0.01"
+      },
+      "ast_version": 1,
+      "column": "value",
+      "kind": "approx",
+      "rel_tol": {
+        "type": "f64",
+        "value": "0.01"
+      },
+      "value": {
+        "type": "f64",
+        "value": "1.0"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "g3-null-count",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "left": {
+        "column": "value",
+        "kind": "null_count"
+      },
+      "op": "equals",
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "i64",
+          "value": "0"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "g3-null-fraction",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "left": {
+        "column": "value",
+        "kind": "null_fraction"
+      },
+      "op": "lte",
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "f64",
+          "value": "0.5"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "g3-distinct-count",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "left": {
+        "column": "value",
+        "kind": "distinct_count"
+      },
+      "op": "gt",
+      "right": {
+        "kind": "literal",
+        "value": {
+          "type": "i64",
+          "value": "0"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "g3-groups",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "columns": [
+        "key"
+      ],
+      "kind": "group_count",
+      "op": "lte",
+      "value": {
+        "type": "i64",
+        "value": "2"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "g3-regex",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "column": "label",
+      "kind": "matches",
+      "mode": "full",
+      "pattern": "[a-z]+"
+    },
+    "valid": true
+  },
+  {
+    "name": "g3-age",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "at": {
+        "kind": "evaluation_time"
+      },
+      "column": "stamp",
+      "kind": "age_compare",
+      "op": "lte",
+      "value": {
+        "type": "i64",
+        "value": "3600"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "g3-schema",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "schema_equals",
+      "schema": {
+        "fields": [],
+        "format_version": 1
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "g3-membership",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "column": "key",
+      "input": {
+        "alias": "reference",
+        "kind": "input"
+      },
+      "input_column": "id",
+      "kind": "in_dataset"
+    },
+    "valid": true
+  },
+  {
+    "name": "g3-two-inputs",
+    "schema": "ExpectationAstV1",
+    "value": {
+      "ast_version": 1,
+      "kind": "metric_compare",
+      "left": {
+        "input": {
+          "alias": "previous",
+          "kind": "input"
+        },
+        "kind": "row_count"
+      },
+      "op": "lt",
+      "right": {
+        "input": {
+          "alias": "current",
+          "kind": "input"
+        },
+        "kind": "row_count"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "sql-declaration",
+    "schema": "DeclarationV1",
+    "value": {
+      "module": "producer",
+      "function": "produce",
+      "path": "src/producer.py",
+      "line": 1,
+      "source": false,
+      "engine": "duckdb",
+      "inputs": [],
+      "output": {
+        "ref": {
+          "form": "string",
+          "value": "curated/items"
+        },
+        "checks": [],
+        "schema": null
+      },
+      "parameters": [],
+      "wall_timeout_seconds": null,
+      "cache": "deterministic",
+      "refresh": null,
+      "secret_refs": [],
+      "lineage_json": null,
+      "sql_source": {
+        "path": "src/producer.sql",
+        "sha256": "e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5",
+        "byte_length": "8"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "sql-execution",
+    "schema": "SqlExecutionRequestV1",
+    "value": {
+      "format_version": 1,
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000001",
+      "capture_root": "/synthetic/capture",
+      "source_roots": [
+        "src"
+      ],
+      "files": [],
+      "catalog": {
+        "format_version": 1,
+        "workspace_id": "00000000-0000-4000-8000-000000000001",
+        "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+        "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "entries": []
+      },
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_directory": "/synthetic/result",
+      "auth_token": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "producer": {
+        "module": "producer",
+        "function": "produce",
+        "path": "src/producer.py",
+        "line": 1,
+        "source": false,
+        "engine": "duckdb",
+        "inputs": [],
+        "output": {
+          "ref": {
+            "form": "string",
+            "value": "curated/items"
+          },
+          "checks": [],
+          "schema": null
+        },
+        "parameters": [],
+        "wall_timeout_seconds": null,
+        "cache": "deterministic",
+        "refresh": null,
+        "secret_refs": [],
+        "lineage_json": null,
+        "sql_source": {
+          "path": "src/producer.sql",
+          "sha256": "e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5",
+          "byte_length": "8"
+        }
+      },
+      "inputs": [],
+      "context": {
+        "build_id": "00000000-0000-4000-8000-000000000001",
+        "job_id": "00000000-0000-4000-8000-000000000001",
+        "evaluation_time": {
+          "type": "timestamp",
+          "value": "2026-09-21T00:00:00.000000Z",
+          "unit": "us",
+          "timezone": "UTC"
+        },
+        "random_seed": null,
+        "parameters": []
+      },
+      "compression": "zstd",
+      "row_group_size": "8192",
+      "threads": "2",
+      "memory_bytes": null,
+      "spill_bytes": "268435456"
+    },
+    "valid": true
+  },
+  {
+    "name": "sql-as-polars",
+    "schema": "PolarsExecutionRequestV1",
+    "value": {
+      "format_version": 1,
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000001",
+      "capture_root": "/synthetic/capture",
+      "source_roots": [
+        "src"
+      ],
+      "files": [],
+      "catalog": {
+        "format_version": 1,
+        "workspace_id": "00000000-0000-4000-8000-000000000001",
+        "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+        "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "entries": []
+      },
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_directory": "/synthetic/result",
+      "auth_token": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "producer": {
+        "module": "producer",
+        "function": "produce",
+        "path": "src/producer.py",
+        "line": 1,
+        "source": false,
+        "engine": "duckdb",
+        "inputs": [],
+        "output": {
+          "ref": {
+            "form": "string",
+            "value": "curated/items"
+          },
+          "checks": [],
+          "schema": null
+        },
+        "parameters": [],
+        "wall_timeout_seconds": null,
+        "cache": "deterministic",
+        "refresh": null,
+        "secret_refs": [],
+        "lineage_json": null,
+        "sql_source": {
+          "path": "src/producer.sql",
+          "sha256": "e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5",
+          "byte_length": "8"
+        }
+      },
+      "inputs": [],
+      "context": {
+        "build_id": "00000000-0000-4000-8000-000000000001",
+        "job_id": "00000000-0000-4000-8000-000000000001",
+        "evaluation_time": {
+          "type": "timestamp",
+          "value": "2026-09-21T00:00:00.000000Z",
+          "unit": "us",
+          "timezone": "UTC"
+        },
+        "random_seed": null,
+        "parameters": []
+      },
+      "compression": "zstd",
+      "row_group_size": "8192",
+      "threads": "2",
+      "memory_bytes": null,
+      "spill_bytes": "268435456"
+    },
+    "valid": false
+  },
+  {
+    "name": "sql-missing-source",
+    "schema": "SqlExecutionRequestV1",
+    "value": {
+      "format_version": 1,
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000001",
+      "capture_root": "/synthetic/capture",
+      "source_roots": [
+        "src"
+      ],
+      "files": [],
+      "catalog": {
+        "format_version": 1,
+        "workspace_id": "00000000-0000-4000-8000-000000000001",
+        "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+        "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "entries": []
+      },
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_directory": "/synthetic/result",
+      "auth_token": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "producer": {
+        "module": "producer",
+        "function": "produce",
+        "path": "src/producer.py",
+        "line": 1,
+        "source": false,
+        "engine": "duckdb",
+        "inputs": [],
+        "output": {
+          "ref": {
+            "form": "string",
+            "value": "curated/items"
+          },
+          "checks": [],
+          "schema": null
+        },
+        "parameters": [],
+        "wall_timeout_seconds": null,
+        "cache": "deterministic",
+        "refresh": null,
+        "secret_refs": [],
+        "lineage_json": null
+      },
+      "inputs": [],
+      "context": {
+        "build_id": "00000000-0000-4000-8000-000000000001",
+        "job_id": "00000000-0000-4000-8000-000000000001",
+        "evaluation_time": {
+          "type": "timestamp",
+          "value": "2026-09-21T00:00:00.000000Z",
+          "unit": "us",
+          "timezone": "UTC"
+        },
+        "random_seed": null,
+        "parameters": []
+      },
+      "compression": "zstd",
+      "row_group_size": "8192",
+      "threads": "2",
+      "memory_bytes": null,
+      "spill_bytes": "268435456"
+    },
+    "valid": false
   }
 ]

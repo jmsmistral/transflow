@@ -825,6 +825,9 @@ fn enrich(c: &Context, mut entries: Vec<Value>) -> Result<Vec<Value>> {
                     .find(|d| d.path.as_str() == e["path"])
             }) {
                 e["producer"] = json!({"path":def.location.path,"line":def.location.line,"source":c.source.map(|id|id.to_string()),"retained":true});
+                if let Some(source) = def.declaration.get("sql_source") {
+                    e["producer"]["sql_source"] = source.clone();
+                }
                 e["tags"] = def.declaration["tags"].clone();
             }
         }

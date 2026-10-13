@@ -63,6 +63,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                         "duckdb.samples.v1",
                         "expectation.ast.v1",
                         "expectation.core.v1",
+                        "expectation.g3.v1",
                     ],
                     "extensions": [],
                 }
@@ -88,6 +89,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                 "duckdb.samples.v1",
                 "expectation.ast.v1",
                 "expectation.core.v1",
+                "expectation.g3.v1",
             ],
         }
     )

@@ -427,9 +427,10 @@ impl Store {
         for result in results {
             tf_protocol::validate_document("CheckEvaluationResultV1", result)
                 .map_err(|_| PublicationError::Evidence)?;
+            crate::check_evidence::validate_context_inputs(result, &request.contract)?;
             if result["attempt_id"] != request.intent.attempt().to_string()
-                || result["evaluator"] != "duckdb-1.5.5:core-v1"
-                || result["semantics"] != "strict-null-key-v1"
+                || result["evaluator"] != "duckdb-1.5.5:g3-v1"
+                || result["semantics"] != "strict-null-key-g3-v1"
             {
                 return Err(PublicationError::Evidence);
             }

@@ -37,6 +37,7 @@ from .declarations import (
 from .declarations import (
     source_transform as source_transform,
 )
+from .declarations import sql_transform as sql_transform
 from .declarations import (
     transform as transform,
 )
@@ -52,6 +53,7 @@ __all__ = [
     "DeclarationError",
     "TransformContext",
     "transform",
+    "sql_transform",
     "source_transform",
     "PROTOCOL_VERSION",
     "ProtocolCompatibilityError",

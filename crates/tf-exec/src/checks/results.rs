@@ -1,5 +1,6 @@
 //! Convert bounded exact aggregate cells into canonical outcomes; no samples or data rows.
-use super::compiler::{Node, Result};
+use super::compiler::{Node, Result, ScalarPlan};
+use num_bigint::BigInt;
 use serde_json::{Value, json};
 use tf_domain::expectation::{BooleanOp, Comparison};
 
@@ -11,7 +12,7 @@ fn count(rows: &[Value], q: usize, c: usize) -> Result<u64> {
         .and_then(|v| v.parse().ok())
         .ok_or("query_error")
 }
-fn comparison(op: Comparison, a: i128, b: i128) -> bool {
+fn comparison(op: Comparison, a: BigInt, b: BigInt) -> bool {
     match op {
         Comparison::Gt => a > b,
         Comparison::Gte => a >= b,
@@ -19,6 +20,63 @@ fn comparison(op: Comparison, a: i128, b: i128) -> bool {
         Comparison::Lte => a <= b,
         Comparison::Equals => a == b,
         Comparison::NotEquals => a != b,
+    }
+}
+fn rational(v: &Value) -> Result<(BigInt, BigInt)> {
+    let text = v["value"].as_str().ok_or("literal")?;
+    if matches!(v["type"].as_str(), Some("f32" | "f64")) {
+        let number: f64 = if v["type"] == "f32" {
+            text.parse::<f32>().map_err(|_| "literal")? as f64
+        } else {
+            text.parse().map_err(|_| "literal")?
+        };
+        if !number.is_finite() {
+            return Err("literal");
+        }
+        let bits = number.to_bits();
+        let exponent = ((bits >> 52) & 2047) as i32;
+        let mantissa = (bits & ((1u64 << 52) - 1)) | if exponent == 0 { 0 } else { 1u64 << 52 };
+        let power = if exponent == 0 {
+            -1074
+        } else {
+            exponent - 1075
+        };
+        let mut numerator = BigInt::from(mantissa);
+        if bits >> 63 != 0 {
+            numerator = -numerator;
+        }
+        return Ok(if power >= 0 {
+            (numerator << power as usize, BigInt::from(1))
+        } else {
+            (numerator, BigInt::from(1) << (-power) as usize)
+        });
+    }
+    if v["type"] == "decimal" {
+        let scale = v["scale"].as_u64().ok_or("literal")?;
+        if scale > 38 {
+            return Err("unsupported_precision");
+        }
+        return Ok((
+            text.replace('.', "").parse().map_err(|_| "literal")?,
+            BigInt::from(10).pow(scale as u32),
+        ));
+    }
+    Ok((text.parse().map_err(|_| "literal")?, BigInt::from(1)))
+}
+fn scalar(value: &ScalarPlan, rows: &[Value]) -> Result<(BigInt, BigInt)> {
+    match value {
+        ScalarPlan::Literal(v) => rational(v),
+        ScalarPlan::Metric(q, fraction) => {
+            let numerator = count(rows, *q, 0)?;
+            let denominator = if *fraction { count(rows, *q, 1)? } else { 1 };
+            if denominator == 0 {
+                return Err("undefined_metric");
+            }
+            if *fraction && numerator > denominator {
+                return Err("result_counts");
+            }
+            Ok((BigInt::from(numerator), BigInt::from(denominator)))
+        }
     }
 }
 /// Root row attribution is absent for dataset conditions, including dataset composition.
@@ -74,12 +132,23 @@ pub(super) fn outcome(
             (failed == 0, Some(failed))
         }
         Node::Fixed(v) => (*v, None),
-        Node::Count(op, a, b, q) => {
-            let n = i128::from(count(rows, *q, 0)?);
-            let (a, b) = (a.unwrap_or(n), b.unwrap_or(n));
+        Node::Scalar(op, a, b) => {
+            let ((a, ad), (b, bd)) = (scalar(a, rows)?, scalar(b, rows)?);
             values.insert("left".into(), json!(a.to_string()));
             values.insert("right".into(), json!(b.to_string()));
-            (comparison(*op, a, b), None)
+            values.insert("left_denominator".into(), json!(ad.to_string()));
+            values.insert("right_denominator".into(), json!(bd.to_string()));
+            (comparison(*op, a * bd, b * ad), None)
+        }
+        Node::Group(q) => {
+            let total = count(rows, *q, 0)?;
+            let failed = count(rows, *q, 1)?;
+            if failed > total {
+                return Err("result_counts");
+            }
+            values.insert("groups_evaluated".into(), json!(total.to_string()));
+            values.insert("violating_groups".into(), json!(failed.to_string()));
+            (failed == 0, None)
         }
         Node::Boolean(op, children) => {
             let mut results = vec![];

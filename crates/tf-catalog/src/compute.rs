@@ -156,6 +156,18 @@ pub fn finalize(
         .find(|d| d.output == CandidateIdentity::Registered(execution.output))
         .ok_or(Error::Context)?;
     let normalized_parameters = parameters(&d.declaration, execution.parameters)?;
+    fn observes_time(value: &Value) -> bool {
+        match value {
+            Value::Object(map) => {
+                value["kind"] == "evaluation_time" || map.values().any(observes_time)
+            }
+            Value::Array(values) => values.iter().any(observes_time),
+            _ => false,
+        }
+    }
+    if observes_time(&d.declaration) && execution.evaluation_us.is_none() {
+        return Err(Error::Semantics);
+    }
     let expected: BTreeSet<_> = d.inputs.iter().map(|i| i.alias.as_str()).collect();
     let mut inputs = BTreeMap::new();
     for input in execution.inputs {

@@ -27,6 +27,9 @@ export function field(value: unknown, name: string): string | undefined {
 function nested(value: unknown, ...names: string[]): unknown {
   return names.reduce<unknown>((item, name) => object(item)?.[name], value);
 }
+export function producingSourcePath(value: unknown): string | undefined {
+  return field(nested(value, "sql_source"), "path") ?? field(value, "path");
+}
 export function schemaOf(value: unknown): LogicalSchemaV1 | null {
   try {
     return decode("LogicalSchemaV1", value);

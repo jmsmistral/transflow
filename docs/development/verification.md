@@ -1,6 +1,51 @@
 # Contributor verification
 
 
+## Managed SQL and G3 checks — T101–T104 (2026-10-14)
+
+The owner-selected batch delivers immutable SQL registrations, exact pinned input
+views and bound parameters, one managed relation/connection lifetime through one
+Parquet sink, and the remaining G3 expectation operations. Cross-input and
+validation-only checks preserve separate alias/version identities and consumer
+quality evidence. Exact rational arithmetic prevents overflow and lossy decimal,
+integer or fraction comparisons. The [SQL guide](../../python/SQL_TRANSFORMS.md)
+and [expectation guide](../../python/EXPECTATIONS.md) define the delivered profile.
+
+Local macOS 15.3.1 arm64/Python 3.14.7 gates passed: the full 486-test Rust suite
+and one doc test, one added normalization regression and the affected 13-test
+export/type recheck; all-target Clippy; 1,124 Python tests with Ruff/format/mypy
+(85 sources), package/export checks; 599 web tests and reproducible 16-asset
+production builds; and 60 installed-worker CLI/API tests. All 382 shared contract
+cases and 48 expectation AST vectors are synchronized. The reviewed 639-version
+OSV audit has no findings. Specification, safety and Rust-boundary checks passed.
+
+Native qualification passed 28 existing canonical cases, 21 G3 cases, 19 SQL/value
+cases with three cross-engine canonical-check matrix groups, 21 publication
+lifecycle cases, and nine real SQL CLI/API journeys. The standalone exact-rational
+dependency probe and Clippy passed. The clean engine environment contains none
+of the four retired adapter dependencies. Unsupported conversions fail rather
+than rounding: examples include UTC milliseconds in SQL, timezone-aware
+nanoseconds, non-UTC metadata and Decimal256.
+
+Codex internal Browser verified a real four-producer fixture: authenticated
+launch, saved view and published graph status, captured SQL in all three Code
+modes, exact decimal Preview rows, published output versus consumer input checks,
+and cached history/Build reports with no fabricated attempts. Review caught and
+corrected the missing Code import and SQL metadata projection; the final browser
+journey used the corrected API and assets.
+
+The new persistent workspace is `~/dev/transflow-workspace/t104-sql-checks-review`.
+Its separate `t104-review-tools/serve-preview.sh` launcher uses copied qualified
+CLI/web assets. Existing alpha workspaces and primary preview binaries/dist were
+preserved. Review schedules remain paused; the verification coordinator and tab
+were stopped/closed before handoff.
+
+The [measured receipt](evidence/t101-t104-macos-arm64.json) records commands,
+corrections, exact cases and limits. New cross-platform CI is owner-monitored;
+no remote success is claimed. Optional SQL extensions are disabled. Numeric row
+checks retain exact aggregate outcomes without optional row samples. Overall G3,
+deferred editor qualification and application release remain later work.
+
 ## Polars/DuckDB scope and macOS CLI framing (2026-10-13)
 
 The owner-approved engine scope is now specification 1.1.4. The unpublished

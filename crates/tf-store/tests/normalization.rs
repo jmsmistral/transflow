@@ -153,11 +153,24 @@ fn storage_representability_does_not_imply_engine_support() {
             (Adapter::Parquet, parquet),
             (Adapter::Polars, polars),
             (Adapter::DuckDbValidation, duckdb),
-            (Adapter::DuckDbSql, false),
+            (Adapter::DuckDbSql, duckdb),
         ] {
             assert_eq!(schema.require(adapter).is_ok(), ok);
         }
     }
+}
+#[test]
+fn utc_milliseconds_require_lossless_adapter_support() {
+    let schema = NormalizedSchema::from_arrow(&Schema::new(vec![Field::new(
+        "stamp",
+        DataType::Timestamp(TimeUnit::Millisecond, Some("UTC".into())),
+        true,
+    )]))
+    .unwrap();
+    assert!(schema.require(Adapter::Parquet).is_ok());
+    assert!(schema.require(Adapter::Polars).is_ok());
+    assert!(schema.require(Adapter::DuckDbValidation).is_ok());
+    assert!(schema.require(Adapter::DuckDbSql).is_err());
 }
 #[test]
 fn physical_offsets_normalize_but_logical_changes_do_not() {

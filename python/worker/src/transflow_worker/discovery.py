@@ -14,13 +14,13 @@ import stat
 import sys
 import threading
 import traceback
-from dataclasses import asdict
-from pathlib import Path
+from dataclasses import asdict, replace
+from pathlib import Path, PurePosixPath
 from types import CodeType, ModuleType
 from typing import Any, BinaryIO, cast
 
 from transflow._catalog import CatalogSnapshot, DatasetRef, _bind_worker
-from transflow.declarations import Branch, Check, Declaration, get_declaration
+from transflow.declarations import Branch, Check, Declaration, SqlTransform, get_declaration
 
 from .canonical import DigestKind, content_digest
 from .compatibility import check_compatibility
@@ -255,12 +255,17 @@ def collect(request: dict[str, Any]) -> dict[str, object]:
                 module = importlib.import_module(entry.name)
                 seen: set[int] = set()
                 local: list[Declaration] = []
-                for function in vars(module).values():
-                    if not inspect.isfunction(function) or id(function) in seen:
+                for name, function in vars(module).items():
+                    if (
+                        not (inspect.isfunction(function) or isinstance(function, SqlTransform))
+                        or id(function) in seen
+                    ):
                         continue
                     seen.add(id(function))
                     declaration = get_declaration(function)
                     if declaration is not None and declaration.module == entry.name:
+                        if isinstance(function, SqlTransform):
+                            declaration = replace(declaration, qualname=name)
                         local.append(declaration)
                 if len(local) > 1:
                     raise DiscoveryError(
@@ -268,7 +273,22 @@ def collect(request: dict[str, Any]) -> dict[str, object]:
                         "A producing module must define exactly one producer",
                         entry.path,
                     )
-                definitions.extend(_declaration(d, entry) for d in local)
+                for declaration in local:
+                    definition = _declaration(declaration, entry)
+                    if declaration.sql_file is not None:
+                        sql_path = str(PurePosixPath(entry.path).parent / declaration.sql_file)
+                        captured = next(
+                            (f for f in request["files"] if f["path"] == sql_path), None
+                        )
+                        if captured is None:
+                            raise DiscoveryError(
+                                "sql_source",
+                                "SQL source is absent or excluded from the captured source roots",
+                                entry.path,
+                                declaration.line,
+                            )
+                        definition["sql_source"] = dict(captured)
+                    definitions.append(definition)
                 imported.append(entry.name)
             except DiscoveryError:
                 raise
@@ -370,6 +390,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                         "discovery.v1",
                         "expectation.ast.v1",
                         "expectation.core.v1",
+                        "expectation.g3.v1",
                     ],
                     "extensions": [],
                 }
@@ -390,7 +411,12 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
         {
             "type": "hello",
             "operation": "discover",
-            "capabilities": ["discovery.v1", "expectation.ast.v1", "expectation.core.v1"],
+            "capabilities": [
+                "discovery.v1",
+                "expectation.ast.v1",
+                "expectation.core.v1",
+                "expectation.g3.v1",
+            ],
         }
     )
     thread = threading.Thread(target=heartbeat, daemon=True)

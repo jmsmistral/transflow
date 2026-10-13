@@ -132,6 +132,9 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
             "query",
             "sql_policy",
             "polars_adapter",
+            "sql_adapter",
+            "arrow_schema",
+            "check_numeric",
             "lifetime",
         )
     }

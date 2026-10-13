@@ -9,6 +9,7 @@ publish = false
 [workspace]
 
 [dependencies]
+num-bigint = "=0.5.1"
 arrow-ipc = "=60.0.0"
 arrow-array = "=60.0.0"
 arrow-schema = "=60.0.0"

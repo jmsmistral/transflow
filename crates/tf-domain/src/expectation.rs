@@ -34,6 +34,12 @@ pub struct InputAliasRef(pub FieldName);
 pub enum ScalarMetric {
     /// Count rows in the current dataset or a declared input.
     RowCount(Option<InputAliasRef>),
+    /// Exact null count in a named column.
+    NullCount(FieldName),
+    /// Exact rational null fraction; undefined on an empty subject.
+    NullFraction(FieldName),
+    /// Exact distinct non-null values.
+    DistinctCount(FieldName),
 }
 /// Per-row value, distinct from scalar aggregate operands.
 #[derive(Clone, Debug, PartialEq)]
@@ -64,6 +70,14 @@ pub enum RowPredicate<L> {
     IsNan(FieldName),
     /// Exact allowed literals, with explicit null membership.
     IsIn(FieldName, Vec<L>),
+    /// Finite approximate equality, preserving the numeric domain.
+    Approx(FieldName, L, L, L),
+    /// Reviewed regex subset; boolean selects full versus partial matching.
+    Matches(FieldName, String, bool),
+    /// Membership in one exact declared alias and column.
+    InDataset(FieldName, InputAliasRef, FieldName),
+    /// Age at the attempt's frozen evaluation time, in seconds.
+    Age(Comparison, FieldName, L),
     /// Explicit comparison of compatible typed operands.
     Compare(Comparison, ColumnValue<L>, ColumnValue<L>),
     /// Composition of the same boolean kind.
@@ -80,6 +94,10 @@ pub enum DatasetExpectation<L> {
     Exists(FieldName),
     /// Exact logical type test; the codec validates the type payload.
     HasType(FieldName, L),
+    /// Exact ordered logical schema equality.
+    SchemaEquals(L),
+    /// Every present group must satisfy an exact count comparison.
+    GroupCount(Comparison, Vec<FieldName>, L),
     /// Explicit comparison of compatible typed operands.
     Compare(Comparison, ScalarOperand<L>, ScalarOperand<L>),
     /// Explicitly require a row predicate across the dataset.

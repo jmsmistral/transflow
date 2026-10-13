@@ -28,7 +28,7 @@ pub enum Adapter {
     Polars,
     /// Exact canonical DuckDB validation boundary.
     DuckDbValidation,
-    /// Deferred SQL transform adapter.
+    /// Managed DuckDB SQL transform boundary.
     DuckDbSql,
 }
 /// Validated normalized schema, with an independent canonical fingerprint.
@@ -75,9 +75,6 @@ impl NormalizedSchema {
     }
     /// Reject an unsupported engine boundary before an engine can silently cast.
     pub fn require(&self, adapter: Adapter) -> Result<(), NormalizationError> {
-        if adapter == Adapter::DuckDbSql {
-            return Err(fail("$", "This transform adapter is not implemented"));
-        }
         fn visit(value: &Value, adapter: Adapter, path: &str) -> Result<(), NormalizationError> {
             match value["type"].as_str() {
                 Some("decimal") => {
@@ -95,13 +92,22 @@ impl NormalizedSchema {
                     }
                 }
                 Some("timestamp") => {
+                    if adapter == Adapter::DuckDbSql
+                        && value["timezone"] == "UTC"
+                        && value["unit"] == "ms"
+                    {
+                        return Err(fail(
+                            path,
+                            "SQL timezone-aware milliseconds require explicit microsecond conversion",
+                        ));
+                    }
                     if value["unit"] == "s" {
                         return Err(fail(
                             path,
                             "Second-resolution timestamps require an explicit unit conversion before this adapter",
                         ));
                     }
-                    if adapter == Adapter::DuckDbValidation
+                    if matches!(adapter, Adapter::DuckDbValidation | Adapter::DuckDbSql)
                         && !value["timezone"].is_null()
                         && (value["timezone"] != "UTC" || value["unit"] == "ns")
                     {

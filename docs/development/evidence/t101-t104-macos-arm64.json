@@ -1,0 +1,299 @@
+{
+  "tasks": [
+    "T101",
+    "T102",
+    "T103",
+    "T104"
+  ],
+  "date": "2026-10-14",
+  "specification": "1.1.4",
+  "platform": {
+    "os": "macOS 15.3.1",
+    "architecture": "arm64",
+    "python": "3.14.7",
+    "rust": "1.98.1",
+    "node": "24.4.1",
+    "npm": "11.4.2"
+  },
+  "base_revisions": {
+    "implementation": "8414ad42fa6bebd728f1e551992de72a620c46f8",
+    "specification": "856a09e"
+  },
+  "verification": {
+    "rust": {
+      "passed": true,
+      "workspace_tests": 486,
+      "doc_tests": 1,
+      "additional_normalization_regression": 1,
+      "affected_export_and_normalization_recheck_tests": 13,
+      "all_target_clippy": true
+    },
+    "python": {
+      "passed": true,
+      "tests": 1124,
+      "typed_sources": 85,
+      "tooling_pins": 19
+    },
+    "web": {
+      "passed": true,
+      "tests": 599,
+      "files": 26,
+      "production_assets": 16,
+      "reproducible_build": true
+    },
+    "installed_cli": {
+      "passed": true,
+      "tests": 60
+    },
+    "shared_contract_cases": 382,
+    "shared_expectation_ast_vectors": 48,
+    "advisory_audit": {
+      "packages": 639,
+      "findings": 0
+    },
+    "specification_checker_tests": 44,
+    "safety_tests": 27,
+    "rust_boundary_tests": 12,
+    "final_document_gate": {
+      "passed": true,
+      "completed_tasks": 103,
+      "local_links_checked": 956
+    },
+    "final_safety_gate": {
+      "passed": true,
+      "public_candidates": 831,
+      "packages": 639,
+      "tests": 27
+    }
+  },
+  "native": {
+    "canonical_expectations": {
+      "result": "pass",
+      "checks": [
+        "restricted-connection",
+        "arrow",
+        "polars",
+        "sql",
+        "candidate",
+        "float-comparisons",
+        "truth-tables",
+        "empty",
+        "identifier",
+        "tuple",
+        "precision",
+        "timezone-ns",
+        "case-collision",
+        "unsupported-key",
+        "canceled",
+        "disabled",
+        "sample-cap-redaction",
+        "sample-no-allowlist",
+        "sample-precise",
+        "sample-pk",
+        "sample-ignore-null",
+        "sample-no-attribution",
+        "sample-schema-only",
+        "sample-large-cell",
+        "memory-error",
+        "timeout",
+        "spill",
+        "disk-error"
+      ],
+      "duckdb": "1.5.5",
+      "group_spill_peak_bytes": 19628032
+    },
+    "g3_expectations": {
+      "format_version": 1,
+      "cases": [
+        "finite-approx",
+        "approx-ignore-null",
+        "approx-extreme-float",
+        "approx-exact-uint64",
+        "numeric-three-valued-composition",
+        "decimal-approx",
+        "exact-metrics",
+        "ratio-no-rounding",
+        "undefined-empty-fraction",
+        "group-null-key",
+        "empty-groups",
+        "invalid-regex-on-empty",
+        "regex-explicit-mode",
+        "regex-unsupported-blocks-warn",
+        "ordered-schema",
+        "frozen-time",
+        "foreign-membership",
+        "foreign-mismatch",
+        "same-dataset-two-aliases",
+        "undeclared-input",
+        "missing-foreign-column"
+      ],
+      "count": 21,
+      "engines": {
+        "duckdb": "1.5.5",
+        "pyarrow": "25.0.1"
+      }
+    },
+    "sql_cross_engine": {
+      "format_version": 1,
+      "checks": [
+        "exact-alias",
+        "bound-parameter",
+        "bound-injection",
+        "empty-result",
+        "source-integrity",
+        "one-query",
+        "no-extension-install",
+        "no-ambient-read",
+        "precision",
+        "timezone-rejected",
+        "matrix-scalars-polars",
+        "matrix-scalars-duckdb",
+        "matrix-precision-polars",
+        "matrix-precision-duckdb",
+        "matrix-nested-polars",
+        "matrix-nested-duckdb",
+        "utc-millisecond-sql-conversion-rejected",
+        "non-utc-timezone-rejected",
+        "decimal256-rejected"
+      ],
+      "engine": "duckdb",
+      "version": "1.5.5",
+      "canonical_matrix_groups": [
+        "matrix-nested",
+        "matrix-precision",
+        "matrix-scalars"
+      ]
+    },
+    "publication_lifecycle": {
+      "result": "passed",
+      "cases": [
+        "pass",
+        "input-fail",
+        "input-warn",
+        "input-error-warn",
+        "output-fail",
+        "output-warn",
+        "output-error-warn",
+        "helper-error-warn",
+        "repeated-alias",
+        "all-input-aliases",
+        "no-checks",
+        "independent-output-checks",
+        "omitted-obligation",
+        "wrong-version",
+        "canceled",
+        "cancel-after-materialize",
+        "cancel-before-publish",
+        "persisted-cancel",
+        "conflict",
+        "tamper",
+        "producer-error"
+      ]
+    },
+    "dependency_probe": {
+      "sqlite_version": "3.51.3",
+      "sqlite_source_id": "2026-03-13 10:38:09 737ae4a34738ffa0c3ff7f9bb18df914dd1cad163f28fd6b6e114a344fe6d618",
+      "sqlite_journal_mode": "wal",
+      "parquet_rows": 3,
+      "checks": [
+        "exact_rational_counts",
+        "unicode_identifiers",
+        "sqlite_version",
+        "wal_full_foreign_keys",
+        "rollback",
+        "parquet_roundtrip",
+        "advisory_lock",
+        "http_router",
+        "dst_gap",
+        "json_schema",
+        "sha256"
+      ]
+    },
+    "sql_cli_lifecycle": {
+      "format_version": 1,
+      "passed": 9,
+      "cases": [
+        "four producers, SQL parameters, pinned branch aliases and cached repeat",
+        "existing workspace is preserved",
+        "SQL output violation preserves SQL/downstream heads and blocks descendants under force",
+        "SQL bytes change the compute identity and execute real jobs",
+        "unchanged SQL/check bindings reuse original publications without new attempts",
+        "replay uses captured SQL and pinned aliases without changing live source",
+        "check evidence retains distinct exact versions for repeated dataset aliases",
+        "review schedules stay paused",
+        "current and historical API definitions expose captured SQL source identity"
+      ]
+    }
+  },
+  "semantics": [
+    "Python registration plus immutable captured SQL; one SELECT and one Parquet sink",
+    "exact pinned data views, bound typed parameters, no replacement scans or automatic extension installs",
+    "finite approximation and exact scalar ratios use rational arithmetic, including float extremes and decimal38",
+    "full/partial reviewed regex, present-group counts, ordered schema, one frozen UTC evaluation clock",
+    "declared input aliases only; distinct branch versions and consumer-scoped immutable evidence",
+    "cross-input and clock-dependent certificates are re-evaluated when context is incomplete"
+  ],
+  "browser": {
+    "tool": "Codex internal Browser",
+    "coordinator": "real local synthetic workspace",
+    "observed": [
+      "authenticated launch fragment consumed",
+      "saved SQL and checks review graph with published statuses",
+      "SQL data publish/latest saved/diff source path and syntax highlighting",
+      "two exact decimal SQL output rows",
+      "six passing output checks plus separate consumer input check",
+      "cached history and build report with four cached jobs and zero attempts",
+      "live master/review branch choices"
+    ],
+    "corrections": [
+      "missing CodeInspector field import",
+      "catalogue API now includes captured sql_source metadata"
+    ],
+    "coordinator_after_review": "stopped",
+    "tab_after_review": "closed"
+  },
+  "review": {
+    "workspace": "/Users/jms/dev/transflow-workspace/t104-sql-checks-review",
+    "preview_bundle": "/Users/jms/dev/transflow-workspace/t104-review-tools",
+    "existing_alpha_preserved": true,
+    "datasets": 4,
+    "paused_schedules": 2
+  },
+  "limits": [
+    "Local macOS arm64 evidence only; cross-platform CI awaits owner confirmation",
+    "Optional SQL extensions are not enabled; unsupported/lossy conversions are rejected",
+    "Numeric row checks retain exact aggregates without optional row samples",
+    "This delivery does not close the overall G3 gate, deferred editors, or release qualification"
+  ],
+  "ci": {
+    "state": "pending owner monitoring",
+    "polled": false
+  },
+  "artifact_sha256": {
+    "target/debug/transflow": "3dfec8e1ec95d624028a99ce6210f27c76b28a5c810cfe9b4469d9152d2ecaf4",
+    "target/t101/wheels/transflow-0.0.0.dev0-py3-none-any.whl": "8321cc634675873ca426d46b049ef81c4f8d3ccf7f2c6cfd59576d877935849f",
+    "web/dist/index.html": "fb50c7a496e703a2662db09f587a8f94a6ebf295591dee8a4b85995cadc8f6fb"
+  },
+  "commands": [
+    "PYTHON=<prepared-py314> PYTHON_CHECK=<prepared-py314> bash tools/check.sh (specification, safety and full Rust passed; Python integration failures corrected below)",
+    "cargo test --locked --offline -p tf-catalog --test editor -p tf-store --test normalization",
+    "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+    "PYTHON_CHECK=<prepared-py314> bash tools/check-python.sh",
+    "bash tools/check-web.sh",
+    "PYTHON_CHECK=<prepared-py314> bash tools/check-cli.sh",
+    "<qualified-engine-python> -I -B python/tools/check_expectations.py <checks_probe> <polars_probe> <matched-wheel>",
+    "<qualified-engine-python> -I -B python/tools/check_g3_expectations.py <checks_probe> <polars_probe> <matched-wheel>",
+    "<qualified-engine-python> -I -B python/tools/check_sql_execution.py <polars_probe> <normalization_probe> <matched-wheel> <checks_probe>",
+    "<qualified-engine-python> -I -B python/tools/check_lifecycle.py <lifecycle_probe> <matched-wheel>",
+    "cargo clippy --locked --offline --all-targets --manifest-path tools/qualification/rust/Cargo.toml -- -D warnings",
+    "cargo run --quiet --locked --offline --manifest-path tools/qualification/rust/Cargo.toml -- --output-dir <fresh-directory>",
+    "<prepared-py314> -I -B python/tools/check_sql_checks_demo.py <cli> <matched-wheel> <offline-wheelhouse> --output <receipt>"
+  ],
+  "corrections_during_verification": [
+    "Reviewed direct num-bigint dependency for exact ratios, synchronized exact qualification pin and boundary policy",
+    "Updated Python/Rust typing stubs and their manifest hashes for the new SQL export",
+    "Added the new SQL/Arrow/numeric modules to the closed matched-wheel inventory",
+    "Made the pure-import subprocess test independent of tooling interpreter installation",
+    "Historical API assertions require dataset context only when a version is selected"
+  ]
+}

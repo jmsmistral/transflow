@@ -1,14 +1,17 @@
 {
-  "schema": 1,
   "contracts": [
     {
-      "name": "worker-contract-v1",
+      "command": [
+        "{python}",
+        "tools/contracts/generate.py"
+      ],
       "inputs": {
-        "tools/contracts/generate.py": "8f5595a78863e8f0b5a0dab886ff62256e86d25180bf388184f3a9a0126bbe5d",
-        "schemas/contracts-v1.schema.json": "b6a078267e53424b7b72793951c3b347f04430b6a0d015cfac7e0d1c9feff798",
+        "schemas/api-routes-v1.json": "549b1e68fe4ff3ca6a7cd7e92020eeef5f61a138caf793afb6bc4ac0dfb98bfa",
+        "schemas/contracts-v1.schema.json": "3a89d03b8adb233f436743bac1489ffdcfc5b031435461f09487389a08219c14",
         "schemas/versions.json": "beb4e63198f8a245c2735b23f3fa9890697b166d20cc6812f0b47aa19ec4080f",
-        "schemas/api-routes-v1.json": "549b1e68fe4ff3ca6a7cd7e92020eeef5f61a138caf793afb6bc4ac0dfb98bfa"
+        "tools/contracts/generate.py": "8f5595a78863e8f0b5a0dab886ff62256e86d25180bf388184f3a9a0126bbe5d"
       },
+      "name": "worker-contract-v1",
       "outputs": [
         "schemas/generated/worker-control-v1.schema.json",
         "web/src/generated/contracts.ts",
@@ -16,11 +19,8 @@
         "python/worker/src/transflow_worker/_wire_validators.py",
         "schemas/generated/cli-result-v1.schema.json",
         "schemas/generated/openapi-v1.json"
-      ],
-      "command": [
-        "{python}",
-        "tools/contracts/generate.py"
       ]
     }
-  ]
+  ],
+  "schema": 1
 }

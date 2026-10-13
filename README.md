@@ -8,7 +8,7 @@
 
 A local, code-first build system for dataframe datasets, with versioned Parquet outputs, declarative checks, and an interactive lineage interface.
 
-**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. [External datasets](crates/transflow/EXTERNAL.md) support explicit registration, provider-owned resolution, leased direct reads without input replication, consumer checks, provider-dependent exact pins/replay and read-only upstream provenance (T069–T072). Foreign producer code never runs in consumer builds. Ordinary builds refresh retained catalogue browsing metadata; fixed Git-ref builds and replay preserve the current browse view. The [G1 qualification matrix](docs/development/g1-qualification.md) records core coverage and later-gate exclusions. The authenticated [loopback HTTP API](crates/tf-api/README.md) provides contextual catalogue/version/source reads, validation/diffs, plans and guarded lifecycle/build commands (T074–T076), resumable committed events and bounded exact-version previews (T077–T078). External previews read provider files directly under renewable leases. The contributor workspace UI and persistent scheduling are available; the DuckDB SQL transform adapter and release qualification remain upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
+**Status:** The local developer core includes public [build, history, logs, cancellation and replay](crates/transflow/BUILDS.md), explicit transient retries, restart reconciliation and a headless persistent CLI coordinator. The [customer-orders walkthrough](examples/customer-orders/README.md) exercises fresh setup, cached/forced builds, branch isolation and failed checks (T068). Environment locking includes the required DuckDB check engine. [External datasets](crates/transflow/EXTERNAL.md) support explicit registration, provider-owned resolution, leased direct reads without input replication, consumer checks, provider-dependent exact pins/replay and read-only upstream provenance (T069–T072). Foreign producer code never runs in consumer builds. Ordinary builds refresh retained catalogue browsing metadata; fixed Git-ref builds and replay preserve the current browse view. The [G1 qualification matrix](docs/development/g1-qualification.md) records core coverage and later-gate exclusions. The authenticated [loopback HTTP API](crates/tf-api/README.md) provides contextual catalogue/version/source reads, validation/diffs, plans and guarded lifecycle/build commands (T074–T076), resumable committed events and bounded exact-version previews (T077–T078). External previews read provider files directly under renewable leases. The contributor workspace UI and persistent scheduling are available; managed DuckDB SQL transforms are available; release qualification remains upcoming. Earlier task evidence and outstanding prerequisites are recorded in the contributor verification history; this is not an application release.
 
 Python **3.14 is the sole supported minor** (current qualification pin: 3.14.7).
 Package installation and workspace environment checks reject other minors.
@@ -31,7 +31,7 @@ selection follow the chosen light/dark theme, including highlighted code.
 
 Write Python transforms, declare their input and output datasets, and build a target without managing a separate catalogue namespace for every source directory. Transflow is designed to validate the dependency graph, resolve exact input versions, run checks, preserve the previous successful output when a build fails, and explain what needs rebuilding.
 
-The intended architecture is a Rust coordinator/CLI with Python workers for Polars and DuckDB, SQLite metadata, immutable Parquet files, and a local browser UI. Git is supported but not required. Registered datasets from other workspaces will be consumed as read boundaries rather than automatically executing another workspace's code.
+The architecture is a Rust coordinator/CLI with Python workers for Polars and DuckDB, SQLite metadata, immutable Parquet files, and a local browser UI. Git is supported but not required. Registered datasets from other workspaces are consumed as read boundaries rather than automatically executing another workspace's code.
 
 An example of the supported Polars authoring API is:
 
@@ -89,8 +89,9 @@ transflow serve                 # authenticated API and CLI coordinator
 transflow serve --open          # one-time browser connection page
 ```
 
-**Initial delivery focuses on Polars transforms**, with DuckDB used internally for
-validation. DuckDB SQL transform adapters remain later work. The
+**Polars and managed DuckDB SQL transforms are available**, with the same canonical
+publication checks. See [SQL authoring](python/SQL_TRANSFORMS.md) and the
+[SQL and checks review](examples/sql-checks/README.md). The
 [DuckDB feasibility probe](tools/qualification/duckdb/README.md) is contributor
 evidence. T079 adds the private [restricted SQL helper](python/worker/SQL.md),
 with a parsed AST allowlist, locked engine settings and exact-version input reads.
@@ -381,7 +382,10 @@ unavailable commands still fail clearly without starting work.
 
 ### Python declarations
 
-The SDK now provides `Input`, `Output`, `Check`, `transform` and `source_transform`.
+The SDK provides `Input`, `Output`, `Check`, `transform`, `source_transform` and
+`sql_transform`. G3 expectations include exact numeric approximation, scalar/group
+metrics, explicit regex modes, ordered schema equality, frozen time and checks over
+pinned data or validation-only aliases.
 Decorated functions remain directly callable for unit tests. Declarations preserve
 branch/fallback policy, immutable checks, typed parameters and source refresh
 metadata. See the [authoring guide](python/DECLARATIONS.md) for examples and limits.

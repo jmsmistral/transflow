@@ -34,6 +34,44 @@ fn main() -> Result<(), Box<dyn Error>> {
         input["artifact_digest"].as_str().ok_or("digest")?,
     )?;
     let verified = store.verify(digest)?;
+    let declared = input
+        .get("inputs")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let input_artifacts = declared
+        .iter()
+        .map(|v| {
+            store
+                .verify(ContentDigest::from_hex(
+                    DigestKind::Artifact,
+                    v["artifact_digest"].as_str().ok_or("input digest")?,
+                )?)
+                .map_err(Into::into)
+        })
+        .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+    let check_inputs = declared
+        .iter()
+        .zip(&input_artifacts)
+        .map(|(v, artifact)| {
+            Ok(checks::Input {
+                alias: v["alias"].as_str().ok_or("input alias")?,
+                dataset: tf_domain::DatasetKey::new(
+                    v["dataset"]["workspace_id"]
+                        .as_str()
+                        .ok_or("input workspace")?
+                        .parse()?,
+                    v["dataset"]["dataset_id"]
+                        .as_str()
+                        .ok_or("input dataset")?
+                        .parse()?,
+                ),
+                version: v["version_id"].as_str().ok_or("input version")?.parse()?,
+                artifact,
+            })
+        })
+        .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+    let evaluation_time = input.get("evaluation_time").cloned();
     let phase = if mode == "output" {
         Phase::OutputValidation
     } else {
@@ -101,9 +139,23 @@ fn main() -> Result<(), Box<dyn Error>> {
             tf_exec::discovery::random_id()?.parse()?,
             |_| Ok(()),
         )?;
-        checks::run(launch, Subject::Candidate(&candidate), &checks, cancel)?
+        checks::run_bound(
+            launch,
+            Subject::Candidate(&candidate),
+            &checks,
+            &check_inputs,
+            evaluation_time.as_ref(),
+            cancel,
+        )?
     } else {
-        checks::run(launch, Subject::Pinned(&verified), &checks, cancel)?
+        checks::run_bound(
+            launch,
+            Subject::Pinned(&verified),
+            &checks,
+            &check_inputs,
+            evaluation_time.as_ref(),
+            cancel,
+        )?
     };
     println!(
         "{}",

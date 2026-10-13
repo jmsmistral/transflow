@@ -42,7 +42,9 @@ def pinned_files(request: dict[str, Any]) -> tuple[list[str], list[tuple[int, in
     return paths, guards
 
 
-def connect(request: dict[str, Any], paths: list[str]) -> Any:
+def connect(
+    request: dict[str, Any], paths: list[str], inputs: dict[str, list[str]] | None = None
+) -> Any:
     duckdb = importlib.import_module("duckdb")
     if duckdb.__version__ != MANAGED_PACKAGES["duckdb"]:
         raise CheckError("engine_version", "Canonical checks require the qualified DuckDB version")
@@ -65,7 +67,7 @@ def connect(request: dict[str, Any], paths: list[str]) -> Any:
     )
     try:
         settings = {
-            "allowed_paths": paths,
+            "allowed_paths": paths + [path for files in (inputs or {}).values() for path in files],
             "allowed_directories": [],
             "allowed_configs": [],
             "temp_directory": str(temporary),
@@ -84,6 +86,10 @@ def connect(request: dict[str, Any], paths: list[str]) -> Any:
         if any(any(c in p for c in "*?[") for p in paths):
             raise CheckError("artifact_path", "Canonical staged filenames must not contain globs")
         db.read_parquet(paths, hive_partitioning=False, union_by_name=False).create_view("subject")
+        for view, files in (inputs or {}).items():
+            if any(any(c in path for c in "*?[") for path in files):
+                raise CheckError("artifact_path", "Pinned input filenames cannot contain globs")
+            db.read_parquet(files, hive_partitioning=False, union_by_name=False).create_view(view)
         db.execute("SET lock_configuration = true")
         return db
     except BaseException:
@@ -93,14 +99,28 @@ def connect(request: dict[str, Any], paths: list[str]) -> Any:
 
 def execute(request: dict[str, Any]) -> dict[str, Any]:
     paths, guards = pinned_files(request)
+    input_paths = {}
+    input_guards: list[tuple[str, tuple[int, int, int, int, int]]] = []
+    bindings = request.get("inputs", [])
+    if len({binding["alias"] for binding in bindings}) != len(bindings):
+        raise CheckError("input_alias", "Canonical inputs must have distinct declared aliases")
+    for index, binding in enumerate(bindings):
+        files, identities = pinned_files(binding)
+        input_paths[f"__tf_input_{index}"] = files
+        input_guards.extend(zip(files, identities, strict=True))
     rows: list[dict[str, Any]] = []
     samples: list[dict[str, Any] | None] = []
-    with connect(request, paths) as db:
+    with connect(request, paths, input_paths) as db:
         for query in request["queries"]:
             # Only Rust's private typed compiler constructs these queries. Values remain
             # strings/bools and are explicitly cast by the compiler, preserving ns/decimal/u64.
             parameters = [v["value"] for v in query["parameters"]]
             try:
+                if "row_plan" in query:
+                    from .check_numeric import scan
+
+                    rows.append({"counts": scan(db, query), "error": None})
+                    continue
                 cursor = db.execute(query["sql"], parameters)
                 row = cursor.fetchone()
                 if row is None or len(row) != query["width"] or cursor.fetchone() is not None:
@@ -126,6 +146,8 @@ def execute(request: dict[str, Any]) -> dict[str, Any]:
             samples.append(None if query is None else sample(db, query))
     if any(_file(Path(path)) != guard for path, guard in zip(paths, guards, strict=True)):
         raise CheckError("artifact_integrity", "Check subject changed during evaluation")
+    if any(_file(Path(path)) != identity for path, identity in input_guards):
+        raise CheckError("artifact_integrity", "Pinned check input changed during evaluation")
     return {
         "format_version": 1,
         "request_id": request["request_id"],

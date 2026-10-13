@@ -706,3 +706,33 @@ def validate_ApiScheduleRolesV1(value: object) -> None:
 def validate_ApiScheduleClockPreviewV1(value: object) -> None:
     """Assert the ApiScheduleClockPreviewV1 contract, including custom formats."""
     validate_document("ApiScheduleClockPreviewV1", value)
+
+
+def validate_PolarsDeclarationV1(value: object) -> None:
+    """Assert the PolarsDeclarationV1 contract, including custom formats."""
+    validate_document("PolarsDeclarationV1", value)
+
+
+def validate_SqlDeclarationV1(value: object) -> None:
+    """Assert the SqlDeclarationV1 contract, including custom formats."""
+    validate_document("SqlDeclarationV1", value)
+
+
+def validate_SqlExecutionRequestV1(value: object) -> None:
+    """Assert the SqlExecutionRequestV1 contract, including custom formats."""
+    validate_document("SqlExecutionRequestV1", value)
+
+
+def validate_AggregateCheckQueryV1(value: object) -> None:
+    """Assert the AggregateCheckQueryV1 contract, including custom formats."""
+    validate_document("AggregateCheckQueryV1", value)
+
+
+def validate_NumericRowNodeV1(value: object) -> None:
+    """Assert the NumericRowNodeV1 contract, including custom formats."""
+    validate_document("NumericRowNodeV1", value)
+
+
+def validate_NumericCheckQueryV1(value: object) -> None:
+    """Assert the NumericCheckQueryV1 contract, including custom formats."""
+    validate_document("NumericCheckQueryV1", value)

@@ -12,6 +12,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from enum import Enum
+from pathlib import PurePosixPath
 from types import FunctionType
 from typing import Protocol, TypeVar
 from uuid import UUID
@@ -236,6 +237,7 @@ class Declaration:
     qualname: str
     filename: str
     line: int
+    sql_file: str | None = None
 
 
 F = TypeVar("F", bound=Callable[..., object])
@@ -245,7 +247,11 @@ _RESERVED = {"output", "engine", "params", "resources", "cache", "lineage", "ctx
 
 def get_declaration(function: object) -> Declaration | None:
     """Helpers have no declaration; discovery decides module-level producer rules."""
-    result = getattr(function, _ATTRIBUTE, None)
+    result = (
+        function.declaration
+        if isinstance(function, SqlTransform)
+        else getattr(function, _ATTRIBUTE, None)
+    )
     if result is not None and not isinstance(result, Declaration):
         raise DeclarationError("Callable has invalid Transflow declaration metadata")
     return result
@@ -263,10 +269,11 @@ def _decorate(
     refresh: str | int | None,
     secret_refs: Sequence[str],
     source: bool,
+    sql_file: str | None = None,
 ) -> Callable[[F], F]:
     if not isinstance(output, Output):
         raise DeclarationError("Declare exactly one output=Output(...)")
-    if engine != "polars":
+    if engine != "polars" and not (engine == "duckdb" and sql_file is not None):
         raise DeclarationError("Only the polars transform engine is currently supported")
     if cache not in (None, "deterministic", "never"):
         raise DeclarationError("cache must be deterministic or never")
@@ -280,6 +287,11 @@ def _decorate(
     if params is not None and not isinstance(params, Mapping):
         raise DeclarationError("params must be a mapping of typed Parameter declarations")
     parameters = tuple((params or {}).items())
+    if sql_file is not None:
+        sql_aliases = [alias.casefold() for alias, binding in bound if binding.role == "data"]
+        names = [name.casefold() for name, _ in parameters]
+        if len(set(sql_aliases)) != len(sql_aliases) or len(set(names)) != len(names):
+            raise DeclarationError("SQL aliases and parameter names cannot collide by case")
     for name, parameter in parameters:
         _alias(name)
         if not isinstance(parameter, Parameter):
@@ -346,7 +358,7 @@ def _decorate(
                     f"Function parameter {name!r} has no role=data Input declaration; "
                     "use ctx.params"
                 )
-        missing = data - signature.parameters.keys()
+        missing = data - signature.parameters.keys() if sql_file is None else set()
         if missing:
             raise DeclarationError(
                 "Function is missing data Input aliases: " + ", ".join(sorted(missing))
@@ -366,11 +378,73 @@ def _decorate(
             function.__qualname__,
             function.__code__.co_filename,
             function.__code__.co_firstlineno,
+            sql_file,
         )
         setattr(function, _ATTRIBUTE, declaration)
         return function
 
     return decorate
+
+
+@dataclass(frozen=True, slots=True)
+class SqlTransform:
+    """Immutable registration; the managed worker owns the SQL connection and sink."""
+
+    declaration: Declaration
+
+
+def sql_transform(
+    sql_file: str,
+    *,
+    output: Output,
+    params: Mapping[str, Parameter] | None = None,
+    resources: Mapping[str, int] | None = None,
+    cache: str = "deterministic",
+    lineage: object = None,
+    **named_inputs: Input,
+) -> SqlTransform:
+    """Register one captured SQL query, relative to this registration module.
+
+    Named input aliases are SQL views; named parameters use DuckDB's $name binding.
+    Importing this declaration does not read the SQL file or import an engine.
+    """
+    if (
+        not isinstance(sql_file, str)
+        or not sql_file.endswith(".sql")
+        or PurePosixPath(sql_file).is_absolute()
+        or ".." in sql_file.split("/")
+        or "\\" in sql_file
+        or str(PurePosixPath(sql_file)) != sql_file
+    ):
+        raise DeclarationError("SQL source must be a relative .sql path beside its registration")
+    frame = inspect.currentframe()
+    caller = frame.f_back if frame is not None else None
+    if caller is None or caller.f_code.co_name != "<module>":
+        raise DeclarationError("Register SQL producers at module scope")
+    module = caller.f_globals["__name__"]
+    filename, line = caller.f_code.co_filename, caller.f_lineno
+    del frame, caller
+
+    def registration() -> None:
+        return None
+
+    decorated = _decorate(
+        output=output,
+        inputs=named_inputs,
+        engine="duckdb",
+        params=params,
+        resources=resources,
+        cache=cache,
+        lineage=lineage,
+        refresh=None,
+        secret_refs=(),
+        source=False,
+        sql_file=sql_file,
+    )(registration)
+    declaration = get_declaration(decorated)
+    if declaration is None:
+        raise DeclarationError("SQL registration metadata is missing")
+    return SqlTransform(replace(declaration, module=module, filename=filename, line=line))
 
 
 def transform(

@@ -10217,166 +10217,14 @@
         "additionalProperties": false
       },
       "DeclarationV1": {
-        "type": "object",
-        "properties": {
-          "module": {
-            "type": "string",
-            "format": "transflow-name"
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/PolarsDeclarationV1"
           },
-          "function": {
-            "type": "string",
-            "format": "transflow-name"
-          },
-          "path": {
-            "$ref": "#/components/schemas/RelativePath"
-          },
-          "line": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 4294967295
-          },
-          "source": {
-            "type": "boolean"
-          },
-          "engine": {
-            "const": "polars"
-          },
-          "inputs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DeclarationInputV1"
-            },
-            "minItems": 0,
-            "maxItems": 10000
-          },
-          "output": {
-            "type": "object",
-            "properties": {
-              "ref": {
-                "$ref": "#/components/schemas/DiscoveryRefV1"
-              },
-              "checks": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/DeclarationCheckV1"
-                },
-                "minItems": 0,
-                "maxItems": 10000
-              },
-              "schema": {
-                "oneOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/components/schemas/LogicalSchemaV1"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "ref",
-              "checks",
-              "schema"
-            ],
-            "additionalProperties": false
-          },
-          "parameters": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "format": "transflow-name"
-                },
-                "logical_type": {
-                  "$ref": "#/components/schemas/LogicalType"
-                },
-                "default": {
-                  "$ref": "#/components/schemas/WireValue"
-                }
-              },
-              "required": [
-                "name",
-                "logical_type",
-                "default"
-              ],
-              "additionalProperties": false
-            },
-            "minItems": 0,
-            "maxItems": 10000
-          },
-          "wall_timeout_seconds": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/Count"
-              }
-            ]
-          },
-          "cache": {
-            "enum": [
-              null,
-              "deterministic",
-              "never"
-            ]
-          },
-          "refresh": {
-            "oneOf": [
-              {
-                "enum": [
-                  null,
-                  "always",
-                  "manual"
-                ]
-              },
-              {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 4294967295
-              }
-            ]
-          },
-          "secret_refs": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "transflow-name"
-            },
-            "minItems": 0,
-            "maxItems": 10000
-          },
-          "lineage_json": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+          {
+            "$ref": "#/components/schemas/SqlDeclarationV1"
           }
-        },
-        "required": [
-          "module",
-          "function",
-          "path",
-          "line",
-          "source",
-          "engine",
-          "inputs",
-          "output",
-          "parameters",
-          "wall_timeout_seconds",
-          "cache",
-          "refresh",
-          "secret_refs",
-          "lineage_json"
-        ],
-        "additionalProperties": false
+        ]
       },
       "DiscoveryRequestV1": {
         "type": "object",
@@ -12345,7 +12193,7 @@
             "$ref": "#/components/schemas/Sha256"
           },
           "producer": {
-            "$ref": "#/components/schemas/DeclarationV1"
+            "$ref": "#/components/schemas/PolarsDeclarationV1"
           },
           "inputs": {
             "type": "array",
@@ -12492,27 +12340,82 @@
         "additionalProperties": false
       },
       "ExpectationMetric": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "const": "row_count"
-          },
-          "input": {
-            "oneOf": [
-              {
-                "type": "null"
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "row_count"
               },
-              {
-                "$ref": "#/components/schemas/ExpectationInputRef"
+              "input": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ExpectationInputRef"
+                  }
+                ]
               }
-            ]
+            },
+            "required": [
+              "kind",
+              "input"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "null_count"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              }
+            },
+            "required": [
+              "kind",
+              "column"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "null_fraction"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              }
+            },
+            "required": [
+              "kind",
+              "column"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "distinct_count"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              }
+            },
+            "required": [
+              "kind",
+              "column"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "kind",
-          "input"
-        ],
-        "additionalProperties": false
+        ]
       },
       "ExpectationValue": {
         "oneOf": [
@@ -12926,6 +12829,181 @@
               "kind",
               "column",
               "logical_type"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "approx"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "value": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "abs_tol": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "rel_tol": {
+                "$ref": "#/components/schemas/ScalarValue"
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "value",
+              "abs_tol",
+              "rel_tol"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "matches"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "pattern": {
+                "type": "string",
+                "maxLength": 1024
+              },
+              "mode": {
+                "enum": [
+                  "partial",
+                  "full"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "pattern",
+              "mode"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "in_dataset"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "input": {
+                "$ref": "#/components/schemas/ExpectationInputRef"
+              },
+              "input_column": {
+                "type": "string",
+                "format": "transflow-name"
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "input",
+              "input_column"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "age_compare"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "op": {
+                "const": "lte"
+              },
+              "at": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "const": "evaluation_time"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": false
+              },
+              "value": {
+                "$ref": "#/components/schemas/ScalarValue"
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "op",
+              "at",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "schema_equals"
+              },
+              "schema": {
+                "$ref": "#/components/schemas/LogicalSchemaV1"
+              }
+            },
+            "required": [
+              "kind",
+              "schema"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "group_count"
+              },
+              "columns": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "transflow-name"
+                },
+                "minItems": 1,
+                "maxItems": 1000
+              },
+              "op": {
+                "enum": [
+                  "gt",
+                  "gte",
+                  "lt",
+                  "lte",
+                  "equals",
+                  "not_equals"
+                ]
+              },
+              "value": {
+                "$ref": "#/components/schemas/ScalarValue"
+              }
+            },
+            "required": [
+              "kind",
+              "columns",
+              "op",
+              "value"
             ],
             "additionalProperties": false
           }
@@ -13353,35 +13431,217 @@
               "ast_version"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "approx"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "value": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "abs_tol": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "rel_tol": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "ast_version": {
+                "const": 1
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "value",
+              "abs_tol",
+              "rel_tol",
+              "ast_version"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "matches"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "pattern": {
+                "type": "string",
+                "maxLength": 1024
+              },
+              "mode": {
+                "enum": [
+                  "partial",
+                  "full"
+                ]
+              },
+              "ast_version": {
+                "const": 1
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "pattern",
+              "mode",
+              "ast_version"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "in_dataset"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "input": {
+                "$ref": "#/components/schemas/ExpectationInputRef"
+              },
+              "input_column": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "ast_version": {
+                "const": 1
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "input",
+              "input_column",
+              "ast_version"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "age_compare"
+              },
+              "column": {
+                "type": "string",
+                "format": "transflow-name"
+              },
+              "op": {
+                "const": "lte"
+              },
+              "at": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "const": "evaluation_time"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": false
+              },
+              "value": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "ast_version": {
+                "const": 1
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "op",
+              "at",
+              "value",
+              "ast_version"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "schema_equals"
+              },
+              "schema": {
+                "$ref": "#/components/schemas/LogicalSchemaV1"
+              },
+              "ast_version": {
+                "const": 1
+              }
+            },
+            "required": [
+              "kind",
+              "schema",
+              "ast_version"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "group_count"
+              },
+              "columns": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "transflow-name"
+                },
+                "minItems": 1,
+                "maxItems": 1000
+              },
+              "op": {
+                "enum": [
+                  "gt",
+                  "gte",
+                  "lt",
+                  "lte",
+                  "equals",
+                  "not_equals"
+                ]
+              },
+              "value": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "ast_version": {
+                "const": 1
+              }
+            },
+            "required": [
+              "kind",
+              "columns",
+              "op",
+              "value",
+              "ast_version"
+            ],
+            "additionalProperties": false
           }
         ]
       },
       "CheckQueryV1": {
-        "type": "object",
-        "properties": {
-          "sql": {
-            "type": "string"
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AggregateCheckQueryV1"
           },
-          "parameters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ScalarValue"
-            },
-            "minItems": 0,
-            "maxItems": 8192
-          },
-          "width": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 65
+          {
+            "$ref": "#/components/schemas/NumericCheckQueryV1"
           }
-        },
-        "required": [
-          "sql",
-          "parameters",
-          "width"
-        ],
-        "additionalProperties": false
+        ]
       },
       "CheckEvaluationRequestV1": {
         "type": "object",
@@ -13487,6 +13747,54 @@
             },
             "minItems": 0,
             "maxItems": 128
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "format": "transflow-name"
+                },
+                "dataset": {
+                  "$ref": "#/components/schemas/DatasetKey"
+                },
+                "version_id": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "artifact_root": {
+                  "type": "string"
+                },
+                "artifact_digest": {
+                  "$ref": "#/components/schemas/Sha256"
+                },
+                "manifest": {
+                  "$ref": "#/components/schemas/ArtifactManifestV1"
+                }
+              },
+              "required": [
+                "alias",
+                "dataset",
+                "version_id",
+                "artifact_root",
+                "artifact_digest",
+                "manifest"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "evaluation_time": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ScalarValue"
+              }
+            ]
           }
         },
         "required": [
@@ -13762,6 +14070,45 @@
           },
           "sample_policy": {
             "$ref": "#/components/schemas/CheckSamplePolicyV1"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "format": "transflow-name"
+                },
+                "dataset": {
+                  "$ref": "#/components/schemas/DatasetKey"
+                },
+                "version_id": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "artifact_digest": {
+                  "$ref": "#/components/schemas/Sha256"
+                }
+              },
+              "required": [
+                "alias",
+                "dataset",
+                "version_id",
+                "artifact_digest"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 10000
+          },
+          "evaluation_time": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ScalarValue"
+              }
+            ]
           }
         },
         "required": [
@@ -18695,6 +19042,783 @@
         },
         "required": [
           "leaves"
+        ],
+        "additionalProperties": false
+      },
+      "PolarsDeclarationV1": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "function": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "path": {
+            "$ref": "#/components/schemas/RelativePath"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "source": {
+            "type": "boolean"
+          },
+          "engine": {
+            "const": "polars"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeclarationInputV1"
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "output": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "$ref": "#/components/schemas/DiscoveryRefV1"
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DeclarationCheckV1"
+                },
+                "minItems": 0,
+                "maxItems": 10000
+              },
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LogicalSchemaV1"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ref",
+              "checks",
+              "schema"
+            ],
+            "additionalProperties": false
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "format": "transflow-name"
+                },
+                "logical_type": {
+                  "$ref": "#/components/schemas/LogicalType"
+                },
+                "default": {
+                  "$ref": "#/components/schemas/WireValue"
+                }
+              },
+              "required": [
+                "name",
+                "logical_type",
+                "default"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "wall_timeout_seconds": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "cache": {
+            "enum": [
+              null,
+              "deterministic",
+              "never"
+            ]
+          },
+          "refresh": {
+            "oneOf": [
+              {
+                "enum": [
+                  null,
+                  "always",
+                  "manual"
+                ]
+              },
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              }
+            ]
+          },
+          "secret_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "lineage_json": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "required": [
+          "module",
+          "function",
+          "path",
+          "line",
+          "source",
+          "engine",
+          "inputs",
+          "output",
+          "parameters",
+          "wall_timeout_seconds",
+          "cache",
+          "refresh",
+          "secret_refs",
+          "lineage_json"
+        ],
+        "additionalProperties": false
+      },
+      "SqlDeclarationV1": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "function": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "path": {
+            "$ref": "#/components/schemas/RelativePath"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "source": {
+            "const": false
+          },
+          "engine": {
+            "const": "duckdb"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeclarationInputV1"
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "output": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "$ref": "#/components/schemas/DiscoveryRefV1"
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DeclarationCheckV1"
+                },
+                "minItems": 0,
+                "maxItems": 10000
+              },
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LogicalSchemaV1"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ref",
+              "checks",
+              "schema"
+            ],
+            "additionalProperties": false
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "format": "transflow-name"
+                },
+                "logical_type": {
+                  "$ref": "#/components/schemas/LogicalType"
+                },
+                "default": {
+                  "$ref": "#/components/schemas/WireValue"
+                }
+              },
+              "required": [
+                "name",
+                "logical_type",
+                "default"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "wall_timeout_seconds": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "cache": {
+            "enum": [
+              null,
+              "deterministic",
+              "never"
+            ]
+          },
+          "refresh": {
+            "oneOf": [
+              {
+                "enum": [
+                  null,
+                  "always",
+                  "manual"
+                ]
+              },
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              }
+            ]
+          },
+          "secret_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "lineage_json": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "sql_source": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "$ref": "#/components/schemas/RelativePath"
+              },
+              "sha256": {
+                "$ref": "#/components/schemas/Sha256"
+              },
+              "byte_length": {
+                "$ref": "#/components/schemas/Count"
+              }
+            },
+            "required": [
+              "path",
+              "sha256",
+              "byte_length"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "module",
+          "function",
+          "path",
+          "line",
+          "source",
+          "engine",
+          "inputs",
+          "output",
+          "parameters",
+          "wall_timeout_seconds",
+          "cache",
+          "refresh",
+          "secret_refs",
+          "lineage_json",
+          "sql_source"
+        ],
+        "additionalProperties": false
+      },
+      "SqlExecutionRequestV1": {
+        "type": "object",
+        "properties": {
+          "format_version": {
+            "const": 1
+          },
+          "protocol": {
+            "$ref": "#/components/schemas/ProtocolVersion"
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "attempt_id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "capture_root": {
+            "type": "string"
+          },
+          "source_roots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RelativePath"
+            },
+            "minItems": 0,
+            "maxItems": 128
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "$ref": "#/components/schemas/RelativePath"
+                },
+                "sha256": {
+                  "$ref": "#/components/schemas/Sha256"
+                },
+                "byte_length": {
+                  "$ref": "#/components/schemas/Count"
+                }
+              },
+              "required": [
+                "path",
+                "sha256",
+                "byte_length"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0,
+            "maxItems": 100000
+          },
+          "catalog": {
+            "$ref": "#/components/schemas/CatalogSnapshotV1"
+          },
+          "environment_fingerprint": {
+            "$ref": "#/components/schemas/Sha256"
+          },
+          "result_directory": {
+            "type": "string"
+          },
+          "auth_token": {
+            "$ref": "#/components/schemas/Sha256"
+          },
+          "producer": {
+            "$ref": "#/components/schemas/SqlDeclarationV1"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "format": "transflow-name"
+                },
+                "dataset": {
+                  "$ref": "#/components/schemas/DatasetKey"
+                },
+                "version_id": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "artifact_root": {
+                  "type": "string"
+                },
+                "artifact_digest": {
+                  "$ref": "#/components/schemas/Sha256"
+                },
+                "manifest": {
+                  "$ref": "#/components/schemas/ArtifactManifestV1"
+                }
+              },
+              "required": [
+                "alias",
+                "dataset",
+                "version_id",
+                "artifact_root",
+                "artifact_digest",
+                "manifest"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "build_id": {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              "job_id": {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              "evaluation_time": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "random_seed": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Count"
+                  }
+                ]
+              },
+              "parameters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "format": "transflow-name"
+                    },
+                    "value": {
+                      "$ref": "#/components/schemas/WireValue"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 0,
+                "maxItems": 10000
+              }
+            },
+            "required": [
+              "build_id",
+              "job_id",
+              "evaluation_time",
+              "random_seed",
+              "parameters"
+            ],
+            "additionalProperties": false
+          },
+          "compression": {
+            "enum": [
+              "uncompressed",
+              "snappy",
+              "zstd"
+            ]
+          },
+          "row_group_size": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "threads": {
+            "$ref": "#/components/schemas/Count"
+          },
+          "memory_bytes": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "spill_bytes": {
+            "$ref": "#/components/schemas/Count"
+          }
+        },
+        "required": [
+          "format_version",
+          "protocol",
+          "request_id",
+          "attempt_id",
+          "capture_root",
+          "source_roots",
+          "files",
+          "catalog",
+          "environment_fingerprint",
+          "result_directory",
+          "auth_token",
+          "producer",
+          "inputs",
+          "context",
+          "compression",
+          "row_group_size",
+          "threads",
+          "memory_bytes",
+          "spill_bytes"
+        ],
+        "additionalProperties": false
+      },
+      "AggregateCheckQueryV1": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScalarValue"
+            },
+            "minItems": 0,
+            "maxItems": 8192
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65
+          }
+        },
+        "required": [
+          "sql",
+          "parameters",
+          "width"
+        ],
+        "additionalProperties": false
+      },
+      "NumericRowNodeV1": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "boolean"
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 999
+              }
+            },
+            "required": [
+              "kind",
+              "column"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "approx_float"
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 999
+              },
+              "value": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "abs_tol": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "rel_tol": {
+                "$ref": "#/components/schemas/ScalarValue"
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "value",
+              "abs_tol",
+              "rel_tol"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "approx_decimal"
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 999
+              },
+              "value": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "abs_tol": {
+                "$ref": "#/components/schemas/ScalarValue"
+              },
+              "rel_tol": {
+                "$ref": "#/components/schemas/ScalarValue"
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "value",
+              "abs_tol",
+              "rel_tol"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "age"
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 999
+              },
+              "value": {
+                "$ref": "#/components/schemas/ScalarValue"
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "all"
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NumericRowNodeV1"
+                },
+                "minItems": 1,
+                "maxItems": 1000
+              }
+            },
+            "required": [
+              "kind",
+              "children"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "any"
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NumericRowNodeV1"
+                },
+                "minItems": 1,
+                "maxItems": 1000
+              }
+            },
+            "required": [
+              "kind",
+              "children"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "not"
+              },
+              "child": {
+                "$ref": "#/components/schemas/NumericRowNodeV1"
+              }
+            },
+            "required": [
+              "kind",
+              "child"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "NumericCheckQueryV1": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScalarValue"
+            },
+            "minItems": 0,
+            "maxItems": 8192
+          },
+          "width": {
+            "const": 3
+          },
+          "row_plan": {
+            "$ref": "#/components/schemas/NumericRowNodeV1"
+          },
+          "row_columns": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "sql",
+          "parameters",
+          "width",
+          "row_plan",
+          "row_columns"
         ],
         "additionalProperties": false
       }

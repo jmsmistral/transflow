@@ -1,4 +1,4 @@
-# Core expectation DSL (T059–T060)
+# Expectation DSL (T059–T060, T102–T103)
 
 An expectation is immutable syntax. Constructing it, attaching it to a `Check`,
 discovering it or running `transflow validate` never evaluates rows or invokes a
@@ -32,11 +32,12 @@ The G1 DSL supplies `col().non_null()`, `.is_null()`, `.is_in(*values)`, `.is_fi
 `row_count`, `all`, `any`, `not_` and `every` syntax.
 Comparison operators are `gt`, `gte`, `lt`, `lte`, `equals` and `not_equals`.
 Column comparisons require a column operand; metric comparisons require a metric
-and accept only integer count literals or another row-count metric. No row/scalar
+and accept integer count literals or another metric. Null fractions additionally
+accept finite numeric literals, compared as exact rational values. No row/scalar
 mix or implicit string-to-number conversion is accepted. Null comparisons require
 explicit null predicates. All six comparisons have column and row-count convenience
 methods. `input(alias).row_count()` is representable syntax; cross-input metric
-evaluation remains G3. Representable syntax is not evidence of an available evaluator.
+evaluation now uses the producer's exact pinned aliases.
 
 Convenience literals accept Python bool, int, float and str, plus None for membership.
 Integers use i64 (or u64 above i64's maximum); floats use f64. Other types and widths
@@ -102,3 +103,44 @@ the existing stricter enclosing schema/transport depth and byte limits also appl
 Recursive schema alternatives check discriminators before children, independent
 of JSON key order. No dependency, database, runtime memory policy or engine pin
 changes are introduced by this task.
+
+## G3 operations
+
+- `E.col(c).approx(v, abs_tol=..., rel_tol=...)` compares finite values using
+  `abs(a-b) <= max(abs_tol, rel_tol * max(abs(a),abs(b)))`. Null remains unknown;
+  NaN/infinity is false. Finite floats are interpreted from their exact binary
+  values; decimal/integer values remain exact. Bounded Arrow reads and rational
+  arithmetic avoid overflow or lossy float casts. These numeric checks require
+  qualified PyArrow 25.0.1 in the explicitly locked environment.
+- `null_count()`, `null_fraction()` and `distinct_count()` are exact metrics.
+  Distinct count excludes null. An empty null fraction is ERROR, including under
+  WARN or a boolean combination whose other child passes. Fraction comparisons
+  preserve the exact binary value of a float threshold; use `E.literal` for an
+  exact decimal threshold.
+- `E.group_by(*columns).count().<comparison>(v)` requires every present group to
+  pass. Null keys form a group; empty groups pass vacuously.
+- `matches(pattern, mode="partial" | "full")` uses a reviewed, case-sensitive
+  ASCII RE2 subset: literals, dot, anchors, classes/ranges, plain groups,
+  alternation and greedy `?`, `*`, `+`, plus reviewed escapes. Flags, lookaround,
+  backreferences, counted/lazy repetition and unsupported patterns yield ERROR.
+  Unsupported patterns cannot pass on empty data or under WARN.
+- `E.schema().equals(schema)` compares the complete ordered logical schema.
+- `E.col(c).age_seconds_at(E.evaluation_time()).lte(v)` uses qualified UTC
+  timestamps and one frozen attempt clock. The clock is required in the compute
+  identity; later clocks cannot reuse the same computation. Age comparisons use
+  exact microseconds and rational thresholds.
+- `in_dataset(alias, column=...)` and `E.input(alias).row_count()` read declared,
+  pinned data or validation aliases. A repeated dataset under two aliases keeps
+  both versions. Missing aliases/columns and incompatible types are ERROR.
+
+Workers negotiate `expectation.g3.v1` in addition to AST/core capabilities. New
+certificates use `expectation-ast-v1:g3-dsl:strict-null-key-g3-v1`. Check evidence
+retains referenced alias/version/artifact identities and the frozen clock when
+observed. Consumer checks never replace a provider's published output checks.
+The single-subject input-certificate API deliberately re-evaluates cross-input
+and clock-dependent checks rather than reusing incomplete context.
+
+Exact aggregate outcomes decide publication. Numeric row diagnostics currently
+retain aggregate metrics without row samples. Other supported row diagnostics
+keep sampling separate from correctness and expose only explicitly allowed
+columns; an unavailable sample never changes an exact outcome.
