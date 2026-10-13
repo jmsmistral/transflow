@@ -1,0 +1,37 @@
+{
+  "task": "T098 schedule edit control polish",
+  "date": "2026-10-13",
+  "platform": "macOS arm64",
+  "specification": "1.1.3",
+  "implementation_base": "b1b82b1c2b82b0656de2c6d3986302b37258b1cd",
+  "specification_base": "e1dd953cd4548f7506c79cef762c6e933d5073da",
+  "changes": [
+    "Center Target/Trigger/Clear icon and text with 6px spacing",
+    "Save schedule precedes Cancel in DOM/keyboard/visual order",
+    "Hide the lineage title/description during schedule editing; retain the portal host and restore the heading on exit"
+  ],
+  "local_verification": {
+    "focused": "26 schedule/App tests passed",
+    "web": "Final full web gate passed 570 tests across 24 files, strict types/lint/format, production worker probes and reproducible 16-asset builds",
+    "documents": "Specification/link/syntax validator passed: 123 tasks, 97 complete",
+    "safety": "Privacy/generated-contract/offline inventory gate and all 27 safety regressions passed: 806 public candidate files, 643 unchanged locked versions, two active exceptions",
+    "whitespace": "git diff --check passed in both repositories"
+  },
+  "browser": {
+    "tool": "Codex internal Browser, real coordinator and existing persistent synthetic t098-schedules workspace",
+    "observed": [
+      "Target/Trigger/Clear center differences each0.25px; icon/text gap each6px; computed align-items:center",
+      "Editor DOM and visible action order is Save schedule then Cancel",
+      "Lineage heading has hidden=true and display:none while editing, omitted from the accessible banner",
+      "Cancel restores Scheduling review and its description without changing the saved lineage or schedule",
+      "Temporary tab closed and owned coordinator stopped; no definition writes or builds ran"
+    ],
+    "screenshot": "Transient local target/t098-schedule-control-polish.jpg; owner reference images are not committed"
+  },
+  "limits": [
+    "Presentation changes only; execution, wire/storage and overwrite guards unchanged",
+    "Unchanged backend and document-checker unit suites not repeated",
+    "T099/full G2 remain outstanding",
+    "CI pending owner confirmation; no CI polling"
+  ]
+}

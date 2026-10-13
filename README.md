@@ -259,7 +259,8 @@ Schedule editing supports graph-selected targets and triggers, a target-only scr
 searchable live data branches and ordered fallback controls. Exit offers Save, Discard or
 Keep editing; the current definition remains unchanged until guarded Save.
 The **View schedule** modal shows full schedule configuration and recent builds,
-which open retained Build reports. See the [schedule guide](crates/transflow/SCHEDULES.md).
+which open retained Build reports. Schedule edit mode hides the lineage title and
+description and places Save schedule before Cancel. See the [schedule guide](crates/transflow/SCHEDULES.md).
 Plain-clicking any selected lineage node narrows a multi-selection to that node.
 With no node selected or multiple nodes selected, the bottom tabs and right
 Properties panel show a centered “Select a node to view information” notice with

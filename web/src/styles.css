@@ -3633,6 +3633,9 @@ revo-grid.preview-grid
   grid-column: 1 / -1;
 }
 .schedule-graph-actions .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   justify-content: center;
   padding: 6px;
 }

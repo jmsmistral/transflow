@@ -252,7 +252,11 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
         <a className="brand" href="#workspace" aria-label="Transflow workspace">
           <span aria-hidden="true">◈</span> transflow
         </a>
-        <div className="lineage-heading" ref={setTitleHost} />
+        <div
+          className="lineage-heading"
+          ref={setTitleHost}
+          hidden={!!scheduleEdit}
+        />
         <div className="top-actions">
           <Button aria-pressed={dark} onClick={() => setDark(!dark)}>
             Dark theme

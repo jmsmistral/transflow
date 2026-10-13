@@ -285,7 +285,9 @@ Dataset cards and aligned rows show compact information;
 branch/fallback sits at the bottom. **View schedule** opens a large dedicated modal
 with the full current definition, code-source explanation, summary and recent builds.
 Each build entry opens its retained Build report, and closing it returns to the Schedule
-view. Editor Save/Cancel stay at the top while scrolling. These views preserve the
+view. Editor Save schedule precedes Cancel at the top while scrolling. The lineage
+title/description are hidden during schedule editing and restored on exit; graph role
+buttons center their icons and text with consistent spacing. These views preserve the
 foreground lineage selection, node positions and camera.
 
 History/summary use persisted occurrences, exact metrics and missing timing evidence;

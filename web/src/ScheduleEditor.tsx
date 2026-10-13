@@ -619,15 +619,6 @@ export function ScheduleEditor({
       <header className="schedule-editor-header">
         <h3>{record ? "Edit schedule" : "Create schedule"}</h3>
         <div className="schedule-editor-actions">
-          <button
-            type="button"
-            className="button"
-            ref={cancelButton}
-            disabled={busy}
-            onClick={requestExit}
-          >
-            Cancel
-          </button>
           <Button
             type="submit"
             onClick={() => {
@@ -638,6 +629,15 @@ export function ScheduleEditor({
           >
             {busy ? "Saving…" : "Save schedule"}
           </Button>
+          <button
+            type="button"
+            className="button"
+            ref={cancelButton}
+            disabled={busy}
+            onClick={requestExit}
+          >
+            Cancel
+          </button>
         </div>
         <p className="muted">
           Save replaces the current definition. Accepted work keeps its captured
