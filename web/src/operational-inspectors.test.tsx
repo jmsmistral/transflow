@@ -6,7 +6,6 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { forwardRef } from "react";
 import { expect, test, vi } from "vitest";
 import { Client } from "./api/client";
 import { Workspace } from "./workspace";
@@ -24,36 +23,6 @@ import {
   workspaceId,
 } from "./test-fixtures";
 
-vi.mock("@revolist/react-datagrid", () => ({
-  RevoGrid: forwardRef<
-    HTMLTableElement,
-    {
-      columns: { prop: string; name: string }[];
-      source: Record<string, string>[];
-    }
-  >(function Grid({ columns, source }, ref) {
-    return (
-      <table ref={ref}>
-        <thead>
-          <tr>
-            {columns.map((c) => (
-              <th key={c.prop}>{c.name}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {source.map((row, i) => (
-            <tr key={i}>
-              {columns.map((c) => (
-                <td key={c.prop}>{row[c.prop]}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  }),
-}));
 const queryId = "11111111-1111-4111-8111-111111111111";
 const publishedAttempt = "22222222-2222-4222-8222-222222222222";
 const failedAttempt = "33333333-3333-4333-8333-333333333333";

@@ -1,5 +1,11 @@
 import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, vi } from "vitest";
+
+// The real adapter bootstraps Stencil at import time, including a Node timer
+// that can outlive an isolated jsdom file. Component tests exercise our grid
+// bindings with text DOM; browser journeys qualify the actual virtualized grid.
+// Selection-specific tests can override this default with their own adapter.
+vi.mock("@revolist/react-datagrid", () => import("./test-grid"));
 
 afterEach(cleanup);
 

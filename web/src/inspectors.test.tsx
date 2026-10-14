@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
-import { forwardRef } from "react";
 import { App } from "./App";
 import { PropertiesInspector, versionMetadata } from "./inspectors";
 import { Client } from "./api/client";
@@ -14,39 +13,6 @@ import {
   versionId,
   workspaceId,
 } from "./test-fixtures";
-
-vi.mock("@revolist/react-datagrid", () => ({
-  RevoGrid: forwardRef<
-    HTMLTableElement,
-    {
-      columns: { prop: string; name: string }[];
-      source: Record<string, string>[];
-    }
-  >(function TestGrid({ columns, source }, ref) {
-    return (
-      <table ref={ref}>
-        <thead>
-          <tr>
-            <th>#</th>
-            {columns.map((column) => (
-              <th key={column.prop}>{column.name}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {source.map((row, index) => (
-            <tr key={index}>
-              <th>{index + 1}</th>
-              {columns.map((column) => (
-                <td key={column.prop}>{row[column.prop]}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  }),
-}));
 
 const schema = {
   format_version: 1,

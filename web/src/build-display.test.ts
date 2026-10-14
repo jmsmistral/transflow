@@ -29,6 +29,13 @@ const caption = (
     "opened/node",
   );
 
+test("caption imports do not bootstrap the browser-only grid runtime", async () => {
+  // The real adapter registers its elements after an import-time microtask and
+  // schedules an appload event that can outlive this file's jsdom environment.
+  await Promise.resolve();
+  expect(customElements.get("revo-grid")).toBeUndefined();
+});
+
 test("manual captions count accepted targets and resolve dataset references to paths", () => {
   expect(caption(ids.map((id) => `dataset:${id}`))).toBe("Build of 4 datasets");
   expect(caption([`dataset:${ids[0]}`])).toBe("Build of curated/item1");

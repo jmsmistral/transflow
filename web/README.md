@@ -106,6 +106,12 @@ internal Browser; do not install Playwright, browser drivers or browser binaries
 See the [browser checklist](../docs/development/browser-checks.md) and
 [T082 measured receipt](../docs/development/evidence/t082-macos-arm64.json).
 
+Every jsdom file uses a shared text-table adapter for RevoGrid, including files
+that only import inspector helpers. This keeps Stencil's import-time startup
+timer inside browser qualification. Selection tests supply their own imperative
+grid adapter. File isolation and unhandled-error detection remain enabled; real
+grid layout, virtualization and gestures are covered by the internal Browser.
+
 React Flow/ELK interaction and worker layout remain T083. The exact React 19.3.0,
 TypeScript 6.0.3, Vite 8.3.0, jsdom 26.1.0 and ESLint 9.39.5 baseline is unchanged.
 Existing development dependency exceptions remain in the safety inventory; no

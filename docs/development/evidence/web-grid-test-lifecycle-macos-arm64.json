@@ -1,0 +1,51 @@
+{
+  "task": "T006 RevoGrid component-test lifecycle correction",
+  "date": "2026-10-14",
+  "specification": "1.1.4",
+  "platform": "macOS arm64 / Node 24.4.1 / npm 11.4.2",
+  "implementation_base": "561deaa91b9252b1ed027fd33e939cc5441d7e1a",
+  "specification_base": "237b9b3cd7df114f4326e108127f895bb3173095",
+  "reported_ci_job": "https://github.com/jmsmistral/transflow/actions/runs/38561827258/job/115844525329",
+  "reported_failure": "607 assertions passed; unhandled elm.dispatchEvent rejection in Stencil appload, attributed to build-display.test.ts",
+  "diagnosis": "Import-time custom-element registration schedules a 30ms appDidLoad timer even without a mounted grid; a short isolated jsdom file can dispose its window before dispatch",
+  "changes": [
+    "Shared test-only text-table RevoGrid adapter registered in Vitest setup before application imports",
+    "Preview and scratchpad inspector tests reuse the shared adapter",
+    "Existing selection-specific imperative adapter retained",
+    "Regression guards the original caption import path against browser-only grid bootstrap"
+  ],
+  "verification": {
+    "baseline": {
+      "command": "npm --prefix web test -- src/build-display.test.ts",
+      "result": "3 passed; intermittent unhandled rejection not reproduced"
+    },
+    "regression_before_fix": {
+      "command": "npm --prefix web test -- src/build-display.test.ts",
+      "result": "1 failed, 3 passed; registered HostElement detected deterministically"
+    },
+    "focused_after_fix": {
+      "command": "npm --prefix web test -- src/build-display.test.ts src/PreviewGrid.test.tsx src/inspectors.test.tsx src/operational-inspectors.test.tsx",
+      "result": "33 passed in 4 files, including existing selection and clipboard tests"
+    },
+    "full_web": {
+      "command": "bash tools/check-web.sh",
+      "result": "608 passed in 26 files; zero failed assertions or unhandled errors; strict types, lint, format and worker probes passed",
+      "production_assets": 16,
+      "repeat_build_identical": true,
+      "pre_fix_production_bytes_identical": true
+    },
+    "repository_checks": {
+      "safety": "27 tests passed; 835 public candidate files, 639 locked versions, 2 existing exceptions and 1 generated contract checked",
+      "specification": "123 tasks, 103 completed, 97 Markdown files and 967 local links checked; no application execution in the document checker",
+      "diff_check": "Both repository diffs passed git diff --check"
+    }
+  },
+  "limits": [
+    "Local macOS arm64 verification; new Linux CI remains owner-monitored",
+    "Reported stack comes from the owner-supplied excerpt; public job page confirms failure but requires sign-in for full logs",
+    "The import-time startup path reproduces; the original intermittent rejection did not reproduce locally",
+    "Production code, locked dependencies, Vitest isolation and unhandled-error detection unchanged",
+    "No new runtime Rust/Python or Browser qualification for a test-only change",
+    "Primary preview artifacts and existing owner review workspaces preserved"
+  ]
+}

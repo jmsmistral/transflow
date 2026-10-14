@@ -1,5 +1,37 @@
 # Contributor verification
 
+## RevoGrid component-test lifecycle correction (2026-10-14)
+
+The owner reported the Ubuntu x86_64 [web job failure](https://github.com/jmsmistral/transflow/actions/runs/38561827258/job/115844525329):
+607 assertions passed, followed by an unhandled `elm.dispatchEvent` rejection.
+The supplied log excerpt identifies Stencil's `appload` event. The public job page
+confirms failure; full authenticated logs were unavailable to this investigation.
+
+The locked RevoGrid adapter calls `defineCustomElements` during import. Its
+bootstrap schedules `appDidLoad` after 30 ms, even when no grid is mounted.
+`build-display` imports `field` from the inspector module, which imports the
+adapter. A short isolated jsdom file can therefore finish before the event tries
+to dispatch through its disposed window. The startup path was reproduced locally:
+a new regression detects a registered `revo-grid` element and fails on the old
+setup. The intermittent rejection itself did not reproduce in the baseline run.
+
+The shared Vitest setup now provides the existing text-table test adapter for
+every file. Preview and scratchpad tests reuse it; selection-specific tests keep
+their imperative adapter. This prevents browser-only initialization at the test
+boundary. Production code, dependency pins, file isolation and unhandled-error
+detection are unchanged.
+
+Verification: the four affected files pass 33 tests; the final full web gate passes
+608 tests in 26 files, strict types/lint/format, worker probes and two matching
+16-asset builds. All 16 assets also match their pre-fix bytes. The initial gate
+found an accessibility lint issue in the test adapter; it was corrected before
+the final passing gate. The [receipt](evidence/web-grid-test-lifecycle-macos-arm64.json)
+records commands and scope. Rust/Python runtime and Browser journeys were not
+rerun for this test-only change. Safety passed 27 regressions and the reviewed
+639-version dependency/contract inventory; specification checks passed for 123
+tasks, 97 Markdown files and 967 local links. Primary preview artifacts and owner workspaces
+are preserved; new remote CI remains owner-monitored.
+
 
 ## Schedule scope and live status refinement (2026-10-14)
 
