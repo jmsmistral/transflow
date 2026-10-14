@@ -4,7 +4,7 @@ import type {
   ApiHistoryJobV1,
 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
-import { Button } from "./components";
+import { Button, DatasetHeader } from "./components";
 import { Icon } from "./Icons";
 import { field, versionMetadata } from "./inspectors";
 import {
@@ -130,8 +130,7 @@ export function HistoryInspector({
           requested={state.selection.branch}
         />
       )}
-      <div className="execution-toolbar">
-        <strong>{dataset?.path}</strong>
+      <DatasetHeader path={dataset?.path}>
         <span className="history-branch" title="History branch">
           <Icon name="branch" /> {state.selection.branch}
         </span>
@@ -143,7 +142,7 @@ export function HistoryInspector({
         {state.selection.version && (
           <Button onClick={() => onVersion(null)}>Return to branch tip</Button>
         )}
-      </div>
+      </DatasetHeader>
       {state.selection.version && (
         <div className="source-provenance">
           Preview and Code are pinned to version{" "}

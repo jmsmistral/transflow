@@ -9,6 +9,22 @@ grid and safe clipboard format as Preview. The service's limits, truncation,
 failure and cancellation states remain visible. Result expiry does not publish
 data or substitute a moving head. Fallback data has Preview's branch warning.
 
+All six bottom tabs share a full-width, 44-pixel dataset header with a 13-pixel
+name. The name stays on the left; controls and metadata keep their context without
+repeating the tab title. Long names truncate visually and retain their full tooltip.
+Data health scrolls its details separately from this header.
+
+The scratchpad uses an editor on the left and an always-present Results pane on
+the right. Run query (play icon) and Cancel query sit beside the dataset name,
+above the editor. The initial Results notice has a local database glyph and the
+prompt “Run a SQL query in the editor to see a preview of the results.” Results,
+errors, cancellation and service limits stay within that pane. Compact panes
+use a smaller empty state; narrow layouts stack the two panes.
+
+Parameters is a collapsed disclosure with help explaining positional `?` bindings.
+For example, `WHERE id = CAST(? AS BIGINT)` uses `["42"]`. Values are bound
+separately from SQL; this refinement changes no query permissions or version pins.
+
 Data health is available in the right inspector and bottom tab. Published output
 checks are read through the version's original attempt; a recent attempted job is
 read through its owning retained plan. Consumer input failures and subsequent

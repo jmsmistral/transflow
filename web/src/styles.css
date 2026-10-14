@@ -1259,26 +1259,63 @@ summary {
   height: 16px;
   flex: none;
 }
-.preview-toolbar {
+.dataset-inspector-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  padding: 8px 14px;
+  gap: 12px;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 12px;
 }
-.preview-toolbar h2 {
+.dataset-inspector-header h2 {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-size: 13px;
+  line-height: 20px;
+  font-weight: 700;
   color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dataset-inspector-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.dataset-inspector-header--start h2 {
+  flex: 0 1 auto;
+  max-width: max(90px, calc(50% - 250px));
+}
+.dataset-inspector-header button,
+.dataset-inspector-header select {
+  min-height: 28px;
+  padding: 4px 9px;
+  font-size: 12px;
+}
+.dataset-inspector-header label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.dataset-inspector-header select {
+  min-width: 0;
+  max-width: 460px;
 }
 .preview-toolbar-details {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 7px 16px;
   color: var(--muted);
+  overflow: hidden;
 }
 .preview-toolbar-details span {
   white-space: nowrap;
@@ -3857,11 +3894,33 @@ revo-grid.preview-grid
   flex-direction: column;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
+  container-type: inline-size;
+  background: var(--surface);
+}
+.scratchpad-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.scratchpad-inputs,
+.scratchpad-results {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.scratchpad-inputs {
+  padding: 12px;
+  gap: 10px;
+  border-right: 1px solid var(--line);
   overflow: auto;
 }
-.scratchpad-inspector .preview-grid-wrap {
-  flex: 0 0 220px;
-  min-height: 160px;
+.scratchpad-results {
+  overflow: hidden;
+  container: sql-results / size;
 }
 .scratchpad-inspector .button {
   display: inline-flex;
@@ -3869,34 +3928,114 @@ revo-grid.preview-grid
   gap: 6px;
 }
 .scratchpad-editor {
-  flex: 0 0 auto;
+  flex: 1;
   box-sizing: border-box;
-  width: calc(100% - 24px);
-  min-height: 76px;
-  max-height: 180px;
-  margin: 10px 12px;
-  padding: 10px;
+  width: 100%;
+  min-height: 60px;
+  margin: 0;
+  padding: 8px;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
   font:
     13px/1.5 ui-monospace,
     SFMono-Regular,
     Menlo,
     monospace;
-  resize: vertical;
+  resize: none;
 }
-.scratchpad-parameters,
-.scratchpad-status {
-  padding: 4px 12px 8px;
+.scratchpad-parameters {
   font-size: 12px;
+}
+.scratchpad-parameters summary {
+  cursor: pointer;
+}
+.scratchpad-parameters summary span {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 4px;
+  color: var(--muted);
+}
+.scratchpad-parameters .icon {
+  width: 14px;
+  height: 14px;
+}
+.scratchpad-status {
+  font-size: 12px;
+  min-width: 0;
 }
 .scratchpad-parameters label {
   display: flex;
   gap: 12px;
   align-items: center;
   margin: 8px 0;
+  flex-wrap: wrap;
 }
 .scratchpad-parameters input {
   flex: 1;
   min-width: 0;
+}
+.scratchpad-parameters small {
+  display: block;
+  color: var(--muted);
+}
+.scratchpad-unavailable,
+.scratchpad-result-notice {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.scratchpad-empty-results {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+}
+.scratchpad-empty-results > .icon {
+  width: 48px;
+  height: 48px;
+  opacity: 0.4;
+  flex: none;
+}
+.scratchpad-empty-results h3 {
+  font-size: 16px;
+  margin: 16px 0 8px;
+}
+.scratchpad-empty-results p {
+  margin: 0;
+  max-width: 340px;
+  font-size: 13px;
+}
+.scratchpad-results-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--line);
+}
+.scratchpad-results-heading h3 {
+  font-size: 13px;
+  margin: 0;
+}
+.scratchpad-results-limits {
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+  border-top: 1px solid var(--line);
+}
+.scratchpad-results > .button {
+  align-self: flex-start;
+  margin: 8px 12px;
 }
 .scratchpad-status small {
   display: block;
@@ -3906,9 +4045,48 @@ revo-grid.preview-grid
 .scratchpad-inspector .execution-error {
   margin: 6px 12px;
 }
+@container sql-results (max-height: 180px) {
+  .scratchpad-empty-results {
+    padding: 6px 12px;
+  }
+  .scratchpad-empty-results > .icon {
+    width: 20px;
+    height: 20px;
+  }
+  .scratchpad-empty-results h3 {
+    margin: 6px 0 4px;
+    font-size: 14px;
+  }
+  .scratchpad-empty-results p {
+    max-width: 550px;
+    font-size: 12px;
+  }
+}
+@container (max-width: 680px) {
+  .dataset-inspector-header--start h2 {
+    max-width: 45%;
+  }
+  .scratchpad-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(160px, 1fr) minmax(180px, 1fr);
+    overflow: auto;
+  }
+  .scratchpad-inputs {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}
 .health-inspector {
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
   height: 100%;
+}
+.health-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 .health-section {
   padding: 12px 16px;

@@ -99,7 +99,10 @@ T080 adds the authenticated [query lifecycle API](crates/tf-api/README.md#intera
 exact local/foreign versions, independent interactive limits, cancellation and temporary
 results. Foreign inputs are read directly under leases. The SQL scratchpad tab now
 queries the displayed immutable version as `dataset`, with typed results, bound
-parameters and cancellation. Queries do not publish datasets or enable a SQL
+parameters and cancellation. Its editor and always-visible Results pane sit side
+by side, with query controls beside the dataset name and contextual parameter
+help. Bottom tabs share consistent dataset headers without repeated tab labels.
+Queries do not publish datasets or enable a SQL
 transform adapter. Data health shows published output checks separately from recent
 attempts and consumer input failures, including retained provider certificates.
 The [operational-alpha demo](examples/operational-alpha/README.md) creates a new

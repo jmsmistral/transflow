@@ -6,7 +6,7 @@ import type {
   ExecutionJsonV1,
 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
-import { Button } from "./components";
+import { Button, DatasetHeader } from "./components";
 import { Icon } from "./Icons";
 import { field, versionMetadata } from "./inspectors";
 import { timestamp } from "./execution-model";
@@ -277,9 +277,7 @@ export function HealthInspector({
           requested={state.selection.branch}
         />
       )}
-      <div className="execution-toolbar">
-        <strong>{dataset.path}</strong>
-        <span className="muted">Data health</span>
+      <DatasetHeader path={dataset.path}>
         <div className="execution-switches">
           <Button
             aria-label="Refresh check evidence"
@@ -288,91 +286,93 @@ export function HealthInspector({
             <Icon name="refresh" />
           </Button>
         </div>
-      </div>
-      <section className="health-section">
-        <dl className="health-summary">
-          <div>
-            <dt>Published output checks</dt>
-            <dd>
-              {meta?.version && overlay?.version === meta.version
-                ? healthLabel(overlay.health)
-                : "Unavailable"}
-            </dd>
-          </div>
-          <div>
-            <dt>Latest attempt on {state.selection.branch}</dt>
-            <dd>{overlay?.latest_attempt ?? "Unavailable"}</dd>
-          </div>
-        </dl>
-        {overlay?.input_failed && (
-          <p className="health-input-failure" role="status">
-            The latest consumer input check failed. Published output checks are
-            shown separately.
+      </DatasetHeader>
+      <div className="health-content">
+        <section className="health-section">
+          <dl className="health-summary">
+            <div>
+              <dt>Published output checks</dt>
+              <dd>
+                {meta?.version && overlay?.version === meta.version
+                  ? healthLabel(overlay.health)
+                  : "Unavailable"}
+              </dd>
+            </div>
+            <div>
+              <dt>Latest attempt on {state.selection.branch}</dt>
+              <dd>{overlay?.latest_attempt ?? "Unavailable"}</dd>
+            </div>
+          </dl>
+          {overlay?.input_failed && (
+            <p className="health-input-failure" role="status">
+              The latest consumer input check failed. Published output checks
+              are shown separately.
+            </p>
+          )}
+          {!meta?.version && (
+            <Empty>No published version is available on this branch.</Empty>
+          )}
+        </section>
+        {outputError && (
+          <p className="execution-error" role="alert">
+            Published check evidence: {outputError}
           </p>
         )}
-        {!meta?.version && (
-          <Empty>No published version is available on this branch.</Empty>
-        )}
-      </section>
-      {outputError && (
-        <p className="execution-error" role="alert">
-          Published check evidence: {outputError}
-        </p>
-      )}
-      {dataset.kind === "imported" && !meta?.attempt ? (
-        <section className="health-section">
-          <h3>Published version checks</h3>
-          <p>Imported data has no producer output checks.</p>
-        </section>
-      ) : (
-        <Checks
-          title={
-            dataset.origin === "external"
-              ? "Provider output certificates"
-              : "Published version checks"
-          }
-          values={outputChecks}
-          empty="No output checks were recorded for this version."
-        />
-      )}
-      {dataset.origin !== "external" && (
-        <>
+        {dataset.kind === "imported" && !meta?.attempt ? (
           <section className="health-section">
-            <h3>Recent attempted job</h3>
-            {attempted ? (
-              <p>
-                {field(attempted.evidence, "state")} ·{" "}
-                {timestamp(field(attempted.evidence, "started_us"), "minute")}
-              </p>
-            ) : (
-              <p className="muted">Attempt details unavailable.</p>
-            )}
-            <small>
-              Most recent attempt among the latest 50 build jobs. Cached reuse
-              does not create an attempt.
-            </small>
-            {recentError && (
-              <p className="execution-error" role="alert">
-                {recentError}
-              </p>
-            )}
+            <h3>Published version checks</h3>
+            <p>Imported data has no producer output checks.</p>
           </section>
-          {attempted && attempted.attempt !== meta?.attempt && (
-            <Checks
-              title="Recent attempt output checks"
-              values={items(property(attempted.evidence, "checks")).filter(
-                (check) => field(check, "phase") === "output",
-              )}
-              empty="No output checks were recorded for this attempt."
-            />
-          )}
+        ) : (
           <Checks
-            title="Consumer input checks"
-            values={inputs}
-            empty="No input checks were recorded for this attempt."
+            title={
+              dataset.origin === "external"
+                ? "Provider output certificates"
+                : "Published version checks"
+            }
+            values={outputChecks}
+            empty="No output checks were recorded for this version."
           />
-        </>
-      )}
+        )}
+        {dataset.origin !== "external" && (
+          <>
+            <section className="health-section">
+              <h3>Recent attempted job</h3>
+              {attempted ? (
+                <p>
+                  {field(attempted.evidence, "state")} ·{" "}
+                  {timestamp(field(attempted.evidence, "started_us"), "minute")}
+                </p>
+              ) : (
+                <p className="muted">Attempt details unavailable.</p>
+              )}
+              <small>
+                Most recent attempt among the latest 50 build jobs. Cached reuse
+                does not create an attempt.
+              </small>
+              {recentError && (
+                <p className="execution-error" role="alert">
+                  {recentError}
+                </p>
+              )}
+            </section>
+            {attempted && attempted.attempt !== meta?.attempt && (
+              <Checks
+                title="Recent attempt output checks"
+                values={items(property(attempted.evidence, "checks")).filter(
+                  (check) => field(check, "phase") === "output",
+                )}
+                empty="No output checks were recorded for this attempt."
+              />
+            )}
+            <Checks
+              title="Consumer input checks"
+              values={inputs}
+              empty="No input checks were recorded for this attempt."
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }

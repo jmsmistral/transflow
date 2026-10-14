@@ -5,7 +5,7 @@ import type {
   ApiHistoryJobV1,
 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
-import { Button } from "./components";
+import { Button, DatasetHeader } from "./components";
 import { field } from "./inspectors";
 import { seconds, short, sortedHistory, timestamp } from "./execution-model";
 import {
@@ -79,8 +79,7 @@ export function TimelineInspector({
   }
   return (
     <div className="execution-inspector">
-      <div className="execution-toolbar">
-        <strong>{dataset?.path}</strong>
+      <DatasetHeader path={dataset?.path}>
         {jobs.length > 0 && (
           <label>
             Build{" "}
@@ -108,7 +107,7 @@ export function TimelineInspector({
             Load more builds
           </Button>
         )}
-      </div>
+      </DatasetHeader>
       {error && (
         <p className="execution-error" role="alert">
           {error}

@@ -1,0 +1,106 @@
+{
+  "task": "T099/T085/T086 scratchpad and shared bottom-header UI refinement",
+  "date": "2026-10-14",
+  "specification": "1.1.4",
+  "platform": {
+    "os": "macOS 15.3.1",
+    "architecture": "arm64",
+    "node": "24.4.1",
+    "npm": "11.4.2"
+  },
+  "base_revisions": {
+    "implementation": "937763d049b4619e878c468ea0728ce481b32a4e",
+    "specification": "df2f68e4db17feaa35cb4cd08b70ff380d1f01da"
+  },
+  "verification": {
+    "web_tests": 601,
+    "test_files": 26,
+    "production_assets": 16,
+    "typecheck_lint_format": true,
+    "reproducible_build": true,
+    "final_css_rebuild_verified": true
+  },
+  "browser": {
+    "tool": "Codex internal Browser",
+    "headers": [
+      {
+        "font": "13px",
+        "height": 44,
+        "path": "curated/qualified_orders",
+        "tab": "SQL scratchpad",
+        "width": 1104
+      },
+      {
+        "font": "13px",
+        "height": 44,
+        "path": "curated/qualified_orders",
+        "tab": "Preview",
+        "width": 1104
+      },
+      {
+        "font": "13px",
+        "height": 44,
+        "path": "curated/qualified_orders",
+        "tab": "History",
+        "width": 1104
+      },
+      {
+        "font": "13px",
+        "height": 44,
+        "path": "curated/qualified_orders",
+        "tab": "Code",
+        "width": 1104
+      },
+      {
+        "font": "13px",
+        "height": 44,
+        "path": "curated/qualified_orders",
+        "tab": "Build timeline",
+        "width": 1104
+      },
+      {
+        "font": "13px",
+        "height": 44,
+        "path": "curated/qualified_orders",
+        "tab": "Data health",
+        "width": 1104
+      }
+    ],
+    "database_glyph_pixels": [
+      48,
+      48
+    ],
+    "observed": [
+      "editor left/results right before query",
+      "Run and Cancel beside dataset name",
+      "collapsed positional parameters with help",
+      "real bound parameter query returns order 2 and Decimal(18,2) 20.00",
+      "missing-column query failure remains in Results and clears the old grid",
+      "light/dark theme presentation",
+      "Data health details scroll independently from full-width header"
+    ],
+    "coordinator_after_review": "stopped",
+    "tab_after_review": "closed"
+  },
+  "review": {
+    "workspace": "/Users/jms/dev/transflow-workspace/t104-scratchpad-review",
+    "preview_bundle": "/Users/jms/dev/transflow-workspace/t104-scratchpad-review-tools",
+    "existing_workspaces_preserved": true
+  },
+  "commands": [
+    "bash tools/check-web.sh",
+    "npm --prefix web run typecheck",
+    "npm --prefix web run test -- src/operational-inspectors.test.tsx",
+    "npm --prefix web run build",
+    "npm --prefix web run build:verify"
+  ],
+  "limits": [
+    "Local frontend and real-coordinator browser evidence only; remote CI awaits owner confirmation",
+    "Narrow stacked layout is defined in CSS, but no separate device/browser platform qualification is claimed",
+    "Rust/Python execution/query protocols and dependency locks are unchanged; their suites were not rerun"
+  ],
+  "ci": {
+    "polled": false,
+    "state": "pending owner monitoring"
+  }
+}

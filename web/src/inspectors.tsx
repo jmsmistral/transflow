@@ -10,7 +10,7 @@ import type {
   WireValue,
 } from "./generated/contracts";
 import type { Workspace, WorkspaceState } from "./workspace";
-import { Button, InspectorNotice } from "./components";
+import { Button, DatasetHeader, InspectorNotice } from "./components";
 import { decode } from "./api/client";
 import { Icon } from "./Icons";
 import { PreviewGrid } from "./PreviewGrid";
@@ -457,8 +457,7 @@ function PreviewContent({
             <strong>{resolved}</strong>
           </div>
         )}
-      <div className="preview-toolbar">
-        <h2>{dataset.path}</h2>
+      <DatasetHeader path={dataset.path}>
         <div className="preview-toolbar-details">
           {state.selection.version && (
             <span title={state.selection.version}>
@@ -483,7 +482,7 @@ function PreviewContent({
           )}
           {schema && <span>{schema.fields.length} columns</span>}
         </div>
-      </div>
+      </DatasetHeader>
       {!version ? (
         <p className="preview-empty">No published version is available.</p>
       ) : !schema ? (

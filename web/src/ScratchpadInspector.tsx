@@ -7,7 +7,7 @@ import type {
 import type { Workspace } from "./workspace";
 import { decode } from "./api/client";
 import { same } from "./api/validate";
-import { Button } from "./components";
+import { Button, DatasetHeader } from "./components";
 import { Icon } from "./Icons";
 import { PreviewGrid } from "./PreviewGrid";
 import { field, typeName, versionMetadata, wire } from "./inspectors";
@@ -45,19 +45,19 @@ export function ScratchpadInspector({
         state.value.inspection,
       )
     : null;
-  if (!dataset || !meta?.version)
-    return <Empty>No published version is available for this query.</Empty>;
+  if (!dataset)
+    return <Empty>Select a dataset to query its published version.</Empty>;
   return (
     <Scratchpad
-      key={`${state.selection.branch}:${dataset.workspace_id}:${dataset.dataset_id}:${meta.version}`}
+      key={`${state.selection.branch}:${dataset.workspace_id}:${dataset.dataset_id}:${meta?.version ?? "unpublished"}`}
       workspace={workspace}
       state={state}
       dark={dark}
-      version={meta.version}
+      version={meta?.version}
       resolved={
         state.selection.version
           ? undefined
-          : (meta.originBranch ?? field(dataset.head, "resolved_branch"))
+          : (meta?.originBranch ?? field(dataset.head, "resolved_branch"))
       }
     />
   );
@@ -73,7 +73,7 @@ function Scratchpad({
   workspace: Workspace;
   state: Ready;
   dark: boolean;
-  version: string;
+  version: string | undefined;
   resolved: string | undefined;
 }) {
   const dataset = state.value.dataset;
@@ -199,7 +199,8 @@ function Scratchpad({
   }
   async function run() {
     const lifetime = owned.current;
-    if (!dataset || !lifetime || lifetime.running || !sql.trim()) return;
+    if (!dataset || !version || !lifetime || lifetime.running || !sql.trim())
+      return;
     lifetime.running = true;
     lifetime.cancelRequested = false;
     delete lifetime.query;
@@ -316,102 +317,144 @@ function Scratchpad({
   return (
     <div className="scratchpad-inspector">
       <Fallback branch={resolved} requested={state.selection.branch} />
-      <div className="execution-toolbar">
-        <strong>{dataset?.path}</strong>
-        <span className="muted">SQL scratchpad</span>
-        <div className="execution-switches">
-          <Button
-            className="button-primary"
-            disabled={busy || !sql.trim()}
-            onClick={() => void run()}
-          >
-            <Icon name="refresh" /> Run query
-          </Button>
-          <Button disabled={!busy || canceling} onClick={() => void cancel()}>
-            {canceling ? "Canceling…" : "Cancel query"}
-          </Button>
-        </div>
-      </div>
-      <textarea
-        className="scratchpad-editor"
-        aria-label="SQL query"
-        spellCheck={false}
-        value={sql}
-        onChange={(event) => setSql(event.target.value)}
-      />
-      <details className="scratchpad-parameters">
-        <summary>Parameters</summary>
-        <label>
-          Bound values (JSON array)
-          <input
-            value={parameters}
-            onChange={(event) => setParameters(event.target.value)}
+      <DatasetHeader path={dataset?.path} actionsAfterName>
+        <Button
+          className="button-primary"
+          disabled={busy || !version || !sql.trim()}
+          onClick={() => void run()}
+        >
+          <Icon name="play" /> Run query
+        </Button>
+        <Button disabled={!busy || canceling} onClick={() => void cancel()}>
+          {canceling ? "Canceling…" : "Cancel query"}
+        </Button>
+      </DatasetHeader>
+      <div className="scratchpad-layout">
+        <section className="scratchpad-inputs" aria-label="SQL editor">
+          <textarea
+            className="scratchpad-editor"
+            aria-label="SQL query"
+            spellCheck={false}
+            wrap="off"
+            value={sql}
+            onChange={(event) => setSql(event.target.value)}
           />
-        </label>
-        <small>
-          Use null, true/false or strings. SQL casts make numeric types
-          explicit.
-        </small>
-      </details>
-      <div className="scratchpad-status" role="status">
-        {job
-          ? `${job.state} · ${job.rows} rows · ${readableDuration((BigInt(job.elapsed_ms) * 1000000n).toString())}`
-          : busy
-            ? "Starting query…"
-            : "Query the selected published version as dataset."}
-        {job?.truncated && (
-          <span> · Results truncated at the query limits.</span>
-        )}
-        {job && (
-          <small>
-            Up to {job.limits.rows} rows · {job.limits.bytes} bytes ·{" "}
-            {job.timeout_seconds === "0"
-              ? "No time limit"
-              : `${job.timeout_seconds} s time limit`}
-          </small>
-        )}
+          <details className="scratchpad-parameters">
+            <summary>
+              Parameters{" "}
+              <span title="Bind values to ? placeholders in order, without inserting them into the SQL text.">
+                <Icon name="info" />
+              </span>
+            </summary>
+            <label>
+              Bound values (JSON array)
+              <input
+                value={parameters}
+                onChange={(event) => setParameters(event.target.value)}
+              />
+            </label>
+            <small>
+              Values replace <code>?</code> placeholders in order. For example,
+              <code> WHERE id = CAST(? AS BIGINT)</code> uses{" "}
+              <code>["42"]</code>. Leave <code>[]</code> for a query without
+              parameters. Use null, true/false or strings; SQL casts make
+              numeric types explicit.
+            </small>
+          </details>
+          {!version && (
+            <p className="scratchpad-unavailable">
+              No published version is available for this query.
+            </p>
+          )}
+        </section>
+        <section
+          className="scratchpad-results"
+          aria-label="SQL results"
+          aria-busy={busy}
+        >
+          {(job || busy) && (
+            <div className="scratchpad-results-heading">
+              <h3>Results</h3>
+              <div className="scratchpad-status" role="status">
+                {job
+                  ? `${job.state} · ${job.rows} rows · ${readableDuration((BigInt(job.elapsed_ms) * 1000000n).toString())}`
+                  : "Starting query…"}
+                {job?.truncated && (
+                  <span> · Results truncated at the query limits.</span>
+                )}
+              </div>
+            </div>
+          )}
+          {error && (
+            <p className="execution-error" role="alert">
+              {error}
+              {readFailed && (
+                <Button
+                  onClick={() => {
+                    const lifetime = owned.current;
+                    if (lifetime) void poll(lifetime);
+                  }}
+                >
+                  Retry status
+                </Button>
+              )}
+            </p>
+          )}
+          {result ? (
+            <>
+              <PreviewGrid
+                page={{
+                  schema: result.schema,
+                  rows: result.rows.map((row) =>
+                    row.map((value) => ({ value, truncated: false })),
+                  ),
+                }}
+                path="SQL query results"
+                dark={dark}
+                formatCell={wire}
+                formatType={(index) =>
+                  typeName(
+                    result.schema.fields[index]?.logical_type ?? {
+                      type: "string",
+                    },
+                  )
+                }
+                onError={setError}
+              />
+              {result.rows.length === 0 && (
+                <p className="scratchpad-result-notice">
+                  The query returned no rows.
+                </p>
+              )}
+              {result.next_offset !== null && (
+                <Button disabled={moreBusy} onClick={() => void more()}>
+                  More result rows
+                </Button>
+              )}
+            </>
+          ) : (
+            <div className="scratchpad-empty-results">
+              <Icon name="database" />
+              {!job && !busy && <h3>Results</h3>}
+              <p>
+                {busy
+                  ? "Your results will appear here when the query finishes."
+                  : job?.state === "CANCELED"
+                    ? "Query canceled. Run another query to see the results."
+                    : "Run a SQL query in the editor to see a preview of the results."}
+              </p>
+            </div>
+          )}
+          {job && (
+            <div className="scratchpad-results-limits">
+              Up to {job.limits.rows} rows · {job.limits.bytes} bytes ·{" "}
+              {job.timeout_seconds === "0"
+                ? "No time limit"
+                : `${job.timeout_seconds} s time limit`}
+            </div>
+          )}
+        </section>
       </div>
-      {error && (
-        <p className="execution-error" role="alert">
-          {error}
-          {readFailed && (
-            <Button
-              onClick={() => {
-                const lifetime = owned.current;
-                if (lifetime) void poll(lifetime);
-              }}
-            >
-              Retry status
-            </Button>
-          )}
-        </p>
-      )}
-      {result && (
-        <>
-          <PreviewGrid
-            page={{
-              schema: result.schema,
-              rows: result.rows.map((row) =>
-                row.map((value) => ({ value, truncated: false })),
-              ),
-            }}
-            path="SQL query results"
-            dark={dark}
-            formatCell={wire}
-            formatType={(index) =>
-              typeName(
-                result.schema.fields[index]?.logical_type ?? { type: "string" },
-              )
-            }
-            onError={setError}
-          />
-          {result.next_offset !== null && (
-            <Button disabled={moreBusy} onClick={() => void more()}>
-              More result rows
-            </Button>
-          )}
-        </>
-      )}
     </div>
   );
 }

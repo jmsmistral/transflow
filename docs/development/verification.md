@@ -1,6 +1,34 @@
 # Contributor verification
 
 
+## Scratchpad and bottom inspector layout refinement (2026-10-14)
+
+The owner-requested UI follow-up uses one full-width dataset header across all six
+bottom tabs and removes repeated tab labels. SQL editing/results occupy separate
+left/right panes; Run/Cancel sit beside the dataset name. Results always has an
+empty/loading/failure/canceled/result presentation. Parameters remains collapsed,
+with help and a concrete positional-binding example. Data health now scrolls its
+body separately so its header has the same width as the other tabs.
+
+Local frontend gates passed: 601 tests in 26 files, strict types/lint/format,
+production worker probes and reproducible 16-asset builds. The affected 13-test
+operational inspector suite also passed after the Health wrapper change. Final
+CSS sizing was rebuilt and production reproducibility rechecked. No dependency,
+Rust/Python execution or query transport change required rerunning those suites.
+
+Codex internal Browser measured every header at equal width, 44-pixel height and
+13-pixel name font. It verified the empty database-glyph Results notice, light/dark
+presentation, parameter disclosure, a real bound query returning exact decimal
+20.00, and a missing-column query failure with no stale grid. Compact pane and
+Health scrollbar findings were corrected during review. No separate device-size
+qualification is claimed for the CSS stacked layout.
+
+The [receipt](evidence/t099-scratchpad-layout-macos-arm64.json) records the scope
+and limits. `~/dev/transflow-workspace/t104-scratchpad-review` and its separate
+`t104-scratchpad-review-tools/serve-preview.sh` launcher preserve existing review
+workspaces and primary preview artifacts. Verification processes/tabs are stopped.
+New remote CI is owner-monitored and has not been polled.
+
 ## Managed SQL and G3 checks — T101–T104 (2026-10-14)
 
 The owner-selected batch delivers immutable SQL registrations, exact pinned input

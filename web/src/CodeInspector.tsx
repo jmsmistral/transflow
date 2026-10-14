@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ApiSourceV1 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
-import { Button } from "./components";
+import { Button, DatasetHeader } from "./components";
 import { SourceLines } from "./SourceLines";
 import { field, producingSourcePath, versionMetadata } from "./inspectors";
 import { sourceDiff } from "./execution-model";
@@ -153,8 +153,7 @@ export function CodeInspector({
       {mode !== "Latest saved version" && !state.selection.version && (
         <Fallback branch={resolved} requested={state.selection.branch} />
       )}
-      <div className="execution-toolbar">
-        <strong>{dataset?.path}</strong>
+      <DatasetHeader path={dataset?.path}>
         <div className="execution-switches" aria-label="Code views">
           {(
             ["Data publish version", "Latest saved version", "Diff"] as const
@@ -173,7 +172,7 @@ export function CodeInspector({
             </Button>
           ))}
         </div>
-      </div>
+      </DatasetHeader>
       {source && <div className="source-provenance">{source.path}</div>}
       {shown?.error ? (
         <Empty>Source unavailable: {shown.error}</Empty>

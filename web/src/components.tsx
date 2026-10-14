@@ -13,6 +13,25 @@ export function InspectorNotice() {
   );
 }
 
+export function DatasetHeader({
+  path,
+  children,
+  actionsAfterName = false,
+}: {
+  path: string | undefined;
+  children?: ReactNode;
+  actionsAfterName?: boolean;
+}) {
+  return (
+    <div
+      className={`dataset-inspector-header${actionsAfterName ? " dataset-inspector-header--start" : ""}`}
+    >
+      <h2 title={path}>{path}</h2>
+      {children && <div className="dataset-inspector-actions">{children}</div>}
+    </div>
+  );
+}
+
 export function Button({
   className = "",
   type = "button",

@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { forwardRef } from "react";
 import { expect, test, vi } from "vitest";
@@ -176,6 +177,68 @@ function successful(path: string) {
       ),
     );
 }
+test("scratchpad shows editor and empty results before a query, with contextual parameters help", async () => {
+  const { workspace, state } = await setup();
+  render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  const editor = screen.getByRole("region", { name: "SQL editor" });
+  const results = screen.getByRole("region", { name: "SQL results" });
+  expect(within(editor).getByLabelText("SQL query")).toBeTruthy();
+  expect(
+    within(results).getByRole("heading", { name: "Results" }),
+  ).toBeTruthy();
+  expect(
+    within(results).getByText(
+      "Run a SQL query in the editor to see a preview of the results.",
+    ),
+  ).toBeTruthy();
+  expect(screen.queryByText("SQL scratchpad")).toBeNull();
+  expect(
+    screen.queryByText("Query the selected published version as dataset."),
+  ).toBeNull();
+  const disclosure = editor.querySelector("details");
+  expect(disclosure?.open).toBe(false);
+  fireEvent.click(within(editor).getByText("Parameters"));
+  expect(within(editor).getByText("WHERE id = CAST(? AS BIGINT)")).toBeTruthy();
+  workspace.dispose();
+});
+
+test("an unpublished dataset retains its header and results pane without starting a query", async () => {
+  const { workspace, state, transport } = await setup();
+  if (!state.value.dataset) throw new Error("fixture dataset missing");
+  const unpublished: Ready = {
+    ...state,
+    value: {
+      ...state.value,
+      dataset: { ...state.value.dataset, head: null },
+      versions: { entries: [], next_cursor: null },
+      inspection: null,
+    },
+  };
+  render(
+    <ScratchpadInspector
+      workspace={workspace}
+      state={unpublished}
+      dark={false}
+    />,
+  );
+  expect(screen.getByRole("heading", { name: dataset.path })).toBeTruthy();
+  expect(screen.getByRole("region", { name: "SQL results" })).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "Run query" }).hasAttribute("disabled"),
+  ).toBe(true);
+  expect(
+    screen.getByText("No published version is available for this query."),
+  ).toBeTruthy();
+  expect(
+    transport.mock.calls.some(([url]) =>
+      String(url).startsWith("/api/v1/queries?"),
+    ),
+  ).toBe(false);
+  workspace.dispose();
+});
+
 test("scratchpad binds the displayed version and renders exact typed result cells", async () => {
   const { workspace, state, transport } = await setup(successful, (url) =>
     url.startsWith("/api/v1/queries?")
