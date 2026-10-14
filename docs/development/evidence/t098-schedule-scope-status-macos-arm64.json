@@ -1,0 +1,54 @@
+{
+  "task": "T098 schedule scope and live status refinement",
+  "date": "2026-10-14",
+  "specification": "1.1.4",
+  "platform": "macOS arm64 / Python 3.14.7 / Rust 1.98.1",
+  "implementation_base": "ccdce0f1a102feda8e5203390122d6d48f2dc6cf",
+  "specification_base": "4ca794b895d8ce9ec48049c60ea0e5acb1133738",
+  "changes": [
+    "14px View schedule arrow",
+    "Paused, Active and live running states with local pause/check/animated cycle SVGs and reduced motion",
+    "Optional currently_running record metadata reads all linked RUNNING builds; queue and pause remain independent",
+    "Automatic shared informational planning supplies complete planned dataset list/count and connecting Attempt to build graph labels",
+    "Hidden planned jobs join Add-to-view; old saved-role count removed",
+    "Separate Code and build options section below Branches",
+    "Bounded context-conflict recovery covers preview and refresh reads; old responses and draft editing cannot reuse saved scope"
+  ],
+  "local_verification": {
+    "rust": "Full boundary/format/check/standalone-storage/Clippy gate; 487 Rust tests and one doc test passed",
+    "python": "1124 tests plus Ruff/format and strict mypy passed; regenerated schema exports and matched wheel",
+    "web": "607 tests in 26 files; strict types/lint/format; production worker diamond/error probes and reproducible 16 local assets",
+    "cli_api": "2 installed schedule CLI/API tests passed against the final coordinator, including typed roles, informational-plan acceptance refusal, paused dispatch and retained history",
+    "focused": "18 storage dispatch/lifecycle/snapshot tests, 43 schedule/graph tests, and final 17-test scope-recovery regression run passed",
+    "safety": "27 safety regressions; reviewed 639-version offline audit, privacy/inventory and generated-contract checks passed",
+    "documents": "Paired specification/link/syntax checks passed: 123 tasks, 103 complete, 97 Markdown files, 962 local links"
+  },
+  "browser": {
+    "tool": "Codex internal Browser with real synthetic coordinator",
+    "observed": [
+      "Four-card complete scope includes both connecting regional jobs; graph labels agree with backend plan",
+      "14px arrow measured; section order Datasets to build / When to build / Branches / Code and build options",
+      "Paused pause glyph and Active green tick; actual running state uses schedule-running animation and rgb(50,125,204)",
+      "Manual work while paused shows Active and currently running plus Automatic scheduling paused in both sidebar and dedicated Schedule view",
+      "Three manual four-job runs succeeded; long synthetic delivery kept running state observable",
+      "Dedicated modal shares complete scope and retained history; closing it returns focus",
+      "Camera and node style arrays unchanged through build transitions and modal navigation",
+      "Light/dark visual review; final copied coordinator/web bundle loads four-card fixed-source scope",
+      "External guarded definition edit in final copied bundle recovers scope automatically without Update preview or stale target fallback"
+    ],
+    "screenshots": "Separate local review bundle only; no owner reference images committed",
+    "cleanup": "All agent-created verification tabs closed and both owned coordinators stopped; no persistent service"
+  },
+  "review": {
+    "workspace": "/Users/jms/dev/transflow-workspace/t104-schedule-scope-review",
+    "tools": "/Users/jms/dev/transflow-workspace/t104-schedule-scope-review-tools",
+    "state": "Both schedules paused; Weekday delivery restored to a fixed captured source; synthetic delivery sleeps 12 seconds"
+  },
+  "limits": [
+    "Configured planning scope is informational; occurrence pins, cache and source-refresh decisions remain authoritative",
+    "API v1 and SQLite schema unchanged; currently_running is additive optional presentation metadata",
+    "No new native engine matrix, other-platform or release qualification",
+    "Remote CI owner-monitored; not polled",
+    "Primary coordinator/web preview artifacts and existing owner review workspaces preserved"
+  ]
+}

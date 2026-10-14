@@ -1,5 +1,9 @@
 import { useId } from "react";
-import type { ScheduleDefinitionV1 } from "./generated/contracts";
+import type {
+  PlanResultV1,
+  ScheduleDefinitionV1,
+  ScheduleRecordV1,
+} from "./generated/contracts";
 import { Icon } from "./Icons";
 import { identity, secondsLabel } from "./schedule-model";
 
@@ -58,6 +62,64 @@ function DetailLabel({ label }: { label: string }) {
 
 type Dataset = ScheduleDefinitionV1["build"]["targets"][number];
 export type SchedulePath = (dataset: Dataset) => string;
+
+export function ScheduleState({ record }: { record: ScheduleRecordV1 }) {
+  const running = record.currently_running === true;
+  // Pause controls automatic dispatch; it does not cancel an already running
+  // or explicit manual build. Keep that distinction visible.
+  const state = running ? "running" : record.paused ? "paused" : "active";
+  return (
+    <span className={`schedule-state schedule-state-${state}`}>
+      <Icon name={running ? "cycle" : record.paused ? "pause" : "check"} />
+      <span>
+        {running
+          ? "Active and currently running"
+          : record.paused
+            ? "Paused"
+            : "Active"}
+        {running && record.paused && <small>Automatic scheduling paused</small>}
+        {record.needs_review ? " · Review required" : ""}
+      </span>
+    </span>
+  );
+}
+
+export function ScheduleBuildScope({
+  plan,
+  error,
+}: {
+  plan: PlanResultV1 | null;
+  error: string;
+}) {
+  const paths = new Map(
+    plan?.writes.map((write) => [write.dataset, write.path]),
+  );
+  return (
+    <section className="schedule-build-scope" aria-label="Datasets to build">
+      <h4>Datasets to build</h4>
+      {plan ? (
+        <>
+          <p className="schedule-scope-count muted">
+            {plan.writes.length}{" "}
+            {plan.writes.length === 1 ? "dataset" : "datasets"}
+          </p>
+          <ScheduleDatasets
+            datasets={plan.writes.map((w) => ({
+              workspace_id: plan.workspace,
+              dataset_id: w.dataset,
+            }))}
+            path={(k) => paths.get(k.dataset_id) ?? k.dataset_id}
+            empty="No datasets to build in the current scope."
+          />
+        </>
+      ) : (
+        <p className="muted" role="status">
+          {error || "Loading schedule build scope…"}
+        </p>
+      )}
+    </section>
+  );
+}
 
 export function ScheduleDatasets({
   datasets,

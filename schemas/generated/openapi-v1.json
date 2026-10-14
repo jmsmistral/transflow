@@ -18413,6 +18413,9 @@
           "paused": {
             "type": "boolean"
           },
+          "currently_running": {
+            "type": "boolean"
+          },
           "needs_review": {
             "type": "boolean"
           },

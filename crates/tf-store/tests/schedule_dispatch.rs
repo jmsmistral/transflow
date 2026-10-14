@@ -94,6 +94,40 @@ async fn scheduled_acceptance_links_once_and_rolls_back_all_writes()
             .await
             .is_err()
     );
+    // Live presentation follows every linked build, independent of logical-fire
+    // ordering, definition edits and pause state. A queue is not running work.
+    let mut reader = store.reader().await?;
+    for (state, running) in [
+        ("QUEUED", false),
+        ("RUNNING", true),
+        ("SUCCEEDED", false),
+        ("FAILED", false),
+        ("CANCELED", false),
+        ("INTERRUPTED", false),
+    ] {
+        sqlx::query("UPDATE builds SET state=? WHERE id=?")
+            .bind(state)
+            .bind(id(9))
+            .execute(&mut db)
+            .await?;
+        let schedule = reader
+            .schedule(workspace, id(5).parse()?)
+            .await?
+            .ok_or("missing schedule")?;
+        assert_eq!(schedule["currently_running"], running, "{state}");
+        assert_eq!(schedule["paused"], true, "manual execution never unpauses");
+        let list = reader.schedules(workspace, "").await?;
+        assert_eq!(list["schedules"][0]["currently_running"], running);
+        assert_eq!(
+            schedule["etag"], "etag",
+            "build transitions do not edit the definition"
+        );
+    }
+    reader.close().await?;
+    sqlx::query("UPDATE builds SET state='RUNNING' WHERE id=?")
+        .bind(id(9))
+        .execute(&mut db)
+        .await?;
     let linked:(String,String)=sqlx::query_as("SELECT b.occurrence_id,o.build_id FROM builds b JOIN schedule_occurrences o ON o.id=b.occurrence_id").fetch_one(&mut db).await?;
     assert_eq!(linked, (id(4), id(9)));
     let mut automatic = pending.clone();

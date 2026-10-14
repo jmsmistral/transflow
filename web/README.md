@@ -321,7 +321,7 @@ The sidebar keeps browsing controls in the list and provides a blue Schedules ba
 button above the heading in selected details. View schedule aligns with the name and
 description; detail labels have focus/hover help and expiry uses hours/minutes/seconds.
 Dataset cards and aligned rows show compact information;
-branch/fallback sits at the bottom. **View schedule** opens a large dedicated modal
+branch/fallback precedes a separate Code and build options section. **View schedule** opens a large dedicated modal
 with the full current definition, code-source explanation, summary and recent builds.
 Each build entry opens its retained Build report, and closing it returns to the Schedule
 view. Editor Save schedule precedes Cancel at the top while scrolling. The lineage
@@ -352,3 +352,22 @@ showing an incomplete successful list. Ordered fallbacks support drag, up/down a
 removal. These controls change the schedule draft without switching the foreground
 lineage branch or input defaults. Section separators replace outer target/condition
 borders; source/input-default reset and build-scope preview buttons are omitted.
+
+### Schedule scope and live state refinement
+
+Selecting a saved schedule automatically requests its informational backend plan.
+The sidebar and dedicated modal list every planned write, with the complete count
+above the cards; the graph labels connecting jobs Attempt to build. The same saved
+source, output branch, fallback/input policies and scope rules used by dispatch
+apply. Retained reads/exclusions are separate roles, not jobs. Actual occurrence
+pins, source refresh and cache decisions can reuse inputs instead of executing them.
+Failed/aborted planning never substitutes the target list or a zero count. Late
+responses cannot repaint a different schedule; runtime polling alone does not
+repeat planning. Hidden planned jobs join the explicit Add-to-view action.
+
+Paused has a pause glyph, Active a green tick, and Active and currently running
+blue rotating arrows. Live state comes from every linked build in SQLite, rather
+than the newest history page or a client timer. A queued request is not running.
+Manual/previously started work can run while automatic dispatch remains paused;
+that distinction is stated below the running label. Reduced motion stops rotation.
+The View schedule arrow is 14 pixels; configuration rows sit below Branches.

@@ -463,3 +463,11 @@ have precedence over schedule-ID templates. All routes use the existing session/
 CSRF protections and closed generated request/response contracts. No file-watching import
 or schedule-definition version history is introduced. CLI commands use these same save and
 control services through authenticated local coordinator transport.
+
+
+Schedule list/show records now include optional `currently_running` presentation
+metadata (emitted by this coordinator). It is an EXISTS read over every linked build
+in RUNNING state, independent of pause/edit state, historical ordering or pagination.
+It does not change the edit ETag, definition snapshot, API v1 or SQLite schema.
+The UI requests the existing informational preview automatically for selected saved
+schedules; this has no producer execution or occurrence acceptance side effect.

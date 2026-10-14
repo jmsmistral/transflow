@@ -264,7 +264,10 @@ The [schedule inspector and CLI](crates/transflow/SCHEDULES.md) store one curren
 snapshot, overwritten on Save without definition history. Edit guards prevent conflicting
 saves; accepted work keeps its frozen execution settings. The inspector supports related/all
 lists, compound conditions, source/branch policies, manual runs, pause/resume, deletion,
-history/metrics and backend role facts with explicit hidden-resource counts.
+history/metrics and backend role facts. The selected schedule automatically shows the
+complete planned dataset list/count, including connecting jobs and off-canvas datasets;
+connecting nodes are labelled **Attempt to build**. Status icons distinguish Paused,
+Active and Active and currently running.
 Schedule editing supports graph-selected targets and triggers, a target-only scrollable list,
 searchable live data branches and ordered fallback controls. Exit offers Save, Discard or
 Keep editing; the current definition remains unchanged until guarded Save.

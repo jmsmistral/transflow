@@ -79,7 +79,11 @@ The UI shows inclusive From/To calendar dates, two decimal duration display, and
 separate counts for occurrences, builds, jobs, attempts and timings. Charts display
 only the selected history page and disclose that basis. Build reports automatically
 update while active. Use Run now on the saved schedule to execute its definition.
-Informational scope previews remain a CLI/API service; the sidebar omits their button.
+The sidebar omits a scope-preview button and loads the shared informational plan
+automatically when a saved schedule is selected. Datasets to build shows the complete
+planned list and count, including connecting jobs outside the visible canvas. Connecting
+nodes say Attempt to build. Exact occurrence pins and cache/refresh decisions may reuse
+inputs; the preview does not accept or execute a build. Unavailable scope is explicit.
 
 ## Dedicated Schedule view
 
@@ -114,3 +118,14 @@ fallback editor supports add, drag, up/down and remove without switching the lin
 branch. No source/input-default reset button is shown. Info icons beside detail labels
 explain their settings; expiry is displayed in hours, minutes or seconds. Exact pin
 wording stays in the full view/editor, while the compact condition summary omits it.
+
+
+## Live schedule status
+
+Paused uses a pause glyph, Active a green tick, and Active and currently running
+blue rotating arrows. The running flag reads all linked RUNNING builds, including
+manual work and overlapping occurrences; it does not depend on a history page.
+Queued requests are not running. Pause stops automatic scheduling but does not cancel
+ongoing or manual work, so the running label separately states when automatic
+scheduling is paused. Rotation respects reduced-motion preferences. Code and build
+options have their own section below Branches in the sidebar and dedicated view.

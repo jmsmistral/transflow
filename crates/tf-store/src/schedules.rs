@@ -74,10 +74,10 @@ pub(crate) async fn row(
     workspace: WorkspaceId,
     id: ScheduleId,
 ) -> Result<Option<Value>, Error> {
-    let r=sqlx::query("SELECT id,etag,trigger_epoch,paused,needs_review,definition_json,saved_at_us FROM schedules WHERE workspace_id=? AND id=? AND deleted_at_us IS NULL AND length(definition_json)<=262144").bind(workspace.to_string()).bind(id.to_string()).fetch_optional(db).await.map_err(StoreError::from)?;
+    let r=sqlx::query("SELECT id,etag,trigger_epoch,paused,needs_review,definition_json,saved_at_us,EXISTS(SELECT 1 FROM schedule_occurrences o JOIN builds b ON b.id=o.build_id WHERE o.schedule_id=schedules.id AND b.state='RUNNING') AS currently_running FROM schedules WHERE workspace_id=? AND id=? AND deleted_at_us IS NULL AND length(definition_json)<=262144").bind(workspace.to_string()).bind(id.to_string()).fetch_optional(db).await.map_err(StoreError::from)?;
     r.map(|r| {
         let definition: Value=serde_json::from_str(&r.try_get::<String,_>(5).map_err(StoreError::from)?).map_err(|_|bad())?;
-        Ok(json!({"id":r.try_get::<String,_>(0).map_err(StoreError::from)?,"etag":r.try_get::<String,_>(1).map_err(StoreError::from)?,"trigger_epoch":r.try_get::<String,_>(2).map_err(StoreError::from)?,"paused":r.try_get::<i64,_>(3).map_err(StoreError::from)?==1,"needs_review":r.try_get::<i64,_>(4).map_err(StoreError::from)?==1,"definition":definition,"saved_at_us":r.try_get::<i64,_>(6).map_err(StoreError::from)?.to_string()}))
+        Ok(json!({"id":r.try_get::<String,_>(0).map_err(StoreError::from)?,"etag":r.try_get::<String,_>(1).map_err(StoreError::from)?,"trigger_epoch":r.try_get::<String,_>(2).map_err(StoreError::from)?,"paused":r.try_get::<i64,_>(3).map_err(StoreError::from)?==1,"needs_review":r.try_get::<i64,_>(4).map_err(StoreError::from)?==1,"definition":definition,"saved_at_us":r.try_get::<i64,_>(6).map_err(StoreError::from)?.to_string(),"currently_running":r.try_get::<i64,_>(7).map_err(StoreError::from)?==1}))
     }).transpose()
 }
 impl Store {
@@ -217,7 +217,11 @@ impl Store {
             epoch
         };
         sqlx::query("INSERT INTO audit_log(operation,evidence_json,wall_time_us) VALUES('schedule_saved',?,?)").bind(json!({"schedule":request.id.to_string(),"etag":etag,"trigger_epoch":epoch,"actor":request.actor,"created":current.is_none()}).to_string()).bind(request.at_us).execute(&mut *tx).await.map_err(StoreError::from)?;
-        let saved = json!({"id":request.id.to_string(),"etag":etag,"trigger_epoch":epoch,"paused":paused,"needs_review":false,"definition":request.definition,"saved_at_us":request.at_us.to_string()});
+        // Keep mutation receipts and live reads on the same projection, including
+        // already running work that a definition replacement cannot cancel.
+        let saved = row(&mut tx, request.workspace, request.id)
+            .await?
+            .ok_or(Error::Missing)?;
         if let Some((id, digest)) = request.receipt {
             if digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit()) {
                 return Err(bad());

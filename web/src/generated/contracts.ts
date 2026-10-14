@@ -387,7 +387,7 @@ export type SchedulePoliciesV1 = { readonly "max_attempts": number; readonly "re
 export type ScheduleDefinitionV1 = { readonly "format_version": 1; readonly "name": string; readonly "description": string; readonly "build": ScheduleBuildTemplateV1; readonly "trigger": ScheduleTriggerV1; readonly "policies": SchedulePoliciesV1 };
 
 // prettier-ignore
-export type ScheduleRecordV1 = { readonly "id": Uuid; readonly "etag": string; readonly "trigger_epoch": string; readonly "paused": boolean; readonly "needs_review": boolean; readonly "definition": ExecutionJsonV1; readonly "saved_at_us": Count };
+export type ScheduleRecordV1 = { readonly "id": Uuid; readonly "etag": string; readonly "trigger_epoch": string; readonly "paused": boolean; readonly "currently_running"?: boolean; readonly "needs_review": boolean; readonly "definition": ExecutionJsonV1; readonly "saved_at_us": Count };
 
 // prettier-ignore
 export type ApiSchedulesV1 = { readonly "schedules": ReadonlyArray<ScheduleRecordV1>; readonly "next_cursor": (null | Uuid) };

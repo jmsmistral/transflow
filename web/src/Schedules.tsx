@@ -21,6 +21,7 @@ import type { Workspace } from "./workspace";
 import { visualContext } from "./workspace";
 import { Button } from "./components";
 import { Icon } from "./Icons";
+import { ApiFailure } from "./api/client";
 import {
   type Ready,
   Empty,
@@ -45,6 +46,8 @@ import { useBuildEvidence } from "./build-evidence";
 import { BuildModal } from "./BuildReport";
 import {
   ScheduleBranches,
+  ScheduleState,
+  ScheduleBuildScope,
   ScheduleDatasets,
   ScheduleFacts,
   type SchedulePath,
@@ -57,6 +60,8 @@ function ScheduleModal({
   definition,
   path,
   actions,
+  scopePlan,
+  scopeError,
   onClose,
 }: {
   workspace: Workspace;
@@ -65,6 +70,8 @@ function ScheduleModal({
   definition: ScheduleDefinitionV1 | null;
   path: SchedulePath;
   actions: ReactNode;
+  scopePlan: PlanResultV1 | null;
+  scopeError: string;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -101,26 +108,19 @@ function ScheduleModal({
         <aside className="schedule-modal-definition">
           <header className="schedule-heading">
             <h3>{definition?.name ?? "Schedule needs review"}</h3>
-            <span className="schedule-state">
-              {record.paused ? "Paused" : "Active"}
-              {record.needs_review ? " · Review required" : ""}
-            </span>
+            <ScheduleState record={record} />
           </header>
           {actions}
           {definition && (
             <>
               {definition.description && <p>{definition.description}</p>}
-              <h4>Datasets to build</h4>
-              <ScheduleDatasets
-                datasets={definition.build.targets}
-                path={path}
-              />
+              <ScheduleBuildScope plan={scopePlan} error={scopeError} />
               <h4>When to build</h4>
               <TriggerSummary trigger={definition.trigger} paths={path} />
-              <h4>Code and build options</h4>
-              <ScheduleFacts definition={definition} full />
               <h4>Branches</h4>
               <ScheduleBranches definition={definition} />
+              <h4>Code and build options</h4>
+              <ScheduleFacts definition={definition} full />
               <h4>Read boundaries</h4>
               <ScheduleDatasets
                 datasets={definition.build.boundaries}
@@ -631,6 +631,11 @@ export function Schedules({
     } | null>(null),
     [roles, setRoles] = useState<ApiScheduleRolesV1 | null>(null);
   const [roleError, setRoleError] = useState("");
+  const [scope, setScope] = useState<{
+    basis: string;
+    plan: PlanResultV1 | null;
+    error: string;
+  } | null>(null);
   const [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
@@ -732,8 +737,12 @@ export function Schedules({
       clearTimeout(timer);
     };
   }, [workspace, contextKey, revision]);
+  const currentId = current?.id;
+  const currentEtag = current?.etag;
+  const rolesBranch = context.branch;
+  const rolesFallback = JSON.stringify(context.fallback_policy.slice(1));
   useEffect(() => {
-    if (!current) {
+    if (!currentId) {
       onRoles(null);
       return;
     }
@@ -744,10 +753,10 @@ export function Schedules({
       const readPage = async (after?: string) => {
         const result = await workspace.client.read(
           "ApiScheduleRolesV1",
-          `/api/v1/schedules/${current.id}/roles`,
+          `/api/v1/schedules/${currentId}/roles`,
           {
-            branch: context.branch,
-            fallback: JSON.stringify(context.fallback_policy.slice(1)),
+            branch: rolesBranch,
+            fallback: rolesFallback,
             ...(after ? { after } : {}),
           },
           abort.signal,
@@ -757,7 +766,7 @@ export function Schedules({
             "Schedule source context changed",
             "AbortError",
           );
-        if (result.data.etag !== current.etag)
+        if (result.data.etag !== currentEtag)
           throw Error("The saved schedule changed; updating its role facts");
         return result.data;
       };
@@ -793,7 +802,94 @@ export function Schedules({
         }
       });
     return () => abort.abort();
-  }, [workspace, current, context, contextKey, onRoles]);
+  }, [
+    workspace,
+    currentId,
+    currentEtag,
+    rolesBranch,
+    rolesFallback,
+    contextKey,
+    onRoles,
+  ]);
+  const scopeBasis =
+    current && !draft
+      ? JSON.stringify([current.id, current.etag, contextKey, revision])
+      : "";
+  const definitionJson = definition ? JSON.stringify(definition) : "";
+  const scopeContext = useRef(context);
+  useEffect(() => {
+    scopeContext.current = context;
+  }, [context]);
+  useEffect(() => {
+    onPlan(null);
+    if (!scopeBasis || !definitionJson) return;
+    const abort = new AbortController();
+    // Use the same backend source, branches and scope adapter as dispatch.
+    // Runtime status polling alone must not start a new planning request.
+    const saved = JSON.parse(definitionJson) as ScheduleDefinitionV1;
+    const prepare = async () => {
+      let capturedContext = scopeContext.current;
+      for (let attempt = 0; ; attempt++) {
+        abort.signal.throwIfAborted();
+        try {
+          if (attempt > 0) {
+            await new Promise<void>((resolve) => {
+              const done = () => {
+                clearTimeout(timer);
+                abort.signal.removeEventListener("abort", done);
+                resolve();
+              };
+              const timer = setTimeout(done, 500 * attempt);
+              abort.signal.addEventListener("abort", done, { once: true });
+            });
+            abort.signal.throwIfAborted();
+            await workspace.refresh(true);
+            abort.signal.throwIfAborted();
+            const refreshed = workspace.snapshot();
+            if (
+              refreshed.kind !== "ready" ||
+              visualContext(refreshed.value.context) !== contextKey
+            )
+              throw new DOMException(
+                "Schedule source context changed",
+                "AbortError",
+              );
+            capturedContext = refreshed.value.context;
+          }
+          return await workspace.client.schedulePreview(
+            saved,
+            capturedContext,
+            abort.signal,
+          );
+        } catch (e) {
+          if (
+            !(e instanceof ApiFailure) ||
+            e.kind !== "conflict" ||
+            attempt >= 2
+          )
+            throw e;
+        }
+      }
+    };
+    void prepare()
+      .then((plan) => {
+        if (!abort.signal.aborted) {
+          setScope({ basis: scopeBasis, plan, error: "" });
+          onPlan(plan);
+        }
+      })
+      .catch((e) => {
+        if (!abort.signal.aborted)
+          setScope({
+            basis: scopeBasis,
+            plan: null,
+            error: `Schedule build scope unavailable. ${message(e)}`,
+          });
+      });
+    return () => abort.abort();
+  }, [workspace, scopeBasis, definitionJson, contextKey, onPlan]);
+  const scopePlan = scope?.basis === scopeBasis ? scope.plan : null;
+  const scopeError = scope?.basis === scopeBasis ? scope.error : "";
   const defaults = async () => {
     const abort = new AbortController();
     pending.current?.abort();
@@ -866,6 +962,14 @@ export function Schedules({
     }
   };
   const relevant = new Map((roles?.nodes ?? []).map((n) => [n.identity, n]));
+  for (const write of scopePlan?.writes ?? []) {
+    const key = identity({
+      workspace_id: scopePlan?.workspace ?? context.workspace,
+      dataset_id: write.dataset,
+    });
+    if (!relevant.has(key))
+      relevant.set(key, { identity: key, paths: [write.path], roles: [] });
+  }
   const hidden = [...relevant.values()].filter(
     (n) => !visible.includes(n.identity),
   );
@@ -1149,6 +1253,7 @@ export function Schedules({
               {definition?.description && <p>{definition.description}</p>}
             </div>
             <Button
+              className="schedule-view-button"
               aria-label="View schedule"
               title="View schedule"
               onClick={() => setViewOpen(true)}
@@ -1157,19 +1262,13 @@ export function Schedules({
               <span className="schedule-view-label">View schedule</span>
             </Button>
           </div>
-          <p className="muted">
-            {current.paused ? "Paused" : "Active"}
-            {current.needs_review ? " · Review required" : ""}
+          <p>
+            <ScheduleState record={current} />
           </p>
           {!viewOpen && scheduleActions}
           {definition && (
             <>
-              <ScheduleFacts definition={definition} />
-              <h4>Datasets to build</h4>
-              <ScheduleDatasets
-                datasets={definition.build.targets}
-                path={path}
-              />
+              <ScheduleBuildScope plan={scopePlan} error={scopeError} />
               <h4>When to build</h4>
               <TriggerSummary
                 trigger={definition.trigger}
@@ -1177,17 +1276,6 @@ export function Schedules({
                 compact
               />
             </>
-          )}
-          {roles && (
-            <p className="muted">
-              Saved roles: {relevant.size} relevant datasets ·{" "}
-              {
-                [...relevant.values()].filter((n) =>
-                  visible.includes(n.identity),
-                ).length
-              }{" "}
-              visible · {hidden.length} hidden
-            </p>
           )}
           {hidden.length > 0 && (
             <Button
@@ -1203,6 +1291,12 @@ export function Schedules({
               <ScheduleBranches definition={definition} />
             </section>
           )}
+          {definition && (
+            <section className="schedule-options-section">
+              <h4>Code and build options</h4>
+              <ScheduleFacts definition={definition} />
+            </section>
+          )}
           {viewOpen && (
             <ScheduleModal
               key={current.id}
@@ -1212,6 +1306,8 @@ export function Schedules({
               definition={definition}
               path={path}
               actions={scheduleActions}
+              scopePlan={scopePlan}
+              scopeError={scopeError}
               onClose={() => setViewOpen(false)}
             />
           )}
@@ -1260,7 +1356,7 @@ function ScheduleRow({
       <span>
         <strong>{d?.name ?? "Schedule needs review"}</strong>
         <small>
-          {row.paused ? "Paused" : "Active"} ·{" "}
+          <ScheduleState record={row} /> ·{" "}
           {d?.build.data_branch ?? "Branch unavailable"}
           {row.needs_review ? " · review required" : ""}
         </small>

@@ -7,10 +7,11 @@ import {
   within,
 } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
-import { Client } from "./api/client";
+import { ApiFailure, Client } from "./api/client";
 import { Workspace } from "./workspace";
 import { Schedules } from "./Schedules";
 import { ScheduleEditor } from "./ScheduleEditor";
+import { ScheduleState } from "./ScheduleDetails";
 import {
   context,
   workspaceId,
@@ -23,6 +24,7 @@ import type {
   ScheduleRecordV1,
   ApiScheduleRolesV1,
   ApiLineageNodeV1,
+  PlanResultV1,
 } from "./generated/contracts";
 import {
   related,
@@ -103,6 +105,63 @@ const roles: ApiScheduleRolesV1 = {
       roles: ["target", "trigger"],
     },
   ],
+};
+const schedulePlan: PlanResultV1 = {
+  kind: "plan",
+  workspace: workspaceId,
+  source: workspaceId,
+  source_digest: "a".repeat(64),
+  branch: "master",
+  source_selector: { kind: "working_tree" },
+  source_commit: null,
+  plan_id: id,
+  digest: "b".repeat(64),
+  created_us: "1",
+  expires_us: "9999999999999999",
+  mode: "Full",
+  force: false,
+  targets: ["raw/example"],
+  boundaries: [],
+  exclusions: [],
+  refresh_sources: [],
+  fallback_override: null,
+  boundary_policy: "require_available",
+  branch_would_be_created: false,
+  pending_registrations: [],
+  writes: [
+    {
+      dataset: datasetId,
+      path: "raw/example",
+      job: id,
+      expected_generation: "0",
+      bindings: [],
+      parameters: {},
+      resources: {
+        timeout_seconds: "3600",
+        validation_timeout_seconds: "3600",
+        discovery_timeout_seconds: "60",
+        interactive_timeout_seconds: "60",
+        max_jobs: "4",
+        cpu_tokens: "1",
+        worker_threads: "1",
+        memory_budget_mib: null,
+        memory_origin: null,
+        memory_enforcement: "none",
+        timeout_origin: "Default",
+        validation_timeout_origin: "Default",
+        discovery_timeout_origin: "Default",
+        interactive_timeout_origin: "Default",
+        max_jobs_origin: "Default",
+        cpu_origin: "Default",
+      },
+    },
+  ],
+  reads: [],
+  freshness: [],
+  freshness_context: "selected_branch_heads",
+  warnings: [],
+  producer_execution: false,
+  authoring_changed: false,
 };
 async function setup(
   conflict = false,
@@ -190,6 +249,8 @@ async function setup(
     return undefined;
   });
   const transport: typeof fetch = async (url, init) => {
+    if (String(url).startsWith("/api/v1/schedules/preview?"))
+      return json(schedulePlan, context());
     if (String(url) === "/api/v1/schedules/clock-preview")
       return json({ leaves: [] }, null);
     if (String(url) === `/api/v1/schedules/${id}`) {
@@ -299,9 +360,9 @@ test("visible-graph lists split many-to-many membership; saved backend roles inc
   if (!first) throw Error("schedule row");
   fireEvent.click(first);
   await waitFor(() => expect(onRoles).toHaveBeenCalledWith(roles));
-  expect(
-    screen.getByText(/1 relevant datasets.*0 visible.*1 hidden/),
-  ).toBeTruthy();
+  await screen.findByText("1 dataset");
+  expect(screen.queryByText(/Saved roles:/)).toBeNull();
+  expect(onPlan).toHaveBeenCalledWith(schedulePlan);
   expect(
     screen.getByRole("button", {
       name: "Add hidden relevant datasets to view",
@@ -722,5 +783,193 @@ test("guarded schedule Save refreshes its advanced runtime fence before graph se
   ).resolves.toMatchObject({
     entries: [{ name: "master" }, { name: "feature" }],
   });
+  workspace.dispose();
+});
+
+test("schedule statuses distinguish pause, active and live execution, including paused manual work", () => {
+  const view = render(<ScheduleState record={record} />);
+  expect(screen.getByText("Paused")).toBeTruthy();
+  expect(
+    view.container.querySelector(".schedule-state-paused .icon"),
+  ).toBeTruthy();
+  view.rerender(<ScheduleState record={{ ...record, paused: false }} />);
+  expect(screen.getByText("Active")).toBeTruthy();
+  view.rerender(
+    <ScheduleState
+      record={{ ...record, paused: false, currently_running: true }}
+    />,
+  );
+  expect(screen.getByText("Active and currently running")).toBeTruthy();
+  expect(
+    view.container.querySelector(".schedule-state-running .icon"),
+  ).toBeTruthy();
+  view.rerender(
+    <ScheduleState record={{ ...record, currently_running: true }} />,
+  );
+  expect(screen.getByText("Automatic scheduling paused")).toBeTruthy();
+  view.rerender(<ScheduleState record={record} />);
+  expect(screen.queryByText("Active and currently running")).toBeNull();
+});
+
+test("saved schedule scope includes connecting and off-canvas jobs in the sidebar, modal and graph plan without repeating planning on status polls", async () => {
+  const { workspace, state } = await setup();
+  const write = schedulePlan.writes[0];
+  if (!write) throw Error("missing scope fixture");
+  const full = {
+    ...schedulePlan,
+    writes: [
+      ...schedulePlan.writes,
+      { ...write, dataset: workspaceId, path: "curated/connecting" },
+    ],
+  };
+  const preview = vi
+    .spyOn(workspace.client, "schedulePreview")
+    .mockResolvedValue(full);
+  const onPlan = vi.fn();
+  const props = {
+    workspace,
+    state,
+    selected: [],
+    visible: [identity(target)],
+    onRoles: vi.fn(),
+    onPlan,
+    onAdd: vi.fn(),
+  };
+  const view = render(<Schedules {...props} />);
+  fireEvent.click(await screen.findByText("Daily review"));
+  await screen.findByText("2 datasets");
+  expect(
+    within(
+      screen.getByRole("region", { name: "Datasets to build" }),
+    ).getAllByRole("listitem"),
+  ).toHaveLength(2);
+  expect(screen.getByText("curated/connecting")).toBeTruthy();
+  expect(onPlan).toHaveBeenCalledWith(full);
+  expect(preview).toHaveBeenCalledWith(
+    definition,
+    state.value.context,
+    expect.any(AbortSignal),
+  );
+  const headings = [...view.container.querySelectorAll("h4")].map(
+    (n) => n.textContent,
+  );
+  expect(headings.indexOf("Code and build options")).toBeGreaterThan(
+    headings.indexOf("Branches"),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "View schedule" }));
+  const modal = screen.getByRole("dialog", { name: "Schedule details" });
+  expect(within(modal).getByText("2 datasets")).toBeTruthy();
+  expect(within(modal).getByText("curated/connecting")).toBeTruthy();
+  view.rerender(
+    <Schedules
+      {...props}
+      state={{
+        ...state,
+        value: {
+          ...state.value,
+          context: { ...state.value.context, runtime_revision: "2" },
+        },
+      }}
+    />,
+  );
+  expect(preview).toHaveBeenCalledTimes(1);
+  view.unmount();
+  workspace.dispose();
+});
+
+test("unavailable schedule scope never substitutes explicit targets or a zero count", async () => {
+  const { workspace, state } = await setup();
+  vi.spyOn(workspace.client, "schedulePreview").mockRejectedValue(
+    Error("Retained source unavailable"),
+  );
+  const onPlan = vi.fn();
+  const view = render(
+    <Schedules
+      workspace={workspace}
+      state={state}
+      selected={[]}
+      visible={[identity(target)]}
+      onRoles={vi.fn()}
+      onPlan={onPlan}
+      onAdd={vi.fn()}
+    />,
+  );
+  fireEvent.click(await screen.findByText("Daily review"));
+  await screen.findByText(
+    /Schedule build scope unavailable.*Retained source unavailable/,
+  );
+  const scope = screen.getByRole("region", { name: "Datasets to build" });
+  expect(within(scope).queryAllByRole("listitem")).toHaveLength(0);
+  expect(within(scope).queryByText("0 datasets")).toBeNull();
+  expect(onPlan.mock.calls.every(([plan]) => plan === null)).toBe(true);
+  view.unmount();
+  workspace.dispose();
+});
+
+test("leaving a schedule discards a late scope response without repainting the graph", async () => {
+  const { workspace, state } = await setup();
+  let finish: (plan: PlanResultV1) => void = () => {
+    throw Error("not started");
+  };
+  vi.spyOn(workspace.client, "schedulePreview").mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const onPlan = vi.fn();
+  const view = render(
+    <Schedules
+      workspace={workspace}
+      state={state}
+      selected={[]}
+      visible={[identity(target)]}
+      onRoles={vi.fn()}
+      onPlan={onPlan}
+      onAdd={vi.fn()}
+    />,
+  );
+  fireEvent.click(await screen.findByText("Daily review"));
+  fireEvent.click(screen.getByRole("button", { name: "Schedules" }));
+  await act(async () => {
+    finish(schedulePlan);
+  });
+  expect(onPlan.mock.calls.every(([plan]) => plan === null)).toBe(true);
+  expect(screen.queryByText("1 dataset")).toBeNull();
+  view.unmount();
+  workspace.dispose();
+});
+
+test("a runtime read conflict refreshes context and automatically recovers scope without an Update preview button", async () => {
+  const { workspace, state } = await setup();
+  const preview = vi
+    .spyOn(workspace.client, "schedulePreview")
+    .mockRejectedValueOnce(new ApiFailure("conflict", "Context advanced"))
+    .mockResolvedValue(schedulePlan);
+  const originalRefresh = workspace.refresh;
+  const refresh = vi
+    .spyOn(workspace, "refresh")
+    .mockRejectedValueOnce(
+      new ApiFailure("conflict", "Read fence moved during refresh"),
+    )
+    .mockImplementation(originalRefresh);
+  const view = render(
+    <Schedules
+      workspace={workspace}
+      state={state}
+      selected={[]}
+      visible={[identity(target)]}
+      onRoles={vi.fn()}
+      onPlan={vi.fn()}
+      onAdd={vi.fn()}
+    />,
+  );
+  fireEvent.click(await screen.findByText("Daily review"));
+  await screen.findByText("1 dataset", {}, { timeout: 3000 });
+  expect(refresh).toHaveBeenCalledWith(true);
+  expect(refresh).toHaveBeenCalledTimes(2);
+  expect(preview).toHaveBeenCalledTimes(2);
+  expect(screen.queryByRole("button", { name: "Update preview" })).toBeNull();
+  view.unmount();
   workspace.dispose();
 });

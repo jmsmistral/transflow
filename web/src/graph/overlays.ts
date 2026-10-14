@@ -45,7 +45,7 @@ const names: Record<string, string> = {
   Unavailable: "Unavailable",
   excluded: "Excluded",
   target: "Target",
-  planned: "Planned job",
+  planned: "Attempt to build",
   trigger: "Trigger",
   boundary: "Read boundary",
   cached: "Cached",

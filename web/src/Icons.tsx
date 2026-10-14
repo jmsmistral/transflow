@@ -6,6 +6,9 @@ const paths = {
   open: "M3 7h7l2 3h9l-3 11H3zM3 7V3h7l2 3h8v4",
   export: "M12 16V3M7 8l5-5 5 5M3 14v7h18v-7",
   refresh: "M20 7A9 9 0 1 0 21 14M20 3v5h-5",
+  cycle: "M20 8a8 8 0 0 0-14-4M4 16a8 8 0 0 0 14 4M20 3v5h-5M4 21v-5h5",
+  pause: "M8 5v14M16 5v14",
+  check: "M5 12l4 4L19 6",
   play: "M7 4l13 8-13 8z",
   database:
     "M21 5c0 2-4 3-9 3S3 7 3 5s4-3 9-3 9 1 9 3zM3 5v14c0 2 4 3 9 3s9-1 9-3V5M3 12c0 2 4 3 9 3s9-1 9-3",

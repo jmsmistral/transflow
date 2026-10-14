@@ -3779,7 +3779,8 @@ revo-grid.preview-grid
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.schedule-branch-section {
+.schedule-branch-section,
+.schedule-options-section {
   margin-top: 20px;
   border-top: 1px solid var(--line);
   padding-top: 8px;
@@ -3840,6 +3841,44 @@ revo-grid.preview-grid
 .schedule-state {
   color: var(--muted);
   font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.schedule-state .icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+.schedule-state-active .icon {
+  color: #259462;
+}
+.schedule-state-running .icon {
+  color: #327dcc;
+  animation: schedule-running 1.3s linear infinite;
+}
+.schedule-state small {
+  display: block;
+}
+.schedule-view-button .icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+.schedule-scope-count {
+  margin-top: -4px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+@keyframes schedule-running {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .schedule-state-running .icon {
+    animation: none;
+  }
 }
 .schedule-modal-history .schedule-history {
   margin: 0;

@@ -1,6 +1,38 @@
 # Contributor verification
 
 
+## Schedule scope and live status refinement (2026-10-14)
+
+The selected saved schedule now loads its shared informational plan automatically.
+The sidebar and dedicated view list/count all planned writes, including connecting
+and hidden jobs; connecting graph nodes say Attempt to build. Paused, Active and
+Active and currently running have pause/check/blue rotating cycle SVGs, with reduced
+motion support. Running reads every linked RUNNING build independently of pause or
+history pagination. Queued work is not running. Code/build options have a separate
+section below Branches; View schedule uses a compact 14-pixel arrow.
+
+Final local gates passed 487 Rust tests and one doc test, Clippy/boundary/standalone
+storage checks, 1,124 Python tests with Ruff/format/mypy, 607 web tests with strict
+frontend checks and reproducible 16-asset builds, and two installed schedule CLI/API
+tests. The storage rollback gate exposed a write/read projection mismatch; returning
+the shared record projection fixed it. The 18 affected storage tests pass. Browser
+review exposed transient context conflicts; bounded recovery now retries both
+preview and refresh failures, with no stale target-only/zero fallback. Safety and
+regenerated contract checks passed against 639 reviewed locked versions.
+
+Internal Browser verified the real complete diamond scope, status/animation/manual
+pause distinction, shared dedicated view, 14-pixel arrow, section order and unchanged
+camera/node geometry. Three four-job manual runs succeeded. Light/dark screenshots
+remain in the separate local review bundle. The final copied CLI/web bundle also
+recovers after an external guarded schedule edit. The fixture leaves both schedules
+paused with fixed code source; its synthetic delivery sleeps 12 seconds for review.
+
+The [receipt](evidence/t098-schedule-scope-status-macos-arm64.json) separates UI,
+SQLite, CLI/API and native limits. New API metadata is optional; no storage migration,
+definition history, engine adapter or cross-platform qualification is introduced.
+Existing owner review workspaces and primary preview artifacts are preserved. New
+CI is owner-monitored; it has not been polled.
+
 ## Scratchpad and bottom inspector layout refinement (2026-10-14)
 
 The owner-requested UI follow-up uses one full-width dataset header across all six

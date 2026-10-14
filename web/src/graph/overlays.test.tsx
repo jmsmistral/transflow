@@ -68,3 +68,24 @@ test("numeric bins preserve exact zero and large counts and half-open thresholds
   expect(paint(node, "duration").key).toBe("unknown");
   expect(paint(node, "duration_median").detail).toBe("1,500 ms");
 });
+
+test("connecting schedule jobs are labelled Attempt to build while simultaneous roles survive", () => {
+  const connecting = {
+    ...node,
+    overlay: { ...facts, roles: ["planned"] as const },
+  };
+  expect(paint(connecting, "roles")).toMatchObject({
+    key: "planned",
+    label: "Attempt to build",
+    badges: ["Input check failed", "Attempt to build"],
+  });
+  expect(
+    paint(
+      {
+        ...connecting,
+        overlay: { ...connecting.overlay, roles: ["planned", "trigger"] },
+      },
+      "roles",
+    ).badges,
+  ).toContain("Trigger");
+});
