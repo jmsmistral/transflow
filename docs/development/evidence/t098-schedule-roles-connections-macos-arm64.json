@@ -15,7 +15,7 @@
     "Synchronize connecting boundaries with graph/trigger edits, block incomplete saves and suppress clock-preview requests without complete targets or clock conditions"
   ],
   "verification": {
-    "web": "Final full check-web gate passed: 652 tests in 28 files; strict types, lint, format, worker diamond/error probes and reproducible production builds with 16 local assets",
+    "web": "Pre-commit code gate passed 652 tests in 28 files, strict types/lint/format, worker probes and reproducible 16-asset builds. The later web/README.md appendix was outside that run; see post_delivery_ci for the correction and final-tree rerun.",
     "native": {
       "informational_preview": "Between scope uses raw/orders as the read boundary and exactly curated/east, curated/west and curated/delivery as jobs",
       "manual": "Paused Run now succeeded with exactly three successful downstream jobs; no trigger producer job; master trigger head unchanged",
@@ -73,5 +73,58 @@
     "Trigger input reuse is the documented engineering clarification for the optional connecting switch; manual/time-only schedules remain valid with explicit targets",
     "Existing saved full, explicit-boundary and selected-target-endpoint connecting scopes remain supported in Advanced options; no saved definitions or API defaults are silently rewritten",
     "Verification script initially used an absent job_inputs dataset column and omitted branch filtering for a fallback head; corrected read-only assertions confirmed the real runs without product changes"
-  ]
+  ],
+  "post_delivery_ci": {
+    "checked_on": "2026-10-15",
+    "reported_commit": "e67bd2c161c7ec2bfa70bb77c43d8c74bca0139d",
+    "workflow": "https://github.com/jmsmistral/transflow/actions/runs/38742232404",
+    "public_evidence": "All three web matrix jobs failed in Check types, components and reproducible production assets; no unit-test/build reports were uploaded.",
+    "failed_jobs": [
+      {
+        "id": 116446593892,
+        "name": "web (macos-15)",
+        "url": "https://github.com/jmsmistral/transflow/actions/runs/38742232404/job/116446593892"
+      },
+      {
+        "id": 116446594339,
+        "name": "web (ubuntu-24.04-arm)",
+        "url": "https://github.com/jmsmistral/transflow/actions/runs/38742232404/job/116446594339"
+      },
+      {
+        "id": 116446594379,
+        "name": "web (ubuntu-24.04)",
+        "url": "https://github.com/jmsmistral/transflow/actions/runs/38742232404/job/116446594379"
+      }
+    ],
+    "other_workflows": [
+      {
+        "name": "Rust backend & CLI",
+        "conclusion": "success",
+        "url": "https://github.com/jmsmistral/transflow/actions/runs/38742232450"
+      },
+      {
+        "name": "Security & license checks",
+        "conclusion": "success",
+        "url": "https://github.com/jmsmistral/transflow/actions/runs/38742232287"
+      },
+      {
+        "name": "Python packages",
+        "conclusion": "success",
+        "url": "https://github.com/jmsmistral/transflow/actions/runs/38742232293"
+      },
+      {
+        "name": "Toolchains & dependencies",
+        "conclusion": "success",
+        "url": "https://github.com/jmsmistral/transflow/actions/runs/38742232465"
+      }
+    ],
+    "logs_limit": "GitHub job-log download returned HTTP 403 (admin rights required); public workflow/job/check-run metadata was readable. No authenticated full-log inspection is claimed.",
+    "local_reproduction": "At the pushed commit, npm --prefix web run format:check exits 1 and names only README.md. The appended web README section contains one redundant blank line.",
+    "fix": "Run locked Prettier on web/README.md, removing that blank line. No source, dependency, workflow or gate changes.",
+    "verification": "The exact CI command bash tools/check-web.sh exits 0 after the README fix: 652 tests in 28 files, strict types/lint/format, production worker probes and reproducible 16-asset builds.",
+    "review_artifacts": "All 16 rebuilt UI asset hashes still match t104-schedule-roles-review-tools/SOURCE.json; the existing copied review workspace remains current and was not modified.",
+    "scope_correction": "Earlier final-gate wording omitted the subsequent README edit. That late documentation change was not qualified by the earlier formatter result; the corrected final tree is now covered.",
+    "new_ci": "Pending owner review after the correction is pushed; no new workflow success is inferred.",
+    "repository_checks": "Safety baseline and 27 regressions passed: 846 public files, 639 locked versions, 2 existing exceptions and 1 contract. Specification validation passed 123 tasks, 97 Markdown files and 990 local links; 44 checker regressions and both diff checks passed."
+  }
 }

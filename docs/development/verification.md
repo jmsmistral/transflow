@@ -1,5 +1,28 @@
 # Contributor verification
 
+## Web README formatting correction (2026-10-15)
+
+The owner reported failures after `e67bd2c`. Public GitHub metadata shows all three
+jobs in the [web workflow](https://github.com/jmsmistral/transflow/actions/runs/38742232404)
+failed in the shared web gate before producing test/build reports; the four other
+workflows passed. Full job-log download returned HTTP 403, so no authenticated
+log inspection is claimed.
+
+The pushed tree reproduces a deterministic formatter failure: `npm --prefix web
+run format:check` reports only `web/README.md`. The final documentation appendix
+was added after the previously passing web gate, leaving one redundant blank line.
+Locked Prettier removes it. No application source, dependency, workflow or check
+is changed. This corrects the earlier claim that the final documented tree was
+covered by that gate.
+
+After the fix, the exact CI command `bash tools/check-web.sh` passes **652 tests
+in 28 files**, strict types/lint/format, production worker probes and matching
+16-asset production builds. Every rebuilt asset hash still matches the existing
+`t104-schedule-roles-review-tools` bundle; its workspace and launcher remain current.
+Runtime and Browser checks were not repeated for this whitespace-only correction.
+See the [receipt](evidence/t098-schedule-roles-connections-macos-arm64.json) under `post_delivery_ci`. New remote CI remains
+owner-monitored; local success is not a claim about the next workflow run.
+
 ## Schedule roles, readable clocks and connecting builds (2026-10-15)
 
 T098 owner feedback now has distinct green Target, amber Trigger and blue
@@ -15,7 +38,7 @@ through the existing shared Between scope. Endpoint changes synchronize boundari
 incomplete enabled connections cannot save. Existing saved scopes and API defaults
 remain supported, with no runtime/schema/dependency change.
 
-The final full web gate passes **652 tests in 28 files**, strict types/lint/format,
+The code gate passed **652 tests in 28 files**, strict types/lint/format,
 production worker probes and reproducible 16-asset builds. Real native checks prove
 both a paused manual run and publication-triggered run build exactly three downstream
 jobs, reuse the trigger boundary, and bind the new exact event version. Rust/Python
@@ -343,6 +366,9 @@ and choose the required checks before editing.
 3. Redirect verbose runs to a local temporary log and inspect the exit status,
    summary and failures. Keep the complete log for diagnosis; do not commit
    transient logs. Report actual commands, results and coverage of final changes.
+   Finish checked documentation before the final formatter run. In particular,
+   `web/README.md` is inside `npm --prefix web run format:check`; a documentation
+   edit after a passing gate requires that affected check again before commit.
 4. Review both repository diffs, update evidence, commit and push. The owner
    monitors CI; report the pushed revisions and pending CI without polling.
 

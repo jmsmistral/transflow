@@ -407,7 +407,6 @@ centered, with space instead of a dot between state and branch. Compound conditi
 retain All/Any nesting and use individual cards. Trigger takes precedence over a
 planned-write label, with both flags still available in the role details.
 
-
 ### Role palette, readable conditions and Connecting build
 
 Target uses green, Trigger amber and Attempt to build blue. Node fills exactly
