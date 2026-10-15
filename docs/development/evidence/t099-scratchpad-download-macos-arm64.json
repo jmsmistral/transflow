@@ -1,0 +1,53 @@
+{
+  "task": "T099 scratchpad results and info badge refinement",
+  "date": "2026-10-15",
+  "specification": "1.1.4",
+  "platform": "macOS arm64 / Node 24.4.1 / npm 11.4.2",
+  "implementation_base": "141e2aa9ba7bce7c0f713dae87e7995c23f86330",
+  "specification_base": "4a731f674bfd4cbd749a1fb22cde69e3c1105c1f",
+  "changes": [
+    "Concentric graph info badges with square wrappers and corrected SVG flex basis",
+    "Remove scratchpad Parameters controls, SUCCEEDED prefix and limits footer",
+    "Animate right-hand pending query progress with reduced-motion support and terminal/unknown-state cleanup",
+    "Download complete bounded TSV with headers, shared Preview quoting and spreadsheet-formula protection",
+    "Reject expired, inconsistent, incomplete or stale download pages; release owned object URLs"
+  ],
+  "verification": {
+    "focused": "31 tests in 3 files passed",
+    "web": "620 tests in 27 files; strict types, lint, format, worker probes and reproducible 16-asset builds passed",
+    "browser": {
+      "badge_count": 4,
+      "badge_size_px": [
+        19,
+        19
+      ],
+      "icon_center_delta_px": [
+        0,
+        0
+      ],
+      "pending_animation": "Observed schedule-running animation with a nonidentity transform during a real query",
+      "completion": "3 rows, 2.30 s; no progress icon, parameter controls or limits footer",
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "download": "Actual browser-saved 46-byte TSV parsed: id, region, amount headers and three exact rows",
+      "download_sha256": "68cfc6aafbe64c832cb53d9861c346b5b052b73f7fbe57d9aea362e953e078c2"
+    },
+    "fixture": "Separate four-dataset workspace, three seeded builds and two paused schedules; actual copied launch script verified; coordinator stopped with zero exit and tab closed",
+    "repository_checks": "Safety: 27 tests, 841 public candidate files, 639 locked versions, 2 existing exceptions, 1 generated contract; specification: 123 tasks, 97 Markdown files, 976 local links; both diff checks passed"
+  },
+  "query_timeout": {
+    "default_seconds": 30,
+    "setting": "interactive.query_timeout_seconds",
+    "scope": "Execution setup and result acceptance; queue wait and supervised termination grace are separate",
+    "changed": false
+  },
+  "limits": [
+    "Local macOS verification; new remote CI is owner-monitored",
+    "Browser download notification timed out; the actual native saved file was independently read and validated",
+    "Rust/Python runtime source, shared API contracts and dependency pins unchanged; corresponding full suites not repeated",
+    "TSV contains the bounded query result, not uncapped source data; retained truncation warnings remain visible",
+    "Existing owner review workspaces and copied bundles preserved"
+  ]
+}

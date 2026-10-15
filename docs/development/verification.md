@@ -1,5 +1,44 @@
 # Contributor verification
 
+## Scratchpad results and info-badge refinement (2026-10-15)
+
+Graph info badges now use a fixed square wrapper and a matching 13-pixel SVG flex
+basis. The inherited 18-pixel flex basis caused the offset; internal Browser
+measurements now show 19-by-19 wrappers and zero horizontal/vertical center delta
+on all four nodes.
+
+The scratchpad removes parameter controls, the SUCCEEDED prefix and the limits
+footer. It submits an empty parameter list; the backend contract remains intact.
+The right Results heading shows animated pending progress, with reduced-motion
+support, and stops on terminal or unknown status. Row count, elapsed time, failure,
+cancellation and truncation remain explicit. Download TSV gathers all available
+bounded pages, retains headers and uses Preview's quoted, spreadsheet-safe text.
+Expired, mismatched or incomplete results cannot produce a partial file. Selection
+exit aborts reads; an owned URL is released on replacement, new query or exit.
+
+The default timeout is confirmed as 30 seconds in workspace configuration and the
+API. Setup/result acceptance share the execution budget; queue wait and supervised
+termination grace are separate. No timeout or execution behavior was changed.
+
+Focused checks pass 31 tests; the complete web gate passes 620 tests in 27 files,
+strict types/lint/format, worker probes and reproducible 16-asset builds. Tests cover
+all four terminal progress states, page completion, expiry/schema/identity/missing
+rows, stale selection replies, URL cleanup and TSV quoting/formula protection.
+Internal Browser verified the real rotating icon, completion without animation,
+removed controls/footer, both themes and a three-row query. The actual browser-saved
+46-byte TSV was parsed for tabs, headers and exact rows. Its download notification
+was unavailable in the Browser tool; native saved-file inspection confirmed success.
+
+The [receipt](evidence/t099-scratchpad-download-macos-arm64.json) records scope.
+The new persistent workspace is `~/dev/transflow-workspace/t104-scratchpad-download-review`,
+with a built matching CLI/UI/worker and a `t104-scratchpad-download-review-tools/serve-preview.sh`
+launcher. Its Bash compatibility issue was corrected before the observed launch;
+the verification coordinator exited zero and the tab closed. Existing owner review
+bundles remain unchanged. Rust/Python runtime suites were not repeated for unchanged
+runtime source; new CI remains owner-monitored. Safety passed 27 regressions and
+the reviewed 639-version dependency/contract checks. Specification checks passed
+for 123 tasks, 97 Markdown files and 976 local links.
+
 ## Contributor review artifact refresh (2026-10-15)
 
 The owner saw the pre-refinement scratchpad and schedule arrow while `master`

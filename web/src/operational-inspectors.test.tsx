@@ -146,7 +146,7 @@ function successful(path: string) {
       ),
     );
 }
-test("scratchpad shows editor and empty results before a query, with contextual parameters help", async () => {
+test("scratchpad shows the editor and empty results without parameter controls", async () => {
   const { workspace, state } = await setup();
   render(
     <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
@@ -166,10 +166,11 @@ test("scratchpad shows editor and empty results before a query, with contextual 
   expect(
     screen.queryByText("Query the selected published version as dataset."),
   ).toBeNull();
-  const disclosure = editor.querySelector("details");
-  expect(disclosure?.open).toBe(false);
-  fireEvent.click(within(editor).getByText("Parameters"));
-  expect(within(editor).getByText("WHERE id = CAST(? AS BIGINT)")).toBeTruthy();
+  expect(within(editor).queryByText("Parameters")).toBeNull();
+  expect(
+    within(editor).queryByLabelText("Bound values (JSON array)"),
+  ).toBeNull();
+  expect(screen.queryByLabelText("Query running")).toBeNull();
   workspace.dispose();
 });
 
@@ -229,6 +230,14 @@ test("scratchpad binds the displayed version and renders exact typed result cell
   expect(JSON.parse(String(call?.[1]?.body)).bindings).toEqual(
     accepted.bindings,
   );
+  expect(JSON.parse(String(call?.[1]?.body)).parameters).toEqual([]);
+  expect(
+    within(screen.getByRole("region", { name: "SQL results" })).getByRole(
+      "status",
+    ).textContent,
+  ).not.toContain("SUCCEEDED");
+  expect(screen.queryByText(/time limit/)).toBeNull();
+  expect(screen.getByRole("button", { name: "Download TSV" })).toBeTruthy();
   expect(
     new URL(String(call?.[0]), "http://test").searchParams.has("version"),
   ).toBe(false);
@@ -326,21 +335,277 @@ test("a delayed old result page cannot replace a newly run query", async () => {
   workspace.dispose();
 });
 
-test("invalid bound parameters do not start a query", async () => {
+test("empty SQL does not start a query", async () => {
   const { workspace, state, transport } = await setup();
   render(
     <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
   );
-  fireEvent.change(screen.getByLabelText("Bound values (JSON array)"), {
-    target: { value: "[42]" },
+  fireEvent.change(screen.getByLabelText("SQL query"), {
+    target: { value: "  " },
   });
   fireEvent.click(screen.getByRole("button", { name: "Run query" }));
-  await screen.findByRole("alert");
+  expect(
+    screen.getByRole("button", { name: "Run query" }).hasAttribute("disabled"),
+  ).toBe(true);
   expect(
     transport.mock.calls.some(([url]) =>
       String(url).startsWith("/api/v1/queries?"),
     ),
   ).toBe(false);
+  workspace.dispose();
+});
+
+test.each(["SUCCEEDED", "FAILED", "CANCELED", "TIMED_OUT"] as const)(
+  "query progress is visible while pending and stops on %s",
+  async (stateName) => {
+    let finish!: (value: Response) => void;
+    const pending = new Promise<Response>((resolve) => {
+      finish = resolve;
+    });
+    let statusStarted = false;
+    const { workspace, state } = await setup(
+      (path) => {
+        if (path.endsWith(`/queries/${queryId}`)) {
+          statusStarted = true;
+          return pending;
+        }
+        return successful(path);
+      },
+      (url) =>
+        url.startsWith("/api/v1/queries?")
+          ? Promise.resolve(json(accepted, context()))
+          : undefined,
+    );
+    render(
+      <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+    expect(screen.getByLabelText("Query running")).toBeTruthy();
+    await waitFor(() => expect(statusStarted).toBe(true));
+    await act(async () =>
+      finish(
+        json(
+          {
+            ...accepted,
+            state: stateName,
+            rows: stateName === "SUCCEEDED" ? "2" : "0",
+            error:
+              stateName === "FAILED" || stateName === "TIMED_OUT"
+                ? "Query stopped"
+                : null,
+          },
+          context(),
+        ),
+      ),
+    );
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Query running")).toBeNull(),
+    );
+    expect(
+      screen
+        .getByRole("button", { name: "Run query" })
+        .hasAttribute("disabled"),
+    ).toBe(false);
+    workspace.dispose();
+  },
+);
+
+function mockDownload() {
+  const blobs: Blob[] = [];
+  URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+    if (blob instanceof Blob) blobs.push(blob);
+    return "blob:query-results";
+  });
+  URL.revokeObjectURL = vi.fn();
+  const click = vi
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(() => undefined);
+  return { blobs, click };
+}
+function blobText(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(blob);
+  });
+}
+
+test("download includes headers and every result page, then releases its URL on exit", async () => {
+  const saved = mockDownload();
+  const { workspace, state } = await setup(
+    (path, query) => {
+      if (path.endsWith(`/queries/${queryId}`))
+        return Promise.resolve(
+          json({ ...accepted, state: "SUCCEEDED", rows: "3" }, context()),
+        );
+      if (path.endsWith("/results"))
+        return Promise.resolve(
+          json(
+            {
+              id: queryId,
+              schema,
+              rows:
+                query.offset === "1"
+                  ? [
+                      [{ type: "i64", value: "2" }],
+                      [{ type: "i64", value: "3" }],
+                    ]
+                  : [[{ type: "i64", value: "1" }]],
+              next_offset: query.offset === "1" ? null : 1,
+              truncated: false,
+            },
+            context(),
+          ),
+        );
+      return undefined;
+    },
+    (url) =>
+      url.startsWith("/api/v1/queries?")
+        ? Promise.resolve(json(accepted, context()))
+        : undefined,
+  );
+  const view = render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Download TSV" }));
+  await waitFor(() => expect(saved.click).toHaveBeenCalledOnce());
+  const blob = saved.blobs[0];
+  if (!blob) throw new Error("Missing download blob");
+  expect(blob.type).toBe("text/tab-separated-values;charset=utf-8");
+  expect(await blobText(blob)).toBe("amount\n1\n2\n3");
+  view.unmount();
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:query-results");
+  workspace.dispose();
+});
+
+test.each(["expired", "schema", "identity", "incomplete"])(
+  "download does not save a partial file after %s results",
+  async (kind) => {
+    const saved = mockDownload();
+    const { workspace, state } = await setup(
+      (path, query) => {
+        if (path.endsWith(`/queries/${queryId}`))
+          return Promise.resolve(
+            json({ ...accepted, state: "SUCCEEDED", rows: "2" }, context()),
+          );
+        if (path.endsWith("/results")) {
+          if (query.offset === "1")
+            return Promise.resolve(
+              kind === "expired"
+                ? new Response(
+                    JSON.stringify({ error: { message: "Results expired" } }),
+                    { status: 410 },
+                  )
+                : json(
+                    {
+                      id: kind === "identity" ? workspaceId : queryId,
+                      schema:
+                        kind === "schema" ? { ...schema, fields: [] } : schema,
+                      rows:
+                        kind === "schema" || kind === "incomplete"
+                          ? []
+                          : [[{ type: "i64", value: "2" }]],
+                      next_offset: null,
+                      truncated: false,
+                    },
+                    context(),
+                  ),
+            );
+          return Promise.resolve(
+            json(
+              {
+                id: queryId,
+                schema,
+                rows: [[{ type: "i64", value: "1" }]],
+                next_offset: 1,
+                truncated: false,
+              },
+              context(),
+            ),
+          );
+        }
+        return undefined;
+      },
+      (url) =>
+        url.startsWith("/api/v1/queries?")
+          ? Promise.resolve(json(accepted, context()))
+          : undefined,
+    );
+    const view = render(
+      <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Download TSV" }),
+    );
+    await screen.findByRole("alert");
+    expect(saved.blobs).toHaveLength(0);
+    expect(saved.click).not.toHaveBeenCalled();
+    view.unmount();
+    workspace.dispose();
+  },
+);
+
+test("a late download page after selection exit cannot save a file", async () => {
+  const saved = mockDownload();
+  let finish!: (value: Response) => void;
+  const pending = new Promise<Response>((resolve) => {
+    finish = resolve;
+  });
+  const { workspace, state, transport } = await setup(
+    (path, query) => {
+      if (path.endsWith("/results"))
+        return query.offset === "1"
+          ? pending
+          : Promise.resolve(
+              json(
+                {
+                  id: queryId,
+                  schema,
+                  rows: [[{ type: "i64", value: "1" }]],
+                  next_offset: 1,
+                  truncated: false,
+                },
+                context(),
+              ),
+            );
+      return successful(path);
+    },
+    (url) =>
+      url.startsWith("/api/v1/queries?")
+        ? Promise.resolve(json(accepted, context()))
+        : undefined,
+  );
+  const view = render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Download TSV" }));
+  await waitFor(() =>
+    expect(
+      transport.mock.calls.some(([, init]) =>
+        String(init?.body).includes('"offset":"1"'),
+      ),
+    ).toBe(true),
+  );
+  view.unmount();
+  await act(async () =>
+    finish(
+      json(
+        {
+          id: queryId,
+          schema,
+          rows: [[{ type: "i64", value: "2" }]],
+          next_offset: null,
+          truncated: false,
+        },
+        context(),
+      ),
+    ),
+  );
+  expect(saved.click).not.toHaveBeenCalled();
   workspace.dispose();
 });
 test("an accepted query arriving after unmount is canceled with its original context", async () => {

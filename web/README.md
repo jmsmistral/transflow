@@ -3,10 +3,10 @@
 ## Operational-alpha inspectors (T099)
 
 SQL scratchpad queries the displayed immutable version as `dataset`. Run query
-retains its exact bindings, parameters and query receipt; changing selection or
+retains its exact bindings and query receipt; changing selection or
 leaving the pane cancels owned active work. Results use the same typed read-only
-grid and safe clipboard format as Preview. The service's limits, truncation,
-failure and cancellation states remain visible. Result expiry does not publish
+grid and safe clipboard format as Preview. Truncation, failure and cancellation
+states remain visible. Result expiry does not publish
 data or substitute a moving head. Fallback data has Preview's branch warning.
 
 All six bottom tabs share a full-width, 44-pixel dataset header with a 13-pixel
@@ -18,12 +18,25 @@ The scratchpad uses an editor on the left and an always-present Results pane on
 the right. Run query (play icon) and Cancel query sit beside the dataset name,
 above the editor. The initial Results notice has a local database glyph and the
 prompt “Run a SQL query in the editor to see a preview of the results.” Results,
-errors, cancellation and service limits stay within that pane. Compact panes
+errors and cancellation stay within that pane. Compact panes
 use a smaller empty state; narrow layouts stack the two panes.
 
-Parameters is a collapsed disclosure with help explaining positional `?` bindings.
-For example, `WHERE id = CAST(? AS BIGINT)` uses `["42"]`. Values are bound
-separately from SQL; this refinement changes no query permissions or version pins.
+Enter literal values directly in SQL; the Parameters controls are removed. A small
+rotating icon shows pending work in the right Results heading and stops on a
+terminal state or unknown status. Reduced-motion preferences disable rotation.
+Successful results show row count and duration without the SUCCEEDED prefix or
+repetitive limits footer. Failures and truncation remain explicit.
+
+Download TSV includes headers and every available result page, up to the service's
+bounded result. It uses Preview's field quoting and spreadsheet-formula protection;
+NULL and exact typed text are preserved. A failed, expired or inconsistent page
+blocks the entire download. Leaving the selection cancels pending reads and
+releases the owned download URL. Empty results download their column headers.
+
+The default query execution budget is 30 seconds, configured by
+`interactive.query_timeout_seconds` in `workspace.toml`. It covers setup and
+result acceptance; queue wait and supervised termination grace are separate.
+The API still supports bound parameters; the scratchpad submits an empty list.
 
 Data health is available in the right inspector and bottom tab. Published output
 checks are read through the version's original attempt; a recent attempted job is

@@ -10,6 +10,7 @@ import { same } from "./api/validate";
 import { Button, DatasetHeader } from "./components";
 import { Icon } from "./Icons";
 import { PreviewGrid } from "./PreviewGrid";
+import { tabSeparatedText } from "./tabular-text";
 import { field, typeName, versionMetadata, wire } from "./inspectors";
 import { readableDuration } from "./execution-model";
 import { Empty, Fallback, message, type Ready } from "./execution-ui";
@@ -20,6 +21,8 @@ type Owned = {
   cancelRequested: boolean;
   polling: boolean;
   pollAgain: boolean;
+  downloading: boolean;
+  downloadUrl?: string;
   abort: AbortController;
   timer?: ReturnType<typeof setTimeout>;
   query?: { id: string; context: ApiContextV1 };
@@ -78,7 +81,6 @@ function Scratchpad({
 }) {
   const dataset = state.value.dataset;
   const [sql, setSql] = useState("SELECT * FROM dataset");
-  const [parameters, setParameters] = useState("[]");
   const [job, setJob] = useState<ApiQueryV1>();
   const [result, setResult] = useState<ApiQueryResultsV1>();
   const [busy, setBusy] = useState(false);
@@ -86,6 +88,7 @@ function Scratchpad({
   const [error, setError] = useState("");
   const [readFailed, setReadFailed] = useState(false);
   const [moreBusy, setMoreBusy] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const owned = useRef<Owned | null>(null);
   useEffect(() => {
     const lifetime: Owned = {
@@ -94,6 +97,7 @@ function Scratchpad({
       cancelRequested: false,
       polling: false,
       pollAgain: false,
+      downloading: false,
       abort: new AbortController(),
     };
     owned.current = lifetime;
@@ -101,6 +105,7 @@ function Scratchpad({
       lifetime.closed = true;
       lifetime.abort.abort();
       clearTimeout(lifetime.timer);
+      if (lifetime.downloadUrl) URL.revokeObjectURL(lifetime.downloadUrl);
       if (lifetime.query && lifetime.running) {
         const { id, context } = lifetime.query;
         // The server still enforces its deadline if the connection is lost.
@@ -199,8 +204,19 @@ function Scratchpad({
   }
   async function run() {
     const lifetime = owned.current;
-    if (!dataset || !version || !lifetime || lifetime.running || !sql.trim())
+    if (
+      !dataset ||
+      !version ||
+      !lifetime ||
+      lifetime.running ||
+      lifetime.downloading ||
+      !sql.trim()
+    )
       return;
+    if (lifetime.downloadUrl) {
+      URL.revokeObjectURL(lifetime.downloadUrl);
+      delete lifetime.downloadUrl;
+    }
     lifetime.running = true;
     lifetime.cancelRequested = false;
     delete lifetime.query;
@@ -214,7 +230,7 @@ function Scratchpad({
     try {
       const request = decode("ApiQueryRequestV1", {
         sql,
-        parameters: JSON.parse(parameters),
+        parameters: [],
         bindings: [
           {
             alias: "dataset",
@@ -294,7 +310,14 @@ function Scratchpad({
   }
   async function more() {
     const lifetime = owned.current;
-    if (!lifetime || !result || result.next_offset === null || moreBusy) return;
+    if (
+      !lifetime ||
+      !result ||
+      result.next_offset === null ||
+      moreBusy ||
+      lifetime.downloading
+    )
+      return;
     const query = lifetime.query;
     setMoreBusy(true);
     try {
@@ -314,13 +337,77 @@ function Scratchpad({
       if (!lifetime.closed && lifetime.query === query) setMoreBusy(false);
     }
   }
+  async function download() {
+    const lifetime = owned.current;
+    const query = lifetime?.query;
+    if (
+      !lifetime ||
+      !query ||
+      !result ||
+      !job ||
+      job.state !== "SUCCEEDED" ||
+      lifetime.closed ||
+      lifetime.downloading ||
+      moreBusy
+    )
+      return;
+    lifetime.downloading = true;
+    setDownloading(true);
+    setError("");
+    try {
+      let rows = [...result.rows];
+      let offset = result.next_offset;
+      while (offset !== null) {
+        const next = await page(lifetime, offset);
+        if (lifetime.closed || lifetime.query !== query) return;
+        if (
+          !same(next.schema, result.schema) ||
+          rows.length + next.rows.length > 1000
+        )
+          throw new Error("Query result schema or row bounds changed.");
+        rows = [...rows, ...next.rows];
+        offset = next.next_offset;
+      }
+      if (lifetime.closed || lifetime.query !== query) return;
+      if (BigInt(rows.length) !== BigInt(job.rows))
+        throw new Error(
+          "The complete query result is unavailable for download.",
+        );
+      const text = tabSeparatedText(
+        result.schema.fields.map((field) => field.name),
+        rows.map((row) => row.map(wire)),
+      );
+      if (lifetime.downloadUrl) URL.revokeObjectURL(lifetime.downloadUrl);
+      const url = URL.createObjectURL(
+        new Blob([text], {
+          type: "text/tab-separated-values;charset=utf-8",
+        }),
+      );
+      lifetime.downloadUrl = url;
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "sql-results.tsv";
+      document.body.append(link);
+      try {
+        link.click();
+      } finally {
+        link.remove();
+      }
+    } catch (failure) {
+      if (!lifetime.closed && lifetime.query === query)
+        setError(message(failure));
+    } finally {
+      lifetime.downloading = false;
+      if (!lifetime.closed && lifetime.query === query) setDownloading(false);
+    }
+  }
   return (
     <div className="scratchpad-inspector">
       <Fallback branch={resolved} requested={state.selection.branch} />
       <DatasetHeader path={dataset?.path} actionsAfterName>
         <Button
           className="button-primary"
-          disabled={busy || !version || !sql.trim()}
+          disabled={busy || downloading || !version || !sql.trim()}
           onClick={() => void run()}
         >
           <Icon name="play" /> Run query
@@ -339,28 +426,6 @@ function Scratchpad({
             value={sql}
             onChange={(event) => setSql(event.target.value)}
           />
-          <details className="scratchpad-parameters">
-            <summary>
-              Parameters{" "}
-              <span title="Bind values to ? placeholders in order, without inserting them into the SQL text.">
-                <Icon name="info" />
-              </span>
-            </summary>
-            <label>
-              Bound values (JSON array)
-              <input
-                value={parameters}
-                onChange={(event) => setParameters(event.target.value)}
-              />
-            </label>
-            <small>
-              Values replace <code>?</code> placeholders in order. For example,
-              <code> WHERE id = CAST(? AS BIGINT)</code> uses{" "}
-              <code>["42"]</code>. Leave <code>[]</code> for a query without
-              parameters. Use null, true/false or strings; SQL casts make
-              numeric types explicit.
-            </small>
-          </details>
           {!version && (
             <p className="scratchpad-unavailable">
               No published version is available for this query.
@@ -375,12 +440,35 @@ function Scratchpad({
           {(job || busy) && (
             <div className="scratchpad-results-heading">
               <h3>Results</h3>
-              <div className="scratchpad-status" role="status">
-                {job
-                  ? `${job.state} · ${job.rows} rows · ${readableDuration((BigInt(job.elapsed_ms) * 1000000n).toString())}`
-                  : "Starting query…"}
-                {job?.truncated && (
-                  <span> · Results truncated at the query limits.</span>
+              <div className="scratchpad-result-actions">
+                <div className="scratchpad-status" role="status">
+                  {busy && !readFailed && (!job || !terminal(job)) ? (
+                    <span
+                      className="scratchpad-running"
+                      aria-label="Query running"
+                    >
+                      <Icon name="cycle" /> Running query…
+                    </span>
+                  ) : readFailed && job && !terminal(job) ? (
+                    "Query status unavailable"
+                  ) : job ? (
+                    `${job.state === "SUCCEEDED" ? "" : `${job.state} · `}${job.rows} rows · ${readableDuration((BigInt(job.elapsed_ms) * 1000000n).toString())}`
+                  ) : (
+                    "Starting query…"
+                  )}
+                  {job?.truncated && (
+                    <span> · Results truncated at the query limits.</span>
+                  )}
+                </div>
+                {result && job?.state === "SUCCEEDED" && (
+                  <Button
+                    title="Download all available result rows as a tab-delimited file"
+                    disabled={busy || moreBusy || downloading}
+                    onClick={() => void download()}
+                  >
+                    <Icon name="download" />
+                    {downloading ? "Preparing download…" : "Download TSV"}
+                  </Button>
                 )}
               </div>
             </div>
@@ -427,7 +515,10 @@ function Scratchpad({
                 </p>
               )}
               {result.next_offset !== null && (
-                <Button disabled={moreBusy} onClick={() => void more()}>
+                <Button
+                  disabled={moreBusy || downloading}
+                  onClick={() => void more()}
+                >
                   More result rows
                 </Button>
               )}
@@ -443,14 +534,6 @@ function Scratchpad({
                     ? "Query canceled. Run another query to see the results."
                     : "Run a SQL query in the editor to see a preview of the results."}
               </p>
-            </div>
-          )}
-          {job && (
-            <div className="scratchpad-results-limits">
-              Up to {job.limits.rows} rows · {job.limits.bytes} bytes ·{" "}
-              {job.timeout_seconds === "0"
-                ? "No time limit"
-                : `${job.timeout_seconds} s time limit`}
             </div>
           )}
         </section>

@@ -98,10 +98,16 @@ with a parsed AST allowlist, locked engine settings and exact-version input read
 T080 adds the authenticated [query lifecycle API](crates/tf-api/README.md#interactive-queries):
 exact local/foreign versions, independent interactive limits, cancellation and temporary
 results. Foreign inputs are read directly under leases. The SQL scratchpad tab now
-queries the displayed immutable version as `dataset`, with typed results, bound
-parameters and cancellation. Its editor and always-visible Results pane sit side
-by side, with query controls beside the dataset name and contextual parameter
-help. Bottom tabs share consistent dataset headers without repeated tab labels.
+queries the displayed immutable version as `dataset`, with typed results and
+cancellation. Its editor and always-visible Results pane sit side by side, with
+query controls beside the dataset name. Enter literal values directly in SQL;
+the parameter controls are removed. A small running indicator appears in Results
+while work is pending. Successful results show row count/duration and a Download
+TSV action for the complete bounded result, including headers. Truncation and
+failure notices remain explicit; the repetitive limits footer is removed.
+The query timeout defaults to 30 seconds, configured through
+`interactive.query_timeout_seconds` in `workspace.toml`.
+Bottom tabs share consistent dataset headers without repeated tab labels.
 Queries do not publish datasets or enable a SQL
 transform adapter. Data health shows published output checks separately from recent
 attempts and consumer input failures, including retained provider certificates.

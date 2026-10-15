@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { RevoGrid } from "@revolist/react-datagrid";
 import "./revogrid.css";
+import { tabSeparatedText } from "./tabular-text";
 import type {
   ApiPreviewV1,
   ApiPreviewCellV1,
@@ -9,12 +10,6 @@ import type {
 
 type Area = { x: number; y: number; x1: number; y1: number };
 export type GridPage = Pick<ApiPreviewV1, "schema" | "rows">;
-
-function clipboardField(value: string): string {
-  // A pasted preview must never turn provider data into a spreadsheet formula.
-  const safe = /^[\s]*[=+\-@]/.test(value) ? `'${value}` : value;
-  return /[\t\r\n"]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
-}
 
 export function previewSelectionText(
   page: GridPage,
@@ -31,23 +26,20 @@ export function previewSelectionText(
   if (left > right || top > bottom) return "";
   const headers = page.schema.fields
     .slice(left, right + 1)
-    .map((field) => clipboardField(field.name));
-  const lines = [headers.join("\t")];
+    .map((field) => field.name);
+  const rows: string[][] = [];
   for (let row = top; row <= bottom; row += 1) {
-    lines.push(
+    rows.push(
       (page.rows[row] ?? [])
         .slice(left, right + 1)
         .map((cell: ApiPreviewCellV1) =>
-          clipboardField(
-            cell.truncated
-              ? "Truncated · value unavailable"
-              : formatCell(cell.value),
-          ),
-        )
-        .join("\t"),
+          cell.truncated
+            ? "Truncated · value unavailable"
+            : formatCell(cell.value),
+        ),
     );
   }
-  return lines.join("\n");
+  return tabSeparatedText(headers, rows);
 }
 
 export function PreviewGrid({

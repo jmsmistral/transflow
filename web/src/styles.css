@@ -3259,12 +3259,18 @@ revo-grid.preview-grid
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 50%;
-  padding: 2px;
-  display: flex;
+  width: 19px;
+  height: 19px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .node-overlay-badges .icon {
   width: 13px;
   height: 13px;
+  flex: 0 0 13px;
+  display: block;
 }
 .graph-colour-legend .legend-counts {
   margin: 8px 0 0;
@@ -3984,40 +3990,9 @@ revo-grid.preview-grid
     monospace;
   resize: none;
 }
-.scratchpad-parameters {
-  font-size: 12px;
-}
-.scratchpad-parameters summary {
-  cursor: pointer;
-}
-.scratchpad-parameters summary span {
-  display: inline-flex;
-  vertical-align: middle;
-  margin-left: 4px;
-  color: var(--muted);
-}
-.scratchpad-parameters .icon {
-  width: 14px;
-  height: 14px;
-}
 .scratchpad-status {
   font-size: 12px;
   min-width: 0;
-}
-.scratchpad-parameters label {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin: 8px 0;
-  flex-wrap: wrap;
-}
-.scratchpad-parameters input {
-  flex: 1;
-  min-width: 0;
-}
-.scratchpad-parameters small {
-  display: block;
-  color: var(--muted);
 }
 .scratchpad-unavailable,
 .scratchpad-result-notice {
@@ -4065,12 +4040,30 @@ revo-grid.preview-grid
   font-size: 13px;
   margin: 0;
 }
-.scratchpad-results-limits {
-  padding: 4px 12px;
-  font-size: 11px;
-  color: var(--muted);
-  flex-shrink: 0;
-  border-top: 1px solid var(--line);
+.scratchpad-result-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.scratchpad-running {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+}
+.scratchpad-running .icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  animation: schedule-running 1.2s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scratchpad-running .icon {
+    animation: none;
+  }
 }
 .scratchpad-results > .button {
   align-self: flex-start;
