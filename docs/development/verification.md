@@ -1,5 +1,42 @@
 # Contributor verification
 
+## Schedule roles, readable clocks and connecting builds (2026-10-15)
+
+T098 owner feedback now has distinct green Target, amber Trigger and blue
+Attempt-to-build colours, matching nodes and legend in both themes even during
+plan preview. Role-only circles are removed; hover/accessible descriptions retain
+all simultaneous flags and the optional extra-info mechanism remains available.
+Read-only cron becomes plain language with timezone and calendar OR semantics;
+raw editing, backend fire-time previews and repeated-time policy remain intact.
+
+New UI drafts select explicit targets by default. Connecting build requires distinct
+dataset triggers and targets, reuses published trigger inputs and encodes the paths
+through the existing shared Between scope. Endpoint changes synchronize boundaries;
+incomplete enabled connections cannot save. Existing saved scopes and API defaults
+remain supported, with no runtime/schema/dependency change.
+
+The final full web gate passes **652 tests in 28 files**, strict types/lint/format,
+production worker probes and reproducible 16-asset builds. Real native checks prove
+both a paused manual run and publication-triggered run build exactly three downstream
+jobs, reuse the trigger boundary, and bind the new exact event version. Rust/Python
+full suites were not repeated because their source is unchanged. Internal Browser
+measured equal node/legend fills in both themes, absent role circles, readable
+weekday text, preserved raw cron/DST details, selected-only defaults, guarded
+Connecting controls, final save/reopen and dirty discard without rewriting the saved
+full scope. No final console warnings/errors; verification tabs closed and both
+coordinators exited zero. This is local evidence, not a full G2 or new CI claim.
+Safety passed 27 regressions and the 846-file/639-version baseline; specification
+validation passed 123 tasks, 97 Markdown files and 986 local links with 44 checker
+regressions. Both repository diffs and launcher Bash syntax passed.
+
+The new ready review workspace is `~/dev/transflow-workspace/t104-schedule-roles-review`.
+Launch `bash ~/dev/transflow-workspace/t104-schedule-roles-review-tools/serve-preview.sh`,
+then Open lineage → Operational alpha review. Four datasets and three paused
+schedules are prepared. Connecting delivery retains both successful runs; Weekday
+delivery demonstrates the readable clock and preserved full scope. Matching built
+assets and screenshots are retained separately from all earlier review bundles.
+See the [receipt](evidence/t098-schedule-roles-connections-macos-arm64.json) for exact scope and local limitations.
+
 ## Scratchpad toolbar, diagnostics and schedule polish (2026-10-15)
 
 T098/T099 owner annotations move row count/duration and Download TSV to the right

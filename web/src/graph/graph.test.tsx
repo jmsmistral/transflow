@@ -1218,9 +1218,13 @@ test("an active schedule hides irrelevant Unknown labels and retains target/trig
   expect(view.container.querySelectorAll(".node-overlay-label")).toHaveLength(
     1,
   );
+  expect(view.container.querySelector(".node-overlay-badges")).toBeNull();
   expect(
-    view.container.querySelector(".node-overlay-badges")?.textContent,
-  ).toContain("Trigger");
+    view.container.querySelector(".node-overlay-label")?.getAttribute("title"),
+  ).toBe("Target · Trigger");
+  expect(
+    view.container.querySelector(".dataset-node")?.getAttribute("data-colour"),
+  ).toBe("roles");
   expect(
     [...view.container.querySelectorAll(".react-flow__node")].map((n) =>
       n.getAttribute("style"),

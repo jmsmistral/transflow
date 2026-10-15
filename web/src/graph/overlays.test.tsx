@@ -44,11 +44,8 @@ test("failed latest attempt retains valid head and original output health indepe
     key: "NoChecks",
     badges: ["Input check failed"],
   });
-  expect(paint(node, "roles").badges).toEqual([
-    "Input check failed",
-    "Target",
-    "Trigger",
-  ]);
+  expect(paint(node, "roles").badges).toEqual(["Input check failed"]);
+  expect(paint(node, "roles").detail).toBe("Target · Trigger");
   expect(roles(node, null)).toEqual(["target", "trigger"]);
   expect(paint(node, "freshness")).toMatchObject({
     key: "unknown",
@@ -77,7 +74,7 @@ test("connecting schedule jobs are labelled Attempt to build while simultaneous 
   expect(paint(connecting, "roles")).toMatchObject({
     key: "planned",
     label: "Attempt to build",
-    badges: ["Input check failed", "Attempt to build"],
+    badges: ["Input check failed"],
   });
   expect(
     paint(
@@ -90,6 +87,7 @@ test("connecting schedule jobs are labelled Attempt to build while simultaneous 
   ).toMatchObject({
     key: "trigger",
     label: "Trigger",
-    badges: expect.arrayContaining(["Trigger", "Attempt to build"]),
+    detail: "Attempt to build · Trigger",
+    badges: ["Input check failed"],
   });
 });

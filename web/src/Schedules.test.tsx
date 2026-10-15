@@ -33,6 +33,9 @@ import {
   duration,
   editGraphRoles,
   triggerDatasets,
+  connectionIssue,
+  usesTriggerConnections,
+  withTriggerConnections,
   secondsLabel,
   type ScheduleEditSession,
   minute,
@@ -971,5 +974,145 @@ test("a runtime read conflict refreshes context and automatically recovers scope
   expect(preview).toHaveBeenCalledTimes(2);
   expect(screen.queryByRole("button", { name: "Update preview" })).toBeNull();
   view.unmount();
+  workspace.dispose();
+});
+
+test("connecting builds bind published triggers as read boundaries and retain separate target identities", () => {
+  const upstream = { workspace_id: workspaceId, dataset_id: id };
+  const draft: ScheduleDefinitionV1 = {
+    ...definition,
+    trigger: {
+      ...definition.trigger,
+      kind: "dataset_published",
+      id: "input",
+      dataset: upstream,
+      branch: "input",
+      payload_mode: "pin",
+      include_resets: false,
+    },
+  };
+  const connected = withTriggerConnections(draft, true);
+  expect(connectionIssue(connected)).toBe("");
+  expect(connected.build).toMatchObject({
+    build_mode: "between",
+    targets: [target],
+    boundaries: [upstream],
+  });
+  expect(usesTriggerConnections(connected)).toBe(true);
+  expect(connected.trigger).toBe(draft.trigger);
+  expect(connected.build.source).toBe(draft.build.source);
+  const explicit = withTriggerConnections(connected, false);
+  expect(explicit.build).toMatchObject({
+    build_mode: "selected",
+    targets: [target],
+    boundaries: [],
+  });
+  expect(usesTriggerConnections(explicit)).toBe(false);
+  expect(connectionIssue({ ...draft, trigger: { kind: "manual" } })).toContain(
+    "dataset trigger",
+  );
+  expect(
+    connectionIssue({ ...draft, build: { ...draft.build, targets: [] } }),
+  ).toContain("target dataset");
+  expect(connectionIssue(definition)).toContain("targets different");
+});
+
+test("Connecting build is unavailable for manual/time-only schedules but those schedules can save selected targets", async () => {
+  const { workspace } = await setup();
+  const save = vi.fn<(definition: ScheduleDefinitionV1) => Promise<void>>(
+    async () => undefined,
+  );
+  const initial = { ...definition, trigger: { kind: "manual" as const } };
+  render(
+    <ScheduleEditor
+      workspace={workspace}
+      initial={initial}
+      record={null}
+      datasets={[]}
+      schedules={[]}
+      onSave={save}
+      onCancel={vi.fn()}
+    />,
+  );
+  expect(
+    screen
+      .getByRole("switch", { name: "Connecting build" })
+      .hasAttribute("disabled"),
+  ).toBe(true);
+  expect(
+    screen.getByText(
+      /Manual and time conditions can still build your selected targets/,
+    ),
+  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Save schedule" }));
+  await waitFor(() => expect(save).toHaveBeenCalled());
+  expect(save.mock.calls[0]?.[0]).toMatchObject({
+    trigger: { kind: "manual" },
+    build: { build_mode: "selected", targets: [target] },
+  });
+  workspace.dispose();
+});
+
+test("connecting toggle follows graph trigger edits, blocks incomplete saves and can return to explicit targets", async () => {
+  const { workspace } = await setup();
+  const upstream = { workspace_id: workspaceId, dataset_id: id };
+  const initial: ScheduleDefinitionV1 = {
+    ...definition,
+    trigger: {
+      kind: "dataset_published",
+      id: "input",
+      dataset: upstream,
+      branch: "input",
+      payload_mode: "pin",
+      include_resets: false,
+    },
+  };
+  const save = vi.fn<(definition: ScheduleDefinitionV1) => Promise<void>>(
+    async () => undefined,
+  );
+  let session: ScheduleEditSession | null = null;
+  render(
+    <ScheduleEditor
+      workspace={workspace}
+      initial={initial}
+      record={null}
+      datasets={[]}
+      schedules={[]}
+      onSave={save}
+      onCancel={vi.fn()}
+      onEdit={(s) => {
+        session = s;
+      }}
+    />,
+  );
+  fireEvent.click(screen.getByRole("switch", { name: "Connecting build" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save schedule" }));
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  expect(save.mock.calls[0]?.[0].build).toMatchObject({
+    build_mode: "between",
+    boundaries: [upstream],
+    targets: [target],
+  });
+  const current = session as ScheduleEditSession | null;
+  if (!current) throw Error("missing editing session");
+  act(() => current.act("clear", [graphNode(id)]));
+  expect(
+    screen
+      .getByRole("switch", { name: "Connecting build" })
+      .getAttribute("aria-checked"),
+  ).toBe("true");
+  expect(
+    screen
+      .getByRole("button", { name: "Save schedule" })
+      .hasAttribute("disabled"),
+  ).toBe(true);
+  expect(screen.getByRole("alert").textContent).toContain("dataset trigger");
+  fireEvent.click(screen.getByRole("switch", { name: "Connecting build" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save schedule" }));
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+  expect(save.mock.calls[1]?.[0]).toMatchObject({
+    trigger: { kind: "manual" },
+    build: { build_mode: "selected", targets: [target], boundaries: [] },
+  });
   workspace.dispose();
 });

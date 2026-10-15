@@ -127,6 +127,7 @@ function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
         setHovered(false);
       }}
       className={`dataset-node colour-${data.paint.key} ${data.value.publication === "missing" ? "unbuilt-node" : ""}`}
+      data-colour={data.colour}
     >
       <Handle type="target" position={Position.Left} isConnectable={false} />
       {parents &&
@@ -134,6 +135,9 @@ function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
       <button
         className="node-label"
         aria-label={`Details for ${label(data.value)}`}
+        aria-description={
+          data.colour === "roles" ? data.paint.detail : undefined
+        }
         onMouseEnter={(event) => {
           if (event.buttons === 0) {
             pointerDown.current = false;
@@ -173,7 +177,7 @@ function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
         data.colour !== "publication" &&
         !(data.hideUnknown && data.paint.key === "unknown") && (
           <span className="node-overlay-label" title={data.paint.detail}>
-            {data.paint.label === data.paint.detail
+            {data.colour === "roles" || data.paint.label === data.paint.detail
               ? data.paint.label
               : data.colour === "freshness"
                 ? data.paint.label

@@ -1,0 +1,77 @@
+{
+  "tasks": [
+    "T098"
+  ],
+  "date": "2026-10-15",
+  "specification": "1.1.4",
+  "platform": "macOS arm64 / Python 3.14.7 / Node 24.4.1 / npm 11.4.2",
+  "implementation_base": "8ef3d46735b7fbd443730d8db7726fc1abd99529",
+  "specification_base": "3f8bda146d14ad013eacd7e20443ddacb27064c2",
+  "changes": [
+    "Distinct green Target, amber Trigger and blue Attempt-to-build fills matching node and legend in both themes; generic plan preview cannot override roles",
+    "Remove role-only info circles, retaining simultaneous roles in label hover and accessible descriptions and optional extra-evidence badges",
+    "Human-readable numeric cron with timezone and exact restricted calendar day/weekday OR; raw editor and backend clock resolution retained",
+    "New UI defaults to selected targets; opt-in Connecting build requires distinct dataset triggers and targets, using existing Between scope with trigger read boundaries",
+    "Synchronize connecting boundaries with graph/trigger edits, block incomplete saves and suppress clock-preview requests without complete targets or clock conditions"
+  ],
+  "verification": {
+    "web": "Final full check-web gate passed: 652 tests in 28 files; strict types, lint, format, worker diamond/error probes and reproducible production builds with 16 local assets",
+    "native": {
+      "informational_preview": "Between scope uses raw/orders as the read boundary and exactly curated/east, curated/west and curated/delivery as jobs",
+      "manual": "Paused Run now succeeded with exactly three successful downstream jobs; no trigger producer job; master trigger head unchanged",
+      "publication": "Resumed synthetic schedule accepted a forced raw/orders publication, succeeded with exactly three downstream jobs and bound both direct consumers to the exact event version; paused again afterward",
+      "scope": "Real copied coordinator/worker, SQLite job/input/head assertions; no new backend source, schema or dependency changes"
+    },
+    "browser": {
+      "palette": "Computed RGB equality between every Target/Trigger/planned node and its legend swatch; all three fills distinct in each theme",
+      "light_rgb": {
+        "target": [
+          184,
+          224,
+          201
+        ],
+        "trigger": [
+          247,
+          223,
+          181
+        ],
+        "planned": [
+          197,
+          221,
+          245
+        ]
+      },
+      "dark_rgb": {
+        "target": [
+          36,
+          88,
+          64
+        ],
+        "trigger": [
+          91,
+          69,
+          40
+        ],
+        "planned": [
+          39,
+          72,
+          102
+        ]
+      },
+      "badges": "Zero role-only badge wrappers on all four schedule nodes; Target/Trigger plus planned role retained in hover and accessible descriptions",
+      "conditions": "Every weekday at 9am with Asia/Dubai; full modal retains repeated-time policy and edit form retains raw 0 9 * * 1-5",
+      "editor": "New manual draft defaults to selected-only scope, Connecting disabled without endpoints; manual targets save enabled; toggle, save/reopen, three-job scope, dirty discard and preserved saved full scope observed",
+      "final_bundle": "Restarted final copied production assets; incomplete manual draft has no invalid clock error; Connecting toggled off/on and saved through the final UI",
+      "console": "No warnings or errors in final review tab; verification tab closed"
+    },
+    "fixture": "New t104-schedule-roles-review contains four datasets, three paused schedules, matching copied CLI/worker/UI and Bash launcher; real native success history retained; both verification coordinators exited zero; earlier owner bundles preserved",
+    "repository_checks": "27 safety regressions and baseline passed: 846 public candidates, 639 locked versions, 2 existing exceptions and 1 registered contract; specification validator passed 123 tasks, 97 Markdown files and 986 local links, with 44 checker regressions; both diff checks and launcher Bash syntax passed"
+  },
+  "limits": [
+    "Local macOS arm64 verification; remote GitHub CI remains owner-monitored",
+    "Rust and Python full gates were not repeated because their source is unchanged; real native coordinator evidence is separate from the web component tests",
+    "Trigger input reuse is the documented engineering clarification for the optional connecting switch; manual/time-only schedules remain valid with explicit targets",
+    "Existing saved full, explicit-boundary and selected-target-endpoint connecting scopes remain supported in Advanced options; no saved definitions or API defaults are silently rewritten",
+    "Verification script initially used an absent job_inputs dataset column and omitted branch filtering for a fallback head; corrected read-only assertions confirmed the real runs without product changes"
+  ]
+}

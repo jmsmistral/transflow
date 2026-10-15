@@ -26,19 +26,31 @@ import {
   savedDefinition,
   graphKey,
   editGraphRoles,
+  connectionIssue,
+  usesTriggerConnections,
+  withTriggerConnections,
   type ScheduleEditSession,
   type ScheduleGraphAction,
 } from "./schedule-model";
 import { ScheduleBranchesEditor } from "./ScheduleBranchesEditor";
 
+function hasClock(trigger: ScheduleTriggerV1): boolean {
+  return (
+    trigger.kind === "cron" ||
+    ((trigger.kind === "and" || trigger.kind === "or") &&
+      trigger.children.some(hasClock))
+  );
+}
 export function Switch({
   label,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
   value: boolean;
   onChange: (value: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <label className="schedule-switch">
@@ -47,6 +59,7 @@ export function Switch({
         role="switch"
         aria-checked={value}
         aria-label={label}
+        disabled={disabled}
         onClick={() => onChange(!value)}
       >
         <span />
@@ -496,6 +509,10 @@ export function ScheduleEditor({
   const [graphPaths, setGraphPaths] = useState<ReadonlyMap<string, string>>(
     new Map(),
   );
+  const [connecting, setConnecting] = useState(() =>
+    usesTriggerConnections(initial),
+  );
+  const connectionError = connecting ? connectionIssue(draft) : "";
   const saveAndExit = useRef(false);
   const [policyError, setPolicyError] = useState("");
   const [confirmExit, setConfirmExit] = useState(false);
@@ -514,9 +531,12 @@ export function ScheduleEditor({
             ),
           ]),
       );
-      setDraft((d) => editGraphRoles(d, action, nodes));
+      setDraft((d) => {
+        const next = editGraphRoles(d, action, nodes);
+        return connecting ? withTriggerConnections(next, true) : next;
+      });
     },
-    [],
+    [connecting],
   );
   const exit = useCallback(() => cancelButton.current?.click(), []);
   useEffect(() => {
@@ -546,12 +566,26 @@ export function ScheduleEditor({
     );
   });
   const build = (patch: Partial<ScheduleDefinitionV1["build"]>) =>
-    setDraft((d) => ({ ...d, build: { ...d.build, ...patch } }));
+    setDraft((d) => {
+      const next = { ...d, build: { ...d.build, ...patch } };
+      return connecting ? withTriggerConnections(next, true) : next;
+    });
   const policies = (patch: Partial<SchedulePoliciesV1>) =>
     setDraft((d) => ({ ...d, policies: { ...d.policies, ...patch } }));
   useEffect(() => {
     const abort = new AbortController();
     const timer = setTimeout(() => {
+      // Incomplete graph drafts and event/manual-only definitions have no clock
+      // preview to request. Do not show whole-definition validation as a clock error.
+      if (
+        !draft.build.targets.length ||
+        !hasClock(draft.trigger) ||
+        connectionError
+      ) {
+        setClock(null);
+        setClockError("");
+        return;
+      }
       void workspace.client
         .scheduleClock(draft, abort.signal)
         .then((v) => {
@@ -573,7 +607,7 @@ export function ScheduleEditor({
       clearTimeout(timer);
       abort.abort();
     };
-  }, [draft, workspace]);
+  }, [draft, workspace, connectionError]);
   const saveRequest = useRef<AbortController | null>(null);
   useEffect(() => () => saveRequest.current?.abort(), []);
   const source = draft.build.source;
@@ -583,7 +617,10 @@ export function ScheduleEditor({
       className="schedule-editor"
       onSubmit={(e) => {
         e.preventDefault();
-        if (policyError) return;
+        if (policyError || connectionError) {
+          setError(policyError || connectionError);
+          return;
+        }
         setBusy(true);
         setError("");
         const abort = new AbortController();
@@ -625,7 +662,12 @@ export function ScheduleEditor({
               saveAndExit.current = false;
             }}
             className="button-primary"
-            disabled={busy || !!policyError || !draft.build.targets.length}
+            disabled={
+              busy ||
+              !!policyError ||
+              !!connectionError ||
+              !draft.build.targets.length
+            }
           >
             {busy ? "Saving…" : "Save schedule"}
           </Button>
@@ -703,29 +745,35 @@ export function ScheduleEditor({
           {additions.length === 1 ? "node" : "nodes"}
         </Button>
       </section>
-      <Field label="Build scope">
-        <select
-          value={draft.build.build_mode}
-          onChange={(e) => {
-            const mode = e.target.value;
-            build({
-              build_mode:
-                mode === "selected"
-                  ? "selected"
-                  : mode === "between"
-                    ? "between"
-                    : mode === "connecting"
-                      ? "connecting"
-                      : "full",
-            });
+      <section
+        className="schedule-connecting"
+        aria-label="Connecting build settings"
+      >
+        <Switch
+          label="Connecting build"
+          value={connecting}
+          disabled={busy || (!connecting && !!connectionIssue(draft))}
+          onChange={(enabled) => {
+            setConnecting(enabled);
+            setDraft((d) => withTriggerConnections(d, enabled));
           }}
-        >
-          <option value="full">Targets and required ancestors</option>
-          <option value="selected">Selected datasets only</option>
-          <option value="between">Between selected endpoints</option>
-          <option value="connecting">All connecting datasets</option>
-        </select>
-      </Field>
+        />
+        <p className="muted" role={connectionError ? "alert" : undefined}>
+          {connectionIssue(draft) ||
+            "Reuse published trigger datasets and build every eligible dataset on the paths to your targets. Other inputs remain read boundaries."}
+        </p>
+        {!connecting && draft.build.build_mode !== "selected" && (
+          <p className="muted">
+            Saved advanced scope:{" "}
+            {draft.build.build_mode === "full"
+              ? "Targets and required ancestors"
+              : draft.build.build_mode === "between"
+                ? "Between read boundaries and targets"
+                : "Connecting selected target endpoints"}
+            . Configure it under Advanced options.
+          </p>
+        )}
+      </section>
       <ScheduleBranchesEditor
         workspace={workspace}
         branch={draft.build.data_branch}
@@ -805,7 +853,12 @@ export function ScheduleEditor({
       )}
       <TriggerEditor
         value={draft.trigger}
-        onChange={(trigger) => setDraft({ ...draft, trigger })}
+        onChange={(trigger) =>
+          setDraft((d) => {
+            const next = { ...d, trigger };
+            return connecting ? withTriggerConnections(next, true) : next;
+          })
+        }
         datasets={datasets}
         schedules={schedules}
         branch={draft.build.data_branch}
@@ -836,6 +889,35 @@ export function ScheduleEditor({
       )}
       <details>
         <summary>Advanced options</summary>
+        {!connecting && (
+          <Field label="Build scope">
+            <select
+              value={draft.build.build_mode}
+              onChange={(e) => {
+                const mode = e.target.value;
+                build({
+                  build_mode:
+                    mode === "selected"
+                      ? "selected"
+                      : mode === "between"
+                        ? "between"
+                        : mode === "connecting"
+                          ? "connecting"
+                          : "full",
+                });
+              }}
+            >
+              <option value="selected">Selected datasets only</option>
+              <option value="full">Targets and required ancestors</option>
+              <option value="between">Between explicit read boundaries</option>
+              {draft.build.build_mode === "connecting" && (
+                <option value="connecting">
+                  Connecting selected target endpoints (saved scope)
+                </option>
+              )}
+            </select>
+          </Field>
+        )}
         <Switch
           label="Force build on up-to-date datasets"
           value={draft.build.force}
@@ -1018,12 +1100,14 @@ export function ScheduleEditor({
             }
           />
         </Field>
-        <DatasetChoices
-          label="Read boundaries"
-          value={draft.build.boundaries}
-          datasets={datasets}
-          onChange={(boundaries) => build({ boundaries })}
-        />
+        {!connecting && (
+          <DatasetChoices
+            label="Read boundaries"
+            value={draft.build.boundaries}
+            datasets={datasets}
+            onChange={(boundaries) => build({ boundaries })}
+          />
+        )}
         <DatasetChoices
           label="Excluded datasets"
           value={draft.build.exclusions}
@@ -1153,7 +1237,12 @@ export function ScheduleEditor({
           </Button>
           <Button
             className="button-primary"
-            disabled={busy || !!policyError || !draft.build.targets.length}
+            disabled={
+              busy ||
+              !!policyError ||
+              !!connectionError ||
+              !draft.build.targets.length
+            }
             onClick={() => {
               setConfirmExit(false);
               saveAndExit.current = true;

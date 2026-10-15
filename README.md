@@ -195,7 +195,10 @@ published-data availability. Duration modes use the last successful materializat
 or the latest ten successful publications, excluding cache reuse. Median uses
 measured samples; mean remains unknown when any selected timing is missing.
 Metadata-only browsing cannot certify currentness or foreign bytes. Build
-preview and saved-schedule roles remain independent badges, including simultaneous target and trigger membership.
+preview and saved-schedule roles remain independent flags. Target is green, Trigger
+amber and Attempt to build blue, matching the legend in both themes. Role labels
+retain all simultaneous flags in hover/accessible descriptions; info badges are
+reserved for additional evidence rather than repeating those roles.
 T089 adds Cmd/Ctrl+K catalogue search, Cmd/Ctrl+S view saving and cancelable graph
 loads, with context-fenced hover/overlay refreshes. The separate dataset-list view
 remains removed. A public synthetic fixture and opt-in measurement build document
@@ -279,7 +282,12 @@ even when included in the build. Conditions use cards and schedule actions align
 with the enlarged name heading. Status icons distinguish Paused,
 Active and Active and currently running.
 Schedule editing supports graph-selected targets and triggers, a target-only scrollable list,
-searchable live data branches and ordered fallback controls. Exit offers Save, Discard or
+searchable live data branches and ordered fallback controls. New UI schedules build
+only selected targets by default. **Connecting build** requires distinct dataset
+triggers and targets; it reuses published trigger inputs and builds the paths to
+the targets. Existing advanced saved scopes remain supported. Read-only time
+conditions use descriptions such as “Every weekday at 9am”, with their timezone;
+the editor retains numeric cron and clock previews. Exit offers Save, Discard or
 Keep editing; the current definition remains unchanged until guarded Save.
 The **View schedule** modal shows full schedule configuration and recent builds,
 which open retained Build reports. Schedule edit mode hides the lineage title and

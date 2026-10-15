@@ -149,6 +149,56 @@ export function triggerDatasets(
       return [];
   }
 }
+export function connectionInputs(
+  definition: ScheduleDefinitionV1,
+): DatasetKey[] {
+  return [
+    ...new Map(
+      triggerDatasets(definition.trigger).map((k) => [identity(k), k]),
+    ).values(),
+  ];
+}
+export function connectionIssue(definition: ScheduleDefinitionV1): string {
+  if (!definition.build.targets.length)
+    return "Add at least one target dataset to use Connecting build.";
+  const inputs = connectionInputs(definition);
+  if (!inputs.length)
+    return "Add at least one dataset trigger to use Connecting build. Manual and time conditions can still build your selected targets.";
+  if (
+    inputs.some((k) =>
+      definition.build.targets.some((t) => identity(t) === identity(k)),
+    )
+  )
+    return "Connecting build reuses the trigger as an input, so choose targets different from the trigger datasets.";
+  return "";
+}
+export function usesTriggerConnections(
+  definition: ScheduleDefinitionV1,
+): boolean {
+  const inputs = connectionInputs(definition);
+  return (
+    definition.build.build_mode === "between" &&
+    inputs.length > 0 &&
+    inputs.length === definition.build.boundaries.length &&
+    inputs.every((k) =>
+      definition.build.boundaries.some((b) => identity(b) === identity(k)),
+    )
+  );
+}
+/** Encode the UI option using the shared between-boundaries planning contract. */
+export function withTriggerConnections(
+  definition: ScheduleDefinitionV1,
+  enabled: boolean,
+): ScheduleDefinitionV1 {
+  return {
+    ...definition,
+    build: {
+      ...definition.build,
+      build_mode: enabled ? "between" : "selected",
+      boundaries: enabled ? connectionInputs(definition) : [],
+    },
+  };
+}
 export function related(
   definition: ScheduleDefinitionV1,
   nodes: readonly string[],

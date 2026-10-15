@@ -3127,13 +3127,13 @@ revo-grid.preview-grid
   border: 0;
   color: var(--accent);
 }
-.plan-will-build .dataset-node {
+.plan-will-build .dataset-node:not([data-colour="roles"]) {
   background: #d5e9fb;
 }
-.theme-dark .plan-will-build .dataset-node {
+.theme-dark .plan-will-build .dataset-node:not([data-colour="roles"]) {
   background: #244864;
 }
-.plan-will-not-build .dataset-node {
+.plan-will-not-build .dataset-node:not([data-colour="roles"]) {
   background: var(--surface);
   opacity: 0.5;
 }
@@ -3175,8 +3175,7 @@ revo-grid.preview-grid
 }
 .colour-bin1,
 .colour-Running,
-.colour-planned,
-.colour-target {
+.colour-planned {
   background: #c5ddf5;
 }
 .colour-bin2,
@@ -3200,9 +3199,14 @@ revo-grid.preview-grid
 .theme-dark .colour-source,
 .theme-dark .colour-bin1,
 .theme-dark .colour-Running,
-.theme-dark .colour-planned,
-.theme-dark .colour-target {
+.theme-dark .colour-planned {
   background: #274866;
+}
+.colour-target {
+  background: #b8e0c9;
+}
+.theme-dark .colour-target {
+  background: #245840;
 }
 .theme-dark .colour-bin0,
 .theme-dark .colour-Succeeded,
@@ -3474,6 +3478,11 @@ revo-grid.preview-grid
 }
 .schedule-clock {
   font-size: 0.85rem;
+}
+.schedule-clock-policy {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
 }
 .schedule-clock ul {
   padding-left: 1rem;

@@ -406,3 +406,34 @@ sits beneath that row. New schedule's icon and the list's state/branch labels ar
 centered, with space instead of a dot between state and branch. Compound conditions
 retain All/Any nesting and use individual cards. Trigger takes precedence over a
 planned-write label, with both flags still available in the role details.
+
+
+### Role palette, readable conditions and Connecting build
+
+Target uses green, Trigger amber and Attempt to build blue. Node fills exactly
+match the legend in both themes, including when a plan preview is active. The
+primary role remains a visible label; its hover and accessible description retain
+simultaneous roles. Role-only info circles are omitted. The extra-info badge
+mechanism remains available for evidence beyond the legend.
+
+Read-only time cards describe the five numeric cron fields in plain language,
+keeping the timezone. Calendar day and weekday constraints retain their OR rule.
+The editor keeps raw cron and backend-computed future times; the full view also
+explains how repeated local times are handled. This wording never computes or
+changes fire times. Incomplete drafts and conditions without a clock do not
+request a misleading whole-definition clock preview.
+
+New UI drafts default to **Selected datasets only**. Add targets on the graph;
+manual and time conditions do not imply a connecting path. **Connecting build**
+becomes available with at least one distinct dataset trigger and target. It reuses
+published trigger datasets as read boundaries and builds eligible producers along
+the paths to the targets. Side inputs remain read boundaries. Changing graph
+roles or condition leaves keeps those boundaries synchronized; incomplete enabled
+connections cannot save and can always be turned off.
+
+The option encodes the existing shared Between scope, preserving explicit target
+identities. The planner uses the full captured graph and frozen branch/input
+policies, not just visible nodes. Existing saved full, explicit-boundary and
+selected-endpoint scopes remain available under Advanced options. Changing this
+UI default does not rewrite existing definitions or accepted work, nor change the
+API default or any transport/storage format.

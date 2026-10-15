@@ -48,7 +48,9 @@ they do not follow later foreground branch or policy changes.
 
 Conditions support nested AND/OR, numeric five-field cron with IANA timezones,
 dataset publication/head changes, successful builds and successful schedules.
-Time previews disclose offsets and bundled timezone rules. Publication conditions
+Read-only time cards use plain-language descriptions with their IANA timezone;
+the editor retains numeric cron and previews with offsets and bundled timezone
+rules. Full details explain repeated local times. Publication conditions
 can pin the exact event version or act only as signals. Event expiry, missed tick
 policy, bounded catch-up and automatic burst limits are explicit.
 
@@ -109,6 +111,19 @@ an existing single condition combines with the new condition using AND. Clear re
 that dataset's target/trigger/boundary/exclusion/refresh membership and collapses empty
 or single-child groups. Unrelated condition IDs and policies are retained. Backend
 validation still rejects invalid targets, cycles and conflicting edits.
+
+New UI schedules start with selected targets only. Manual/time conditions can
+trigger those targets without any dataset trigger. The optional **Connecting
+build** switch requires at least one dataset trigger and a distinct target. It
+reuses published trigger inputs and builds eligible datasets on their paths to
+the targets; other inputs remain read boundaries. Removing a required endpoint
+blocks Save until repaired or the switch is turned off. The shared planner uses
+the complete captured graph and saved input policies. Existing saved advanced
+scopes remain available; this UI option uses Between scope with trigger boundaries
+without changing explicit targets, API defaults or accepted execution settings.
+
+Target is green, Trigger amber and Attempt to build blue, matching the legend.
+Hover a role label for simultaneous flags. Extra-info icons do not repeat roles.
 
 These are draft changes. **Exit schedule**, **Schedules** and **Cancel** offer Save and
 exit, Discard changes or Keep editing when there are unsaved changes. Save overwrites

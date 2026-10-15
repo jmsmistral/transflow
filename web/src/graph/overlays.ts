@@ -170,7 +170,6 @@ export function paint(
   const badges = [
     ...(f?.version && colour === "status" ? ["Published data available"] : []),
     ...(f?.input_failed ? ["Input check failed"] : []),
-    ...(colour === "roles" ? roles(node, plan).map((r) => names[r] ?? r) : []),
   ];
   if (
     ["rows", "files", "bytes"].includes(colour) ||
@@ -217,9 +216,13 @@ export function paint(
     key,
     label: names[key] ?? "Unknown",
     detail:
-      colour === "freshness" && reasons.length
-        ? reasons.join("\n")
-        : (names[key] ?? "Unknown"),
+      colour === "roles"
+        ? roles(node, plan)
+            .map((role) => names[role] ?? role)
+            .join(" · ") || "Unknown"
+        : colour === "freshness" && reasons.length
+          ? reasons.join("\n")
+          : (names[key] ?? "Unknown"),
     badges,
   };
 }
@@ -237,7 +240,7 @@ export function basis(colour: Colour): string {
             : colour === "health"
               ? "Published output checks; input failures are separate badges."
               : colour === "roles"
-                ? "Saved schedule roles and active scope preview. Badges retain simultaneous roles."
+                ? "Saved schedule roles and active scope preview. Hover the role label for simultaneous roles."
                 : colour === "freshness"
                   ? "Shared freshness evidence. Unverified bytes or policies remain unknown."
                   : "Visible nodes only.";

@@ -41,6 +41,7 @@ import {
 } from "./schedule-model";
 import type { ScheduleEditSession } from "./schedule-model";
 import { ScheduleEditor, Switch } from "./ScheduleEditor";
+import { cronDescription } from "./cron-description";
 import { historyDateRange, percent, position } from "./execution-model";
 import { useBuildEvidence } from "./build-evidence";
 import { BuildModal } from "./BuildReport";
@@ -284,10 +285,14 @@ function TriggerSummary({
     case "cron":
       return (
         <ConditionCard icon="calendar">
-          {trigger.expression} · {trigger.timezone} ·{" "}
-          {trigger.duplicate_time === "both"
-            ? "both repeated times"
-            : "first repeated time"}
+          {cronDescription(trigger.expression)} · {trigger.timezone}
+          {!compact && (
+            <small className="schedule-clock-policy">
+              {trigger.duplicate_time === "both"
+                ? "Run at both occurrences when clocks repeat."
+                : "Run once at the first occurrence when clocks repeat."}
+            </small>
+          )}
         </ConditionCard>
       );
     case "dataset_published":
@@ -908,7 +913,7 @@ export function Schedules({
     const abort = new AbortController();
     pending.current?.abort();
     pending.current = abort;
-    return (
+    const definition = (
       await workspace.client.read(
         "ScheduleDefinitionV1",
         "/api/v1/schedules/defaults",
@@ -920,6 +925,10 @@ export function Schedules({
         context,
       )
     ).data;
+    return {
+      ...definition,
+      build: { ...definition.build, build_mode: "selected" as const },
+    };
   };
   const path = (k: import("./generated/contracts").DatasetKey) =>
     datasets.find((d) => identity(keyOf(d)) === identity(k))?.path ??
