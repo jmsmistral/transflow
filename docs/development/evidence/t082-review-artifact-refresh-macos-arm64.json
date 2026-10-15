@@ -1,0 +1,45 @@
+{
+  "task": "T082 contributor review artifact refresh",
+  "date": "2026-10-15",
+  "specification": "1.1.4",
+  "platform": "macOS arm64 / Rust 1.98.1 / Node 24.4.1 / npm 11.4.2 / Python 3.14.7",
+  "implementation_base": "5625218f123566fd4f9160c8c353954d7eb2386c",
+  "specification_base": "48404619e1b8780a0d585b9bec934c90d810d932",
+  "diagnosis": {
+    "base": "5625218f123566fd4f9160c8c353954d7eb2386c",
+    "old_entry": "assets/index-UXTkn7Ew.js",
+    "old_css": "assets/index-Fh8RYfO5.css",
+    "old_cli_sha256": "369f231c03b4818e8ec1691ddff9fc2b58c77dd6d6c7239edfc6a804143c511f",
+    "old_bundle_has_split": false,
+    "old_bundle_has_compact_arrow": false,
+    "source_has_split": true,
+    "source_has_compact_arrow": true
+  },
+  "refreshed": {
+    "entry": "assets/index-DTziQ1_f.js",
+    "css": "assets/index-F2CDsmrn.css",
+    "cli_sha256": "c2a042d5c1a285d5ea2f65769942630a17ae985bf089e91aa99b35951a9d1e4d",
+    "served_index_matches_local": true,
+    "all_16_assets_match_newest_review_bundle": true
+  },
+  "verification": {
+    "tooling": "18 unittest cases including 6 launcher cases; Bash syntax and focused Ruff lint/format passed",
+    "build": "cargo build --locked --offline -p transflow; npm prepare:types, build and build:verify passed; real launcher built and started the primary artifacts",
+    "browser": {
+      "editor_width": 640,
+      "results_width": 640,
+      "same_vertical_position": true,
+      "schedule_arrow_width": 14,
+      "schedule_arrow_height": 14,
+      "planned_dataset_count": 4
+    },
+    "cleanup": "Owned coordinator exited zero after SIGINT; owned browser tab closed; saved definitions and source files preserved",
+    "repository_checks": "Safety: 27 tests, 838 public candidate files, 639 locked versions, 2 existing exceptions, 1 generated contract; specification: 123 tasks, 97 Markdown files, 972 local links; both diff checks passed"
+  },
+  "limits": [
+    "Local macOS verification; remote CI remains owner-monitored",
+    "Runtime Rust/Python and frontend component suites not repeated for unchanged runtime source",
+    "Launcher requires explicitly prepared dependencies and an existing prepared workspace; it does not synchronize Python environments",
+    "Separate review bundles retain their recorded revisions; source pulls do not refresh generated artifacts or running asset snapshots"
+  ]
+}

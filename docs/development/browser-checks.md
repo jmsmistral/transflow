@@ -5,9 +5,14 @@ browser binaries. Vitest/jsdom proves component behavior, not native browser foc
 layout or coordinator integration.
 
 For T082, prepare a synthetic workspace with published versions on two branches,
-build `web/dist`, and run the coordinator with the explicit `--ui-dir` option in
+then use `bash tools/serve-review.sh /path/to/workspace` to rebuild this checkout's
+CLI/UI before running the coordinator with the explicit `--ui-dir` option in
 [web setup](../../web/README.md). Obtain its one-use launch grant without exposing
 the bearer token.
+
+After pulling source changes, stop the old coordinator and relaunch. Its UI asset
+snapshot does not follow files rebuilt on disk. Check the served entry JS/CSS
+against the current `web/dist/index.html` when diagnosing an older-looking UI.
 
 1. Open the launch URL. Verify Connected, fragment removal and actual bounded
    catalogue metadata. Read browser errors; no fake successful build is displayed.

@@ -1,5 +1,39 @@
 # Contributor verification
 
+## Contributor review artifact refresh (2026-10-15)
+
+The owner saw the pre-refinement scratchpad and schedule arrow while `master`
+already contained both changes. The launch command selected an October 13 native
+binary and ignored `web/dist`, rather than the separately copied October 14 review
+bundle. Git updates source; it does not rebuild these ignored outputs. The
+coordinator also snapshots assets before listening, requiring a restart after a
+rebuild. No missing branch commits or source regression were found.
+
+The primary CLI and UI were rebuilt from current `master`. The served index was
+compared exactly with `web/dist/index.html`; all 16 asset hashes match the newest
+schedule-scope review bundle. Internal Browser measured the editor/results at
+640 pixels each with the same vertical position, the View schedule arrow at
+14 by 14 pixels, and the complete four-dataset schedule list. The verification
+coordinator stopped gracefully; saved definitions/source files were not edited.
+
+`bash tools/serve-review.sh WORKSPACE --open` now builds the CLI and UI before
+starting those exact paths. It stops on failure, pins Cargo's output to this
+checkout's target directory, preserves quoted/relative workspace paths and
+forwards serve options. It does not install dependencies or change Python
+environments. Six launcher regressions and all 18 tooling tests pass, with Bash
+syntax and focused Ruff checks. Actual native build, production worker probes
+and reproducible 16-asset builds passed. Runtime Rust/Python and component suites
+were not repeated because their source is unchanged. The
+[receipt](evidence/t082-review-artifact-refresh-macos-arm64.json) records hashes
+and scope. Safety passed 27 tests and the 639-version dependency/contract checks;
+specification checks passed for 123 tasks, 97 Markdown files and 972 local links.
+The previous CI result is not inferred from these local checks.
+
+The newest feature review remains the separate `t104-schedule-scope-review`
+workspace and its `t104-schedule-scope-review-tools/serve-preview.sh` launcher.
+Copied bundles keep their recorded revision; the new repository launcher instead
+rebuilds whichever implementation checkout contains it.
+
 ## RevoGrid component-test lifecycle correction (2026-10-14)
 
 The owner reported the Ubuntu x86_64 [web job failure](https://github.com/jmsmistral/transflow/actions/runs/38561827258/job/115844525329):

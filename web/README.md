@@ -58,10 +58,15 @@ Use Node 24.4.1/npm 11.4.2 and the exact lockfile. Installation is explicit:
 npm --prefix web ci --ignore-scripts
 npm --prefix web run prepare:types
 bash tools/check-web.sh
-npm --prefix web run build
-cargo build --locked --offline -p transflow
-target/debug/transflow --workspace /path/to/workspace serve --ui-dir "$PWD/web/dist" --open
+bash tools/serve-review.sh /path/to/workspace --open
 ```
+
+The review launcher rebuilds the local CLI and production assets before serving
+them and fails without launching if either build fails. It does not install
+dependencies or change the workspace's prepared Python environment. Pulling source
+commits alone leaves `target/debug/transflow` and `web/dist` unchanged. Stop any
+previous coordinator before launching: UI assets are snapshotted at startup.
+Use the new authenticated page after restarting.
 
 `--ui-dir` is an explicit contributor bundle directory. It serves a frozen snapshot
 of `index.html` and flat `assets/*.js`/`*.css` files, up to 64 files/8 MiB total,

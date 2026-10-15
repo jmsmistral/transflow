@@ -342,11 +342,20 @@ The [workspace UI shell](web/README.md) now supports authenticated branch/versio
 browsing, live metadata refresh and resizable panels. For a contributor build:
 
 ```bash
-npm --prefix web run build
-transflow --workspace /path/to/workspace serve --ui-dir "$PWD/web/dist" --open
+bash tools/serve-review.sh /path/to/workspace --open
 ```
 
-Use the local `target/debug/transflow` binary when it is not installed on PATH.
+The launcher rebuilds this checkout's CLI and UI before starting their exact local
+paths. It stops on a failed build and requires explicitly prepared Cargo/npm
+dependencies and an existing prepared workspace. `git pull` updates source files;
+it does **not** rebuild the ignored `target/debug/transflow` or `web/dist` outputs.
+An existing coordinator snapshots UI assets at startup: stop it with Ctrl-C, then
+use the launcher after pulling changes. Refreshing its old browser page cannot
+replace that running snapshot; open the newly launched authenticated page.
+
+For manual builds, run `cargo build --locked --offline -p transflow` and
+`npm --prefix web run build`, then start `target/debug/transflow` with the explicit
+`--workspace` and `serve --ui-dir "$PWD/web/dist"` options.
 Ctrl-C gracefully stops the foreground coordinator and drains owned work before
 releasing workspace authority. Interrupt handling is ready before its HTTP endpoint
 is published, including immediately after a restart.
