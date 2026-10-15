@@ -297,6 +297,12 @@ Specification baseline: **1.1.4**. See its task ledger for intended scope; unche
 
 ## Development checks
 
+Sequential development takes place directly on `master` in both repositories.
+Rebuild the UI after changes before review; rebuild the CLI when its source
+changes. Each owner test workspace is handed over with matching built artifacts
+and a Bash launcher that starts its coordinator and opens the authenticated
+lineage UI. Preserve workspaces and copied bundles while the owner reviews them.
+
 Use the project-local pyenv environment, Git and the pinned Rust 1.98.1 toolchain
 with rustfmt and Clippy. Document checks use the Python standard library (3.11+);
 package checks use a separate, hash-locked Python 3.14 tooling environment.

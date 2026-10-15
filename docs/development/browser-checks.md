@@ -100,6 +100,14 @@ Preserve existing review workspaces; remove them only when the owner requests
 cleanup. Stop any coordinator started for verification before handing the workspace
 back, and report its path and the observed checks.
 
+Each handoff must include already-built matching CLI/UI artifacts and a Bash
+launcher that starts the coordinator and opens the authenticated lineage UI.
+Verify the launcher and intended saved lineage before providing the exact command.
+Rebuild UI assets after changes; rebuild the CLI when its source changes. Preserve
+the bundle under owner review and use a separate persistent test workspace for
+later work when needed. Development source changes go directly on `master` in both
+primary repositories.
+
 For a workspace with an active schedule, leave the coordinator observing while
 opening and filtering Catalogue, adding a dataset to the graph and inspecting its
 preview. Routine clock/event cursor audits must not cause context-conflict errors.
