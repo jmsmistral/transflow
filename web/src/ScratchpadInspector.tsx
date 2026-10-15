@@ -415,6 +415,45 @@ function Scratchpad({
         <Button disabled={!busy || canceling} onClick={() => void cancel()}>
           {canceling ? "Canceling…" : "Cancel query"}
         </Button>
+        {busy && !readFailed && (!job || !terminal(job)) && (
+          <span
+            className="scratchpad-running"
+            role="status"
+            aria-label="Query running"
+          >
+            <Icon name="cycle" /> Running query…
+          </span>
+        )}
+        {(job || busy) && (
+          <div className="scratchpad-result-actions">
+            <div
+              className="scratchpad-status"
+              role="status"
+              aria-label="Query status"
+            >
+              {busy && !readFailed && (!job || !terminal(job))
+                ? null
+                : readFailed && job && !terminal(job)
+                  ? "Query status unavailable"
+                  : job
+                    ? `${job.state === "SUCCEEDED" ? "" : `${job.state} · `}${job.rows} rows · ${readableDuration((BigInt(job.elapsed_ms) * 1000000n).toString())}`
+                    : "Starting query…"}
+              {job?.truncated && (
+                <span> · Results truncated at the query limits.</span>
+              )}
+            </div>
+            {result && job?.state === "SUCCEEDED" && (
+              <Button
+                title="Download all available result rows as a tab-delimited file"
+                disabled={busy || moreBusy || downloading}
+                onClick={() => void download()}
+              >
+                <Icon name="download" />
+                {downloading ? "Preparing download…" : "Download TSV"}
+              </Button>
+            )}
+          </div>
+        )}
       </DatasetHeader>
       <div className="scratchpad-layout">
         <section className="scratchpad-inputs" aria-label="SQL editor">
@@ -437,42 +476,6 @@ function Scratchpad({
           aria-label="SQL results"
           aria-busy={busy}
         >
-          {(job || busy) && (
-            <div className="scratchpad-results-heading">
-              <h3>Results</h3>
-              <div className="scratchpad-result-actions">
-                <div className="scratchpad-status" role="status">
-                  {busy && !readFailed && (!job || !terminal(job)) ? (
-                    <span
-                      className="scratchpad-running"
-                      aria-label="Query running"
-                    >
-                      <Icon name="cycle" /> Running query…
-                    </span>
-                  ) : readFailed && job && !terminal(job) ? (
-                    "Query status unavailable"
-                  ) : job ? (
-                    `${job.state === "SUCCEEDED" ? "" : `${job.state} · `}${job.rows} rows · ${readableDuration((BigInt(job.elapsed_ms) * 1000000n).toString())}`
-                  ) : (
-                    "Starting query…"
-                  )}
-                  {job?.truncated && (
-                    <span> · Results truncated at the query limits.</span>
-                  )}
-                </div>
-                {result && job?.state === "SUCCEEDED" && (
-                  <Button
-                    title="Download all available result rows as a tab-delimited file"
-                    disabled={busy || moreBusy || downloading}
-                    onClick={() => void download()}
-                  >
-                    <Icon name="download" />
-                    {downloading ? "Preparing download…" : "Download TSV"}
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
           {error && (
             <p className="execution-error" role="alert">
               {error}
@@ -523,10 +526,9 @@ function Scratchpad({
                 </Button>
               )}
             </>
-          ) : (
+          ) : !error || busy ? (
             <div className="scratchpad-empty-results">
               <Icon name="database" />
-              {!job && !busy && <h3>Results</h3>}
               <p>
                 {busy
                   ? "Your results will appear here when the query finishes."
@@ -535,7 +537,7 @@ function Scratchpad({
                     : "Run a SQL query in the editor to see a preview of the results."}
               </p>
             </div>
-          )}
+          ) : null}
         </section>
       </div>
     </div>

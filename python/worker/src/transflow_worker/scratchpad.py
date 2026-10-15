@@ -28,6 +28,19 @@ BYTES = 2 * 1024 * 1024
 # T080 must check availability before advertising the public scratchpad service.
 
 
+class QueryError(ValueError):
+    """Bounded SQL diagnostic for the authenticated interactive query owner."""
+
+
+def diagnostic(message: str) -> str:
+    """Keep useful line breaks, remove terminal controls and cap the private frame text."""
+    text = "".join(c for c in message if c in "\n\t" or c.isprintable())
+    encoded = text.encode("utf-8")
+    if len(encoded) > 4096:
+        text = encoded[:4093].decode("utf-8", errors="ignore") + "…"
+    return text
+
+
 def _schema(schema: Any, pa: Any) -> None:
     """Refuse known lossy DuckDB inputs before binding; Arrow retains exact result types."""
     require(len(schema) <= 128, "SQL inputs support at most 128 columns")
@@ -175,7 +188,9 @@ def _results(
     }
 
 
-def execute(request: dict[str, Any], limits: dict[str, Any] | None = None) -> None:
+def execute(
+    request: dict[str, Any], limits: dict[str, Any] | None = None, *, detailed_errors: bool = False
+) -> None:
     """Application-only entry; caller owns read leases and process/resource supervision."""
     validate_document("ScratchpadRequestV1", request)
     if limits is not None:
@@ -209,8 +224,32 @@ def execute(request: dict[str, Any], limits: dict[str, Any] | None = None) -> No
         # provider or workspace directory is granted. Temporary files never publish.
         with tempfile.TemporaryDirectory(prefix="spill-", dir=directory) as temporary:
             with _connect(paths, Path(temporary), limits) as db:
-                validate_query(db, request["sql"], list(paths))
-                result = _results(db, request, output, pa, limits)
+                duckdb = importlib.import_module("duckdb")
+                try:
+                    validate_query(db, request["sql"], list(paths), detailed_errors=detailed_errors)
+                    result = _results(db, request, output, pa, limits)
+                except (
+                    duckdb.ParserException,
+                    duckdb.BinderException,
+                    duckdb.CatalogException,
+                    duckdb.ConversionException,
+                    duckdb.InvalidInputException,
+                    duckdb.OutOfRangeException,
+                    duckdb.InvalidTypeException,
+                    duckdb.TypeMismatchException,
+                ) as error:
+                    if not detailed_errors:
+                        raise
+                    # Only authored-query failures reach the owner. Setup, file I/O,
+                    # unexpected exceptions and tracebacks keep fixed diagnostics.
+                    text = str(error)
+                    for path in sorted(
+                        [str(directory), *(p for files in paths.values() for p in files)],
+                        key=len,
+                        reverse=True,
+                    ):
+                        text = text.replace(path, "[private query file]")
+                    raise QueryError(diagnostic(text)) from None
         require(
             all(_file(Path(path)) == guard for path, guard in guards),
             "SQL inputs changed during the query",

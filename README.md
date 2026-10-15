@@ -101,9 +101,11 @@ results. Foreign inputs are read directly under leases. The SQL scratchpad tab n
 queries the displayed immutable version as `dataset`, with typed results and
 cancellation. Its editor and always-visible Results pane sit side by side, with
 query controls beside the dataset name. Enter literal values directly in SQL;
-the parameter controls are removed. A small running indicator appears in Results
-while work is pending. Successful results show row count/duration and a Download
-TSV action for the complete bounded result, including headers. Truncation and
+the parameter controls are removed. A small running indicator appears beside Cancel
+query while work is pending. Successful row count/duration and Download TSV sit at
+the right of the same toolbar, leaving the results pane for data. Download includes
+the complete bounded result and its headers. Query errors show the engine's column,
+syntax or conversion explanation as text, with bounded diagnostics. Truncation and
 failure notices remain explicit; the repetitive limits footer is removed.
 The query timeout defaults to 30 seconds, configured through
 `interactive.query_timeout_seconds` in `workspace.toml`.
@@ -272,7 +274,9 @@ saves; accepted work keeps its frozen execution settings. The inspector supports
 lists, compound conditions, source/branch policies, manual runs, pause/resume, deletion,
 history/metrics and backend role facts. The selected schedule automatically shows the
 complete planned dataset list/count, including connecting jobs and off-canvas datasets;
-connecting nodes are labelled **Attempt to build**. Status icons distinguish Paused,
+connecting nodes are labelled **Attempt to build**, while triggers retain **Trigger**
+even when included in the build. Conditions use cards and schedule actions align
+with the enlarged name heading. Status icons distinguish Paused,
 Active and Active and currently running.
 Schedule editing supports graph-selected targets and triggers, a target-only scrollable list,
 searchable live data branches and ordered fallback controls. Exit offers Save, Discard or

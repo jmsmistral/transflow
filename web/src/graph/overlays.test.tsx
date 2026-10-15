@@ -86,6 +86,10 @@ test("connecting schedule jobs are labelled Attempt to build while simultaneous 
         overlay: { ...connecting.overlay, roles: ["planned", "trigger"] },
       },
       "roles",
-    ).badges,
-  ).toContain("Trigger");
+    ),
+  ).toMatchObject({
+    key: "trigger",
+    label: "Trigger",
+    badges: expect.arrayContaining(["Trigger", "Attempt to build"]),
+  });
 });

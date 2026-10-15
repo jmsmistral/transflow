@@ -763,7 +763,7 @@ test("guarded schedule Save refreshes its advanced runtime fence before graph se
     />,
   );
   fireEvent.click(
-    await screen.findByRole("button", { name: "Daily review Paused · output" }),
+    await screen.findByRole("button", { name: "Daily review Paused output" }),
   );
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   fireEvent.change(screen.getByLabelText("Description"), {

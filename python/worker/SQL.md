@@ -105,3 +105,11 @@ bounded typed results in memory for five minutes. Startup recovery authenticates
 and stops orphan query helpers before deleting their temporary directories.
 Unreachable providers or a coordinator crash retain the existing finite lease
 expiry as a backstop; provider data is never copied or deleted by query cleanup.
+
+The authenticated supervised operation returns useful SQL policy, parser, binder,
+catalogue, conversion, range and type errors to its query owner. Only reviewed
+query exception classes around authored validation/execution expose engine text;
+setup, I/O, unexpected failures and tracebacks retain fixed diagnostics. Diagnostic
+text is capped at 4 KiB UTF-8 with control characters removed and known exact input
+and result paths replaced. SQL snippets, identifiers and values may appear in this
+owner-only response. The standalone helper's fixed stderr policy is unchanged.

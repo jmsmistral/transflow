@@ -1,5 +1,46 @@
 # Contributor verification
 
+## Scratchpad toolbar, diagnostics and schedule polish (2026-10-15)
+
+T098/T099 owner annotations move row count/duration and Download TSV to the right
+of the dataset toolbar and put progress directly after Cancel query. The result
+heading row is removed. Reviewed SQL errors now cross the validated private worker
+terminal into query status, retaining useful column/syntax/conversion details as
+bounded plain monospace text. Unexpected/setup/I/O failures keep fixed messages.
+Existing query permissions, deadline, immutable bindings and TSV limits are unchanged.
+
+Schedule browsing has centered icons/state/branch with whitespace separation. The
+blue back action touches sidebar content edges, the compact View schedule aligns
+with a larger name, and nested conditions use cards. Trigger takes precedence over
+planned coloring while both role flags survive. Read-only cards use a separate
+class so editor condition fields retain their vertical form layout.
+
+Local final gates pass: 487 Rust tests plus one doc test, 1,128 Python tests and 620
+web tests in 27 files, with strict lint/type/format and reproducible 16-asset builds.
+The native HTTP query probe passes nine groups, including binder, syntax, conversion
+and missing-parameter errors, denials, deadlines, cancellation and cleanup. The
+standalone scratchpad probe passes eleven groups. Restricted process-identity/socket
+checks initially returned macOS EPERM; rerunning with required local permission
+passed. No product change was made to bypass the process guards.
+
+Internal Browser verifies real results and the actual `ida` error, 28-pixel Run/
+Cancel/Download controls at the same y coordinate, no result heading, progress
+lifecycle, zero icon/state alignment deltas, condition cards in both themes,
+dedicated Schedule view, preserved editor layout and Cancel. The final tab has
+no console warnings/errors. Verification coordinators exited zero and the tab closed.
+
+The [receipt](evidence/t098-t099-toolbar-diagnostics-macos-arm64.json) records scope.
+Use `bash ~/dev/transflow-workspace/t104-toolbar-schedules-review-tools/serve-preview.sh`,
+then Open lineage → Operational alpha review. The new persistent workspace has
+matching built CLI/UI/worker artifacts; final CLI and all 16 UI files were compared
+with primary builds. Earlier owner review bundles are preserved. Remote CI remains
+owner-monitored.
+
+Final repository checks pass: 44 specification regressions, 123 tasks, 97 Markdown
+files and 982 local links; 27 safety regressions, 843 public candidates, 639 locked
+versions, two existing exceptions and one generated contract. Both diffs and the
+copied Bash launcher's syntax pass.
+
 ## Scratchpad results and info-badge refinement (2026-10-15)
 
 Graph info badges now use a fixed square wrapper and a matching 13-pixel SVG flex

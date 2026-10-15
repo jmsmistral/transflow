@@ -152,7 +152,9 @@ def view_names(names: list[str]) -> set[str]:
     return folded
 
 
-def validate_query(db: Any, sql: str, bindings: list[str]) -> None:
+def validate_query(
+    db: Any, sql: str, bindings: list[str], *, detailed_errors: bool = False
+) -> None:
     """Validate exactly one SELECT/WITH; never execute authored SQL during validation.
 
     Serialization uses the very engine that will execute the statement, avoiding a
@@ -184,6 +186,10 @@ def validate_query(db: Any, sql: str, bindings: list[str]) -> None:
     except SqlPolicyError:
         raise
     except Exception:
+        if detailed_errors:
+            # The supervised caller only exposes reviewed query exception classes.
+            # Other parser/engine failures retain its fixed private diagnostic.
+            raise
         raise SqlPolicyError("SQL could not be parsed by the qualified analytical parser") from None
 
 

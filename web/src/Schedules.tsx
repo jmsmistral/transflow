@@ -264,7 +264,7 @@ function TriggerSummary({
 }) {
   switch (trigger.kind) {
     case "manual":
-      return <span>Manual only</span>;
+      return <ConditionCard icon="play">Manual only</ConditionCard>;
     case "and":
     case "or":
       return (
@@ -272,51 +272,65 @@ function TriggerSummary({
           <strong>
             {trigger.kind === "and" ? "All conditions" : "Any condition"}
           </strong>
-          <ul>
+          <div className="schedule-conditions" role="list">
             {trigger.children.map((c, i) => (
-              <li key={i}>
+              <div key={i} role="listitem">
                 <TriggerSummary trigger={c} paths={paths} compact={compact} />
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       );
     case "cron":
       return (
-        <span>
+        <ConditionCard icon="calendar">
           {trigger.expression} · {trigger.timezone} ·{" "}
           {trigger.duplicate_time === "both"
             ? "both repeated times"
             : "first repeated time"}
-        </span>
+        </ConditionCard>
       );
     case "dataset_published":
     case "dataset_head_changed":
       return (
-        <span>
+        <ConditionCard icon="table">
           {paths(trigger.dataset)} ·{" "}
           {trigger.kind === "dataset_published" ? "published" : "head changed"}{" "}
           on {trigger.branch}
           {!compact &&
             ` · ${trigger.payload_mode === "pin" ? "exact version pin" : "signal only"}`}
           {trigger.include_resets ? " · includes resets" : ""}
-        </span>
+        </ConditionCard>
       );
     case "schedule_succeeded":
       return (
-        <span>
+        <ConditionCard icon="calendar">
           Schedule {trigger.schedule_id} succeeded
           {trigger.require_materialization ? " with materialization" : ""}
-        </span>
+        </ConditionCard>
       );
     case "build_succeeded":
       return (
-        <span>
+        <ConditionCard icon="build">
           Build of {trigger.targets.map(paths).join(", ")} succeeded on{" "}
           {trigger.branch}
-        </span>
+        </ConditionCard>
       );
   }
+}
+function ConditionCard({
+  icon,
+  children,
+}: {
+  icon: "calendar" | "table" | "build" | "play";
+  children: ReactNode;
+}) {
+  return (
+    <div className="schedule-condition-card">
+      <Icon name={icon} />
+      <span>{children}</span>
+    </div>
+  );
 }
 function ScheduleHistory({
   workspace,
@@ -1248,10 +1262,7 @@ export function Schedules({
       {current && (
         <>
           <div className="schedule-detail-heading">
-            <div>
-              <h3>{definition?.name ?? "Schedule needs review"}</h3>
-              {definition?.description && <p>{definition.description}</p>}
-            </div>
+            <h3>{definition?.name ?? "Schedule needs review"}</h3>
             <Button
               className="schedule-view-button"
               aria-label="View schedule"
@@ -1261,6 +1272,7 @@ export function Schedules({
               <Icon name="external" />
               <span className="schedule-view-label">View schedule</span>
             </Button>
+            {definition?.description && <p>{definition.description}</p>}
           </div>
           <p>
             <ScheduleState record={current} />
@@ -1355,10 +1367,9 @@ function ScheduleRow({
       <Icon name="calendar" />
       <span>
         <strong>{d?.name ?? "Schedule needs review"}</strong>
-        <small>
-          <ScheduleState record={row} /> ·{" "}
-          {d?.build.data_branch ?? "Branch unavailable"}
-          {row.needs_review ? " · review required" : ""}
+        <small className="schedule-row-meta">
+          <ScheduleState record={row} />{" "}
+          <span>{d?.build.data_branch ?? "Branch unavailable"}</span>
         </small>
       </span>
       <Icon name="right" />

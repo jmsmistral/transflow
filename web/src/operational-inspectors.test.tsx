@@ -155,8 +155,8 @@ test("scratchpad shows the editor and empty results without parameter controls",
   const results = screen.getByRole("region", { name: "SQL results" });
   expect(within(editor).getByLabelText("SQL query")).toBeTruthy();
   expect(
-    within(results).getByRole("heading", { name: "Results" }),
-  ).toBeTruthy();
+    within(results).queryByRole("heading", { name: "Results" }),
+  ).toBeNull();
   expect(
     within(results).getByText(
       "Run a SQL query in the editor to see a preview of the results.",
@@ -232,9 +232,7 @@ test("scratchpad binds the displayed version and renders exact typed result cell
   );
   expect(JSON.parse(String(call?.[1]?.body)).parameters).toEqual([]);
   expect(
-    within(screen.getByRole("region", { name: "SQL results" })).getByRole(
-      "status",
-    ).textContent,
+    screen.getByRole("status", { name: "Query status" }).textContent,
   ).not.toContain("SUCCEEDED");
   expect(screen.queryByText(/time limit/)).toBeNull();
   expect(screen.getByRole("button", { name: "Download TSV" })).toBeTruthy();
@@ -381,6 +379,9 @@ test.each(["SUCCEEDED", "FAILED", "CANCELED", "TIMED_OUT"] as const)(
     );
     fireEvent.click(screen.getByRole("button", { name: "Run query" }));
     expect(screen.getByLabelText("Query running")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Cancel query" }).nextElementSibling,
+    ).toBe(screen.getByLabelText("Query running"));
     await waitFor(() => expect(statusStarted).toBe(true));
     await act(async () =>
       finish(
@@ -391,7 +392,7 @@ test.each(["SUCCEEDED", "FAILED", "CANCELED", "TIMED_OUT"] as const)(
             rows: stateName === "SUCCEEDED" ? "2" : "0",
             error:
               stateName === "FAILED" || stateName === "TIMED_OUT"
-                ? "Query stopped"
+                ? 'Binder Error: Referenced column "ida" not found.\nLINE 1: SELECT * FROM dataset WHERE ida >= 2 <img src=x>'
                 : null,
           },
           context(),
@@ -406,6 +407,17 @@ test.each(["SUCCEEDED", "FAILED", "CANCELED", "TIMED_OUT"] as const)(
         .getByRole("button", { name: "Run query" })
         .hasAttribute("disabled"),
     ).toBe(false);
+    if (stateName === "FAILED" || stateName === "TIMED_OUT") {
+      expect(screen.getByRole("alert").textContent).toContain(
+        'Referenced column "ida" not found.\nLINE 1:',
+      );
+      expect(screen.getByRole("alert").querySelector("img")).toBeNull();
+      expect(
+        screen.queryByText(
+          "Run a SQL query in the editor to see a preview of the results.",
+        ),
+      ).toBeNull();
+    }
     workspace.dispose();
   },
 );

@@ -10,7 +10,8 @@ from typing import Any, BinaryIO, cast
 
 from .canonical import DigestKind, content_digest
 from .discovery import _directory, _read
-from .scratchpad import execute
+from .scratchpad import QueryError, diagnostic, execute
+from .sql_policy import SqlPolicyError
 from .wire import ControlFrame, _decode, validate_document, write_frame
 
 
@@ -76,7 +77,7 @@ def _session(request: dict[str, Any], stream: BinaryIO) -> int:
     try:
         send({"type": "phase", "phase": "setup"})
         send({"type": "phase", "phase": "querying"})
-        execute(request["query"], request["limits"])
+        execute(request["query"], request["limits"], detailed_errors=True)
         result = _decode(
             _read(Path(request["query"]["result_directory"]) / "result.json", 65536, private=True)
         )
@@ -90,12 +91,14 @@ def _session(request: dict[str, Any], stream: BinaryIO) -> int:
         )
         send({"type": "completed"})
         return 0
-    except Exception:
+    except Exception as error:
         send(
             {
                 "type": "error",
                 "code": "query_failed",
-                "message": "Query failed; check SQL, dependencies, input types and disk budget",
+                "message": diagnostic(str(error))
+                if isinstance(error, SqlPolicyError | QueryError)
+                else "Query failed; check SQL, dependencies, input types and disk budget",
                 "retryable": False,
             }
         )

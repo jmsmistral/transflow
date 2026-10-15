@@ -197,8 +197,27 @@ def main() -> None:
             state = settled(client, job, "SUCCEEDED")
             assert state["rows"] == "1" and not state["truncated"]
             cases.append("foreign exact version read directly with zero spill allowance")
+            for sql, diagnostic in (
+                ("SELECT * FROM dataset WHERE ida >= 2", 'Referenced column "ida"'),
+                ("SELECT ( FROM dataset", "Parser Error"),
+                ("SELECT CAST('invalid' AS BIGINT) FROM dataset", "Conversion Error"),
+                ("SELECT ? FROM dataset", "Values were not provided"),
+            ):
+                failed = settled(
+                    client, client.mutate("/api/v1/queries", {**body, "sql": sql}), "FAILED"
+                )
+                assert diagnostic in failed["error"], failed
+                assert len(failed["error"].encode()) <= 4096
+                assert str(root) not in failed["error"] and "Traceback" not in failed["error"]
+            cases.append("bounded binder, syntax and conversion diagnostics reach the query owner")
             for sql in ("DELETE FROM dataset", "SELECT * FROM read_parquet('/tmp/forbidden')"):
-                settled(client, client.mutate("/api/v1/queries", {**body, "sql": sql}), "FAILED")
+                failed = settled(
+                    client, client.mutate("/api/v1/queries", {**body, "sql": sql}), "FAILED"
+                )
+                assert (
+                    "Query helper failed" not in failed["error"]
+                    and "/tmp/forbidden" not in failed["error"]
+                )
             cases.append("forbidden SQL fails closed and releases protected reads")
             big = {
                 **body,

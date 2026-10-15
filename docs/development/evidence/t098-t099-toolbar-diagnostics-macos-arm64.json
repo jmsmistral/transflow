@@ -1,0 +1,47 @@
+{
+  "tasks": ["T098", "T099"],
+  "date": "2026-10-15",
+  "specification": "1.1.4",
+  "platform": "macOS arm64 / Python 3.14.7 / Node 24.4.1 / npm 11.4.2",
+  "implementation_base": "a6817c06e73abd88cc9e9a5433472c555465f714",
+  "specification_base": "548ceaf1a20e1068ac9773dca8ccdd795fceceb2",
+  "changes": [
+    "Move result metadata and matching-size Download TSV to the dataset toolbar; progress follows Cancel query; remove Results heading row",
+    "Surface bounded reviewed SQL diagnostics through the authenticated worker terminal and query status, rendered as plain monospace text",
+    "Center schedule list icons/state/branch, remove state/branch dot, and align compact View schedule with the enlarged name",
+    "Flush schedule back action to sidebar content edges and render nested conditions as cards without changing editor styling",
+    "Prefer Trigger over planned-write coloring while retaining simultaneous role flags"
+  ],
+  "verification": {
+    "rust": "Full check-rust gate: formatting, compilation, standalone storage, Clippy, 487 tests and one doc test passed; primary CLI rebuilt",
+    "python": "Full check-python gate: 1128 tests, prepared dependency checks, Ruff and strict mypy passed",
+    "web": "Full check-web gate: 620 tests in 27 files, strict types/lint/format, worker probes and reproducible 16-asset production builds passed",
+    "query_native": "Nine real HTTP/native groups passed with the final wheel: binder, syntax, conversion and missing-parameter diagnostics; typed paging, denials, deadlines, cancellation, leases and cleanup",
+    "standalone_native": "Eleven real scratchpad scenario groups passed: parsed denials, exact provider reads, safe private failures, precision and caps",
+    "browser": {
+      "query": "Real two-row result; pending rotation directly after Cancel; stopped after completion; actual ida binder error with candidate columns and SQL caret",
+      "button_heights_px": [28, 28, 28],
+      "button_y_px": [537.921875, 537.921875, 537.921875],
+      "results_top_matches_header_bottom_px": 574.421875,
+      "new_schedule_icon_center_delta_px": 0,
+      "status_branch_center_delta_px": 0,
+      "status_branch_gap_px": 12,
+      "schedule_heading_view_center_delta_px": 0,
+      "schedule_name_font_px": 16,
+      "schedule_view_icon_label_gap_px": 6,
+      "back_button": "Top and left offsets zero; right content edge within 0.5px rounding, excluding the scrollbar",
+      "conditions": "Two horizontal cards in both themes and dedicated Schedule modal; editor retains three vertical form conditions and Cancel leaves saved definition unchanged",
+      "role_labels": ["Target", "Trigger", "Attempt to build", "Attempt to build"],
+      "console": "No warnings or errors in final review tab"
+    },
+    "fixture": "New t104-toolbar-schedules-review workspace: four datasets, three seeded builds, two paused schedules; copied CLI/worker/UI and Bash launcher; final CLI and all 16 UI assets match primary artifacts; verification coordinators exited zero and tab closed",
+    "repository_checks": "Safety: 27 regressions, 843 public candidates, 639 locked versions, 2 existing exceptions, 1 generated contract; specification: 44 regressions, 123 tasks, 97 Markdown files and 982 local links; both diff checks and Bash launcher syntax passed"
+  },
+  "limits": [
+    "Local macOS qualification; new GitHub CI remains owner-monitored",
+    "Initial restricted native tests hit macOS EPERM process-identity/socket restrictions; rerun with required local permission passed",
+    "Known query exception classes expose authored SQL snippets, identifiers and values only to their authenticated owner; setup, I/O and unexpected exceptions retain fixed messages",
+    "No dependency, storage or shared wire schema changes; query timeout, restrictions, immutable bindings and bounded TSV export semantics are unchanged",
+    "Existing owner review workspaces and copied bundles are preserved"
+  ]
+}

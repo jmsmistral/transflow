@@ -202,8 +202,8 @@ export function paint(
               : ([
                   "excluded",
                   "target",
-                  "planned",
                   "trigger",
+                  "planned",
                   "boundary",
                   "cached",
                 ].find((r) => roles(node, plan).includes(r)) ?? "unknown");

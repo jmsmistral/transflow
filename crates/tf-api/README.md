@@ -241,6 +241,13 @@ build capacity. Persistent capacity is frozen at serve startup; CPU/memory chang
 require a restart. Per-build job ceilings remain bounded by coordinator capacity.
 Absent explicit memory configuration, no Transflow memory limit is installed.
 
+Failed query status carries a bounded owner-facing SQL diagnostic when a validated
+query error terminal is available. Reviewed parser/binder/conversion/type errors
+include useful engine text and SQL locations; known private query paths are replaced.
+Messages are at most 4 KiB UTF-8 and must be rendered as text, never HTML. Unknown
+supervision, I/O or unexpected worker failures keep a fixed diagnostic; logs and
+tracebacks are not forwarded. Permissions and query validation are unchanged.
+
 Completed query IDs/results expire after five minutes (410 while the expired
 receipt remains, otherwise 404) and are unavailable after restart. Creation
 retries with the same key and request replay the same live ID; a changed request

@@ -3314,13 +3314,27 @@ revo-grid.preview-grid
   padding: 0.7rem;
 }
 .schedule-row span {
-  flex: 1;
   min-width: 0;
+}
+.schedule-row > span {
+  flex: 1;
 }
 .schedule-row strong,
 .schedule-row small {
   display: block;
   overflow-wrap: anywhere;
+}
+.schedule-row .schedule-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  line-height: 20px;
+}
+.schedule-list-toolbar > .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .schedule-row small {
   color: var(--muted);
@@ -3453,8 +3467,10 @@ revo-grid.preview-grid
   margin: 0;
   overflow-wrap: anywhere;
 }
-.schedule-trigger-summary ul {
-  padding-left: 1rem;
+.schedule-conditions {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 18px;
 }
 .schedule-clock {
   font-size: 0.85rem;
@@ -3543,26 +3559,43 @@ revo-grid.preview-grid
 }
 
 .schedule-back-top.button {
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: calc(100% + 2rem);
   justify-content: center;
-  margin-bottom: 12px;
+  margin: 0 -1rem 12px;
+  border-radius: 0;
 }
 .schedule-detail-heading {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-}
-.schedule-detail-heading > div {
-  min-width: 0;
+  gap: 4px 12px;
 }
 .schedule-detail-heading h3,
 .schedule-detail-heading p {
-  margin: 0 0 8px;
+  margin: 0;
   overflow-wrap: anywhere;
 }
+.schedule-detail-heading h3 {
+  font-size: 16px;
+  line-height: 28px;
+  min-width: 0;
+}
+.schedule-detail-heading p {
+  grid-column: 1 / -1;
+  margin-bottom: 8px;
+}
 .schedule-detail-heading > .button {
-  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: 12px;
 }
 .schedule-detail-label {
   position: relative;
@@ -3767,7 +3800,8 @@ revo-grid.preview-grid
   gap: 8px;
   margin: 12px 0 18px;
 }
-.schedule-dataset {
+.schedule-dataset,
+.schedule-condition-card {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -3776,12 +3810,14 @@ revo-grid.preview-grid
   padding: 10px 12px;
   background: var(--bg);
 }
-.schedule-dataset svg {
+.schedule-dataset svg,
+.schedule-condition-card svg {
   flex: none;
   margin-top: 2px;
   color: var(--muted);
 }
-.schedule-dataset span {
+.schedule-dataset span,
+.schedule-condition-card span {
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -3929,6 +3965,9 @@ revo-grid.preview-grid
 .inspector:has(.schedules) {
   container-type: inline-size;
 }
+.inspector:has(> .schedules) {
+  padding: 0;
+}
 @container (max-width: 340px) {
   .schedule-detail-heading .schedule-view-label {
     display: none;
@@ -3971,6 +4010,10 @@ revo-grid.preview-grid
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+.scratchpad-inspector .dataset-inspector-actions {
+  flex: 1;
+  min-width: 0;
 }
 .scratchpad-editor {
   flex: 1;
@@ -4018,27 +4061,10 @@ revo-grid.preview-grid
   opacity: 0.4;
   flex: none;
 }
-.scratchpad-empty-results h3 {
-  font-size: 16px;
-  margin: 16px 0 8px;
-}
 .scratchpad-empty-results p {
-  margin: 0;
+  margin: 12px 0 0;
   max-width: 340px;
   font-size: 13px;
-}
-.scratchpad-results-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 6px 12px;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--line);
-}
-.scratchpad-results-heading h3 {
-  font-size: 13px;
-  margin: 0;
 }
 .scratchpad-result-actions {
   display: flex;
@@ -4046,7 +4072,12 @@ revo-grid.preview-grid
   justify-content: flex-end;
   gap: 10px;
   min-width: 0;
-  flex-wrap: wrap;
+  margin-left: auto;
+}
+.scratchpad-result-actions .scratchpad-status {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .scratchpad-running {
   display: inline-flex;
@@ -4076,6 +4107,9 @@ revo-grid.preview-grid
 }
 .scratchpad-inspector .execution-error {
   margin: 6px 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 @container sql-results (max-height: 180px) {
   .scratchpad-empty-results {
@@ -4084,10 +4118,6 @@ revo-grid.preview-grid
   .scratchpad-empty-results > .icon {
     width: 20px;
     height: 20px;
-  }
-  .scratchpad-empty-results h3 {
-    margin: 6px 0 4px;
-    font-size: 14px;
   }
   .scratchpad-empty-results p {
     max-width: 550px;

@@ -22,10 +22,15 @@ errors and cancellation stay within that pane. Compact panes
 use a smaller empty state; narrow layouts stack the two panes.
 
 Enter literal values directly in SQL; the Parameters controls are removed. A small
-rotating icon shows pending work in the right Results heading and stops on a
+rotating icon shows pending work beside Cancel query and stops on a
 terminal state or unknown status. Reduced-motion preferences disable rotation.
 Successful results show row count and duration without the SUCCEEDED prefix or
 repetitive limits footer. Failures and truncation remain explicit.
+Row count, duration and Download TSV share the dataset toolbar, aligned right;
+Download TSV matches Run query's button height. The results pane has no heading row.
+SQL parser, binder and conversion errors retain their useful engine explanation,
+including line breaks, rendered as plain text. Failed queries do not show the initial
+run-query prompt below the error.
 
 Download TSV includes headers and every available result page, up to the service's
 bounded result. It uses Preview's field quoting and spreadsheet-formula protection;
@@ -395,3 +400,9 @@ than the newest history page or a client timer. A queued request is not running.
 Manual/previously started work can run while automatic dispatch remains paused;
 that distinction is stated below the running label. Reduced motion stops rotation.
 The View schedule arrow is 14 pixels; configuration rows sit below Branches.
+The selected schedule's blue back button touches the sidebar's top and both edges.
+View schedule is a compact control beside the larger schedule name; description
+sits beneath that row. New schedule's icon and the list's state/branch labels are
+centered, with space instead of a dot between state and branch. Compound conditions
+retain All/Any nesting and use individual cards. Trigger takes precedence over a
+planned-write label, with both flags still available in the role details.

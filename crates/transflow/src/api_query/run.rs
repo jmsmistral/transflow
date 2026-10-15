@@ -291,9 +291,22 @@ fn execute_inner(
         return Err(("TIMED_OUT", timeout.to_string()));
     }
     check()?;
-    report
-        .outcome
-        .map_err(|e| ("FAILED", format!("Query helper failed: {e}")))?;
+    report.outcome.map_err(|e| {
+        // Only a validated query error terminal carries an owner-facing SQL
+        // diagnostic. Never forward logs or arbitrary subprocess failure text.
+        let diagnostic = (e == supervisor::Failure::Worker)
+            .then_some(report.terminal.as_ref())
+            .flatten()
+            .filter(|frame| frame.message_type() == tf_protocol::MessageType::Error)
+            .map(|frame| &frame.as_json()["message"])
+            .filter(|message| message["code"] == "query_failed")
+            .and_then(|message| message["message"].as_str())
+            .filter(|message| !message.trim().is_empty() && message.len() <= 4096);
+        (
+            "FAILED",
+            diagnostic.map_or_else(|| format!("Query helper failed: {e}"), str::to_owned),
+        )
+    })?;
     reads.check().map_err(failed)?;
     let result = accept(
         &result_dir,
