@@ -1,5 +1,25 @@
 # Contributor verification
 
+## Product README and owner priorities (2026-10-17)
+
+The implementation root README is now a 90-line product introduction with an
+original synthetic UI screenshot, Polars/SQL snippets, benefits, a source quickstart
+and a documentation index. Contributor setup/reference navigation and Python
+release readiness have dedicated guides. Both contributor entry points protect
+that structure from future milestone/test-history appendices. Public publishing
+remains guarded and requires a concrete approved release.
+
+The owner prioritizes dataset-reference editor work (T107/T108) and standalone
+retention/GC (T111). Column lineage (T105/T106) and all OpenLineage projection and
+delivery (T109/T110) remain deferred. Ordering dependencies are adjusted without
+claiming deferred features or completing the broad T121 documentation/release task.
+
+Documentation/link checks and 44 checker regressions pass; 27 safety regressions
+and the public/dependency baseline pass. README Python snippets parse, the SQL
+sample parses with pinned DuckDB, and the UI production assets were rebuilt.
+Full application suites and network dependency installation were not repeated for
+this documentation-only change. See the [receipt](evidence/readme-product-introduction.json).
+
 ## Web README formatting correction (2026-10-15)
 
 The owner reported failures after `e67bd2c`. Public GitHub metadata shows all three

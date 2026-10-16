@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-17",
+  "scope": "Product README and supporting guides; revised owner task priorities",
+  "readme_lines_before": 579,
+  "readme_lines_after": 90,
+  "screenshot_sha256": "e58b47d9dffd923a89fa8f2882aced8fb7cb5027617535f4dfbd82cb1ca2e46e",
+  "visual": "Original unchanged synthetic operational-demo capture from the verified schedule-role UI; inspected before copying; no user reference screenshot used",
+  "verification": {
+    "python_fences_parsed": 1,
+    "sql_statements_parsed_by_pinned_duckdb": 1,
+    "root_readme_contains_task_ids": false,
+    "documents": "Specification validator and 44 checker regressions passed",
+    "safety": "27 regressions and 852-public-file/639-version baseline passed before adding this receipt",
+    "build": "Production UI rebuilt; no application source changed"
+  },
+  "limits": [
+    "Source-setup/dependency-install commands were checked against implementation and existing qualified walkthroughs; the full network installation was not repeated for documentation editing.",
+    "Root README introduction is complete; the wider T121 release/documentation task remains open.",
+    "Public PyPI lookup returned 404; no name ownership, reservation or publishing eligibility is inferred.",
+    "T105/T106 and all T109/T110 OpenLineage work remain deferred; T107/T108 and standalone T111 are prioritized."
+  ]
+}

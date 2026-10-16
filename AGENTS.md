@@ -12,3 +12,13 @@ Follow the canonical engineering agreement and the selected task's dependencies 
 If the sibling directory is absent or inaccessible, resolve that contributor setup problem rather than guessing its contents. Preserve unrelated changes in both repositories. Record actual verification results and separate repository commit references when available; do not claim tests passed, features shipped or commits exist without evidence.
 
 The spec repository is a development requirement, not a runtime dependency of the installed application. The current baseline is specification **1.1.4**; consult its change history before implementing a superseded design.
+
+## Root README structure
+
+Preserve `README.md` as a concise product introduction: overview, real synthetic
+visual, short authoring example, benefits, quickstart and links to the guides.
+Keep its approximate 100–150-line scale. Do not append task IDs, implementation
+milestones, verification totals, detailed UI change logs or internal architecture
+notes. Put those in the specification task ledger, `docs/development/verification.md`
+and the relevant reference guide; update `docs/README.md` when adding a guide.
+See `docs/development/README.md` for contributor orientation.
