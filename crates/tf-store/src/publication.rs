@@ -638,6 +638,7 @@ impl Store {
             return Err(PublicationError::Evidence);
         }
         let checks = check_results(&mut tx, request).await?;
+        crate::gc::restored(&mut tx, artifact.digest().hex(), request.at_us).await?;
         sqlx::query("INSERT INTO dataset_versions(id,dataset_id,artifact_digest,attempt_id,source_snapshot_id,published_at_us,compute_fingerprint,check_fingerprint) VALUES(?,?,?,?,?,?,?,?)").bind(i.version().to_string()).bind(t.dataset.dataset_id().to_string()).bind(i.artifact().hex()).bind(i.attempt().to_string()).bind(i.binding().source.to_string()).bind(request.at_us).bind(&request.contract.compute_fingerprint).bind(&request.contract.check_fingerprint).execute(&mut *tx).await?;
         for input in &request.contract.inputs {
             sqlx::query("INSERT INTO version_inputs(output_version_id,alias,origin_workspace_id,origin_dataset_id,origin_version_id,artifact_digest,declared_branch_json,starting_branch,resolved_branch,role,resolution_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)").bind(i.version().to_string()).bind(&input.alias).bind(input.dataset.workspace_id().to_string()).bind(input.dataset.dataset_id().to_string()).bind(input.version.to_string()).bind(input.artifact.hex()).bind(encoded(&input.declared_branch)?).bind(input.starting_branch.as_str()).bind(input.resolved_branch.as_str()).bind(input.role.name()).bind(encoded(&input.resolution)?).execute(&mut *tx).await?;

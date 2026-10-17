@@ -170,6 +170,7 @@ impl Store {
         if stored != encoded_manifest {
             return Err(PublicationError::Evidence);
         }
+        crate::gc::restored(&mut tx, artifact.digest().hex(), r.at_us).await?;
         sqlx::query("INSERT INTO dataset_versions(id,dataset_id,artifact_digest,import_id,source_snapshot_id,published_at_us,compute_fingerprint,check_fingerprint) VALUES(?,?,?,?,?,?,?,?)")
             .bind(r.version.to_string()).bind(r.dataset.dataset_id().to_string()).bind(artifact.digest().hex()).bind(r.import.to_string()).bind(r.source.to_string()).bind(r.at_us).bind(compute).bind(checks).execute(&mut *tx).await?;
         let receipt = publication::publish_head(

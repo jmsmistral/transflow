@@ -468,3 +468,40 @@ test("late preview response cannot cross a workspace context change", async () =
   await expect(pending).rejects.toHaveProperty("name", "AbortError");
   workspace.dispose();
 });
+
+test("expired local data keeps metadata and never starts a preview", async () => {
+  const transport = fixtureTransport((path, query) =>
+    path.endsWith("/versions")
+      ? Promise.resolve(
+          json(
+            {
+              entries: [
+                {
+                  ...version,
+                  availability: "expired",
+                  integrity_state: "EXPIRED",
+                },
+              ],
+              next_cursor: null,
+            },
+            context(query.branch),
+          ),
+        )
+      : undefined,
+  );
+  const fetcher = vi.fn(transport);
+  const workspace = new Workspace(new Client(fetcher));
+  await workspace.connect("launch");
+  render(<App workspace={workspace} />);
+  await selectGraphDataset();
+  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+  await screen.findByText(
+    /Data expired\. Version history and schema are retained/,
+  );
+  expect(
+    fetcher.mock.calls.some(([url]) =>
+      String(url).startsWith("/api/v1/previews?"),
+    ),
+  ).toBe(false);
+  workspace.dispose();
+});

@@ -712,10 +712,10 @@ async fn schema_fifteen_upgrade_keeps_definitions_and_fences_initially_paused_ev
     let d = definition(5, leaf("dataset_published", "leaf", "signal_only", false));
     let paused = save(&mut s, 5, &d, true).await?;
     s.close().await?;
-    sqlx::raw_sql("DROP TABLE schedule_pause_intervals; DELETE FROM schema_migrations WHERE version=16; PRAGMA user_version=15;").execute(&mut db).await?;
+    sqlx::raw_sql("DROP TRIGGER gc_blocks_source_pin; DROP TRIGGER gc_blocks_expired_head_insert; DROP TRIGGER gc_blocks_expired_head_update; DROP TRIGGER gc_blocks_expired_source_plan_insert; DROP TRIGGER gc_blocks_expired_source_plan_update; DROP TABLE gc_items; DROP TABLE gc_deletions; DROP TABLE schedule_pause_intervals; DELETE FROM schema_migrations WHERE version>=16; PRAGMA user_version=15;").execute(&mut db).await?;
     publish(&mut db, 1, 1, "publication", 20).await?;
     let mut s = Store::open(&path).await?;
-    assert_eq!(s.info().schema_version, 16);
+    assert_eq!(s.info().schema_version, 17);
     let resumed = control(&mut s, &paused, 40, Action::Resume(None), 30).await?;
     assert_eq!(resumed["definition"], d);
     let report = s

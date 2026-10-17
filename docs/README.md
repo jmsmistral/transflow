@@ -9,6 +9,7 @@ a first dataset build and the lineage workspace.
 - [Polars execution](../python/POLARS.md) and [DuckDB SQL transforms](../python/SQL_TRANSFORMS.md).
 - [Quality checks](../python/EXPECTATIONS.md) — exact checks and failure policies.
 - [Catalogue references](../python/CATALOG.md) — stable dataset references in Python.
+- [Editor integration](editors.md) — local completion, hover and producer navigation.
 - [Customer-orders walkthrough](../examples/customer-orders/README.md),
   [SQL and checks example](../examples/sql-checks/README.md), and
   [operational demo](../examples/operational-alpha/README.md).
@@ -21,6 +22,7 @@ a first dataset build and the lineage workspace.
 - [Catalogue inspection and lifecycle edits](../crates/transflow/CATALOG.md).
 - [Branches](../crates/transflow/BRANCHES.md).
 - [Schedules](../crates/transflow/SCHEDULES.md).
+- [Retention and garbage collection](retention.md).
 - [External workspaces and direct reads](../crates/transflow/EXTERNAL.md).
 
 ## Explore the workspace

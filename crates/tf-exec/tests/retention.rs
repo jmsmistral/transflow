@@ -228,7 +228,7 @@ fn retained_lineage_explicit_roots_and_plan_expiry_are_independent() {
     });
 }
 #[test]
-fn active_candidate_and_input_contract_are_roots_until_build_finishes() {
+fn active_candidate_stays_rooted_until_terminal_publication_recovery() {
     runtime().block_on(async {
         let mut h = Harness::new().await;
         let r = h.start(10, 10, 0, contract()).await;
@@ -256,10 +256,34 @@ fn active_candidate_and_input_contract_are_roots_until_build_finishes() {
         store.close().await.unwrap();
         h.finish(10, "FAILED").await;
         let mut store = h.owner.as_mut().unwrap().open_store().await.unwrap();
+        assert!(matches!(
+            store
+                .repository()
+                .unwrap()
+                .claim_collection(id(40), h.digest, 101, policy())
+                .await,
+            Err(RetentionError::Rooted)
+        ));
+        store.close().await.unwrap();
+        h.owner.take();
+        let mut owner = tf_exec::ownership::RuntimeOwner::acquire(
+            &h.root,
+            workspace(),
+            tf_exec::ownership::CoordinatorMode::Temporary,
+        )
+        .unwrap();
+        publication::recover(&mut owner, 102).await.unwrap();
+        h.owner = Some(owner);
+        assert_eq!(
+            h.scalar("SELECT count(*) FROM publication_intents WHERE state='ABANDONED'")
+                .await,
+            1
+        );
+        let mut store = h.owner.as_mut().unwrap().open_store().await.unwrap();
         let claim = store
             .repository()
             .unwrap()
-            .claim_collection(id(40), h.digest, 101, policy())
+            .claim_collection(id(40), h.digest, 103, policy())
             .await
             .unwrap();
         assert_eq!(claim.artifact(), h.digest);
@@ -289,6 +313,20 @@ fn collection_claim_blocks_publication_even_when_the_bytes_already_exist() {
         .unwrap();
         h.owner = Some(completion.owner);
         h.finish(10, "FAILED").await;
+        h.owner.take();
+        let mut owner = tf_exec::ownership::RuntimeOwner::acquire(
+            &h.root,
+            workspace(),
+            tf_exec::ownership::CoordinatorMode::Temporary,
+        )
+        .unwrap();
+        publication::recover(&mut owner, 99).await.unwrap();
+        h.owner = Some(owner);
+        assert_eq!(
+            h.scalar("SELECT count(*) FROM publication_intents WHERE state='ABANDONED'")
+                .await,
+            1
+        );
         let mut store = h.owner.as_mut().unwrap().open_store().await.unwrap();
         let _claim = store
             .repository()

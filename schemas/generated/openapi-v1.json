@@ -9693,7 +9693,9 @@
                   "schedule.history",
                   "schedule.metrics",
                   "schedule.export",
-                  "schedule.delete"
+                  "schedule.delete",
+                  "lsp",
+                  "gc"
                 ]
               },
               "context": {
@@ -9762,6 +9764,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/ScheduleResultV1"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GcResultV1"
                   }
                 ]
               },
@@ -9843,7 +9848,9 @@
                   "schedule.history",
                   "schedule.metrics",
                   "schedule.export",
-                  "schedule.delete"
+                  "schedule.delete",
+                  "lsp",
+                  "gc"
                 ]
               },
               "context": {
@@ -9961,7 +9968,9 @@
                   "schedule.history",
                   "schedule.metrics",
                   "schedule.export",
-                  "schedule.delete"
+                  "schedule.delete",
+                  "lsp",
+                  "gc"
                 ]
               },
               "context": {
@@ -15126,7 +15135,10 @@
                       "$ref": "#/components/schemas/Uuid"
                     },
                     "availability": {
-                      "const": "not_verified"
+                      "enum": [
+                        "not_verified",
+                        "expired"
+                      ]
                     },
                     "origin": {
                       "const": "local"
@@ -19822,6 +19834,79 @@
           "width",
           "row_plan",
           "row_columns"
+        ],
+        "additionalProperties": false
+      },
+      "GcResultV1": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "gc"
+          },
+          "applied": {
+            "type": "boolean"
+          },
+          "collectible_bytes": {
+            "type": "string",
+            "format": "transflow-u64"
+          },
+          "deleted_bytes": {
+            "type": "string",
+            "format": "transflow-u64"
+          },
+          "items": {
+            "type": "array",
+            "maxItems": 2000,
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "artifact",
+                    "source",
+                    "logs",
+                    "unknown"
+                  ]
+                },
+                "id": {
+                  "$ref": "#/components/schemas/DiagnosticText"
+                },
+                "action": {
+                  "enum": [
+                    "retain",
+                    "observe",
+                    "collect",
+                    "recover",
+                    "observed",
+                    "deleted"
+                  ]
+                },
+                "bytes": {
+                  "type": "string",
+                  "format": "transflow-u64"
+                },
+                "reason": {
+                  "$ref": "#/components/schemas/DiagnosticText"
+                }
+              },
+              "required": [
+                "kind",
+                "id",
+                "action",
+                "bytes",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "kind",
+          "applied",
+          "collectible_bytes",
+          "deleted_bytes",
+          "items"
         ],
         "additionalProperties": false
       }

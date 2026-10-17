@@ -15,6 +15,9 @@ data quality, history and scheduling into one local workflow.
 
 **[Get started](docs/getting-started.md)** · **[Documentation](docs/README.md)** · **[Try the SQL example](examples/sql-checks/README.md)**
 
+Author with [local editor assistance](docs/editors.md), then manage retained data
+with [explicit, previewable garbage collection](docs/retention.md).
+
 ## Your code, connected
 
 Declare the data a transform reads and the dataset it produces. Transflow resolves

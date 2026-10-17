@@ -1537,6 +1537,9 @@ dependencies = [
 [[package]]
 name = "tf-lsp"
 version = "0.0.0-dev"
+dependencies = [
+ "serde_json",
+]
 
 [[package]]
 name = "tf-plan"
@@ -1777,6 +1780,7 @@ dependencies = [
  "tf-catalog",
  "tf-domain",
  "tf-exec",
+ "tf-lsp",
  "tf-plan",
  "tf-protocol",
  "tf-schedule",

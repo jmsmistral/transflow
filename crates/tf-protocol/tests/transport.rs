@@ -33,8 +33,8 @@ fn runtime_assertions_agree_with_all_shared_schema_cases() {
     assert_eq!(versions["worker_protocol"]["minor"], PROTOCOL_MINOR);
     let cases: Vec<Value> =
         serde_json::from_str(include_str!("../../../schemas/fixtures/conformance.json")).unwrap();
-    // The two new scope vectors reject the removed writer/resource engine values.
-    assert_eq!(cases.len(), 382);
+    // Includes the closed GC dry-run result alongside the existing scope vectors.
+    assert_eq!(cases.len(), 383);
     for case in cases {
         assert_eq!(
             validate_document(case["schema"].as_str().unwrap(), &case["value"]).is_ok(),

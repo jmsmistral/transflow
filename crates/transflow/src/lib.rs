@@ -24,10 +24,12 @@ mod env;
 mod external;
 mod external_reads;
 mod foreign_lineage;
+mod gc;
 mod import;
 mod import_publish;
 mod init;
 mod inspection_cli;
+mod lsp;
 mod plan_parameters;
 mod preparation;
 /// Metadata-only provider control and leased direct reads.
@@ -72,6 +74,8 @@ fn command() -> clap::Command {
         .about("A local build system for dataframe datasets (development scaffold)")
         .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Plan, why, graph traversal, dataset builds, execution history and retained replay are available. Serve runs an authenticated loopback API and CLI coordinator. Scheduling commands manage saved definitions and guarded actions; serve activates automatic dispatch.")
         .subcommands(inspection_cli::commands())
+        .subcommand(lsp::command())
+        .subcommand(gc::command())
         .subcommand(external::command())
         .subcommand(build_cli::command())
         .subcommand(schedule_cli::command())
@@ -253,6 +257,64 @@ pub fn run(
     match command().try_get_matches_from(args) {
         Ok(matches) => {
             if !matches.get_flag("help") && !matches.get_flag("version") {
+                if let Some(("lsp", args)) = matches.subcommand() {
+                    return match lsp::execute(
+                        args,
+                        matches.get_one::<String>("workspace"),
+                        intent.json,
+                        stdout,
+                        stderr,
+                    ) {
+                        Ok(true) => Ok(ExitCode::SUCCESS),
+                        Ok(false) => Ok(ExitCode::FAILURE),
+                        Err(_) => {
+                            writeln!(stderr, "Language service failed; inspect local workspace configuration and protocol transport").map_err(CliError::Stderr)?;
+                            Ok(ExitCode::FAILURE)
+                        }
+                    };
+                }
+                if let Some(("gc", args)) = matches.subcommand() {
+                    let result = gc::execute(args, matches.get_one::<String>("workspace"));
+                    match result {
+                        Ok(report) => {
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::gc(&version, &context, report.value)?
+                                            .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                writeln!(stdout, "{}", report.human()).map_err(CliError::Stdout)?;
+                            }
+                            return Ok(ExitCode::SUCCESS);
+                        }
+                        Err(error) => {
+                            let d=Diagnostic::new(DiagnosticCode::OperationFailed,redactor.text("Garbage collection could not complete")?,redactor.text(&error.to_string())?,redactor.text("Review the dry run and workspace integrity. Standalone --apply --yes needs exclusive ownership; unknown roots and interrupted claims remain protected.")?);
+                            if intent.json {
+                                stdout
+                                    .write_all(
+                                        CliEnvelope::failure(
+                                            &version,
+                                            ExitStatus::Failure,
+                                            &context,
+                                            &[d],
+                                        )?
+                                        .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                stderr
+                                    .write_all(
+                                        render_diagnostic(&d, &context, intent.verbose, false)
+                                            .as_bytes(),
+                                    )
+                                    .map_err(CliError::Stderr)?;
+                            }
+                            return Ok(ExitCode::FAILURE);
+                        }
+                    }
+                }
                 if let Some((name @ ("build" | "serve" | "schedule"), args)) = matches.subcommand()
                 {
                     let mut context = context.clone();

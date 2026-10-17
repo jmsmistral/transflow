@@ -20,6 +20,9 @@ pub enum RetentionError {
     /// Invalid bounds or a wall-clock rollback that requires clock reconciliation.
     #[error("Retention requires bounded requests and a nondecreasing clock")]
     ClockOrLimit,
+    /// A root carrier from an unsupported feature/version cannot authorize collection.
+    #[error("Retention-root state is unsupported; reconcile it before collecting data")]
+    UnknownRoots,
     /// A live root still protects the candidate.
     #[error("The artifact is retained by a live version, lease, pin or build")]
     Rooted,
@@ -192,7 +195,7 @@ pub(crate) async fn available(db: &mut SqliteConnection, digest: ContentDigest) 
     if digest.kind() != DigestKind::Artifact {
         return Err(RetentionError::Unavailable);
     }
-    let n:i64=sqlx::query_scalar("SELECT count(*) FROM artifacts a WHERE digest=? AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g WHERE g.digest=a.digest)").bind(digest.hex()).fetch_one(db).await?;
+    let n:i64=sqlx::query_scalar("SELECT count(*) FROM artifacts a WHERE digest=? AND NOT EXISTS(SELECT 1 FROM gc_items g WHERE g.kind='artifact' AND g.object_key=a.digest AND g.state='DELETED') AND NOT EXISTS(SELECT 1 FROM artifact_gc_claims g WHERE g.digest=a.digest)").bind(digest.hex()).fetch_one(db).await?;
     if n != 1 {
         return Err(RetentionError::Unavailable);
     }
@@ -404,7 +407,7 @@ impl Store {
         Ok(())
     }
 }
-async fn roots(
+pub(crate) async fn roots(
     db: &mut SqliteConnection,
     now: i64,
     policy: RetentionPolicy,
@@ -456,9 +459,9 @@ async fn roots(
  UNION SELECT i.artifact_digest FROM version_inputs i JOIN retained_work r ON r.id=i.output_version_id WHERE i.origin_workspace_id=(SELECT id FROM workspaces)
  UNION SELECT artifact_digest FROM pins WHERE artifact_digest IS NOT NULL AND (expires_at_us IS NULL OR expires_at_us>?)
  UNION SELECT artifact_digest FROM read_leases WHERE artifact_digest IS NOT NULL AND released=0 AND expires_at_us>?
- UNION SELECT p.artifact_digest FROM publication_intents p JOIN attempts a ON a.id=p.attempt_id JOIN jobs j ON j.id=a.job_id JOIN builds b ON b.id=j.build_id WHERE p.state='PREPARED' AND b.state IN ('QUEUED','RUNNING')
- UNION SELECT artifact_digest FROM failed_check_candidates
- UNION SELECT json_extract(i.value,'$.artifact') FROM publication_contracts c JOIN jobs j ON j.id=c.job_id JOIN builds b ON b.id=j.build_id,json_each(c.contract_json,'$.inputs') i WHERE b.state IN ('QUEUED','RUNNING') AND json_extract(i.value,'$.workspace')=(SELECT id FROM workspaces) LIMIT 100001"#).bind(now).bind(now).fetch_all(&mut *db).await?;
+ UNION SELECT p.artifact_digest FROM publication_intents p JOIN attempts a ON a.id=p.attempt_id JOIN jobs j ON j.id=a.job_id JOIN builds b ON b.id=j.build_id WHERE p.state='PREPARED'
+ UNION SELECT f.artifact_digest FROM failed_check_candidates f JOIN attempts a ON a.id=f.attempt_id WHERE a.finished_at_us IS NULL OR a.finished_at_us>?
+ UNION SELECT json_extract(i.value,'$.artifact') FROM publication_contracts c JOIN jobs j ON j.id=c.job_id JOIN builds b ON b.id=j.build_id,json_each(c.contract_json,'$.inputs') i WHERE b.state IN ('QUEUED','RUNNING') AND json_extract(i.value,'$.workspace')=(SELECT id FROM workspaces) LIMIT 100001"#).bind(now).bind(now).bind(now.saturating_sub(7*24*60*60*1_000_000)).fetch_all(&mut *db).await?;
     let sources:Vec<String>=sqlx::query_scalar("SELECT source_snapshot_id FROM dataset_versions WHERE id IN (SELECT id FROM retained_work) UNION SELECT source_snapshot_id FROM pins WHERE source_snapshot_id IS NOT NULL AND (expires_at_us IS NULL OR expires_at_us>?) UNION SELECT p.source_snapshot_id FROM build_plans p JOIN builds b ON b.plan_id=p.id WHERE b.state IN ('QUEUED','RUNNING') AND p.source_snapshot_id IS NOT NULL UNION SELECT json_extract(definition_json,'$.build.source.snapshot_id') FROM schedules WHERE deleted_at_us IS NULL AND json_extract(definition_json,'$.build.source.kind')='fixed_snapshot' UNION SELECT json_extract(execution_json,'$.build.source.snapshot_id') FROM schedule_occurrences WHERE disposition IN ('ACCEPTED','QUEUED','HELD','RUNNING') AND json_extract(execution_json,'$.build.source.kind')='fixed_snapshot' LIMIT 100001").bind(now).fetch_all(&mut *db).await?;
     if digests.len() > 100_000 || sources.len() > 100_000 {
         return Err(RetentionError::ClockOrLimit);
@@ -479,7 +482,7 @@ async fn roots(
 pub(crate) async fn version_available(db: &mut SqliteConnection, version: VersionId) -> Result<()> {
     let row=sqlx::query(r#"WITH RECURSIVE lineage(id) AS (
  SELECT ? UNION SELECT v.id FROM version_inputs i JOIN lineage l ON l.id=i.output_version_id JOIN dataset_versions v ON v.id=i.origin_version_id AND v.dataset_id=i.origin_dataset_id WHERE i.origin_workspace_id=(SELECT id FROM workspaces) LIMIT 100001)
- SELECT count(*),coalesce(sum(CASE WHEN EXISTS(SELECT 1 FROM dataset_versions v JOIN artifact_gc_claims g ON g.digest=v.artifact_digest WHERE v.id=l.id) OR EXISTS(SELECT 1 FROM version_inputs i JOIN artifact_gc_claims g ON g.digest=i.artifact_digest WHERE i.output_version_id=l.id) THEN 1 ELSE 0 END),0) FROM lineage l"#).bind(version.to_string()).fetch_one(db).await?;
+ SELECT count(*),coalesce(sum(CASE WHEN EXISTS(SELECT 1 FROM dataset_versions v JOIN artifacts a ON a.digest=v.artifact_digest WHERE v.id=l.id AND (EXISTS(SELECT 1 FROM gc_items g WHERE g.kind='artifact' AND g.object_key=v.artifact_digest AND g.state='DELETED') OR EXISTS(SELECT 1 FROM artifact_gc_claims g WHERE g.digest=v.artifact_digest) OR EXISTS(SELECT 1 FROM gc_items g WHERE g.kind='source' AND g.object_key=v.source_snapshot_id AND g.state IN ('CLAIMED','DELETED')))) OR EXISTS(SELECT 1 FROM version_inputs i JOIN artifact_gc_claims g ON g.digest=i.artifact_digest WHERE i.output_version_id=l.id AND i.origin_workspace_id=(SELECT id FROM workspaces)) THEN 1 ELSE 0 END),0) FROM lineage l"#).bind(version.to_string()).fetch_one(db).await?;
     if row.try_get::<i64, _>(0)? > 100_000 {
         return Err(RetentionError::ClockOrLimit);
     }

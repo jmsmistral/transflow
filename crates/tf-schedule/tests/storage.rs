@@ -548,9 +548,9 @@ async fn schema_fourteen_upgrade_preserves_definitions_and_rejects_unknown_zone_
     )
     .await?;
     s.close().await?;
-    sqlx::raw_sql("DROP TABLE schedule_pause_intervals; DROP TABLE schedule_clock_ticks; DROP TABLE schedule_clock_state; DELETE FROM schema_migrations WHERE version>=15; PRAGMA user_version=14;").execute(&mut db).await?;
+    sqlx::raw_sql("DROP TRIGGER gc_blocks_source_pin; DROP TRIGGER gc_blocks_expired_head_insert; DROP TRIGGER gc_blocks_expired_head_update; DROP TRIGGER gc_blocks_expired_source_plan_insert; DROP TRIGGER gc_blocks_expired_source_plan_update; DROP TABLE gc_items; DROP TABLE gc_deletions; DROP TABLE schedule_pause_intervals; DROP TABLE schedule_clock_ticks; DROP TABLE schedule_clock_state; DELETE FROM schema_migrations WHERE version>=15; PRAGMA user_version=14;").execute(&mut db).await?;
     let mut s = Store::open(&path).await?;
-    assert_eq!(s.info().schema_version, 16);
+    assert_eq!(s.info().schema_version, 17);
     assert_eq!(count(&mut db, "SELECT count(*) FROM schedules").await?, 1);
     assert!(poll(&mut s, start + 60_000_000).await.is_err());
     assert_eq!(

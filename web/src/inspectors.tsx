@@ -79,6 +79,7 @@ export function versionMetadata(
   );
   return {
     version,
+    expired: entry?.origin === "local" && entry.availability === "expired",
     schema,
     rows:
       entry?.origin === "local"
@@ -270,6 +271,9 @@ export function PropertiesInspector({
               value={date(ready.inspection?.created_us ?? undefined)}
             />
             <Detail name="Published" value={date(meta?.published)} />
+            {meta?.expired && (
+              <Detail name="Data availability" value="Data expired" />
+            )}
             <Detail name="Rows" value={display(meta?.rows)} />
             <Detail name="Files" value={display(meta?.files)} />
             <Detail name="Physical bytes" value={display(meta?.bytes)} />
@@ -396,7 +400,14 @@ function PreviewContent({
     columns,
   ]);
   useEffect(() => {
-    if (!dataset || !version || !columns.length || columns.length > 128) return;
+    if (
+      !dataset ||
+      !version ||
+      !columns.length ||
+      columns.length > 128 ||
+      meta?.expired
+    )
+      return;
     const request = new AbortController();
     void workspace
       .preview(
@@ -433,7 +444,7 @@ function PreviewContent({
         },
       );
     return () => request.abort();
-  }, [workspace, key, cursor, dataset, version, columns, retry]);
+  }, [workspace, key, cursor, dataset, version, columns, retry, meta?.expired]);
   const page = result?.key === key ? result.page : null;
   if (!dataset)
     return (
@@ -485,6 +496,11 @@ function PreviewContent({
       </DatasetHeader>
       {!version ? (
         <p className="preview-empty">No published version is available.</p>
+      ) : meta?.expired ? (
+        <p className="preview-empty" role="status">
+          Data expired. Version history and schema are retained; the collected
+          data cannot be previewed or replayed.
+        </p>
       ) : !schema ? (
         <p className="preview-empty">
           Schema metadata is unavailable for this version.

@@ -9,6 +9,7 @@ description = "Transflow CLI and application composition root"
 [dependencies]
 rustix.workspace = true
 tf-api = { path = "../tf-api" }
+tf-lsp = { path = "../tf-lsp" }
 tf-domain = { path = "../tf-domain" }
 tf-protocol = { path = "../tf-protocol" }
 tf-catalog = { path = "../tf-catalog" }

@@ -1,0 +1,184 @@
+{
+  "date": "2026-10-17",
+  "platform": "macOS 15.3.1 arm64",
+  "python": "3.14.7",
+  "scope": [
+    "Product README and linked guides",
+    "T107 dataset-reference stdio LSP",
+    "T108 local editor clients, partial native qualification",
+    "T111 read-only reachability reporting and fenced physical GC"
+  ],
+  "runtime_schema": 17,
+  "readme_lines": 93,
+  "changes": {
+    "lsp": [
+      "LSP 3.17 finite protocol-only stdio",
+      "isolated static Python syntax, UTF-16 ranges and debounced documents",
+      "read-only workspace-qualified catalogue and retained producer metadata",
+      "C/string completions, hover, source navigation, invalid/stale diagnostics"
+    ],
+    "editors": [
+      "Additive local VS Code source extension, no runtime npm dependencies",
+      "Emacs CAPF/Eldoc/Flymake minor mode and explicit Python 3.14 comint compatibility helper"
+    ],
+    "gc": [
+      "Latest-20 OR 30-day retention plus transitive local roots, leases and pins",
+      "Read-only dry run; explicit --apply --yes requires real exclusive runtime ownership",
+      "Durable first-seen orphan/source grace, quarantine and independent log lifetime",
+      "Intent-specific bounded nofollow removal and recoverable claims",
+      "Immutable publication evidence with separate expired-byte availability ledger"
+    ]
+  },
+  "verification": {
+    "rust": {
+      "status": "passed cumulatively",
+      "native_tests": 494,
+      "doc_tests": 1,
+      "coverage": "All workspace crates; unchanged eight-crate passing prefix plus final storage/CLI and all documentation suites",
+      "commands": [
+        "PYTHON=target/python/py314/bin/python bash tools/check-rust.sh",
+        "cargo fmt --all -- --check",
+        "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+        "cargo test -p tf-store -p transflow --locked --offline",
+        "cargo test --workspace --doc --locked --offline"
+      ],
+      "logs": [
+        "/tmp/transflow-t107-t111-rust-complete.log",
+        "/tmp/transflow-t107-t111-rust-final-lint.log",
+        "/tmp/transflow-t107-t111-rust-storage-cli.log",
+        "/tmp/transflow-t107-t111-rust-doc.log"
+      ],
+      "reconciliation": "The broad runner exposed obsolete publication-recovery assumptions and exact fixture/table/migration counts. Recovery tests now require real reconciliation; fixture counts track the added GC vector and runtime-17 tables. After the final two count corrections, all affected storage/CLI tests and doc tests were rerun; unchanged passing earlier suites were reused. No application source changed during these final fixture corrections."
+    },
+    "python": {
+      "status": "passed",
+      "tests": 1130,
+      "log": "/tmp/transflow-t107-t111-python.log"
+    },
+    "web": {
+      "status": "passed",
+      "tests": 654,
+      "reproducible_assets": 16,
+      "log": "/tmp/transflow-t107-t111-web.log"
+    },
+    "cli": {
+      "status": "passed",
+      "tests": 70,
+      "seconds": 635.47,
+      "command": "TRANSFLOW_EMACS=/Users/jms/bin/emacs/emacs bash tools/check-cli.sh",
+      "log": "/tmp/transflow-t107-t111-cli-final.log"
+    },
+    "emacs": {
+      "version": "30.1",
+      "native_ert_tests": 4,
+      "byte_compile": "passed; no compiler warnings",
+      "coverage": [
+        "independent simultaneous workspace clients",
+        "catalogue completion, typo rejection and refresh",
+        "retained producer hover/navigation and UTF-16",
+        "installed SDK root and expectations submodule completion alongside Python CAPF"
+      ]
+    },
+    "vscode": {
+      "native_ui": "not run; VS Code unavailable",
+      "node_native_service_transport": "passed; not native VS Code qualification"
+    },
+    "spec_checker_regressions": 44,
+    "safety_regressions": 27,
+    "advisories": {
+      "provider": "OSV",
+      "queried": 639,
+      "reported_matches": 0,
+      "note": "No absence-of-vulnerabilities claim"
+    },
+    "browser": {
+      "surface": "Codex internal Browser",
+      "journey": [
+        "Authenticated matching copied review bundle",
+        "Opened saved Operational alpha review; four successful dataset nodes",
+        "Selected curated/delivery; published preview has three rows",
+        "SQL editor left/results right; real DuckDB query returns exact three rows",
+        "Running indicator lifecycle and terminal controls observed"
+      ],
+      "query_observations": [
+        {
+          "outcome": "TIMED_OUT",
+          "duration_seconds": 30.1,
+          "note": "First query in fresh environment during concurrent native gates; cause not established"
+        },
+        {
+          "outcome": "SUCCEEDED",
+          "duration_seconds": 7.81,
+          "rows": 3
+        }
+      ],
+      "console_warnings_errors": 0,
+      "tab": "closed",
+      "coordinator_exit_code": 0
+    },
+    "safety_public_candidate_files_before_receipt": 873,
+    "spec_documents": 104,
+    "spec_local_links": 995
+  },
+  "review": {
+    "workspace": "/Users/jms/dev/transflow-workspace/t111-editors-retention-review",
+    "launcher": "/Users/jms/dev/transflow-workspace/t111-editors-retention-review-tools/serve-preview.sh",
+    "saved_view": "Operational alpha review",
+    "datasets": 4,
+    "paused_schedules": 2,
+    "real_builds": {
+      "first": "4 successful jobs",
+      "repeat": "4 cached jobs, no attempts",
+      "review_branch": "1 successful job"
+    },
+    "cli_sha256": "50ac0dd60e9c8c28bd19d18b5e0ec39fa23fb21b5b1a5e50aabca5cc22d4b2f9",
+    "wheel_sha256": "c4cf342fa53149f3ee422e9cd4452b54832212fb105e3203f9a4f1e7aafebc44",
+    "ui_sha256": {
+      ".vite/manifest.json": "3c2f0dc964c231174b33a52c91439dd594738c4cbf937634a357830b6f66329f",
+      "assets/column.service-pu_fdQ0S-DELTJplQ.js": "ff2482618e5cb90e6dffc6672b740f32dc76539c5821a1c7426abb8cdba78347",
+      "assets/debounce-PCRWZliA-Dh58NMOG.js": "d5d274011102bd3c977f540b5391a95b24a2d4e4d124442c1ea35543189c4b64",
+      "assets/dimension.helpers-Cln9sALu-BTbF81SO.js": "19eecf7a766b957403ddb55e2809a33f2765de988ee30cece22b5f2a05d4391f",
+      "assets/events-BvSmBueA-4kqQ57iN.js": "48d0a6aad9b77628e8dea03ae4689c8b25951d25ba5f43ea957888a545555c93",
+      "assets/index-D0hQeTiV.js": "2a54377cbd5397ee24f3c1375aca35b55dfea47f42df8f16e3eb60aab180524f",
+      "assets/index-DGwO32gx.css": "a7994082ca58c5251fe85bc4c2170e6b620a77db4d8af2c5dd7c18861a4d737d",
+      "assets/layout-worker-UjtT9XpI.js": "f34c39b86c8a8d185d6922fbdcf9c17b63316787311e8459afed5c076be8f27c",
+      "assets/revo-grid.entry-ChS4cCci.js": "6726376d7f90d9248c924bd72df8ae245422b3f565d240ba8acde47d9e2f3c7e",
+      "assets/revogr-attribution_7.entry-D4oxlcy8.js": "fe0b7c1caae1bc0f9219923ab89405337ecbdcb35def0e02b76ecbd421d27d7f",
+      "assets/revogr-clipboard_3.entry-DFbd-6KH.js": "735aef0c6afddf95155781f9531853a59b91f67ef1e60ae69c1b776ff211d668",
+      "assets/revogr-data_4.entry-Cavw7zof.js": "37e2bd9d77997686c836cdd35f984b932add53e5221e0057ee2cbdb66087e154",
+      "assets/revogr-filter-panel.entry-Bbh9ihvW.js": "51eb663a18f08b40ed311538802ca52baa1d86dbf7d8f8897a44b2a4e06576e1",
+      "assets/throttle-3rhqdcLy-DDYBq0kx.js": "da3d83f4fdedb78dec4e2a130986b6a8062c2c120ef402a0b11777197b0a3db8",
+      "assets/viewport.helpers-CoCAvmZs-ByVRjjkF.js": "6470a10316e0f1e12a9ba4ed16b4c081f60a8247c371ff7067296fff031f9b55",
+      "index.html": "2a662ede17dee0878da9fd229c6baaf9c9dec22a7ca5912376922d2dac25188c"
+    },
+    "existing_review_bundles": "preserved",
+    "gc_dry_run": {
+      "status": "passed",
+      "items": 15,
+      "actions": {
+        "retain": 13,
+        "observe": 2
+      },
+      "collectible_bytes": "0",
+      "deleted_bytes": "0"
+    }
+  },
+  "scenario_scope": {
+    "A35": "Dataset navigation only; column inference deferred",
+    "A39": "GC, root protection, expiry and migration regression slice; backup/restore remains T112",
+    "A40": "Local copied CLI/wheel/UI and Emacs batch; release/cross-platform/native VS Code remains open",
+    "A49": "Existing registry recovery regressions retained in native suite",
+    "A53_A69": "Reference/identity isolation, typo/refresh and installed-SDK behavior; full editor qualification incomplete",
+    "A56_A64": "Existing provider lease/replay roots plus physical collection fences; no consumer copies"
+  },
+  "limits": [
+    "T031/T107/T108 remain unchecked while native editor prerequisite qualification is incomplete",
+    "No interactive Emacs Python LSP or native VS Code qualification inferred",
+    "Expired-data presentation covered by component and real version-API tests, not an aged Browser fixture",
+    "Local macOS arm64 results; new remote CI awaits owner confirmation and is not polled",
+    "Fresh review query first hit default 30-second deadline before a successful repeat; no performance qualification claimed",
+    "No column lineage or OpenLineage projection/delivery",
+    "No public package upload, name registration or release guard removal",
+    "T112 backup/restore implementation remains separate"
+  ]
+}

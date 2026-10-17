@@ -124,7 +124,7 @@ fn names_path(reference: &Value, path: &str) -> bool {
 fn base(registry: &RegistrySnapshot, operation: &str) -> Value {
     json!({"kind":"catalog","operation":operation,"applied":false,"registry_fingerprint":registry.fingerprint().hex(),"entries":[],"next_cursor":null,"total":"0","impact":{"total":"0","items":[]},"blockers":[],"previous_path":null,"new_path":null,"alias_retained":false})
 }
-fn retained(workspace: &Workspace) -> Result<BTreeMap<DatasetId, Value>, Error> {
+pub(crate) fn retained(workspace: &Workspace) -> Result<BTreeMap<DatasetId, Value>, Error> {
     let mut locations = BTreeMap::new();
     if let Some(value) = tf_catalog::graph_cache::latest(workspace.root())? {
         let id = value["source_snapshot_id"]

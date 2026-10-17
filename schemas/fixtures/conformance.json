@@ -2209,7 +2209,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2300,7 +2302,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2391,7 +2395,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2482,7 +2488,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2573,7 +2581,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2664,7 +2674,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2755,7 +2767,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2846,7 +2860,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -2937,7 +2953,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -3004,7 +3022,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -5815,7 +5835,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -5907,7 +5929,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -6023,7 +6047,9 @@
         "schedule.history",
         "schedule.metrics",
         "schedule.export",
-        "schedule.delete"
+        "schedule.delete",
+        "lsp",
+        "gc"
       ],
       "context": {
         "workspace": "/synthetic/analysis",
@@ -9753,5 +9779,17 @@
       "spill_bytes": "268435456"
     },
     "valid": false
+  },
+  {
+    "name": "gc-dry-run-empty",
+    "schema": "GcResultV1",
+    "valid": true,
+    "value": {
+      "kind": "gc",
+      "applied": false,
+      "collectible_bytes": "0",
+      "deleted_bytes": "0",
+      "items": []
+    }
   }
 ]

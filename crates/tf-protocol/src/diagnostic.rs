@@ -54,6 +54,8 @@ pub const CLI_CAPABILITIES: &[&str] = &[
     "schedule.metrics",
     "schedule.export",
     "schedule.delete",
+    "lsp",
+    "gc",
 ];
 /// Successful informational operation.
 #[derive(Clone, Copy, Debug)]
@@ -104,6 +106,15 @@ fn text_bytes(value: &Diagnostic) -> usize {
         + value.causes().iter().map(text_bytes).sum::<usize>()
 }
 impl CliEnvelope {
+    /// Explicit reachability report, including observations and completed physical removals.
+    pub fn gc(
+        version: &SafeText,
+        ctx: &RequestContext,
+        result: Value,
+    ) -> Result<Self, ProtocolError> {
+        validate_document("GcResultV1", &result)?;
+        Self::encode(version, ExitStatus::Success, ctx, result, vec![])
+    }
     /// Successful help/version result. Every dynamic string is sanitized first.
     pub fn success(
         version: &SafeText,

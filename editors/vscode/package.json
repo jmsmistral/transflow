@@ -1,0 +1,28 @@
+{
+  "name": "transflow",
+  "displayName": "Transflow datasets",
+  "description": "Local dataset completion, hover, diagnostics and producer navigation alongside Python tooling.",
+  "version": "0.0.0",
+  "publisher": "transflow-local",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": { "vscode": "^1.100.0" },
+  "categories": ["Programming Languages"],
+  "main": "./extension.cjs",
+  "activationEvents": ["onLanguage:python"],
+  "capabilities": {"untrustedWorkspaces": {"supported": false}},
+  "contributes": {
+    "commands": [
+      {"command": "transflow.restart", "title": "Transflow: Restart Dataset Service"},
+      {"command": "transflow.openProducer", "title": "Transflow: Open Dataset Producer"}
+    ],
+    "configuration": {
+      "title": "Transflow",
+      "properties": {
+        "transflow.executable": {"type": "string", "default": "transflow", "scope": "machine-overridable", "description": "Matched native Transflow executable. Only runs in a trusted workspace."},
+        "transflow.python": {"type": "string", "default": "", "scope": "machine-overridable", "description": "Optional Python 3.14 parser executable. Otherwise use workspace configuration."},
+        "transflow.branch": {"type": "string", "default": "", "scope": "resource", "description": "Optional explicit data branch for hover metadata."}
+      }
+    }
+  }
+}

@@ -35,7 +35,7 @@ control operations; public query lifecycle integration remains T080. See the
 | Logical schema, artifact manifest, catalogue snapshot | 1 each | Shapes defined here |
 | Expectation AST | 1 | T059–T060 typed G1 syntax and exact semantics; artifact evaluation remains T061 |
 | Workspace config, authoring registry, HTTP API | 1 each | Independent configuration/API baselines |
-| SQLite schema contract placeholder | 0 | Historical wire placeholder; actual product database version is 11, owned by tf-store migrations |
+| SQLite schema contract placeholder | 0 | Historical wire placeholder; actual product database version is 17, owned by tf-store migrations |
 
 Product version, specification version and these format versions are independent.
 Persisted documents accept only their exact known format version; unsupported

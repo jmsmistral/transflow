@@ -1,5 +1,60 @@
 # Contributor verification
 
+## Dataset editor clients and retention collection (2026-10-17)
+
+The root README remains a 93-line product introduction with an original synthetic
+UI visual, authoring examples and concise guide links. Contributor entry points
+protect that structure. New editor and retention guides hold the detailed behavior.
+OpenLineage projection/delivery and column lineage remain deferred.
+
+T107 supplies bounded protocol-only stdio LSP, isolated static Python syntax,
+UTF-16 completion edits, hover/navigation and explicit stale/missing diagnostics.
+Metadata is read-only and workspace-qualified, including local/foreign UUID
+collisions. Producers are never imported on keystrokes. T108 supplies thin local
+VS Code source and additive Emacs CAPF/Eldoc/Flymake clients. Four actual Emacs
+30.1 ERT checks cover isolated contexts, typo/refresh, navigation and installed-SDK
+root/submodule completion with Python CAPF. The explicit Python 3.14 comint helper
+uses builtin open instead of deprecated codecs.open without warning suppression.
+Native VS Code and interactive Python-server qualification remain open; T031,
+T107 and T108 remain unchecked while that prerequisite evidence is incomplete.
+
+T111 implements read-only GC explanations and explicit --apply --yes collection
+under real exclusive ownership. Runtime 17 retains immutable artifact/version
+evidence and separates availability/intent/deletion receipts. Latest-20 OR 30-day
+history, transitive local inputs, heads, live leases, plans, schedules and backup
+pins stay rooted. Prepared publication intents remain protected until recovery,
+even after a build fails. Verified orphans/source captures need seven days of
+recorded observation; quarantine and completed logs have separate lifetimes.
+Bounded descriptor-relative removal refuses unsafe namespaces and resumes exact
+interrupted intents. API/UI expiry retains metadata without silently replaying
+latest data. Backup/restore implementation remains T112.
+
+Local Python passes 1,130 tests; web passes 654 tests plus strict checks and
+reproducible 16-asset builds. The full CLI gate passes 70 tests, including actual
+Emacs and Node-to-native-service checks, static-parser isolation and real Parquet
+collection. Rust workspace coverage passes cumulatively: 494 native tests and 1 doc test; final formatting/clippy and affected storage/CLI suites pass. All 44 spec
+checker regressions and 27 safety regressions pass. The refreshed 639-version OSV
+query reports zero matches; this is not a vulnerability-free claim. Only local
+crate wiring changed in Cargo.lock; no third-party package version was added.
+
+A fresh persistent review workspace uses copied matching CLI, wheel, clients and
+UI. Its real four-job Polars build succeeds; the repeat has four cached jobs and
+no attempts. Internal Browser opens Operational alpha review, reads a three-row
+published preview and executes the real DuckDB scratchpad query with editor left
+and results right. The first fresh-environment query hits the existing 30-second
+deadline during concurrent native checks; a repeat succeeds in 7.81 seconds.
+The cause is not established and no performance qualification is claimed. Final
+console warnings/errors are absent. The tab closes and the coordinator exits zero.
+Expired UI is covered by component and real version-API checks, not an aged Browser
+fixture. Cross-platform CI remains owner-monitored and has not been polled.
+
+Launch `bash ~/dev/transflow-workspace/t111-editors-retention-review-tools/serve-preview.sh`,
+then Lineage actions → Open lineage → Operational alpha review. The workspace is
+`~/dev/transflow-workspace/t111-editors-retention-review`; it has four datasets and
+two paused schedules. Earlier review bundles are preserved. Public PyPI upload
+remains guarded; propose a versioned alpha only after owner review/CI and concrete
+artifact/platform/namespace readiness. See the [receipt](evidence/t107-t108-t111-editors-retention-macos-arm64.json).
+
 ## Product README and owner priorities (2026-10-17)
 
 The implementation root README is now a 90-line product introduction with an

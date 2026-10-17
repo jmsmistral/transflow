@@ -736,3 +736,8 @@ def validate_NumericRowNodeV1(value: object) -> None:
 def validate_NumericCheckQueryV1(value: object) -> None:
     """Assert the NumericCheckQueryV1 contract, including custom formats."""
     validate_document("NumericCheckQueryV1", value)
+
+
+def validate_GcResultV1(value: object) -> None:
+    """Assert the GcResultV1 contract, including custom formats."""
+    validate_document("GcResultV1", value)

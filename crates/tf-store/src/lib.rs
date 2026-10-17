@@ -1,5 +1,9 @@
 //! Serialized SQLite repositories. The coordinator owns one Store; no transaction escapes.
 pub mod catalog_mutations;
+/// Reachability inventory and durable collection fencing.
+pub mod gc;
+/// Bounded descriptor-relative physical retirement and recovery.
+pub mod gc_files;
 mod migrations;
 mod path;
 /// Durable event matching and exact schedule-token evidence, without dispatch.
@@ -20,7 +24,7 @@ use std::{
 use tf_domain::{DatasetId, WorkspaceId};
 
 /// Latest supported runtime schema. Authoring registry versions are independent.
-pub const SCHEMA_VERSION: i64 = 16;
+pub const SCHEMA_VERSION: i64 = 17;
 
 /// Historical estimates of total build operation time.
 pub mod build_estimates;

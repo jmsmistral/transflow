@@ -7,9 +7,14 @@ pending checks, not failures or claimed passes.
 
 ## Catalogue editor integration — T031/T108
 
-T010's runtime/mypy prototype is complete for G0. Native editor completion remains
-pending in both VS Code and Emacs. Use the synthetic contexts and setup constraints
-in the [overlay report](catalog-overlay.md), once editor integration is delivered.
+T010's runtime/mypy prototype is complete for G0. The dataset service and additive
+clients are described in the [editor guide](../editors.md). Emacs 30.1 batch checks
+now exercise independent catalogue completion, diagnostics/refresh, navigation,
+UTF-16 and installed-SDK/submodule completion alongside Python CAPF. Its optional
+Python 3.14 comint compatibility setup is tested without warning suppression.
+Interactive session review and native VS Code qualification remain open; a Node
+transport test is not evidence of a VS Code UI pass. Use the synthetic contexts
+and stub setup in the [overlay report](catalog-overlay.md).
 
 - Open two independent workspaces simultaneously: `raw/orders` in one and
   `raw/invoices` in the other. Each `C.raw.` completion must show its own names.
