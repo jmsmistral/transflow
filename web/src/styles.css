@@ -2325,8 +2325,9 @@ revo-grid.preview-grid
   border-bottom: 1px solid var(--line);
 }
 .history-summary-header .metrics-summary {
+  flex: 1 1 auto;
+  justify-content: center;
   gap: 10px 20px;
-  margin-right: auto;
   padding: 0 24px 3px;
   border: 0;
 }
@@ -2346,8 +2347,9 @@ revo-grid.preview-grid
   padding: 8px 12px;
 }
 .duration-chart svg {
+  display: block;
   width: 100%;
-  max-height: 210px;
+  height: 210px;
   color: var(--muted);
   font-size: 10px;
   fill: currentColor;
@@ -4183,10 +4185,21 @@ revo-grid.preview-grid
   margin: 0;
 }
 .health-check {
-  padding: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 5px;
+  margin-top: 8px;
 }
-.health-check + .health-check {
-  border-top: 1px solid var(--line);
+.health-check-heading .health-dot {
+  width: 14px;
+  flex: 0 0 14px;
+  align-self: center;
+}
+.health-check-heading strong {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .health-check-heading {
   display: flex;
@@ -4295,6 +4308,11 @@ revo-grid.preview-grid
   margin: 18px 0 8px;
   list-style: none;
 }
+.health-history > li {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 22px;
+}
 .health-dot {
   max-width: 22px;
   min-width: 0;
@@ -4302,6 +4320,9 @@ revo-grid.preview-grid
   line-height: 1;
   align-self: flex-start;
   aspect-ratio: 1;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--health-border, var(--line));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -4310,6 +4331,49 @@ revo-grid.preview-grid
   font-size: 13px;
   font-weight: 700;
 }
+.health-history .health-dot {
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+.health-history .health-dot:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.health-history .health-dot:not(:disabled):hover,
+.health-history .health-dot:focus-visible,
+.health-history .health-dot[aria-expanded="true"] {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 3px var(--line);
+}
+.health-history-details {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 220ms ease,
+    opacity 220ms ease;
+}
+.health-history-details[data-expanded="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.health-history-details > div {
+  overflow: hidden;
+  min-height: 0;
+}
+.health-selected-at {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 10px 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .health-history-details,
+  .health-history .health-dot {
+    transition: none;
+  }
+}
 .health-pill {
   padding: 3px 9px;
   border-radius: 999px;
@@ -4317,14 +4381,17 @@ revo-grid.preview-grid
   white-space: nowrap;
 }
 .health-good {
+  --health-border: #94bfaa;
   background: #d6efdf;
   color: #16603b;
 }
 .health-warn {
+  --health-border: #d7bd68;
   background: #fff0b8;
   color: #785600;
 }
 .health-bad {
+  --health-border: #dda2a0;
   background: #fbe0df;
   color: #a32727;
 }

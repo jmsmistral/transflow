@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-19",
+  "tasks": [
+    "T086",
+    "T088"
+  ],
+  "changes": [
+    "Plain bordered health circles open and close their own retained check cards with hover, keyboard and reduced-motion support.",
+    "Publication availability info badges removed; other diagnostic badges retained.",
+    "History metrics centred, chart fitted to pane width, failed attempts excluded from scatter points."
+  ],
+  "verification": {
+    "web": {
+      "command": "bash tools/check-web.sh",
+      "result": "passed",
+      "tests": 661,
+      "assets": 16,
+      "log": "/tmp/health-details-web.log"
+    },
+    "safety": {
+      "result": "passed",
+      "tests": 27,
+      "log": "/tmp/health-details-safety.log"
+    },
+    "specification": {
+      "result": "passed",
+      "checker_tests": 44,
+      "logs": [
+        "/tmp/health-details-spec.log",
+        "/tmp/health-details-spec-tests.log"
+      ]
+    },
+    "browser": {
+      "result": "passed",
+      "workspace": "t111-health-details-review",
+      "observations": [
+        "Real failed build, published WARN and input FAIL evidence stay separate; older build opens both retained input/output checks.",
+        "Mouse and Enter toggle panels; cached reuse explicitly reports no execution, empty history slots are disabled.",
+        "Circle glyphs absent, darker 1px borders, hover/selected feedback and 220ms expansion transitions.",
+        "Wide pane metrics are centred; responsive SVG uses its 1202px content width; two successful points and zero failed points.",
+        "Narrow pane wraps dates and retains circular controls; light/dark layouts checked with no warning/error console logs.",
+        "Publication availability has no info badge; independent input-failure badge is retained.",
+        "Launcher verified; coordinator stopped before handoff."
+      ]
+    },
+    "runtime_suites": {
+      "result": "not rerun",
+      "reason": "Rust, Python and API contracts unchanged; this delivery changes only web presentation and client evidence selection."
+    }
+  },
+  "limits": [
+    "Missing history slots are disabled; unavailable retained evidence remains explicit.",
+    "Remote CI remains owner-monitored."
+  ]
+}

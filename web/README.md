@@ -12,7 +12,7 @@ data or substitute a moving head. Fallback data has Preview's branch warning.
 All five bottom tabs share a full-width, 44-pixel dataset header with a 13-pixel
 name. The name stays on the left; controls and metadata keep their context without
 repeating the tab title. Long names truncate visually and retain their full tooltip.
-Data health scrolls its details separately from this header.
+The right Health inspector scrolls its details separately from this header.
 
 The scratchpad uses an editor on the left and an always-present Results pane on
 the right. Run query (play icon) and Cancel query sit beside the dataset name,
@@ -45,12 +45,20 @@ The API still supports bound parameters; the scratchpad submits an empty list.
 
 Data health lives only in the right inspector. Latest builds, Published data checks
 and Input dataset checks each show ten newest-first status circles and a latest
-status pill. Missing history, absent checks and unavailable evidence stay neutral;
+status pill. Filled circles have a darker border and open their own retained checks
+in an animated panel, with a status circle and text on each grey check card.
+Click the selected circle again to close it; empty history slots are disabled.
+Keyboard activation and reduced motion are supported. Missing history, absent checks and unavailable evidence stay neutral;
 PASS is green, WARN violations amber and FAIL violations red. Build reuse is labelled
 Cached and never invents a check run. Histories read up to 1,000 jobs through bounded
 pages ordered by build creation time (`order=newest`) and disclose that limit when reached. Published checks use exact version
 contexts; input checks use each attempt's retained plan. Provider certificates stay
 retained metadata, without executing or contacting provider code.
+
+History centres summary metrics between its heading and date controls. Its duration
+chart uses the available width and plots successful attempts only; failed jobs
+remain in the list and failure-rate metrics. Publication availability no longer
+adds an info badge to graph nodes.
 
 Node hover cards separate Data quality from Freshness. Freshness compares successful
 direct-input publications with the displayed output publication, following named

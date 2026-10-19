@@ -168,10 +168,7 @@ export function paint(
   plan: PlanResultV1 | null = null,
 ): Paint {
   const f = node.overlay;
-  const badges = [
-    ...(f?.version && colour === "status" ? ["Published data available"] : []),
-    ...(f?.input_failed ? ["Input check failed"] : []),
-  ];
+  const badges = [...(f?.input_failed ? ["Input check failed"] : [])];
   if (
     ["rows", "files", "bytes"].includes(colour) ||
     colour.startsWith("duration")

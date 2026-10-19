@@ -5,7 +5,9 @@ import { property } from "./execution-ui";
 export interface HealthPoint {
   label: string;
   tone: "good" | "warn" | "bad" | "neutral";
-  at?: string;
+  at?: string | undefined;
+  checks?: readonly ExecutionJsonV1[] | undefined;
+  note?: string | undefined;
 }
 /** Aggregate recorded results; absent checks and unknown policies never imply PASS. */
 export function checkStatus(checks: readonly ExecutionJsonV1[]): HealthPoint {

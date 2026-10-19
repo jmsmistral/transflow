@@ -128,6 +128,7 @@ async function fixture(
     trigger?: ExecutionJsonV1;
     fail?: boolean;
     sql?: boolean;
+    jobs?: ApiHistoryJobV1[];
   } = {},
 ) {
   const calls: { path: string; query: Record<string, string> }[] = [];
@@ -194,7 +195,10 @@ async function fixture(
           );
         if (path.endsWith("/history"))
           return Promise.resolve(
-            json({ entries: [historyJob], next_cursor: null }, c),
+            json(
+              { entries: control.jobs ?? [historyJob], next_cursor: null },
+              c,
+            ),
           );
         if (path.endsWith("/metrics"))
           return Promise.resolve(
@@ -1031,5 +1035,44 @@ test("background metadata refresh keeps the selected job and Build modal mounted
       .getByRole("button", { name: /FAILED · 1 attempts/ })
       .getAttribute("aria-pressed"),
   ).toBe("true");
+  model.dispose();
+});
+
+test("History chart excludes failed and cached attempts while retaining failure metrics and job entries", async () => {
+  const success = {
+    ...job,
+    id: versionId,
+    state: "SUCCEEDED",
+    attempts: job.attempts.map((a) => ({
+      ...a,
+      attempt: versionId,
+      state: "SUCCEEDED",
+      duration_ns: "2000000000",
+    })),
+  };
+  const cached = { ...job, id: workspaceId, state: "CACHED", attempts: [] };
+  const { model, state } = await fixture(false, job, {
+    jobs: [job, success, cached],
+  });
+  const view = render(
+    <HistoryInspector workspace={model} state={state} onVersion={() => {}} />,
+  );
+  fireEvent.change(screen.getByRole("textbox", { name: "From" }), {
+    target: { value: "2023-11-14" },
+  });
+  fireEvent.change(screen.getByRole("textbox", { name: "To" }), {
+    target: { value: "2023-11-14" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+  const chart = await screen.findByRole("img", {
+    name: "Measured attempt durations by build acceptance time",
+  });
+  expect(chart.querySelectorAll("circle")).toHaveLength(1);
+  expect(chart.querySelector("circle title")?.textContent).toContain(
+    "SUCCEEDED",
+  );
+  expect(chart.querySelector(".status-failed")).toBeNull();
+  expect(view.container.querySelectorAll(".history-entry")).toHaveLength(3);
+  expect(screen.getByText("100.00%")).toBeTruthy();
   model.dispose();
 });

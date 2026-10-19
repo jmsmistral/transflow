@@ -1,5 +1,22 @@
 # Contributor verification
 
+## Health circle details and History layout (2026-10-19)
+
+Each filled health circle opens its own retained checks in an animated panel with
+grey status cards. Empty slots are disabled; cached reuse remains explicit.
+Publication availability badges are removed. History centres its metrics, fits
+the chart to the pane width and plots successful attempts only, while retaining
+failed jobs and failure metrics.
+
+The web gate passes 661 tests, strict checks and reproducible production assets.
+Safety passes 27 regressions; specification validation and 44 checker regressions
+pass. Internal Browser review covers real retained WARN/FAIL evidence, older
+checks, keyboard collapse, narrow/wide layout and light/dark themes. See the
+[receipt](evidence/t088-health-interactions.json). The rebuilt
+`t111-health-details-review` bundle has a verified launcher; the preceding review
+workspace is preserved. Native runtime suites are unchanged and were not rerun;
+remote CI remains owner-monitored.
+
 ## Health history and exploration details (2026-10-19)
 
 Health now lives in the right inspector with ten-slot build, published-check and

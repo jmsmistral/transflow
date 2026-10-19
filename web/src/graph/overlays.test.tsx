@@ -38,7 +38,7 @@ const node: ApiLineageNodeV1 = {
 test("failed latest attempt retains valid head and original output health independently of consumer failure", () => {
   expect(paint(node, "status")).toMatchObject({
     key: "Failed",
-    badges: ["Published data available", "Input check failed"],
+    badges: ["Input check failed"],
   });
   expect(paint(node, "health")).toMatchObject({
     key: "NoChecks",

@@ -873,8 +873,9 @@ test("published output checks and later consumer failure remain separate, exact 
   const view = render(
     <HealthInspector workspace={workspace} state={state} node={node} />,
   );
-  await screen.findByText("PASS");
-  await screen.findByText("VIOLATION");
+  await within(
+    screen.getByRole("region", { name: "Published data checks" }),
+  ).findByText("Passed");
   expect(
     within(
       screen.getByRole("region", { name: "Published data checks" }),
@@ -891,6 +892,38 @@ test("published output checks and later consumer failure remain separate, exact 
     ).getByText("Failed"),
   ).toBeTruthy();
   expect(view.container.querySelectorAll(".health-dot")).toHaveLength(30);
+  expect(screen.queryByText("Latest check details")).toBeNull();
+  const publishedRegion = screen.getByRole("region", {
+    name: "Published data checks",
+  });
+  const publishedCircle = within(publishedRegion).getByRole("button", {
+    name: /^1: Passed/,
+  });
+  expect(publishedCircle.textContent).toBe("");
+  expect(publishedCircle.getAttribute("aria-expanded")).toBe("false");
+  fireEvent.click(publishedCircle);
+  expect(publishedCircle.getAttribute("aria-expanded")).toBe("true");
+  expect(
+    within(publishedRegion).getByText("<img src=x onerror=alert(1)>"),
+  ).toBeTruthy();
+  expect(
+    publishedRegion.querySelector(".health-check .health-dot.health-good"),
+  ).toBeTruthy();
+  fireEvent.click(
+    within(
+      screen.getByRole("region", { name: "Input dataset checks" }),
+    ).getByRole("button", { name: /^1: Failed/ }),
+  );
+  expect(
+    view.container.querySelector(".health-check .health-dot.health-bad"),
+  ).toBeTruthy();
+  fireEvent.click(publishedCircle);
+  expect(publishedCircle.getAttribute("aria-expanded")).toBe("false");
+  expect(
+    publishedRegion
+      .querySelector(".health-history-details")
+      ?.hasAttribute("inert"),
+  ).toBe(true);
   expect(view.container.querySelector("img")).toBeNull();
   const publishedRead = transport.mock.calls
     .map(([, init]) => JSON.parse(String(init?.body ?? "{}")))
@@ -976,13 +1009,17 @@ test("foreign health shows retained provider certificates without starting provi
   render(
     <HealthInspector workspace={workspace} state={foreign} node={undefined} />,
   );
-  expect(screen.getByText("Provider output certificates")).toBeTruthy();
-  expect(screen.getByText("PASS")).toBeTruthy();
+  fireEvent.click(
+    within(
+      screen.getByRole("region", { name: "Published data checks" }),
+    ).getByRole("button", { name: /^1: Passed/ }),
+  );
+  expect(screen.getByText("Certificate 1")).toBeTruthy();
   expect(
     within(
       screen.getByRole("region", { name: "Published data checks" }),
-    ).getByText("Passed"),
-  ).toBeTruthy();
+    ).getAllByText("Passed").length,
+  ).toBeGreaterThan(0);
   expect(transport.mock.calls).toHaveLength(before);
   workspace.dispose();
 });
@@ -1038,5 +1075,89 @@ test("health history keeps newest first, ten slots, severity and retained output
       screen.getByRole("region", { name: "Input dataset checks" }),
     ).getByText("Unavailable"),
   ).toBeTruthy();
+  workspace.dispose();
+});
+
+test("each health circle opens its own retained checks and refresh closes the old selection", async () => {
+  const base = history().entries[0];
+  if (!base) throw new Error("Missing history fixture");
+  const { workspace, state } = await setup((path, query) => {
+    if (path.endsWith("/history"))
+      return Promise.resolve(
+        json(
+          {
+            entries: [
+              base,
+              {
+                ...base,
+                id: publishedAttempt,
+                state: "SUCCEEDED",
+                created_us: "1699999999000000",
+                attempts: [
+                  {
+                    ...base.attempts[0],
+                    attempt: publishedAttempt,
+                    state: "SUCCEEDED",
+                    started_us: "1699999999000000",
+                  },
+                ],
+              },
+            ],
+            next_cursor: null,
+          },
+          context(query.branch),
+        ),
+      );
+    if (path.includes("/attempts/")) {
+      const older = path.endsWith(publishedAttempt);
+      const value = attempt(
+        older ? publishedAttempt : failedAttempt,
+        query.version ? "output" : "input",
+        older ? "PASS" : "VIOLATION",
+      );
+      const check = value.evidence.checks[0];
+      if (!check) throw new Error("Missing check fixture");
+      check.name = older ? "Older passing check" : "Latest required check";
+      return Promise.resolve(
+        json(
+          value,
+          query.version
+            ? {
+                ...context(),
+                selection: {
+                  kind: "local_version",
+                  id: versionId,
+                  digest: "f".repeat(64),
+                },
+                fingerprint: "f".repeat(64),
+              }
+            : planContext(),
+        ),
+      );
+    }
+    return undefined;
+  });
+  render(<HealthInspector workspace={workspace} state={state} node={node} />);
+  const builds = screen.getByRole("region", { name: "Latest builds" });
+  await within(builds).findByText("Failed");
+  expect(within(builds).queryByText("Latest required check")).toBeNull();
+  const first = within(builds).getByRole("button", { name: /^1: Failed/ });
+  const second = within(builds).getByRole("button", { name: /^2: Succeeded/ });
+  fireEvent.click(first);
+  expect(within(builds).getByText("Latest required check")).toBeTruthy();
+  fireEvent.click(second);
+  expect(within(builds).getByText("Older passing check")).toBeTruthy();
+  expect(within(builds).queryByText("Latest required check")).toBeNull();
+  expect(first.getAttribute("aria-expanded")).toBe("false");
+  expect(second.getAttribute("aria-expanded")).toBe("true");
+  expect(
+    within(builds).getByRole("button", { name: /^3: No recorded history/ }),
+  ).toHaveProperty("disabled", true);
+  fireEvent.click(
+    screen.getByRole("button", { name: "Refresh check evidence" }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByText("Older passing check")).toBeNull(),
+  );
   workspace.dispose();
 });

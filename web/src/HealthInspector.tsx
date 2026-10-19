@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useId, useState } from "react";
 import type {
   ApiLineageNodeV1,
   ApiOverlayFactsV1,
@@ -26,18 +26,15 @@ export function healthLabel(value: ApiOverlayFactsV1["health"] | undefined) {
   return value === "NoChecks" ? "No output checks" : (value ?? "Unavailable");
 }
 function Checks({
-  title,
   values,
   empty,
 }: {
-  title: string;
   values: readonly ExecutionJsonV1[] | undefined;
   empty: string;
 }) {
   const [limit, setLimit] = useState(20);
   return (
-    <section className="health-section">
-      <h3>{title}</h3>
+    <div className="health-selected-checks">
       {!values ? (
         <Empty>Check evidence is unavailable.</Empty>
       ) : !values.length ? (
@@ -50,10 +47,6 @@ function Checks({
               property(check, "policy"),
               "declaration",
             );
-            const outcome =
-              field(check, "outcome") ??
-              field(metrics, "status") ??
-              "Unavailable";
             const name =
               field(metrics, "name") ??
               field(declaration, "name") ??
@@ -63,6 +56,7 @@ function Checks({
               field(property(check, "policy"), "severity") ??
               field(metrics, "severity");
             const alias = field(check, "alias");
+            const status = checkStatus([check]);
             return (
               <article
                 className="health-check"
@@ -73,19 +67,12 @@ function Checks({
                 }
               >
                 <div className="health-check-heading">
-                  <strong>{name}</strong>
                   <span
-                    className={`health-outcome outcome-${outcome.toLowerCase()}`}
-                  >
-                    <span aria-hidden="true">
-                      {outcome === "PASS"
-                        ? "✓"
-                        : outcome === "VIOLATION"
-                          ? "×"
-                          : "!"}
-                    </span>{" "}
-                    {outcome}
-                  </span>
+                    className={`health-dot health-${status.tone}`}
+                    aria-hidden="true"
+                  />
+                  <strong>{name}</strong>
+                  <span className="health-outcome">{status.label}</span>
                 </div>
                 {(severity || alias) && (
                   <small>
@@ -123,7 +110,7 @@ function Checks({
           )}
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
@@ -132,15 +119,17 @@ function HistoryStrip({
   points,
   loading,
   error,
-  children,
 }: {
   title: string;
   points: readonly HealthPoint[];
   loading?: boolean;
   error?: string | undefined;
-  children?: ReactNode;
 }) {
   const latest = points[0];
+  const detailsId = useId();
+  const [selected, setSelected] = useState<number>();
+  const [expanded, setExpanded] = useState(false);
+  const point = selected === undefined ? undefined : points[selected];
   return (
     <section className="health-section" aria-label={title}>
       <div className="health-history-heading">
@@ -156,21 +145,20 @@ function HistoryStrip({
             ? `${point.label}${point.at ? ` · ${timestamp(point.at, "minute")}` : ""}`
             : "No recorded history";
           return (
-            <li
-              key={index}
-              className={`health-dot health-${point?.tone ?? "neutral"}`}
-              title={label}
-              aria-label={`${index + 1}: ${label}`}
-            >
-              <span aria-hidden="true">
-                {point?.tone === "good"
-                  ? "✓"
-                  : point?.tone === "warn"
-                    ? "!"
-                    : point?.tone === "bad"
-                      ? "×"
-                      : ""}
-              </span>
+            <li key={index} aria-label={`${index + 1}: ${label}`}>
+              <button
+                type="button"
+                className={`health-dot health-${point?.tone ?? "neutral"}`}
+                title={label}
+                aria-label={`${index + 1}: ${label}`}
+                aria-expanded={expanded && selected === index}
+                aria-controls={detailsId}
+                disabled={!point}
+                onClick={() => {
+                  setSelected(index);
+                  setExpanded(selected !== index || !expanded);
+                }}
+              />
             </li>
           );
         })}
@@ -180,7 +168,32 @@ function HistoryStrip({
           {error}
         </p>
       )}
-      {children}
+      <div
+        id={detailsId}
+        className="health-history-details"
+        data-expanded={expanded}
+        aria-hidden={!expanded}
+        inert={!expanded}
+      >
+        <div>
+          {point && (
+            <>
+              <p className="health-selected-at">
+                {point.label}
+                {point.at ? ` · ${timestamp(point.at, "minute")}` : ""}
+              </p>
+              <Checks
+                key={selected}
+                values={point.checks}
+                empty={point.note ?? "No checks were recorded."}
+              />
+              {point.note && point.checks === undefined && (
+                <p className="muted">{point.note}</p>
+              )}
+            </>
+          )}
+        </div>
+      </div>
     </section>
   );
 }
@@ -210,8 +223,6 @@ export function HealthInspector({
     builds: HealthPoint[];
     outputs: HealthPoint[];
     inputs: HealthPoint[];
-    outputChecks?: readonly ExecutionJsonV1[] | undefined;
-    inputChecks?: readonly ExecutionJsonV1[] | undefined;
     error?: string | undefined;
     limited?: boolean;
   }>();
@@ -247,9 +258,22 @@ export function HealthInspector({
         );
       const inputs: HealthPoint[] = [];
       const errors: string[] = [];
-      const buildChecks = new Map<string, HealthPoint>();
-      let inputChecks: readonly ExecutionJsonV1[] | undefined;
-      for (const timing of timings.slice(0, 10)) {
+      const attemptPoints = new Map<string, HealthPoint>();
+      const buildAttempts = jobs.slice(0, 10).flatMap((job) => {
+        const latest = [...timings].find(
+          (timing) => timing.owner.id === job.id,
+        );
+        return latest ? [latest] : [];
+      });
+      const requested = [
+        ...new Map(
+          [...timings.slice(0, 10), ...buildAttempts].map((timing) => [
+            timing.attempt,
+            timing,
+          ]),
+        ).values(),
+      ];
+      for (const timing of requested) {
         try {
           const retained = await workspace.scope(
             { branch: state.selection.branch, plan: timing.owner.plan },
@@ -267,25 +291,29 @@ export function HealthInspector({
             value.source !== timing.owner.source
           )
             throw new Error("Check evidence does not match this dataset.");
-          const checks = items(property(value.evidence, "checks")).filter(
-            (c) => field(c, "phase") === "input",
-          );
-          if (!inputs.length) inputChecks = checks;
-          if (!buildChecks.has(timing.owner.id))
-            buildChecks.set(
-              timing.owner.id,
-              checkStatus(items(property(value.evidence, "checks"))),
-            );
-          inputs.push({ ...checkStatus(checks), at: timing.started_us });
+          const checks = items(property(value.evidence, "checks"));
+          attemptPoints.set(timing.attempt, { ...checkStatus(checks), checks });
         } catch (error) {
           if (abort.signal.aborted) return;
           errors.push(message(error));
-          inputs.push({
+          attemptPoints.set(timing.attempt, {
             label: "Unavailable",
             tone: "neutral",
-            at: timing.started_us,
+            note: message(error),
           });
         }
+      }
+      for (const timing of timings.slice(0, 10)) {
+        const retained = attemptPoints.get(timing.attempt);
+        const checks = retained?.checks?.filter(
+          (c) => field(c, "phase") === "input",
+        );
+        inputs.push({
+          ...(checks
+            ? { ...checkStatus(checks), checks }
+            : (retained ?? { label: "Unavailable", tone: "neutral" })),
+          at: timing.started_us,
+        });
       }
       const publications = jobs.flatMap((j) =>
         j.produced_version
@@ -317,7 +345,6 @@ export function HealthInspector({
             : b.version.localeCompare(a.version),
       );
       const outputs: HealthPoint[] = [];
-      let outputChecks: readonly ExecutionJsonV1[] | undefined;
       for (const publication of publications.slice(0, 10)) {
         if (!publication.attempt) {
           outputs.push({
@@ -351,8 +378,7 @@ export function HealthInspector({
           const checks = items(property(value.evidence, "checks")).filter(
             (c) => field(c, "phase") === "output",
           );
-          if (!outputs.length) outputChecks = checks;
-          outputs.push({ ...checkStatus(checks), at: publication.at });
+          outputs.push({ ...checkStatus(checks), checks, at: publication.at });
         } catch (error) {
           if (abort.signal.aborted) return;
           errors.push(message(error));
@@ -360,6 +386,7 @@ export function HealthInspector({
             label: "Unavailable",
             tone: "neutral",
             at: publication.at,
+            note: message(error),
           });
         }
       }
@@ -367,17 +394,28 @@ export function HealthInspector({
         setResult({
           key,
           revision,
-          builds: jobs.slice(0, 10).map((j) => ({
-            ...(j.state === "SUCCEEDED" &&
-            buildChecks.get(j.id)?.tone === "warn"
-              ? { label: "Warning", tone: "warn" as const }
-              : buildStatus(j.state)),
-            at: j.created_us,
-          })),
+          builds: jobs.slice(0, 10).map((j) => {
+            const latest = buildAttempts.find((t) => t.owner.id === j.id);
+            const retained = latest
+              ? attemptPoints.get(latest.attempt)
+              : undefined;
+            return {
+              ...(j.state === "SUCCEEDED" && retained?.tone === "warn"
+                ? { label: "Warning", tone: "warn" as const }
+                : buildStatus(j.state)),
+              at: j.created_us,
+              checks: j.state === "CACHED" ? [] : retained?.checks,
+              note:
+                j.state === "CACHED"
+                  ? "Cached reuse did not run checks. Published check evidence is shown separately."
+                  : (retained?.note ??
+                    (!latest
+                      ? "No execution attempt was recorded."
+                      : undefined)),
+            };
+          }),
           outputs,
           inputs,
-          outputChecks,
-          inputChecks,
           limited: !!cursor && jobs.length >= 1000,
           error: errors.length ? [...new Set(errors)].join("; ") : undefined,
         });
@@ -414,14 +452,16 @@ export function HealthInspector({
     entry?.origin === "external"
       ? property(entry.metadata, "output_certificates")
       : undefined;
-  const outputChecks = foreign
-    ? Array.isArray(provider)
-      ? provider
-      : undefined
-    : current?.outputChecks;
+  const outputChecks = Array.isArray(provider) ? provider : undefined;
   const outputs = foreign
     ? outputChecks
-      ? [checkStatus(outputChecks)]
+      ? [
+          {
+            ...checkStatus(outputChecks),
+            checks: outputChecks,
+            at: meta?.published ?? undefined,
+          },
+        ]
       : []
     : (current?.outputs ?? []);
   return (
@@ -442,45 +482,24 @@ export function HealthInspector({
       </DatasetHeader>
       <div className="health-content">
         <HistoryStrip
+          key={`${key}:${revision}:builds`}
           title="Latest builds"
           points={current?.builds ?? []}
           loading={!foreign && !current}
           error={current?.error}
         />
         <HistoryStrip
+          key={`${key}:${revision}:outputs`}
           title="Published data checks"
           points={outputs}
           loading={!foreign && !current}
-        >
-          {outputChecks && (
-            <details>
-              <summary>Latest check details</summary>
-              <Checks
-                title={
-                  foreign ? "Provider output certificates" : "Output checks"
-                }
-                values={outputChecks}
-                empty="No output checks were recorded for this version."
-              />
-            </details>
-          )}
-        </HistoryStrip>
+        />
         <HistoryStrip
+          key={`${key}:${revision}:inputs`}
           title="Input dataset checks"
           points={current?.inputs ?? []}
           loading={!foreign && !current}
-        >
-          {current?.inputChecks && (
-            <details>
-              <summary>Latest check details</summary>
-              <Checks
-                title="Input checks"
-                values={current.inputChecks}
-                empty="No input checks were recorded for this attempt."
-              />
-            </details>
-          )}
-        </HistoryStrip>
+        />
         {current?.limited && (
           <p className="muted">
             History is limited to the latest 1,000 build jobs.

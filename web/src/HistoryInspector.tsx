@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   ApiExecutionMetricsV1,
   ApiHistoryJobV1,
@@ -308,6 +308,18 @@ function DurationChart({
   jobs: readonly ApiHistoryJobV1[];
   metrics: ApiExecutionMetricsV1;
 }) {
+  const chart = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(700);
+  useEffect(() => {
+    const element = chart.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry && entry.contentRect.width > 0)
+        setWidth(Math.max(280, entry.contentRect.width));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const samples = jobs
     .filter(
       (job) =>
@@ -318,8 +330,7 @@ function DurationChart({
       job.attempts
         .filter(
           (attempt) =>
-            attempt.duration_ns !== null &&
-            (attempt.state === "SUCCEEDED" || attempt.state === "FAILED"),
+            attempt.duration_ns !== null && attempt.state === "SUCCEEDED",
         )
         .map((attempt) => ({ ...attempt, accepted: job.created_us })),
     );
@@ -336,25 +347,32 @@ function DurationChart({
       mean ?? 1n,
     ) || 1n;
   return (
-    <div className="duration-chart">
+    <div className="duration-chart" ref={chart}>
       {samples.length ? (
         <svg
-          viewBox="0 0 700 180"
+          viewBox={`0 0 ${width} 210`}
+          height="210"
           role="img"
           aria-label="Measured attempt durations by build acceptance time"
         >
           <title>
-            Measured attempt durations, successful and failed. Cached reuse has
-            no point. {samples.length} measured attempts in {jobs.length} loaded
-            jobs, from {historyDate(metrics.from_us)} to{" "}
+            Measured successful attempt durations. Failed attempts and cached
+            reuse have no point. {samples.length} measured attempts in{" "}
+            {jobs.length} loaded jobs, from {historyDate(metrics.from_us)} to{" "}
             {historyDate(metrics.to_us, true)} inclusive.
           </title>
-          <line x1="58" y1="12" x2="58" y2="145" stroke="currentColor" />
-          <line x1="58" y1="145" x2="685" y2="145" stroke="currentColor" />
+          <line x1="58" y1="12" x2="58" y2="175" stroke="currentColor" />
+          <line
+            x1="58"
+            y1="175"
+            x2={width - 15}
+            y2="175"
+            stroke="currentColor"
+          />
           <text x="2" y="18">
             {seconds(max.toString(), 2)}
           </text>
-          <text x="20" y="145">
+          <text x="20" y="175">
             0 s
           </text>
           {mean !== null && (
@@ -362,11 +380,11 @@ function DurationChart({
               <line
                 className="duration-mean"
                 x1="58"
-                x2="685"
-                y1={145 - position(mean, 0n, max) * 1.25}
-                y2={145 - position(mean, 0n, max) * 1.25}
+                x2={width - 15}
+                y1={175 - position(mean, 0n, max) * 1.55}
+                y2={175 - position(mean, 0n, max) * 1.55}
               />
-              <text x="70" y="174">
+              <text x="70" y="203">
                 Mean of latest {metrics.trailing_samples} successful
                 materializations in this range:{" "}
                 {seconds(metrics.trailing_mean_ns, 2)}
@@ -384,11 +402,11 @@ function DurationChart({
                   BigInt(metrics.from_us),
                   BigInt(metrics.to_us) - BigInt(metrics.from_us),
                 ) *
-                  6.25
+                  ((width - 78) / 100)
               }
               cy={
-                145 -
-                position(BigInt(sample.duration_ns ?? "0"), 0n, max) * 1.25
+                175 -
+                position(BigInt(sample.duration_ns ?? "0"), 0n, max) * 1.55
               }
               r="4"
             >
@@ -401,7 +419,8 @@ function DurationChart({
         </svg>
       ) : (
         <Empty>
-          No measured attempt durations in the loaded jobs for this range.
+          No measured successful attempt durations in the loaded jobs for this
+          range.
         </Empty>
       )}
     </div>
