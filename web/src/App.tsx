@@ -260,8 +260,20 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
           hidden={!!scheduleEdit}
         />
         <div className="top-actions">
-          <Button aria-pressed={dark} onClick={() => setDark(!dark)}>
-            Dark theme
+          <Button
+            className="theme-toggle"
+            role="switch"
+            aria-label="Dark theme"
+            aria-checked={dark}
+            title={dark ? "Switch to light theme" : "Switch to dark theme"}
+            onClick={() => setDark(!dark)}
+          >
+            <span className={!dark ? "theme-choice active" : "theme-choice"}>
+              <Icon name="sun" />
+            </span>
+            <span className={dark ? "theme-choice active" : "theme-choice"}>
+              <Icon name="moon" />
+            </span>
           </Button>
           <BranchControls
             disabled={!!scheduleEdit}
@@ -391,11 +403,13 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 className={`inspector ${mode === "Catalogue" ? "catalogue-panel" : ""}`}
                 aria-label="Right inspector"
               >
-                {mode !== "Build planner" && mode !== "Schedules" && (
-                  <header className="inspector-header">
-                    <h2>{mode}</h2>
-                  </header>
-                )}
+                {mode !== "Build planner" &&
+                  mode !== "Schedules" &&
+                  mode !== "Properties" && (
+                    <header className="inspector-header">
+                      <h2>{mode}</h2>
+                    </header>
+                  )}
                 {mode === "Catalogue" ? (
                   <>
                     <CatalogueSearch

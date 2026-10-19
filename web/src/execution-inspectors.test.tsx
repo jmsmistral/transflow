@@ -454,7 +454,8 @@ test("history identifies the selected branch and submits inclusive ISO calendar 
       to_us: "1709251200000000",
     }),
   );
-  expect(await screen.findByText(/2024-02-29 to 2024-02-29/)).toBeTruthy();
+  expect(from).toHaveProperty("value", "2024-02-29");
+  expect(to).toHaveProperty("value", "2024-02-29");
   expect(screen.queryByText(/Build acceptance cohort/)).toBeNull();
   fireEvent.change(to, { target: { value: "2024-02-28" } });
   expect(apply).toHaveProperty("disabled", true);
@@ -512,7 +513,6 @@ test("history summary uses compact minute timestamps, rounded durations and conc
     "Failure rate",
     "Mean · latest 10 successes",
     "Median duration",
-    "Measured / missing",
   ]);
   fireEvent.change(screen.getByRole("textbox", { name: "From" }), {
     target: { value: "2023-11-14" },

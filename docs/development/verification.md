@@ -1,5 +1,13 @@
 # Contributor verification
 
+## Compact exploration controls (2026-10-19)
+
+The sun/moon theme switch, simplified Properties/legend and compact History row
+pass 656 web tests, strict checks and reproducible production builds. Internal
+Browser review covers light/dark themes and the real history chart. See the
+[receipt](evidence/t082-compact-ui.json). The existing safety exception expiry
+remains unresolved; no dependency or policy change is included.
+
 ## Branch switching and dataset ID review (2026-10-19)
 
 Branch/fallback changes preserve the current lineage canvas and saved identity;

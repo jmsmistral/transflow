@@ -222,6 +222,28 @@ export function HistoryInspector({
               <>
                 <div className="history-summary-header">
                   <h3>Summary</h3>
+                  {metrics && (
+                    <div className="metrics-summary">
+                      <Metric label="Builds" value={metrics.builds} />
+                      <Metric
+                        label="Failure rate"
+                        value={percent(metrics.failure_rate)}
+                        title={
+                          metrics.failure_rate
+                            ? `${metrics.failure_rate.numerator}/${metrics.failure_rate.denominator} succeeded + failed builds`
+                            : "No succeeded or failed builds"
+                        }
+                      />
+                      <Metric
+                        label={`Mean · latest ${metrics.trailing_window} successes`}
+                        value={seconds(metrics.trailing_mean_ns, 2)}
+                      />
+                      <Metric
+                        label="Median duration"
+                        value={seconds(metrics.median_ns, 2)}
+                      />
+                    </div>
+                  )}
                   <form
                     className="metrics-range"
                     onSubmit={(event) => {
@@ -260,30 +282,6 @@ export function HistoryInspector({
                 </div>
                 {metrics ? (
                   <>
-                    <div className="metrics-summary">
-                      <Metric label="Builds" value={metrics.builds} />
-                      <Metric
-                        label="Failure rate"
-                        value={percent(metrics.failure_rate)}
-                        title={
-                          metrics.failure_rate
-                            ? `${metrics.failure_rate.numerator}/${metrics.failure_rate.denominator} succeeded + failed builds`
-                            : "No succeeded or failed builds"
-                        }
-                      />
-                      <Metric
-                        label={`Mean · latest ${metrics.trailing_window} successes`}
-                        value={seconds(metrics.trailing_mean_ns, 2)}
-                      />
-                      <Metric
-                        label="Median duration"
-                        value={seconds(metrics.median_ns, 2)}
-                      />
-                      <Metric
-                        label="Measured / missing"
-                        value={`${metrics.duration_samples} / ${metrics.missing_duration_samples}`}
-                      />
-                    </div>
                     <DurationChart jobs={jobs} metrics={metrics} />
                     <div className="source-provenance">
                       {metrics.manual_requests} manual requests ·{" "}
@@ -339,11 +337,6 @@ function DurationChart({
     ) || 1n;
   return (
     <div className="duration-chart">
-      <div className="chart-caption" title="Both dates are included">
-        Attempt duration (seconds) · {samples.length} measured successes /
-        failures in {jobs.length} loaded jobs · {historyDate(metrics.from_us)}{" "}
-        to {historyDate(metrics.to_us, true)}
-      </div>
       {samples.length ? (
         <svg
           viewBox="0 0 700 180"
@@ -352,7 +345,9 @@ function DurationChart({
         >
           <title>
             Measured attempt durations, successful and failed. Cached reuse has
-            no point.
+            no point. {samples.length} measured attempts in {jobs.length} loaded
+            jobs, from {historyDate(metrics.from_us)} to{" "}
+            {historyDate(metrics.to_us, true)} inclusive.
           </title>
           <line x1="58" y1="12" x2="58" y2="145" stroke="currentColor" />
           <line x1="58" y1="145" x2="685" y2="145" stroke="currentColor" />

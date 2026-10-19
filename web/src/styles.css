@@ -2287,20 +2287,20 @@ revo-grid.preview-grid
 }
 .history-summary-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 12px;
   padding: 8px 12px;
   flex-wrap: wrap;
 }
 .history-summary-header h3 {
-  margin: 0;
+  margin: 0 auto 0 0;
+  padding-bottom: 4px;
   font-size: 13px;
 }
 .metrics-range {
   display: flex;
   align-items: flex-end;
   gap: 12px;
-  margin-left: auto;
   flex-wrap: wrap;
 }
 .metrics-range label {
@@ -2321,6 +2321,12 @@ revo-grid.preview-grid
   padding: 10px 12px;
   border-bottom: 1px solid var(--line);
 }
+.history-summary-header .metrics-summary {
+  gap: 10px 20px;
+  margin-left: auto;
+  padding: 0 0 3px;
+  border: 0;
+}
 .metric {
   display: flex;
   flex-direction: column;
@@ -2335,11 +2341,6 @@ revo-grid.preview-grid
 }
 .duration-chart {
   padding: 8px 12px;
-}
-.chart-caption {
-  color: var(--muted);
-  font-size: 11px;
-  margin-bottom: 6px;
 }
 .duration-chart svg {
   width: 100%;
@@ -3274,12 +3275,6 @@ revo-grid.preview-grid
   width: 13px;
   height: 13px;
   flex: 0 0 13px;
-  display: block;
-}
-.graph-colour-legend .legend-counts {
-  margin: 8px 0 0;
-  font-size: 11px;
-  max-width: 235px;
   display: block;
 }
 
@@ -4251,4 +4246,32 @@ revo-grid.preview-grid
 .property-copy .icon {
   width: 14px;
   height: 14px;
+}
+
+/* Compact light/dark switch with a visible selected glyph. */
+.theme-toggle.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--bg);
+}
+.theme-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--muted);
+}
+.theme-choice.active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: 0 1px 3px #0002;
+}
+.theme-choice .icon {
+  width: 17px;
+  height: 17px;
 }

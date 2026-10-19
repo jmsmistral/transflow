@@ -60,7 +60,7 @@ as well as visual positions, preventing invisible nodes after controlled refresh
 T082 connects the original React interface to a local coordinator. It provides
 bounded catalogue pages, requested branch/fallback metadata, dataset and exact
 version selection, explicit retained/historical source context, connection states,
-light/dark themes and resizable right/bottom panels. Tabs, splitters and selection
+light/dark themes through a keyboard-operable sun/moon switch and resizable right/bottom panels. Tabs, splitters and selection
 work by keyboard. Narrow screens stack panels; layout survives context changes
 within the page session.
 
@@ -230,7 +230,7 @@ inspectors remain later work.
 
 ## Dataset inspection (T085)
 
-The right **Properties** panel follows the selected graph or catalogue dataset.
+The right **Properties** panel follows the selected graph or catalogue dataset, starting directly with dataset identity and the About/Columns tabs.
 About displays stable ID, logical path, origin, transform type, producer location,
 creation time when recorded, publication time and physical row/file/byte counts.
 The compact detail list has no row dividers. Columns lists the current preview
@@ -436,3 +436,10 @@ policies, not just visible nodes. Existing saved full, explicit-boundary and
 selected-endpoint scopes remain available under Advanced options. Changing this
 UI default does not rewrite existing definitions or accepted work, nor change the
 API default or any transport/storage format.
+
+### Compact exploration controls
+
+Legends show category rows and their counts without a totals footer. History keeps
+Summary, right-aligned metrics and bottom-aligned date controls on one wrapping
+row. The measured/missing metric and chart caption are omitted; chart tooltips
+retain sample scope and dates, and the axis retains duration units.

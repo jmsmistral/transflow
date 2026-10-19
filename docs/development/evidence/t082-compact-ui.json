@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-19",
+  "tasks": [
+    "T082",
+    "T085",
+    "T086",
+    "T088"
+  ],
+  "changes": [
+    "Accessible sun/moon theme switch.",
+    "Properties starts with dataset identity, no separate heading/divider.",
+    "Legend retains only category/count rows and accessible scope description.",
+    "History summary, metrics and dates share one bottom-aligned wrapping row; measured/missing metric and visible chart caption removed."
+  ],
+  "verification": {
+    "web": {
+      "command": "bash tools/check-web.sh",
+      "result": "passed",
+      "tests": 656,
+      "assets": 16,
+      "log": "/tmp/transflow-ui-polish-web.log"
+    },
+    "browser": {
+      "workspace": "t111-ui-polish-review",
+      "result": "passed",
+      "observations": [
+        "Light/dark switch changes theme and selected glyph.",
+        "Properties header and legend footer absent.",
+        "Summary metrics and date controls fit one row at 1280-pixel viewport.",
+        "Real retained durations render; no warning/error browser logs."
+      ]
+    },
+    "safety": {
+      "result": "known baseline failure",
+      "reason": "ESLint and whatwg-encoding development deprecation exceptions expired on 2026-10-19; policy unchanged."
+    }
+  },
+  "limits": [
+    "No native/backend behavior changed.",
+    "Remote CI remains owner-monitored.",
+    "User uncommitted root README edit preserved."
+  ]
+}

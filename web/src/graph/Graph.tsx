@@ -1177,12 +1177,6 @@ function GraphView({
                 ? ` Complete plan: ${planPreview.writes.length} jobs, ${planPreview.targets.length} targets.`
                 : ""}
             </p>
-            <span className="legend-counts" title={basis(paintColour)}>
-              {graph.nodes.length} visible nodes
-              {paintColour === "roles" && planPreview
-                ? ` · Plan: ${planPreview.writes.length} jobs, ${planPreview.targets.length} targets`
-                : ""}
-            </span>
           </div>
         )}
       </div>

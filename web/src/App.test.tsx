@@ -16,13 +16,13 @@ test("disconnected preview exposes no invented datasets or build controls", () =
 test("theme button supports keyboard activation and preserves connection state", async () => {
   const user = userEvent.setup();
   render(<App />);
-  const button = screen.getByRole("button", { name: "Dark theme" });
+  const button = screen.getByRole("switch", { name: "Dark theme" });
   button.focus();
   await user.keyboard("{Enter}");
-  expect(button.getAttribute("aria-pressed")).toBe("true");
+  expect(button.getAttribute("aria-checked")).toBe("true");
   expect(screen.getAllByText("Not connected").length).toBeGreaterThan(0);
   await user.keyboard(" ");
-  expect(button.getAttribute("aria-pressed")).toBe("false");
+  expect(button.getAttribute("aria-checked")).toBe("false");
 });
 
 test("button defaults to non-submit and disabled actions do not fire", async () => {
