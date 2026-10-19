@@ -2,20 +2,6 @@
 
 I started building **transflow** back in 2022 as a pet project for my own use. Recently, I decided that it was a good base for experimenting with agentic coding and seeing how far it can go.
 
-The idea is to build a **CLI tool + lineage UI to enable the structured development and management of data pipelines locally**, with the following features:
-
-- **Pipeline development and orchestration** - Build, run and schedule data pipelines.
-- **Polars and DuckDB first** - Write data transformations in Polars or DuckDB SQL.
-- **Data expectations** - Define and validate quality checks on transform inputs and outputs.
-- **Branch fallbacks** - Resolve inputs through an ordered set of data branches for builds and scheduled runs.
-- **Data lineage** - Explore pipeline dependencies and dataset metadata through an interactive graph with informative overlays.
-- **Data health** - Assess dataset quality and build outcomes across your pipelines at a glance.
-- **Editor assistance** - Complete dataset references, inspect catalogue metadata and navigate to producers from your editor.
-- **Versioned data and provenance** - Track published outputs, captured code and exact input versions.
-- **Build caching** - Reuse eligible results to avoid unnecessary computation.
-- **Interactive exploration** - Preview datasets, run SQL queries and inspect execution history.
-- **Local ownership** - Keep pipeline code, data and execution on your machine.
-
 Write transforms in **Polars or DuckDB SQL**, build versioned datasets, and explore
 how they connect in an interactive lineage workspace. Transflow brings execution,
 data quality, history and scheduling into one local workflow.
@@ -59,18 +45,21 @@ FROM orders
 GROUP BY customer_id;
 ```
 
-## From a build to an explanation
+## Features
 
-| Capability                   | What you get                                                                                              |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Polars and DuckDB**        | Python transforms and SQL transforms in the same dataset graph.                                           |
-| **Versioned data**           | Immutable Parquet outputs, captured source and exact input-version provenance.                            |
-| **Quality checks**           | Input and output checks, with the last successful output preserved when a required check fails.           |
-| **Branches and caching**     | Separate data branches, ordered input fallbacks and reuse of eligible results.                            |
-| **An interactive workspace** | Explore dataset lineage, preview tables, query published data and inspect code, logs and build timelines. |
-| **Schedules**                | Run on time or publication events, combine conditions and inspect recent runs.                            |
+- **Pipeline development and orchestration** - Build, run and schedule data pipelines.
+- **Polars and DuckDB first** - Write data transformations in Polars or DuckDB SQL.
+- **Versioned data and provenance** - Track published outputs, captured code and exact input versions.
+- **Data expectations** - Define and validate quality checks on transform inputs and outputs.
+- **Lineage UI** - Explore pipelines and dataset metadata via a interactive graph with informative overlays.
+- **Interactive exploration** - Preview datasets, run expoloratory SQL queries and inspect execution history.
+- **Branch fallbacks** - Resolve inputs through an ordered set of data branches for builds and scheduled runs.
+- **Data health** - Assess dataset quality and build outcomes across your pipelines at a glance.
+- **Editor assistance** - Complete dataset references, inspect catalogue metadata and navigate to producers from your editor.
+- **Build caching** - Reuse eligible results to avoid unnecessary computation.
+- **Local ownership** - Keep pipeline code, data and execution on your machine.
 
-The coordinator runs locally. SQLite stores metadata and immutable Parquet files
+The transflow coordinator runs locally. SQLite stores metadata and immutable Parquet files
 hold the data. External workspace inputs are read under leases; their producer
 code stays in the provider's workspace.
 
