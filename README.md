@@ -1,6 +1,17 @@
 # Transflow
 
-### Build data pipelines locally. Understand every result.
+I started building **transflow** back in 2022 as a pet project for my own use. Recently, I decided that it was a good base for experimenting with agentic coding and seeing how far it can go.
+
+The idea is to build a **CLI tool + lineage UI to enable the structured development and management of data pipelines locally**, with the following features:
+
+- **Pipeline development and orchestration** - Building, running, and scheduling data pipelines.
+- **Polars and DuckDB first** - Using Polars and DuckDB (SQL) as the primary tools for data transformations.
+- **Data expectations** - Defining and validating expectations on both the inputs and outputs of individual transforms.
+- **Branch fallbacks** - Supporting branch-based fallbacks in builds and scheduled runs.
+- **Data lineage** - An intuitive lineage UI with informative overlays for exploring pipeline dependencies and other useful metadata.
+- **Data health** - Making it easy to assess the health of individual transforms and entire pipelines at a glance.
+- **Great IDE experience** - Auto-completion and catalog metadata look-ups directly from the editor.
+
 
 Write transforms in **Polars or DuckDB SQL**, build versioned datasets, and explore
 how they connect in an interactive lineage workspace. Transflow brings execution,
