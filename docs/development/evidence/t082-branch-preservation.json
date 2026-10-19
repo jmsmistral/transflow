@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-19",
+  "tasks": [
+    "T082",
+    "T084",
+    "T085"
+  ],
+  "changes": [
+    "Preserve lineage membership, camera, selection and saved identity on data branch/fallback changes; refresh runtime facts under context fences.",
+    "Single-line ellipsized dataset ID with round borderless copy button on row hover or keyboard focus."
+  ],
+  "verification": {
+    "web": {
+      "command": "bash tools/check-web.sh",
+      "result": "passed",
+      "tests": 656,
+      "assets": 16,
+      "log": "/tmp/transflow-branch-web-final.log"
+    },
+    "browser": {
+      "workspace": "t111-editors-retention-review",
+      "result": "passed",
+      "observations": [
+        "master to review to master retains four nodes, identical DOM positions and camera transform and selected delivery dataset.",
+        "Review without fallbacks shows three missing publications and one published dataset in Publication legend.",
+        "Copy success feedback; unit test verifies exact full UUID and denied clipboard handling.",
+        "Final button computed opacity 0 off row, 1 on row hover and keyboard focus; border 0px and radius 50%.",
+        "No browser console warnings/errors; verification tab closed and coordinator stopped."
+      ],
+      "screenshot": "/tmp/transflow-branch-review.png"
+    },
+    "scope": "UI and documentation only; no Rust/Python runtime changes.",
+    "spec": {
+      "result": "passed",
+      "regressions": 44,
+      "logs": [
+        "/tmp/transflow-branch-spec.log",
+        "/tmp/transflow-branch-spec-tests.log"
+      ]
+    },
+    "safety": {
+      "result": "failed-existing-expired-policy",
+      "regressions_passed": 25,
+      "regressions_failed": 2,
+      "reason": "Existing ESLint 9.39.5 and whatwg-encoding 3.1.1 deprecation exceptions expired at 2026-10-19 UTC. First reported failure is ESLint. Policy and dependencies unchanged.",
+      "logs": [
+        "/tmp/transflow-branch-safety.log",
+        "/tmp/transflow-branch-safety-tree.log"
+      ]
+    }
+  },
+  "cleanup": {
+    "removed": [
+      "t104-scratchpad-download-review",
+      "t104-toolbar-schedules-review-tools",
+      "t099-alpha-review",
+      "t084-lineage-name",
+      "t099-operational-alpha",
+      "t104-review-tools",
+      "t104-scratchpad-download-review-tools",
+      "t104-toolbar-schedules-review",
+      "t086-build-display",
+      "create-t098-schedules.py",
+      "t104-schedule-roles-review",
+      "t104-schedule-roles-review-tools",
+      "t104-schedule-scope-review-tools",
+      "t098-schedules",
+      "t104-scratchpad-review",
+      "create-t086-build-display.py",
+      "t104-schedule-scope-review",
+      "t095-schedules",
+      "t095-setup.log",
+      "create-t095-schedules.py",
+      "t104-sql-checks-review",
+      "t104-scratchpad-review-tools",
+      "serve-preview.sh",
+      "open-firefox.py"
+    ],
+    "preserved": [
+      "t111-editors-retention-review",
+      "t111-editors-retention-review-tools"
+    ]
+  },
+  "readme": "Owner introduction left byte-for-byte unchanged; suggestions supplied in chat only.",
+  "ci": "Owner monitored; not polled"
+}

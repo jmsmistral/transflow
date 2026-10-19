@@ -1,5 +1,23 @@
 # Contributor verification
 
+## Branch switching and dataset ID review (2026-10-19)
+
+Branch/fallback changes preserve the current lineage canvas and saved identity;
+runtime facts refresh under the new context. Properties uses a single-line
+dataset ID with a round borderless copy button on row hover or keyboard focus.
+The owner’s root README introduction is unchanged. Pre-T111 review workspaces
+and legacy helpers were removed by explicit owner request; both T111 directories
+remain. The T111 launcher serves refreshed production UI assets. See the
+[verification receipt](evidence/t082-branch-preservation.json).
+
+All 656 web tests, strict checks and reproducible production assets pass; the
+internal Browser confirms preserved canvas state and hover/focus copy behavior.
+Specification validation and 44 checker regressions pass. The safety gate fails
+on existing development-tool deprecation exceptions that expired on 2026-10-19
+(ESLint and whatwg-encoding); 25 safety regressions pass and two fail on that
+baseline policy expiry. Dependencies and exceptions were not changed. This is
+not an all-gates-passing or remote-CI success claim.
+
 ## Dataset editor clients and retention collection (2026-10-17)
 
 The root README remains a 93-line product introduction with an original synthetic

@@ -95,12 +95,10 @@ export class GraphModel {
       const visualContext = contextIdentity(state.value.context);
       const selector = JSON.stringify([
         state.value.context.workspace,
-        state.value.context.branch,
         state.value.context.selection,
-        state.value.context.fallback_policy,
       ]);
-      // A build may publish a new capture/registry. Rebind visible identities in
-      // the same branch view while retaining the camera and node positions.
+      // Branch/fallback changes and new captures rebind runtime facts, not the
+      // visual document. Keep its stable identity, membership and camera.
       const timingOnly =
         changed &&
         (this.state.visualContext === visualContext ||

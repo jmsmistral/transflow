@@ -505,3 +505,31 @@ test("expired local data keeps metadata and never starts a preview", async () =>
   ).toBe(false);
   workspace.dispose();
 });
+
+test("dataset ID copies the full value and reports clipboard denial", async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  const previous = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText },
+  });
+  const workspace = new Workspace(new Client(transport()));
+  try {
+    await workspace.connect("launch");
+    const view = render(<App workspace={workspace} />);
+    await selectGraphDataset();
+    fireEvent.click(screen.getByRole("button", { name: "Properties" }));
+    expect(screen.getByTitle(datasetId).textContent).toBe(datasetId);
+    fireEvent.click(screen.getByRole("button", { name: "Copy dataset ID" }));
+    await screen.findByText("Dataset ID copied");
+    expect(writeText).toHaveBeenCalledWith(datasetId);
+    writeText.mockRejectedValueOnce(new Error("Denied"));
+    fireEvent.click(screen.getByRole("button", { name: "Copy dataset ID" }));
+    await screen.findByText("Could not copy dataset ID");
+    view.unmount();
+  } finally {
+    workspace.dispose();
+    if (previous) Object.defineProperty(navigator, "clipboard", previous);
+    else Reflect.deleteProperty(navigator, "clipboard");
+  }
+});

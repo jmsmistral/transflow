@@ -219,6 +219,8 @@ test("new query and branch changes cancel reads and ignore late responses", asyn
     new Client(
       fixtureTransport((path, q, s) => {
         if (!path.endsWith("/lineage")) return;
+        if (q.lookup)
+          return Promise.resolve(json(page([node("new")]), context(q.branch)));
         if (q.connections)
           return Promise.resolve(json(page([]), context(q.branch)));
         if (slow) {
@@ -248,7 +250,7 @@ test("new query and branch changes cancel reads and ignore late responses", asyn
   release(json(page([node("old")]), context()));
   await second;
   expect(model.snapshot().context).toBe(context("feature").fingerprint);
-  expect(model.snapshot().nodes).toEqual([]);
+  expect(model.snapshot().nodes.map((n) => n.identity)).toEqual(["new"]);
   stop();
   workspace.dispose();
 });

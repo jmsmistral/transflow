@@ -4211,3 +4211,44 @@ revo-grid.preview-grid
 .health-input-failure {
   color: var(--danger, #ac3636);
 }
+
+.property-copy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.property-copy > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.property-copy > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 3px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  opacity: 0;
+  pointer-events: none;
+}
+.property-row:hover .property-copy > button,
+.property-row:focus-within .property-copy > button {
+  opacity: 1;
+  pointer-events: auto;
+}
+.property-copy > button:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.property-copy .icon {
+  width: 14px;
+  height: 14px;
+}

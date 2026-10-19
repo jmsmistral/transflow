@@ -139,6 +139,37 @@ export function typeName(type: LogicalType): string {
   if (type.type === "struct") return `struct (${type.fields.length} fields)`;
   return type.type;
 }
+function CopyDatasetId({ value }: { value: string }) {
+  const [result, setResult] = useState("");
+  return (
+    <div className="property-row">
+      <dt>Dataset ID</dt>
+      <dd>
+        <div className="property-copy">
+          <span title={value}>{value}</span>
+          <button
+            type="button"
+            aria-label="Copy dataset ID"
+            title="Copy dataset ID"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(value);
+                setResult("Dataset ID copied");
+              } catch {
+                setResult("Could not copy dataset ID");
+              }
+            }}
+          >
+            <Icon name="copy" />
+          </button>
+        </div>
+        <span className="sr-only" role="status">
+          {result}
+        </span>
+      </dd>
+    </div>
+  );
+}
 function Detail({ name, value }: { name: string; value: string }) {
   return (
     <div className="property-row">
@@ -248,7 +279,10 @@ export function PropertiesInspector({
           <h4>Details</h4>
           <dl>
             <Detail name="Logical path" value={dataset.path} />
-            <Detail name="Dataset ID" value={dataset.dataset_id} />
+            <CopyDatasetId
+              key={dataset.dataset_id}
+              value={dataset.dataset_id}
+            />
             <Detail
               name="Origin"
               value={

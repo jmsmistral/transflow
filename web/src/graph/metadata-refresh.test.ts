@@ -170,3 +170,42 @@ test("disconnect cancels a pending metadata retry", async () => {
     vi.useRealTimers();
   }
 });
+
+test("branch switches preserve membership, clear old facts and discard late branch replies", async () => {
+  const workspace = new Workspace(new Client(fixtureTransport()));
+  await workspace.connect("launch");
+  const model = new GraphModel(workspace);
+  const disconnect = model.connect();
+  model.restore({ nodes: [node("root")], edges: [] });
+  const visual = model.snapshot().visualContext;
+  let release: ((scope: Scope) => void) | undefined;
+  const read = vi
+    .spyOn(GraphCache.prototype, "lookup")
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    )
+    .mockResolvedValue({
+      nodes: [{ ...node("root"), publication: "missing" }],
+      edges: [],
+    });
+  try {
+    await workspace.select({ branch: "review" });
+    expect(model.snapshot().visualContext).toBe(visual);
+    expect(model.snapshot().nodes[0]?.overlay).toBeUndefined();
+    await workspace.select({ branch: "master" });
+    await vi.waitFor(() =>
+      expect(model.snapshot().nodes[0]?.publication).toBe("missing"),
+    );
+    release?.({ nodes: [node("root")], edges: [] });
+    await Promise.resolve();
+    expect(model.snapshot().nodes[0]?.publication).toBe("missing");
+    expect(model.snapshot().nodes.map((n) => n.identity)).toEqual(["root"]);
+  } finally {
+    disconnect();
+    workspace.dispose();
+    read.mockRestore();
+  }
+});

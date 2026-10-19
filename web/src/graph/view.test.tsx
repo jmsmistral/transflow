@@ -595,7 +595,7 @@ test.each([false, true])(
 );
 
 test.each([false, true])(
-  "saved lineage identity survives runtime refresh with new capture %s and clears on a branch switch",
+  "saved lineage identity survives runtime refresh with new capture %s and survives a branch switch",
   async (newCapture) => {
     const saved = {
       ...doc(),
@@ -711,7 +711,19 @@ test.each([false, true])(
         ?.getAttribute("style"),
     ).toBe(viewport);
     await act(async () => workspace.select({ branch: "review" }));
-    await waitFor(() => expect(screen.queryByText(saved.name)).toBeNull());
+    await waitFor(() => expect(screen.getByTitle(saved.name)).toBeTruthy());
+    expect(rendered.container.querySelectorAll(".dataset-node")).toHaveLength(
+      1,
+    );
+    expect(
+      rendered.container
+        .querySelector(".react-flow__viewport")
+        ?.getAttribute("style"),
+    ).toBe(viewport);
+    expect(screen.getByRole("button", { name: "Save" })).toHaveProperty(
+      "disabled",
+      false,
+    );
     rendered.unmount();
     workspace.dispose();
   },
