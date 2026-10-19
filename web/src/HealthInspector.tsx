@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type {
-  ApiAttemptV1,
   ApiLineageNodeV1,
   ApiOverlayFactsV1,
+  ApiHistoryJobV1,
+  ApiDatasetHistoryV1,
   ExecutionJsonV1,
 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
@@ -10,6 +11,7 @@ import { Button, DatasetHeader } from "./components";
 import { Icon } from "./Icons";
 import { field, versionMetadata } from "./inspectors";
 import { timestamp } from "./execution-model";
+import { checkStatus, buildStatus, type HealthPoint } from "./health-model";
 import {
   Empty,
   Fallback,
@@ -125,10 +127,67 @@ function Checks({
   );
 }
 
+function HistoryStrip({
+  title,
+  points,
+  loading,
+  error,
+  children,
+}: {
+  title: string;
+  points: readonly HealthPoint[];
+  loading?: boolean;
+  error?: string | undefined;
+  children?: ReactNode;
+}) {
+  const latest = points[0];
+  return (
+    <section className="health-section" aria-label={title}>
+      <div className="health-history-heading">
+        <h3>{title}</h3>
+        <span className={`health-pill health-${latest?.tone ?? "neutral"}`}>
+          {loading ? "Loading…" : (latest?.label ?? "No history")}
+        </span>
+      </div>
+      <ol className="health-history" aria-label={`${title}, newest first`}>
+        {Array.from({ length: 10 }, (_, index) => {
+          const point = points[index];
+          const label = point
+            ? `${point.label}${point.at ? ` · ${timestamp(point.at, "minute")}` : ""}`
+            : "No recorded history";
+          return (
+            <li
+              key={index}
+              className={`health-dot health-${point?.tone ?? "neutral"}`}
+              title={label}
+              aria-label={`${index + 1}: ${label}`}
+            >
+              <span aria-hidden="true">
+                {point?.tone === "good"
+                  ? "✓"
+                  : point?.tone === "warn"
+                    ? "!"
+                    : point?.tone === "bad"
+                      ? "×"
+                      : ""}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      {error && (
+        <p className="execution-error" role="alert">
+          {error}
+        </p>
+      )}
+      {children}
+    </section>
+  );
+}
+
 export function HealthInspector({
   workspace,
   state,
-  node,
 }: {
   workspace: Workspace;
   state: Ready;
@@ -143,132 +202,228 @@ export function HealthInspector({
         state.value.inspection,
       )
     : null;
-  const [published, setPublished] = useState<{
-    version: string;
-    value: ApiAttemptV1;
-  }>();
-  const [recent, setRecent] = useState<{ key: string; value: ApiAttemptV1 }>();
-  const [outputError, setOutputError] = useState("");
-  const [recentError, setRecentError] = useState("");
-  const [revision, refresh] = useState(0);
   const key = state.value.context.fingerprint;
-  useEffect(() => {
-    if (
-      !dataset ||
-      dataset.origin === "external" ||
-      !meta?.version ||
-      !meta.attempt
-    )
-      return;
-    const abort = new AbortController();
-    const version = meta.version,
-      attempt = meta.attempt;
-    void (async () => {
-      const scope = await workspace.scope(
-        {
-          branch: state.selection.branch,
-          dataset: dataset.dataset_id,
-          origin: dataset.workspace_id,
-          version,
-        },
-        abort.signal,
-      );
-      const value = await scope.read(
-        "ApiAttemptV1",
-        `/api/v1/attempts/${attempt}`,
-      );
-      if (value.attempt !== attempt || value.dataset !== dataset.dataset_id)
-        throw new Error(
-          "Published check evidence does not match this dataset.",
-        );
-      if (!abort.signal.aborted) {
-        setPublished({ version, value });
-        setOutputError("");
-      }
-    })().catch((failure) => {
-      if (!abort.signal.aborted) setOutputError(message(failure));
-    });
-    return () => abort.abort();
-  }, [workspace, state, dataset, meta?.version, meta?.attempt, revision]);
+  const [revision, refresh] = useState(0);
+  const [result, setResult] = useState<{
+    key: string;
+    revision: number;
+    builds: HealthPoint[];
+    outputs: HealthPoint[];
+    inputs: HealthPoint[];
+    outputChecks?: readonly ExecutionJsonV1[] | undefined;
+    inputChecks?: readonly ExecutionJsonV1[] | undefined;
+    error?: string | undefined;
+    limited?: boolean;
+  }>();
   useEffect(() => {
     if (!dataset || dataset.origin === "external") return;
     const abort = new AbortController();
     void (async () => {
       const scope = await workspace.scope(branchSelection(state), abort.signal);
-      const history = await scope.read(
-        "ApiDatasetHistoryV1",
-        `/api/v1/datasets/${dataset.dataset_id}/history`,
-        { limit: "50" },
+      const jobs: ApiHistoryJobV1[] = [];
+      let cursor: string | null = null;
+      do {
+        const page: ApiDatasetHistoryV1 = await scope.read(
+          "ApiDatasetHistoryV1",
+          `/api/v1/datasets/${dataset.dataset_id}/history`,
+          { limit: "50", order: "newest", ...(cursor ? { cursor } : {}) },
+        );
+        jobs.push(...page.entries);
+        cursor = page.next_cursor;
+      } while (
+        cursor &&
+        jobs.length < 1000 &&
+        (jobs.flatMap((j) => j.attempts).length < 10 ||
+          jobs.filter((j) => j.produced_version).length < 10)
       );
-      const attempts = history.entries.flatMap((job) =>
-        job.attempts.map((timing) => ({ ...timing, owner: job })),
-      );
-      attempts.sort((a, b) =>
-        BigInt(a.started_us) > BigInt(b.started_us)
-          ? -1
-          : BigInt(a.started_us) < BigInt(b.started_us)
-            ? 1
-            : b.attempt.localeCompare(a.attempt),
-      );
-      const attempt = attempts[0];
-      if (!attempt) return;
-      const retained = await workspace.scope(
-        { branch: state.selection.branch, plan: attempt.owner.plan },
-        abort.signal,
-      );
-      const value = await retained.read(
-        "ApiAttemptV1",
-        `/api/v1/attempts/${attempt.attempt}`,
+      const timings = jobs
+        .flatMap((job) => job.attempts.map((t) => ({ ...t, owner: job })))
+        .sort((a, b) =>
+          BigInt(a.started_us) > BigInt(b.started_us)
+            ? -1
+            : BigInt(a.started_us) < BigInt(b.started_us)
+              ? 1
+              : b.attempt.localeCompare(a.attempt),
+        );
+      const inputs: HealthPoint[] = [];
+      const errors: string[] = [];
+      const buildChecks = new Map<string, HealthPoint>();
+      let inputChecks: readonly ExecutionJsonV1[] | undefined;
+      for (const timing of timings.slice(0, 10)) {
+        try {
+          const retained = await workspace.scope(
+            { branch: state.selection.branch, plan: timing.owner.plan },
+            abort.signal,
+          );
+          const value = await retained.read(
+            "ApiAttemptV1",
+            `/api/v1/attempts/${timing.attempt}`,
+          );
+          if (
+            value.attempt !== timing.attempt ||
+            value.dataset !== dataset.dataset_id ||
+            value.plan !== timing.owner.plan ||
+            value.build !== timing.owner.build ||
+            value.source !== timing.owner.source
+          )
+            throw new Error("Check evidence does not match this dataset.");
+          const checks = items(property(value.evidence, "checks")).filter(
+            (c) => field(c, "phase") === "input",
+          );
+          if (!inputs.length) inputChecks = checks;
+          if (!buildChecks.has(timing.owner.id))
+            buildChecks.set(
+              timing.owner.id,
+              checkStatus(items(property(value.evidence, "checks"))),
+            );
+          inputs.push({ ...checkStatus(checks), at: timing.started_us });
+        } catch (error) {
+          if (abort.signal.aborted) return;
+          errors.push(message(error));
+          inputs.push({
+            label: "Unavailable",
+            tone: "neutral",
+            at: timing.started_us,
+          });
+        }
+      }
+      const publications = jobs.flatMap((j) =>
+        j.produced_version
+          ? [
+              {
+                version: j.produced_version,
+                attempt: [...j.attempts]
+                  .reverse()
+                  .find((a) => a.state === "SUCCEEDED")?.attempt,
+                at: j.finished_us ?? j.created_us,
+              },
+            ]
+          : [],
       );
       if (
-        value.attempt !== attempt.attempt ||
-        value.dataset !== dataset.dataset_id ||
-        value.plan !== attempt.owner.plan ||
-        value.build !== attempt.owner.build ||
-        value.source !== attempt.owner.source
+        meta?.version &&
+        !publications.some((p) => p.version === meta.version)
       )
-        throw new Error("Recent check evidence does not match this dataset.");
-      if (!abort.signal.aborted) {
-        setRecent({ key, value });
-        setRecentError("");
+        publications.unshift({
+          version: meta.version,
+          attempt: meta.attempt ?? undefined,
+          at: meta.published ?? "",
+        });
+      publications.sort((a, b) =>
+        BigInt(a.at || "0") > BigInt(b.at || "0")
+          ? -1
+          : BigInt(a.at || "0") < BigInt(b.at || "0")
+            ? 1
+            : b.version.localeCompare(a.version),
+      );
+      const outputs: HealthPoint[] = [];
+      let outputChecks: readonly ExecutionJsonV1[] | undefined;
+      for (const publication of publications.slice(0, 10)) {
+        if (!publication.attempt) {
+          outputs.push({
+            label: dataset.kind === "imported" ? "No checks" : "Unavailable",
+            tone: "neutral",
+            at: publication.at,
+          });
+          continue;
+        }
+        try {
+          const retained = await workspace.scope(
+            {
+              branch: state.selection.branch,
+              dataset: dataset.dataset_id,
+              origin: dataset.workspace_id,
+              version: publication.version,
+            },
+            abort.signal,
+          );
+          const value = await retained.read(
+            "ApiAttemptV1",
+            `/api/v1/attempts/${publication.attempt}`,
+          );
+          if (
+            value.attempt !== publication.attempt ||
+            value.dataset !== dataset.dataset_id
+          )
+            throw new Error(
+              "Published check evidence does not match this dataset.",
+            );
+          const checks = items(property(value.evidence, "checks")).filter(
+            (c) => field(c, "phase") === "output",
+          );
+          if (!outputs.length) outputChecks = checks;
+          outputs.push({ ...checkStatus(checks), at: publication.at });
+        } catch (error) {
+          if (abort.signal.aborted) return;
+          errors.push(message(error));
+          outputs.push({
+            label: "Unavailable",
+            tone: "neutral",
+            at: publication.at,
+          });
+        }
       }
-    })().catch((failure) => {
-      if (!abort.signal.aborted) setRecentError(message(failure));
+      if (!abort.signal.aborted)
+        setResult({
+          key,
+          revision,
+          builds: jobs.slice(0, 10).map((j) => ({
+            ...(j.state === "SUCCEEDED" &&
+            buildChecks.get(j.id)?.tone === "warn"
+              ? { label: "Warning", tone: "warn" as const }
+              : buildStatus(j.state)),
+            at: j.created_us,
+          })),
+          outputs,
+          inputs,
+          outputChecks,
+          inputChecks,
+          limited: !!cursor && jobs.length >= 1000,
+          error: errors.length ? [...new Set(errors)].join("; ") : undefined,
+        });
+    })().catch((error) => {
+      if (!abort.signal.aborted)
+        setResult({
+          key,
+          revision,
+          builds: [],
+          outputs: [],
+          inputs: [],
+          error: message(error),
+        });
     });
     return () => abort.abort();
-  }, [workspace, state, dataset, key, revision]);
+  }, [
+    workspace,
+    state,
+    dataset,
+    key,
+    meta?.version,
+    meta?.attempt,
+    meta?.published,
+    revision,
+  ]);
   if (!dataset) return <Empty>Select a dataset to inspect its health.</Empty>;
+  const current =
+    result?.key === key && result.revision === revision ? result : undefined;
+  const foreign = dataset.origin === "external";
   const entry = state.value.versions?.entries.find(
-    (value) => value.version === meta?.version,
+    (v) => v.version === meta?.version,
   );
-  const output =
-    published && published.version === meta?.version
-      ? published.value
-      : undefined;
-  const attempted = recent?.key === key ? recent.value : undefined;
   const provider =
     entry?.origin === "external"
       ? property(entry.metadata, "output_certificates")
       : undefined;
-  const outputChecks =
-    dataset.origin === "external"
-      ? Array.isArray(provider)
-        ? provider
-        : undefined
-      : output
-        ? items(property(output.evidence, "checks")).filter(
-            (check) => field(check, "phase") === "output",
-          )
-        : undefined;
-  const inputs = attempted
-    ? items(property(attempted.evidence, "checks")).filter(
-        (check) => field(check, "phase") === "input",
-      )
-    : undefined;
-  const overlay =
-    node?.identity === `dataset:${dataset.workspace_id}:${dataset.dataset_id}`
-      ? node.overlay
-      : undefined;
+  const outputChecks = foreign
+    ? Array.isArray(provider)
+      ? provider
+      : undefined
+    : current?.outputChecks;
+  const outputs = foreign
+    ? outputChecks
+      ? [checkStatus(outputChecks)]
+      : []
+    : (current?.outputs ?? []);
   return (
     <div className="health-inspector">
       {!state.selection.version && (
@@ -278,99 +433,64 @@ export function HealthInspector({
         />
       )}
       <DatasetHeader path={dataset.path}>
-        <div className="execution-switches">
-          <Button
-            aria-label="Refresh check evidence"
-            onClick={() => refresh((n) => n + 1)}
-          >
-            <Icon name="refresh" />
-          </Button>
-        </div>
+        <Button
+          aria-label="Refresh check evidence"
+          onClick={() => refresh((n) => n + 1)}
+        >
+          <Icon name="refresh" />
+        </Button>
       </DatasetHeader>
       <div className="health-content">
-        <section className="health-section">
-          <dl className="health-summary">
-            <div>
-              <dt>Published output checks</dt>
-              <dd>
-                {meta?.version && overlay?.version === meta.version
-                  ? healthLabel(overlay.health)
-                  : "Unavailable"}
-              </dd>
-            </div>
-            <div>
-              <dt>Latest attempt on {state.selection.branch}</dt>
-              <dd>{overlay?.latest_attempt ?? "Unavailable"}</dd>
-            </div>
-          </dl>
-          {overlay?.input_failed && (
-            <p className="health-input-failure" role="status">
-              The latest consumer input check failed. Published output checks
-              are shown separately.
-            </p>
+        <HistoryStrip
+          title="Latest builds"
+          points={current?.builds ?? []}
+          loading={!foreign && !current}
+          error={current?.error}
+        />
+        <HistoryStrip
+          title="Published data checks"
+          points={outputs}
+          loading={!foreign && !current}
+        >
+          {outputChecks && (
+            <details>
+              <summary>Latest check details</summary>
+              <Checks
+                title={
+                  foreign ? "Provider output certificates" : "Output checks"
+                }
+                values={outputChecks}
+                empty="No output checks were recorded for this version."
+              />
+            </details>
           )}
-          {!meta?.version && (
-            <Empty>No published version is available on this branch.</Empty>
+        </HistoryStrip>
+        <HistoryStrip
+          title="Input dataset checks"
+          points={current?.inputs ?? []}
+          loading={!foreign && !current}
+        >
+          {current?.inputChecks && (
+            <details>
+              <summary>Latest check details</summary>
+              <Checks
+                title="Input checks"
+                values={current.inputChecks}
+                empty="No input checks were recorded for this attempt."
+              />
+            </details>
           )}
-        </section>
-        {outputError && (
-          <p className="execution-error" role="alert">
-            Published check evidence: {outputError}
+        </HistoryStrip>
+        {current?.limited && (
+          <p className="muted">
+            History is limited to the latest 1,000 build jobs.
           </p>
         )}
-        {dataset.kind === "imported" && !meta?.attempt ? (
-          <section className="health-section">
-            <h3>Published version checks</h3>
-            <p>Imported data has no producer output checks.</p>
-          </section>
-        ) : (
-          <Checks
-            title={
-              dataset.origin === "external"
-                ? "Provider output certificates"
-                : "Published version checks"
-            }
-            values={outputChecks}
-            empty="No output checks were recorded for this version."
-          />
-        )}
-        {dataset.origin !== "external" && (
-          <>
-            <section className="health-section">
-              <h3>Recent attempted job</h3>
-              {attempted ? (
-                <p>
-                  {field(attempted.evidence, "state")} ·{" "}
-                  {timestamp(field(attempted.evidence, "started_us"), "minute")}
-                </p>
-              ) : (
-                <p className="muted">Attempt details unavailable.</p>
-              )}
-              <small>
-                Most recent attempt among the latest 50 build jobs. Cached reuse
-                does not create an attempt.
-              </small>
-              {recentError && (
-                <p className="execution-error" role="alert">
-                  {recentError}
-                </p>
-              )}
-            </section>
-            {attempted && attempted.attempt !== meta?.attempt && (
-              <Checks
-                title="Recent attempt output checks"
-                values={items(property(attempted.evidence, "checks")).filter(
-                  (check) => field(check, "phase") === "output",
-                )}
-                empty="No output checks were recorded for this attempt."
-              />
-            )}
-            <Checks
-              title="Consumer input checks"
-              values={inputs}
-              empty="No input checks were recorded for this attempt."
-            />
-          </>
+        {foreign && (
+          <p className="muted">
+            Provider build and input-check history is unavailable. Output
+            certificates are retained metadata.
+          </p>
         )}
       </div>
     </div>

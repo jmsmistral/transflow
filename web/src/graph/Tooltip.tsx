@@ -1,3 +1,4 @@
+import { formatSize } from "../format-size";
 import { useEffect, useState } from "react";
 import type {
   ApiDatasetV1,
@@ -86,18 +87,26 @@ export function DatasetTooltip({
         <dt>Rows / size</dt>
         <dd>
           {scalar(field(head, "row_count"))} rows ·{" "}
-          {scalar(field(head, "byte_count"))} bytes
+          {formatSize(field(head, "byte_count"))}
         </dd>
         <dt>Columns</dt>
         <dd>{Array.isArray(fields) ? fields.length : "Unknown"}</dd>
-        <dt>Freshness / quality</dt>
+        <dt>Freshness</dt>
         <dd>
-          {paint(node, "freshness").label} · {paint(node, "health").label}
+          {node.overlay?.data_freshness === "current"
+            ? "Up-to-date"
+            : node.overlay?.data_freshness === "stale"
+              ? "Out-of-date"
+              : node.overlay?.data_freshness === "never_built"
+                ? "Never built"
+                : "Unavailable"}
         </dd>
+        <dt>Data quality</dt>
+        <dd>{paint(node, "health").label}</dd>
         <dt>Latest attempt</dt>
         <dd>
           {paint(node, "status").label}
-          {node.overlay?.version ? " · Published data available" : ""}
+          {node.overlay?.version ? " · Published" : ""}
         </dd>
       </dl>
       {message && (

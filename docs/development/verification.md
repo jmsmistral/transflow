@@ -1,5 +1,23 @@
 # Contributor verification
 
+## Health history and exploration details (2026-10-19)
+
+Health now lives in the right inspector with ten-slot build, published-check and
+input-check histories. Newest-first API pagination fixes identifier-order ambiguity.
+Data-only freshness compares direct input publications; warnings and later failed
+attempts preserve the last published result. Physical sizes use decimal units and
+History summary spacing is compact. See the [receipt](evidence/t088-health-history.json).
+
+Completed checks: 659 web tests and production build, 1,130 Python tests,
+API qualification, focused Rust history/freshness checks, workspace Clippy,
+27 safety regressions and specification validation with 44 checker regressions.
+The full Rust and CLI integration runs were stopped at the owner's request;
+their completion is unverified.
+
+The rebuilt review bundle includes real WARN and FAIL examples, with the previous
+review workspace preserved. Circle navigation is deferred; missing checks/history
+remain neutral. Remote CI is handed to the owner after push.
+
 ## Safety exception and toolchain review (2026-10-19)
 
 Node 24.22.0/npm 11.19.1 and jsdom 30.1.3 remove the obsolete encoding

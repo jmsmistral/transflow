@@ -185,6 +185,26 @@ async fn retained_history_metrics_cache_retry_and_context_isolation()
     let empty = rd.execution_metrics(empty).await?;
     assert_eq!(empty["duration_samples"], "0");
     assert!(empty["median_ns"].is_null() && empty["failure_rate"].is_null());
+    let newest = rd
+        .dataset_history_newest(id(1).parse()?, &branch, id(2).parse()?, "", 2)
+        .await?;
+    assert_eq!(newest[0]["id"], id(309));
+    assert_eq!(newest[1]["id"], id(310));
+    let older = rd
+        .dataset_history_newest(
+            id(1).parse()?,
+            &branch,
+            id(2).parse()?,
+            newest[1]["id"].as_str().ok_or("cursor missing")?,
+            2,
+        )
+        .await?;
+    assert_eq!(older[0]["id"], id(307));
+    assert!(
+        rd.dataset_history_newest(id(1).parse()?, &branch, id(2).parse()?, &id(308), 2)
+            .await
+            .is_err()
+    );
     let history = rd
         .dataset_history(id(1).parse()?, &branch, id(2).parse()?, "", 2)
         .await?;

@@ -9533,6 +9533,15 @@
             ]
           },
           "minItems": 0
+        },
+        "data_freshness": {
+          "enum": [
+            "current",
+            "stale",
+            "never_built",
+            "unknown"
+          ],
+          "type": "string"
         }
       }
     },

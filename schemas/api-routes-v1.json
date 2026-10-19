@@ -399,7 +399,8 @@
     "request": null,
     "query": [
       "limit",
-      "cursor"
+      "cursor",
+      "order"
     ],
     "mutation": false,
     "context": true

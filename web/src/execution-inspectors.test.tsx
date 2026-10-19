@@ -979,7 +979,7 @@ test("job transaction metadata stays pinned to its own version without changing 
   fireEvent.click(
     await screen.findByRole("button", { name: /SUCCEEDED · 1 attempts/ }),
   );
-  expect(await screen.findByText("42 bytes")).toBeTruthy();
+  expect(await screen.findByText("0.04 KB")).toBeTruthy();
   expect(
     calls.some(
       (c) =>

@@ -17,6 +17,11 @@ types. OpenAPI examples are validated against those definitions in the contract
 suite; all language receivers count string lengths in Unicode code points.
 The [HTTP guide](../crates/tf-api/README.md) describes authentication and contexts.
 
+Dataset history accepts optional `order=newest`, ordered by build creation time
+and job ID descending with a context-bound pagination cursor. Omitting it preserves
+the identifier order. Optional overlay `data_freshness` reports direct-input
+publication recency independently of code freshness and check quality.
+
 ## Independent versions and compatibility
 
 T079 adds the closed `ScratchpadBindingV1`, `ScratchpadRequestV1` and

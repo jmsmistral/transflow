@@ -5675,6 +5675,14 @@
             }
           },
           {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "dataset",
             "in": "path",
             "required": true,
@@ -17845,6 +17853,15 @@
               ]
             },
             "minItems": 0
+          },
+          "data_freshness": {
+            "enum": [
+              "current",
+              "stale",
+              "never_built",
+              "unknown"
+            ],
+            "type": "string"
           }
         }
       },

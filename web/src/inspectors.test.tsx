@@ -119,7 +119,9 @@ test("properties and preview show exact metadata, typed cells and zero byte coun
   render(<App workspace={workspace} />);
   await selectGraphDataset();
   fireEvent.click(screen.getByRole("button", { name: "Properties" }));
-  expect(screen.getByText("Physical bytes").nextSibling?.textContent).toBe("0");
+  expect(screen.getByText("Physical size").nextSibling?.textContent).toBe(
+    "0 KB",
+  );
   expect(screen.getByText("2", { selector: "dd" })).toBeTruthy();
   expect(screen.getByText("Created").nextSibling?.textContent).toMatch(
     /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/,

@@ -32,7 +32,7 @@ pub(crate) struct Context {
     pub graph: Option<Value>,
     pub source: Option<tf_domain::SourceSnapshotId>,
     pub branch: BranchName,
-    candidates: Vec<BranchName>,
+    pub(crate) candidates: Vec<BranchName>,
     pub root: PathBuf,
 }
 impl Context {
@@ -714,6 +714,11 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
         })
         .transpose()?
         .flatten();
+    let data_freshness = snapshot
+        .as_ref()
+        .map(|s| crate::api_overlays::data_freshness(c, &validated, &request, s))
+        .transpose()?
+        .unwrap_or_default();
     let mut nodes = Vec::with_capacity(p.nodes.len());
     for n in &p.nodes {
         // Never infer absence from unavailable foreign or historical metadata.
@@ -768,6 +773,11 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
                 snapshot.as_ref(),
                 report.as_ref(),
             )?;
+            node["overlay"]["data_freshness"] = data_freshness
+                .get(&n.node.identity)
+                .copied()
+                .unwrap_or("unknown")
+                .into();
         }
         nodes.push(node);
     }

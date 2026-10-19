@@ -1,3 +1,4 @@
+import { formatSize } from "./format-size";
 import { useEffect, useState } from "react";
 import type { ApiSourceV1 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
@@ -199,8 +200,9 @@ export function CodeInspector({
           <SourceLines source={source} current={shown?.current} diff={diff} />
           {source && !source.complete && (
             <p className="bounded-notice">
-              Showing a bounded excerpt (maximum 2,000 lines / 512 KiB); use the
-              retained snapshot for the complete file.
+              Showing a bounded excerpt (maximum 2,000 lines /{" "}
+              {formatSize("524288")}); use the retained snapshot for the
+              complete file.
             </p>
           )}
         </div>

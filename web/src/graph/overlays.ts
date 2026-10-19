@@ -1,3 +1,4 @@
+import { formatSize } from "../format-size";
 import type {
   ApiLineageNodeV1,
   GraphViewV1,
@@ -104,7 +105,7 @@ export function numeric(
   const n = BigInt(value);
   const limits =
     dimension === "bytes"
-      ? [1024n ** 2n, 1024n ** 3n, 1024n ** 4n]
+      ? [1000n ** 2n, 1000n ** 3n, 1000n ** 4n]
       : dimension.startsWith("duration")
         ? [60_000_000_000n, 300_000_000_000n, 900_000_000_000n]
         : dimension === "files"
@@ -112,7 +113,7 @@ export function numeric(
           : [1000n, 1_000_000n, 1_000_000_000n];
   const labels =
     dimension === "bytes"
-      ? ["< 1 MiB", "1 MiB – < 1 GiB", "1 GiB – < 1 TiB", "≥ 1 TiB"]
+      ? ["< 1 MB", "1 MB - < 1 GB", "1 GB - < 1 TB", "≥ 1 TB"]
       : dimension.startsWith("duration")
         ? ["< 1 min", "1 – < 5 min", "5 – < 15 min", "≥ 15 min"]
         : dimension === "files"
@@ -131,7 +132,7 @@ export function numeric(
   const bin = limits.findIndex((limit) => n < limit);
   const detail =
     dimension === "bytes"
-      ? `${n.toLocaleString()} B`
+      ? formatSize(value)
       : dimension.startsWith("duration")
         ? `${(n / 1_000_000n).toLocaleString()} ms`
         : `${n.toLocaleString()} ${dimension === "files" ? "files" : "rows"}`;
@@ -140,7 +141,7 @@ export function numeric(
     label:
       n === 0n
         ? dimension === "bytes"
-          ? "0 B"
+          ? "0 KB"
           : dimension.startsWith("duration")
             ? "0 s"
             : "Zero"

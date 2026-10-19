@@ -2293,15 +2293,18 @@ revo-grid.preview-grid
   flex-wrap: wrap;
 }
 .history-summary-header h3 {
-  margin: 0 auto 0 0;
+  margin: 0 12px 0 0;
   padding-bottom: 4px;
-  font-size: 13px;
+  font-size: 17px;
 }
 .metrics-range {
   display: flex;
   align-items: flex-end;
   gap: 12px;
   flex-wrap: wrap;
+}
+.history-summary-header .metrics-range {
+  margin-left: auto;
 }
 .metrics-range label {
   display: flex;
@@ -2323,8 +2326,8 @@ revo-grid.preview-grid
 }
 .history-summary-header .metrics-summary {
   gap: 10px 20px;
-  margin-left: auto;
-  padding: 0 0 3px;
+  margin-right: auto;
+  padding: 0 24px 3px;
   border: 0;
 }
 .metric {
@@ -4274,4 +4277,62 @@ revo-grid.preview-grid
 .theme-choice .icon {
   width: 17px;
   height: 17px;
+}
+
+.health-history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.health-history-heading h3 {
+  margin: 0;
+}
+.health-history {
+  display: flex;
+  gap: 8px;
+  padding: 0;
+  margin: 18px 0 8px;
+  list-style: none;
+}
+.health-dot {
+  max-width: 22px;
+  min-width: 0;
+  min-height: 0;
+  line-height: 1;
+  align-self: flex-start;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.health-pill {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.health-good {
+  background: #d6efdf;
+  color: #16603b;
+}
+.health-warn {
+  background: #fff0b8;
+  color: #785600;
+}
+.health-bad {
+  background: #fbe0df;
+  color: #a32727;
+}
+.health-neutral {
+  background: var(--bg);
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.health-section details {
+  margin-top: 12px;
 }

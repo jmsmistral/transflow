@@ -173,6 +173,18 @@ def main() -> None:
             history = client.call(
                 "GET", f"/api/v1/datasets/{dataset}/history", query={"branch": "main"}
             )["data"]
+            newest_history = client.call(
+                "GET",
+                f"/api/v1/datasets/{dataset}/history",
+                query={"branch": "main", "order": "newest"},
+            )["data"]
+            assert newest_history == history
+            client.call(
+                "GET",
+                f"/api/v1/datasets/{dataset}/history",
+                query={"branch": "main", "order": "invalid"},
+                status=400,
+            )
             assert history["entries"][0]["build_state"] == report["state"]
             assert history["entries"][0]["build_job_count"] == str(len(report["jobs"]))
             assert history["entries"][0]["produced_version"] == version
@@ -328,9 +340,13 @@ def main() -> None:
                         "fallback": fallback,
                         "start": "raw/items",
                         "depth": "0",
+                        "overlays": "true",
                     },
                 )["data"]
                 assert lineage["nodes"][0]["publication"] == expected, lineage
+                assert lineage["nodes"][0]["overlay"]["data_freshness"] == (
+                    "current" if expected == "published" else "never_built"
+                ), lineage
             for invalid in ["null", "[1]", '[""]', json.dumps(["main"] * 101)]:
                 client.call(
                     "GET",

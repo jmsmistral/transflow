@@ -1,3 +1,4 @@
+import { formatSize } from "./format-size";
 import { useEffect, useState } from "react";
 import type {
   ApiAttemptV1,
@@ -278,7 +279,7 @@ export function Logs({ scope, attempt }: { scope: Scope; attempt: string }) {
                   key={`${stream.helper}:${stream.stream}`}
                   value={JSON.stringify([stream.helper, stream.stream])}
                 >
-                  {stream.helper} · {stream.stream} ({stream.bytes} bytes)
+                  {stream.helper} · {stream.stream} ({formatSize(stream.bytes)})
                 </option>
               ))}
             </select>
@@ -292,7 +293,7 @@ export function Logs({ scope, attempt }: { scope: Scope; attempt: string }) {
                 void load(page.helper, page.stream, page.next_offset);
             }}
           >
-            {busy ? "Loading…" : "Load next 32 KiB"}
+            {busy ? "Loading…" : `Load next ${formatSize("32768")}`}
           </Button>
         )}
       </div>
@@ -317,7 +318,7 @@ export function Logs({ scope, attempt }: { scope: Scope; attempt: string }) {
               <p className="bounded-notice">
                 Partial log excerpt ·{" "}
                 {text.length >= 1024 * 1024
-                  ? "1 MiB display limit reached."
+                  ? `${formatSize("1048576")} display limit reached.`
                   : "More retained output is available."}
               </p>
             )}

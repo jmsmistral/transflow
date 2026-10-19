@@ -1,3 +1,4 @@
+import { formatSize } from "./format-size";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   ApiContextV1,
@@ -481,7 +482,7 @@ export function BuildPlanner({
                         <p>
                           {write.resources.worker_threads} worker threads ·{" "}
                           {write.resources.memory_budget_mib
-                            ? `${write.resources.memory_budget_mib} MiB reservation`
+                            ? `${formatSize((BigInt(write.resources.memory_budget_mib) * 1048576n).toString())} reservation`
                             : "No Transflow memory cap"}
                         </p>
                       </details>

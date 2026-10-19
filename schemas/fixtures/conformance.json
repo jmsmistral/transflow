@@ -8143,7 +8143,8 @@
       "roles": [
         "target",
         "trigger"
-      ]
+      ],
+      "data_freshness": "current"
     }
   },
   {

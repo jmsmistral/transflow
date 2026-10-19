@@ -137,12 +137,64 @@ impl Reader {
         after: &str,
         limit: u32,
     ) -> Result<Vec<Value>> {
+        self.dataset_history_ordered(workspace, branch, dataset, after, limit, false)
+            .await
+    }
+    /// Recent branch jobs ordered by acceptance time and identity, with a stable cursor.
+    pub async fn dataset_history_newest(
+        &mut self,
+        workspace: WorkspaceId,
+        branch: &BranchName,
+        dataset: DatasetId,
+        after: &str,
+        limit: u32,
+    ) -> Result<Vec<Value>> {
+        self.dataset_history_ordered(workspace, branch, dataset, after, limit, true)
+            .await
+    }
+    async fn dataset_history_ordered(
+        &mut self,
+        workspace: WorkspaceId,
+        branch: &BranchName,
+        dataset: DatasetId,
+        after: &str,
+        limit: u32,
+        newest: bool,
+    ) -> Result<Vec<Value>> {
         if !(1..=201).contains(&limit) {
             return Err(invalid());
         }
         let mut tx = self.db.begin().await?;
-        let rows = sqlx::query("SELECT j.id,j.build_id,j.state,b.state AS build_state,(SELECT count(*) FROM jobs siblings WHERE siblings.build_id=b.id) AS build_job_count,p.id AS plan,p.source_snapshot_id,b.created_at_us,b.finished_at_us,c.version_id AS reused_version,c.original_attempt_id,(SELECT count(*) FROM attempts a WHERE a.job_id=j.id) AS attempt_count,(SELECT v.id FROM dataset_versions v JOIN attempts a ON a.id=v.attempt_id WHERE a.job_id=j.id LIMIT 1) AS produced_version FROM jobs j JOIN data_branches d ON d.id=j.branch_id JOIN builds b ON b.id=j.build_id JOIN build_plans p ON p.id=b.plan_id LEFT JOIN cached_jobs c ON c.job_id=j.id WHERE d.workspace_id=? AND d.name=? AND j.dataset_id=? AND j.id>? ORDER BY j.id LIMIT ?")
-            .bind(workspace.to_string()).bind(branch.as_str()).bind(dataset.to_string()).bind(after).bind(limit).fetch_all(&mut *tx).await?;
+        let cutoff: i64 = if newest && !after.is_empty() {
+            sqlx::query_scalar("SELECT b.created_at_us FROM jobs j JOIN builds b ON b.id=j.build_id JOIN data_branches d ON d.id=j.branch_id WHERE d.workspace_id=? AND d.name=? AND j.dataset_id=? AND j.id=?")
+                .bind(workspace.to_string()).bind(branch.as_str()).bind(dataset.to_string()).bind(after)
+                .fetch_optional(&mut *tx).await?.ok_or_else(invalid)?
+        } else {
+            i64::MAX
+        };
+        macro_rules! history_query {
+            ($order:literal) => {
+                concat!("SELECT j.id,j.build_id,j.state,b.state AS build_state,(SELECT count(*) FROM jobs siblings WHERE siblings.build_id=b.id) AS build_job_count,p.id AS plan,p.source_snapshot_id,b.created_at_us,b.finished_at_us,c.version_id AS reused_version,c.original_attempt_id,(SELECT count(*) FROM attempts a WHERE a.job_id=j.id) AS attempt_count,(SELECT v.id FROM dataset_versions v JOIN attempts a ON a.id=v.attempt_id WHERE a.job_id=j.id LIMIT 1) AS produced_version FROM jobs j JOIN data_branches d ON d.id=j.branch_id JOIN builds b ON b.id=j.build_id JOIN build_plans p ON p.id=b.plan_id LEFT JOIN cached_jobs c ON c.job_id=j.id WHERE d.workspace_id=? AND d.name=? AND j.dataset_id=?", $order)
+            };
+        }
+        let query = if newest {
+            history_query!(
+                " AND (?='' OR b.created_at_us<? OR (b.created_at_us=? AND j.id<?)) ORDER BY b.created_at_us DESC,j.id DESC LIMIT ?"
+            )
+        } else {
+            history_query!(" AND j.id>? ORDER BY j.id LIMIT ?")
+        };
+        let query = sqlx::query(query)
+            .bind(workspace.to_string())
+            .bind(branch.as_str())
+            .bind(dataset.to_string())
+            .bind(after);
+        let query = if newest {
+            query.bind(cutoff).bind(cutoff).bind(after)
+        } else {
+            query
+        };
+        let rows = query.bind(limit).fetch_all(&mut *tx).await?;
         let mut entries = vec![];
         let mut total_attempts = 0_usize;
         let mut total_phases = 0_usize;

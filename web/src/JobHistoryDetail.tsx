@@ -1,3 +1,4 @@
+import { formatSize } from "./format-size";
 import { useEffect, useState } from "react";
 import type {
   ApiDatasetV1,
@@ -146,7 +147,7 @@ export function JobHistoryDetail({
               <dt>Rows</dt>
               <dd>{output?.row_count ?? "Unavailable"}</dd>
               <dt>Size of files</dt>
-              <dd>{output ? `${output.byte_count} bytes` : "Unavailable"}</dd>
+              <dd>{output ? formatSize(output.byte_count) : "Unavailable"}</dd>
             </dl>
             {versionError && <p role="status">{versionError}</p>}
           </section>
@@ -232,8 +233,8 @@ export function JobHistoryDetail({
               <dd>{output.artifact}</dd>
               <dt>Files</dt>
               <dd>{output.file_count ?? "Unavailable"}</dd>
-              <dt>Physical bytes</dt>
-              <dd>{output.byte_count}</dd>
+              <dt>Physical size</dt>
+              <dd>{formatSize(output.byte_count)}</dd>
             </dl>
           ) : (
             <Empty>No retained output file metadata for this job.</Empty>

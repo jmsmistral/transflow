@@ -84,7 +84,12 @@ pub(crate) fn read(
         .strip_prefix("datasets/")
         .and_then(|s| s.strip_suffix("/history"))
     {
-        keys(r, &["limit", "cursor"])?;
+        keys(r, &["limit", "cursor", "order"])?;
+        let newest = match r.query.get("order").map(String::as_str) {
+            None => false,
+            Some("newest") => true,
+            _ => return Err(E::invalid()),
+        };
         current_only(r)?;
         if r.query.contains_key("dataset") {
             return Err(E::invalid());
@@ -95,9 +100,12 @@ pub(crate) fn read(
         if !after.is_empty() {
             let _: tf_domain::JobId = after.parse().map_err(|_| E::invalid())?;
         }
-        let mut entries = rt
-            .block_on(rd.dataset_history(wid, &c.branch, id, &after, n as u32 + 1))
-            .map_err(bad)?;
+        let mut entries = if newest {
+            rt.block_on(rd.dataset_history_newest(wid, &c.branch, id, &after, n as u32 + 1))
+        } else {
+            rt.block_on(rd.dataset_history(wid, &c.branch, id, &after, n as u32 + 1))
+        }
+        .map_err(bad)?;
         let more = entries.len() > n;
         entries.truncate(n);
         let next = if more {

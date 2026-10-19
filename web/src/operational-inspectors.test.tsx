@@ -876,12 +876,21 @@ test("published output checks and later consumer failure remain separate, exact 
   await screen.findByText("PASS");
   await screen.findByText("VIOLATION");
   expect(
-    screen.getByText("Published output checks").nextSibling?.textContent,
-  ).toBe("Passed");
+    within(
+      screen.getByRole("region", { name: "Published data checks" }),
+    ).getByText("Passed"),
+  ).toBeTruthy();
   expect(
-    screen.getByText("Latest attempt on master").nextSibling?.textContent,
-  ).toBe("Failed");
-  expect(screen.getByText(/latest consumer input check failed/)).toBeTruthy();
+    within(screen.getByRole("region", { name: "Latest builds" })).getByText(
+      "Failed",
+    ),
+  ).toBeTruthy();
+  expect(
+    within(
+      screen.getByRole("region", { name: "Input dataset checks" }),
+    ).getByText("Failed"),
+  ).toBeTruthy();
+  expect(view.container.querySelectorAll(".health-dot")).toHaveLength(30);
   expect(view.container.querySelector("img")).toBeNull();
   const publishedRead = transport.mock.calls
     .map(([, init]) => JSON.parse(String(init?.body ?? "{}")))
@@ -970,8 +979,64 @@ test("foreign health shows retained provider certificates without starting provi
   expect(screen.getByText("Provider output certificates")).toBeTruthy();
   expect(screen.getByText("PASS")).toBeTruthy();
   expect(
-    screen.getByText("Published output checks").nextSibling?.textContent,
-  ).toBe("Unavailable");
+    within(
+      screen.getByRole("region", { name: "Published data checks" }),
+    ).getByText("Passed"),
+  ).toBeTruthy();
   expect(transport.mock.calls).toHaveLength(before);
+  workspace.dispose();
+});
+
+test("health history keeps newest first, ten slots, severity and retained output on input read failure", async () => {
+  const base = history().entries[0];
+  if (!base) throw new Error("Missing history fixture");
+  const jobs = Array.from({ length: 12 }, (_, i) => ({
+    ...base,
+    id: `00000000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`,
+    state: i === 0 ? "SUCCEEDED" : "FAILED",
+    created_us: String(1700000000000000 - i * 1000000),
+    attempts:
+      i === 0 ? [{ ...base.attempts[0], started_us: "1700000000000000" }] : [],
+  }));
+  const { workspace, state } = await setup((path, query) =>
+    path.endsWith("/history")
+      ? Promise.resolve(
+          json({ entries: jobs, next_cursor: null }, context(query.branch)),
+        )
+      : path.endsWith(`/attempts/${publishedAttempt}`)
+        ? Promise.resolve(
+            json(attempt(publishedAttempt, "output", "PASS"), {
+              ...context(),
+              selection: {
+                kind: "local_version",
+                id: versionId,
+                digest: "f".repeat(64),
+              },
+              fingerprint: "f".repeat(64),
+            }),
+          )
+        : path.endsWith(`/attempts/${failedAttempt}`)
+          ? Promise.reject(new Error("Retained attempt unavailable"))
+          : undefined,
+  );
+  render(<HealthInspector workspace={workspace} state={state} node={node} />);
+  const published = screen.getByRole("region", {
+    name: "Published data checks",
+  });
+  await within(published).findByText("Passed");
+  expect(screen.getByRole("alert").textContent).toContain(
+    "coordinator is disconnected",
+  );
+  const builds = within(
+    screen.getByRole("region", { name: "Latest builds" }),
+  ).getAllByRole("listitem");
+  expect(builds).toHaveLength(10);
+  expect(builds[0]?.getAttribute("aria-label")).toContain("Succeeded");
+  expect(builds[1]?.getAttribute("aria-label")).toContain("Failed");
+  expect(
+    within(
+      screen.getByRole("region", { name: "Input dataset checks" }),
+    ).getByText("Unavailable"),
+  ).toBeTruthy();
   workspace.dispose();
 });

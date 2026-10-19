@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-19",
+  "tasks": [
+    "T085",
+    "T086",
+    "T088"
+  ],
+  "changes": [
+    "Right Health inspector has three ten-slot histories with latest status pills; Data health bottom tab removed.",
+    "Data-only freshness compares direct input publication times; data quality stays separate.",
+    "Physical sizes use decimal units; History summary heading and metric spacing refined.",
+    "Dataset history supports context-bound newest-first pagination."
+  ],
+  "verification": {
+    "web": {
+      "result": "passed",
+      "tests": 659,
+      "assets": 16
+    },
+    "python": {
+      "result": "passed",
+      "tests": 1130
+    },
+    "rust": {
+      "result": "full suite stopped at owner request",
+      "passed": [
+        "workspace Clippy and formatting",
+        "focused history pagination tests (3)",
+        "focused freshness tests",
+        "standalone store example check"
+      ],
+      "note": "The escalated rerun had no observed failures before stopping; full-suite completion is unverified. The initial sandbox run encountered process-control permission errors."
+    },
+    "api": {
+      "result": "passed",
+      "receipt": "target/health-api.json",
+      "coverage": [
+        "newest history order accepted, invalid ordering rejected",
+        "fallback-aware data freshness",
+        "retained version and attempt context guards"
+      ]
+    },
+    "real_workspace": [
+      "all freshly built direct inputs are up-to-date",
+      "new successful upstream publication marks direct consumers out-of-date, not indirect consumers",
+      "WARN input/output checks publish successfully, with independent freshness",
+      "FAIL input checks retain last-good published output quality"
+    ],
+    "browser": {
+      "result": "passed",
+      "observations": [
+        "Latest build Failed, published checks Warning and input checks Failed remain separate on real retained evidence.",
+        "Ten circles per section, latest left; five bottom tabs; compact Summary.",
+        "Light and dark themes checked with no warning/error console logs.",
+        "Circular indicators verified at a narrow inspector width; freshness and 1.18 KB size observed in the tooltip."
+      ],
+      "workspace": "t111-health-review"
+    },
+    "safety": {
+      "result": "passed",
+      "tests": 27,
+      "public_candidates": 881,
+      "locked_versions": 637
+    },
+    "specification": {
+      "result": "passed",
+      "checker_tests": 44
+    },
+    "cli": {
+      "result": "stopped at owner request",
+      "collected": 70,
+      "note": "No observed failures before stopping; full integration-suite completion is unverified."
+    }
+  },
+  "limits": [
+    "No checks or unavailable evidence is neutral, never invented PASS.",
+    "At most 1000 branch jobs are read; exhaustion is disclosed.",
+    "Circle navigation deferred as requested.",
+    "Remote CI remains owner-monitored."
+  ]
+}

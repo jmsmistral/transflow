@@ -9,7 +9,7 @@ grid and safe clipboard format as Preview. Truncation, failure and cancellation
 states remain visible. Result expiry does not publish
 data or substitute a moving head. Fallback data has Preview's branch warning.
 
-All six bottom tabs share a full-width, 44-pixel dataset header with a 13-pixel
+All five bottom tabs share a full-width, 44-pixel dataset header with a 13-pixel
 name. The name stays on the left; controls and metadata keep their context without
 repeating the tab title. Long names truncate visually and retain their full tooltip.
 Data health scrolls its details separately from this header.
@@ -43,13 +43,21 @@ The default query execution budget is 30 seconds, configured by
 result acceptance; queue wait and supervised termination grace are separate.
 The API still supports bound parameters; the scratchpad submits an empty list.
 
-Data health is available in the right inspector and bottom tab. Published output
-checks are read through the version's original attempt; a recent attempted job is
-read through its owning retained plan. Consumer input failures and subsequent
-failed output checks do not replace the last-good publication's evidence.
-The recent detail cohort is explicitly limited to 50 build jobs; cached reuse
-does not invent an attempt. Provider certificates come from retained metadata
-without executing or contacting provider code.
+Data health lives only in the right inspector. Latest builds, Published data checks
+and Input dataset checks each show ten newest-first status circles and a latest
+status pill. Missing history, absent checks and unavailable evidence stay neutral;
+PASS is green, WARN violations amber and FAIL violations red. Build reuse is labelled
+Cached and never invents a check run. Histories read up to 1,000 jobs through bounded
+pages ordered by build creation time (`order=newest`) and disclose that limit when reached. Published checks use exact version
+contexts; input checks use each attempt's retained plan. Provider certificates stay
+retained metadata, without executing or contacting provider code.
+
+Node hover cards separate Data quality from Freshness. Freshness compares successful
+direct-input publications with the displayed output publication, following named
+branches and fallback policy; newer inputs mean Out-of-date. Missing or foreign
+input evidence stays Unavailable. This does not replace the broader Out of date
+overlay, which includes code and inherited changes. All formatted physical sizes
+use decimal KB, MB, GB, TB or PB; exact raw evidence remains available in details.
 
 The [public demo](../examples/operational-alpha/README.md) uses real coordinator
 state and synthetic data. Schedule-role changes retain measured node dimensions

@@ -25,7 +25,6 @@ const tabs = [
   "History",
   "Code",
   "Build timeline",
-  "Data health",
 ] as const;
 const modes = [
   "Catalogue",
@@ -594,15 +593,6 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                   workspace={workspace}
                   state={inspectorState}
                   dark={dark}
-                />
-              ) : tab === "Data health" &&
-                bottomOpen &&
-                inspectorState.kind === "ready" ? (
-                <HealthInspector
-                  key={inspectionKey}
-                  workspace={workspace}
-                  state={inspectorState}
-                  node={selectedNodes[0]}
                 />
               ) : tab === "Code" &&
                 bottomOpen &&

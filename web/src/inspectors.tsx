@@ -1,3 +1,4 @@
+import { formatSize } from "./format-size";
 import { useEffect, useMemo, useState } from "react";
 import type {
   ApiDatasetV1,
@@ -310,7 +311,7 @@ export function PropertiesInspector({
             )}
             <Detail name="Rows" value={display(meta?.rows)} />
             <Detail name="Files" value={display(meta?.files)} />
-            <Detail name="Physical bytes" value={display(meta?.bytes)} />
+            <Detail name="Physical size" value={formatSize(meta?.bytes)} />
           </dl>
           <h4>Connections</h4>
           <dl>

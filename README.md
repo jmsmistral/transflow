@@ -54,7 +54,7 @@ GROUP BY customer_id;
 - **Lineage UI** - Explore pipelines and dataset metadata via a interactive graph with informative overlays.
 - **Interactive exploration** - Preview datasets, run expoloratory SQL queries and inspect execution history.
 - **Branch fallbacks** - Resolve inputs through an ordered set of data branches for builds and scheduled runs.
-- **Data health** - Assess dataset quality and build outcomes across your pipelines at a glance.
+- **Data health** - Review recent builds, published data checks and input checks at a glance.
 - **Editor assistance** - Complete dataset references, inspect catalogue metadata and navigate to producers from your editor.
 - **Build caching** - Reuse eligible results to avoid unnecessary computation.
 - **Local ownership** - Keep pipeline code, data and execution on your machine.

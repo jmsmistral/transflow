@@ -156,3 +156,91 @@ mod tests {
         assert_eq!(super::bounded_reasons(std::iter::empty()).len(), 0);
     }
 }
+
+/// Direct input publication recency, independent of code changes, checks and byte integrity.
+/// Resolve named branches and fallbacks through the same bindings used by planning.
+pub(crate) fn data_freshness(
+    context: &Context,
+    graph: &tf_catalog::validation::ValidatedGraph,
+    request: &tf_catalog::validation::ValidationRequest<'_>,
+    snapshot: &Snapshot,
+) -> Result<std::collections::BTreeMap<Id, &'static str>> {
+    let bindings = tf_catalog::input_bindings::local_read_bindings(
+        graph,
+        request,
+        &context.branch,
+        Some(&context.candidates[1..]),
+    )
+    .map_err(bad)?;
+    let mut result = std::collections::BTreeMap::new();
+    for definition in graph.candidate().definitions() {
+        let Id::Registered(key) = definition.output else {
+            continue;
+        };
+        if key.workspace_id() != snapshot.workspace {
+            continue;
+        }
+        let head = context
+            .candidates
+            .iter()
+            .find_map(|b| snapshot.heads.get(&(key.dataset_id(), b.clone())));
+        let parents = definition.inputs.iter().map(|input| {
+            let binding_key =
+                tf_domain::input::InputBindingKey::new(key, input.alias.clone()).ok()?;
+            let binding = bindings.get(&binding_key)?;
+            binding.policy.candidates().iter().find_map(|b| {
+                snapshot
+                    .heads
+                    .get(&(binding.dataset.dataset_id(), b.clone()))
+                    .map(|h| h.published_us)
+            })
+        });
+        result.insert(
+            definition.output.clone(),
+            publication_recency(head.map(|h| h.published_us), parents),
+        );
+    }
+    Ok(result)
+}
+fn publication_recency(
+    output: Option<i64>,
+    inputs: impl Iterator<Item = Option<i64>>,
+) -> &'static str {
+    let Some(output) = output else {
+        return "never_built";
+    };
+    let mut unknown = false;
+    for input in inputs {
+        match input {
+            Some(t) if t > output => return "stale",
+            None => unknown = true,
+            _ => (),
+        }
+    }
+    if unknown { "unknown" } else { "current" }
+}
+#[cfg(test)]
+mod recency_tests {
+    use super::publication_recency;
+    #[test]
+    fn recency_uses_successful_publications_not_attempts_or_code() {
+        assert_eq!(
+            publication_recency(Some(10), [Some(9), Some(10)].into_iter()),
+            "current"
+        );
+        assert_eq!(
+            publication_recency(Some(10), [Some(11)].into_iter()),
+            "stale"
+        );
+        assert_eq!(
+            publication_recency(Some(10), [None, Some(11)].into_iter()),
+            "stale"
+        );
+        assert_eq!(publication_recency(Some(10), [None].into_iter()), "unknown");
+        assert_eq!(
+            publication_recency(None, [Some(11)].into_iter()),
+            "never_built"
+        );
+        assert_eq!(publication_recency(Some(10), std::iter::empty()), "current");
+    }
+}
