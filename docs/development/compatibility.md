@@ -7,6 +7,17 @@ or a claim that the full G0 gate has passed.
 The [retained machine-readable report](evidence/t003-macos-arm64.json) contains
 the native SQLite/engine results, exact tool output and selected wheel filenames/hashes.
 
+## Web toolchain refresh (2026-10-19)
+
+The current Node/npm pins supersede the original web-toolchain measurements.
+jsdom 30.1.3 removes the deprecated encoding dependency and requires newer Node.
+The official Node macOS arm64 archive was checked against its published SHA-256
+and unpacked under ignored `target/toolchains`; no global installation was changed.
+For contributor setup, select the exact version in `.node-version` with your Node
+version manager and use npm 11.19.1 before installing the locked dependencies.
+The standalone web probe and full web gate passed on this runtime; native engine
+pins are unchanged. See the [receipt](evidence/t008-toolchain-review.json).
+
 ## Selected versions
 
 | Component | Pin / qualification |
@@ -21,7 +32,7 @@ the native SQLite/engine results, exact tool output and selected wheel filenames
 | SQLx / libsqlite3-sys | 0.9.0 / 0.37.0, bundled SQLite enabled |
 | Chrono / Chrono-TZ | 0.4.45 / 0.10.4; T093 runtime resolver uses bundled IANA 2025b |
 | Observed Rust SQLite | 3.51.3; source ID below |
-| Node / npm | 24.4.1 / 11.4.2, observed installed versions; no global Node update |
+| Node / npm | 24.22.0 / 11.19.1; macOS arm64 web qualification on 2026-10-19, updated Linux CI pending |
 | React / React DOM | 19.3.0 |
 | React Flow / ELK | @xyflow/react 12.11.6 / elkjs 0.12.0, with the declaration fix below |
 | TypeScript / Vite | 6.0.3 / 8.3.0 |

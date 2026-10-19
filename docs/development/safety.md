@@ -69,8 +69,8 @@ Review the resulting inventory and exception changes together with the locks.
 
 ## Inventory and exceptions
 
-[dependencies.json](../../security/dependencies.json) records 639 distinct package
-versions: 223 crates.io, 393 npm and 23 PyPI. Every entry includes its contributing
+[dependencies.json](../../security/dependencies.json) records 637 distinct package
+versions: 223 crates.io, 391 npm and 23 PyPI. Every entry includes its contributing
 lockfiles and declared license text/expression. The seven locks cover application,
 package/web tooling and isolated T003 qualification dependencies, including
 platform-specific transitive packages. They are not all shipped runtime dependencies.
@@ -90,15 +90,23 @@ stated UTC date. Wildcards, duplicate/unused exceptions and missing ownership or
 rationale fail. All reported advisories block by default, without a severity
 threshold; secret findings cannot be suppressed through this policy.
 
-Two development-only deprecations are temporarily excepted until 2026-10-19:
+### Development-tool review (2026-10-19)
 
-| Package | Reason to review the related toolchain together |
-|---|---|
-| ESLint 9.39.5 | The qualified jsx-a11y plugin's peer range ends at ESLint 9. |
-| whatwg-encoding 3.1.1 | Transitive jsdom dependency; newer jsdom needs a later Node patch than the qualified 24.4.1 baseline. |
+The expired exceptions were reviewed against current package metadata. Node is
+now pinned to 24.22.0 with npm 11.19.1, and jsdom is pinned to 30.1.3. This removes
+`whatwg-encoding` and its exception. Both web lockfiles and the license/advisory
+inventory were regenerated; OSV reported zero matches across 637 locked versions.
 
-The Transflow maintainers own both reviews. Neither exception suppresses a
-vulnerability advisory. No dependency version was changed for T008.
+One exact development-only exception remains for ESLint 9.39.5, reviewed until
+2026-11-18. The latest [jsx-a11y release metadata](https://registry.npmjs.org/eslint-plugin-jsx-a11y/6.10.2)
+still supports ESLint only through version 9. Keeping the compatible pinned pair
+preserves accessibility lint coverage. Review a compatible plugin release before
+moving to ESLint 10. This exception covers only the deprecation finding, never a
+vulnerability advisory; expiry, unused-exception and other failure checks remain
+unchanged. No forced peer installation or lint rule removal is used.
+
+See the [verification receipt](evidence/t008-toolchain-review.json) for actual
+local checks. Linux matrix qualification remains CI work for the owner to monitor.
 
 ### source-map-js advisory correction (2026-10-07)
 

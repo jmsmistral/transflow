@@ -5,8 +5,8 @@
     "tools/qualification/python/py314.lock": "368680daa726b6b16dac4fe9f924ace236f800f4c4e054d0254a029e99897101",
     "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
     "tools/qualification/rust/Cargo.lock": "1ef271b4144b8a3e8d397eb6e040b883e52d91d51e3da1625f14112a7cb537fa",
-    "tools/qualification/web/package-lock.json": "05283de8ee91ea2de18dc35391a714928cac80d348555cc249391cc58d6e47b5",
-    "web/package-lock.json": "634127a7a586889c4a726e89468bf9ec16017274a24ab818c7d01b4adcd5bf02"
+    "tools/qualification/web/package-lock.json": "8121cbedca233a15d8f21c6d20773db70bc73ed77ed43292ef1daa3df88e689a",
+    "web/package-lock.json": "ff234293e568f5809ae10df5c34c5c851535820ad2af40d04d36fbe371507cdb"
   },
   "packages": [
     {
@@ -3424,7 +3424,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@asamuzakjp/css-color@3.2.0",
+      "id": "npm:@asamuzakjp/css-color@7.1.7",
       "licenses": [
         "MIT"
       ],
@@ -3432,7 +3432,20 @@
         "web/package-lock.json"
       ],
       "name": "@asamuzakjp/css-color",
-      "version": "3.2.0"
+      "version": "7.1.7"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "npm",
+      "id": "npm:@asamuzakjp/dom-selector@10.0.4",
+      "licenses": [
+        "MIT"
+      ],
+      "locks": [
+        "web/package-lock.json"
+      ],
+      "name": "@asamuzakjp/dom-selector",
+      "version": "10.0.4"
     },
     {
       "deprecations": [],
@@ -3658,7 +3671,20 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@csstools/color-helpers@5.1.0",
+      "id": "npm:@bramus/specificity@2.4.3",
+      "licenses": [
+        "MIT"
+      ],
+      "locks": [
+        "web/package-lock.json"
+      ],
+      "name": "@bramus/specificity",
+      "version": "2.4.3"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "npm",
+      "id": "npm:@csstools/color-helpers@6.1.2",
       "licenses": [
         "MIT-0"
       ],
@@ -3666,12 +3692,12 @@
         "web/package-lock.json"
       ],
       "name": "@csstools/color-helpers",
-      "version": "5.1.0"
+      "version": "6.1.2"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@csstools/css-calc@2.1.4",
+      "id": "npm:@csstools/css-calc@3.4.3",
       "licenses": [
         "MIT"
       ],
@@ -3679,12 +3705,12 @@
         "web/package-lock.json"
       ],
       "name": "@csstools/css-calc",
-      "version": "2.1.4"
+      "version": "3.4.3"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@csstools/css-color-parser@3.1.0",
+      "id": "npm:@csstools/css-color-parser@4.2.6",
       "licenses": [
         "MIT"
       ],
@@ -3692,12 +3718,12 @@
         "web/package-lock.json"
       ],
       "name": "@csstools/css-color-parser",
-      "version": "3.1.0"
+      "version": "4.2.6"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@csstools/css-parser-algorithms@3.0.5",
+      "id": "npm:@csstools/css-parser-algorithms@4.0.2",
       "licenses": [
         "MIT"
       ],
@@ -3705,12 +3731,25 @@
         "web/package-lock.json"
       ],
       "name": "@csstools/css-parser-algorithms",
-      "version": "3.0.5"
+      "version": "4.0.2"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@csstools/css-tokenizer@3.0.4",
+      "id": "npm:@csstools/css-syntax-patches-for-csstree@1.1.15",
+      "licenses": [
+        "MIT-0"
+      ],
+      "locks": [
+        "web/package-lock.json"
+      ],
+      "name": "@csstools/css-syntax-patches-for-csstree",
+      "version": "1.1.15"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "npm",
+      "id": "npm:@csstools/css-tokenizer@4.0.2",
       "licenses": [
         "MIT"
       ],
@@ -3718,7 +3757,7 @@
         "web/package-lock.json"
       ],
       "name": "@csstools/css-tokenizer",
-      "version": "3.0.4"
+      "version": "4.0.2"
     },
     {
       "deprecations": [],
@@ -3836,6 +3875,19 @@
       ],
       "name": "@eslint/plugin-kit",
       "version": "0.4.1"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "npm",
+      "id": "npm:@exodus/bytes@1.16.0",
+      "licenses": [
+        "MIT"
+      ],
+      "locks": [
+        "web/package-lock.json"
+      ],
+      "name": "@exodus/bytes",
+      "version": "1.16.0"
     },
     {
       "deprecations": [],
@@ -4673,19 +4725,6 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:agent-base@7.1.4",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "agent-base",
-      "version": "7.1.4"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
       "id": "npm:ajv@6.15.0",
       "licenses": [
         "MIT"
@@ -4959,6 +4998,19 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
+      "id": "npm:bidi-js@1.1.0",
+      "licenses": [
+        "MIT"
+      ],
+      "locks": [
+        "web/package-lock.json"
+      ],
+      "name": "bidi-js",
+      "version": "1.1.0"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "npm",
       "id": "npm:brace-expansion@1.1.21",
       "licenses": [
         "MIT"
@@ -5168,15 +5220,15 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:cssstyle@4.6.0",
+      "id": "npm:css-tree@3.2.1",
       "licenses": [
         "MIT"
       ],
       "locks": [
         "web/package-lock.json"
       ],
-      "name": "cssstyle",
-      "version": "4.6.0"
+      "name": "css-tree",
+      "version": "3.2.1"
     },
     {
       "deprecations": [],
@@ -5334,7 +5386,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:data-urls@5.0.0",
+      "id": "npm:data-urls@8.0.0",
       "licenses": [
         "MIT"
       ],
@@ -5342,7 +5394,7 @@
         "web/package-lock.json"
       ],
       "name": "data-urls",
-      "version": "5.0.0"
+      "version": "8.0.0"
     },
     {
       "deprecations": [],
@@ -5544,7 +5596,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:entities@6.0.1",
+      "id": "npm:entities@8.1.0",
       "licenses": [
         "BSD-2-Clause"
       ],
@@ -5552,7 +5604,7 @@
         "web/package-lock.json"
       ],
       "name": "entities",
-      "version": "6.0.1"
+      "version": "8.1.0"
     },
     {
       "deprecations": [],
@@ -6289,7 +6341,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:html-encoding-sniffer@4.0.0",
+      "id": "npm:html-encoding-sniffer@7.0.0",
       "licenses": [
         "MIT"
       ],
@@ -6297,46 +6349,7 @@
         "web/package-lock.json"
       ],
       "name": "html-encoding-sniffer",
-      "version": "4.0.0"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
-      "id": "npm:http-proxy-agent@7.0.2",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "http-proxy-agent",
-      "version": "7.0.2"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
-      "id": "npm:https-proxy-agent@7.0.6",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "https-proxy-agent",
-      "version": "7.0.6"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
-      "id": "npm:iconv-lite@0.6.3",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "iconv-lite",
-      "version": "0.6.3"
+      "version": "7.0.0"
     },
     {
       "deprecations": [],
@@ -6783,7 +6796,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:jsdom@26.1.0",
+      "id": "npm:jsdom@30.1.3",
       "licenses": [
         "MIT"
       ],
@@ -6791,7 +6804,7 @@
         "web/package-lock.json"
       ],
       "name": "jsdom",
-      "version": "26.1.0"
+      "version": "30.1.3"
     },
     {
       "deprecations": [],
@@ -7120,15 +7133,15 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:lru-cache@10.4.3",
+      "id": "npm:lru-cache@11.5.3",
       "licenses": [
-        "ISC"
+        "BlueOak-1.0.0"
       ],
       "locks": [
         "web/package-lock.json"
       ],
       "name": "lru-cache",
-      "version": "10.4.3"
+      "version": "11.5.3"
     },
     {
       "deprecations": [],
@@ -7181,6 +7194,19 @@
       ],
       "name": "math-intrinsics",
       "version": "1.1.0"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "npm",
+      "id": "npm:mdn-data@2.27.1",
+      "licenses": [
+        "CC0-1.0"
+      ],
+      "locks": [
+        "web/package-lock.json"
+      ],
+      "name": "mdn-data",
+      "version": "2.27.1"
     },
     {
       "deprecations": [],
@@ -7260,19 +7286,6 @@
       ],
       "name": "node-releases",
       "version": "2.0.56"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
-      "id": "npm:nwsapi@2.2.28",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "nwsapi",
-      "version": "2.2.28"
     },
     {
       "deprecations": [],
@@ -7420,7 +7433,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:parse5@7.3.0",
+      "id": "npm:parse5@8.0.1",
       "licenses": [
         "MIT"
       ],
@@ -7428,7 +7441,7 @@
         "web/package-lock.json"
       ],
       "name": "parse5",
-      "version": "7.3.0"
+      "version": "8.0.1"
     },
     {
       "deprecations": [],
@@ -7633,6 +7646,19 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
+      "id": "npm:require-from-string@2.0.2",
+      "licenses": [
+        "MIT"
+      ],
+      "locks": [
+        "web/package-lock.json"
+      ],
+      "name": "require-from-string",
+      "version": "2.0.2"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "npm",
       "id": "npm:resolve-from@4.0.0",
       "licenses": [
         "MIT"
@@ -7656,19 +7682,6 @@
       ],
       "name": "rolldown",
       "version": "1.2.9"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
-      "id": "npm:rrweb-cssom@0.8.0",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "rrweb-cssom",
-      "version": "0.8.0"
     },
     {
       "deprecations": [],
@@ -7708,19 +7721,6 @@
       ],
       "name": "safe-regex-test",
       "version": "1.1.0"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
-      "id": "npm:safer-buffer@2.1.2",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "safer-buffer",
-      "version": "2.1.2"
     },
     {
       "deprecations": [],
@@ -8039,19 +8039,6 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:symbol-tree@3.2.4",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "symbol-tree",
-      "version": "3.2.4"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
       "id": "npm:tinybench@6.1.4",
       "licenses": [
         "MIT"
@@ -8092,7 +8079,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:tldts-core@6.1.86",
+      "id": "npm:tldts-core@7.4.18",
       "licenses": [
         "MIT"
       ],
@@ -8100,12 +8087,12 @@
         "web/package-lock.json"
       ],
       "name": "tldts-core",
-      "version": "6.1.86"
+      "version": "7.4.18"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:tldts@6.1.86",
+      "id": "npm:tldts@7.4.18",
       "licenses": [
         "MIT"
       ],
@@ -8113,12 +8100,12 @@
         "web/package-lock.json"
       ],
       "name": "tldts",
-      "version": "6.1.86"
+      "version": "7.4.18"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:tough-cookie@5.1.2",
+      "id": "npm:tough-cookie@6.0.2",
       "licenses": [
         "BSD-3-Clause"
       ],
@@ -8126,12 +8113,12 @@
         "web/package-lock.json"
       ],
       "name": "tough-cookie",
-      "version": "5.1.2"
+      "version": "6.0.2"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:tr46@5.1.1",
+      "id": "npm:tr46@7.0.0",
       "licenses": [
         "MIT"
       ],
@@ -8139,7 +8126,7 @@
         "web/package-lock.json"
       ],
       "name": "tr46",
-      "version": "5.1.1"
+      "version": "7.0.0"
     },
     {
       "deprecations": [],
@@ -8275,6 +8262,19 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
+      "id": "npm:undici@8.12.2",
+      "licenses": [
+        "MIT"
+      ],
+      "locks": [
+        "web/package-lock.json"
+      ],
+      "name": "undici",
+      "version": "8.12.2"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "npm",
       "id": "npm:update-browserslist-db@1.3.3",
       "licenses": [
         "MIT"
@@ -8342,7 +8342,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:w3c-xmlserializer@5.0.0",
+      "id": "npm:w3c-xmlserializer@6.0.0",
       "licenses": [
         "MIT"
       ],
@@ -8350,12 +8350,12 @@
         "web/package-lock.json"
       ],
       "name": "w3c-xmlserializer",
-      "version": "5.0.0"
+      "version": "6.0.0"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:webidl-conversions@7.0.0",
+      "id": "npm:webidl-conversions@8.0.1",
       "licenses": [
         "BSD-2-Clause"
       ],
@@ -8363,27 +8363,12 @@
         "web/package-lock.json"
       ],
       "name": "webidl-conversions",
-      "version": "7.0.0"
-    },
-    {
-      "deprecations": [
-        "Use @exodus/bytes instead for a more spec-conformant and faster implementation"
-      ],
-      "ecosystem": "npm",
-      "id": "npm:whatwg-encoding@3.1.1",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "whatwg-encoding",
-      "version": "3.1.1"
+      "version": "8.0.1"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:whatwg-mimetype@4.0.0",
+      "id": "npm:whatwg-mimetype@5.0.0",
       "licenses": [
         "MIT"
       ],
@@ -8391,12 +8376,12 @@
         "web/package-lock.json"
       ],
       "name": "whatwg-mimetype",
-      "version": "4.0.0"
+      "version": "5.0.0"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:whatwg-url@14.2.0",
+      "id": "npm:whatwg-url@17.3.0",
       "licenses": [
         "MIT"
       ],
@@ -8404,7 +8389,7 @@
         "web/package-lock.json"
       ],
       "name": "whatwg-url",
-      "version": "14.2.0"
+      "version": "17.3.0"
     },
     {
       "deprecations": [],
@@ -8496,19 +8481,6 @@
       ],
       "name": "word-wrap",
       "version": "1.2.5"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
-      "id": "npm:ws@8.21.3",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "ws",
-      "version": "8.21.3"
     },
     {
       "deprecations": [],

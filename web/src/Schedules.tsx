@@ -1375,7 +1375,7 @@ function ScheduleRow({
     <Button className="schedule-row" onClick={onSelect}>
       <Icon name="calendar" />
       <span>
-        <strong>{d?.name ?? "Schedule needs review"}</strong>
+        <strong>{d?.name ?? "Schedule needs review"}</strong>{" "}
         <small className="schedule-row-meta">
           <ScheduleState record={row} />{" "}
           <span>{d?.build.data_branch ?? "Branch unavailable"}</span>

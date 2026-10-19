@@ -9,8 +9,8 @@ if [[ "$(rustc --version)" != "rustc 1.98.1 "* ]]; then
     echo "Qualification requires the pinned Rust 1.98.1 toolchain." >&2
     exit 1
 fi
-if [[ "$(node --version)" != "v24.4.1" || "$(npm --version)" != "11.4.2" ]]; then
-    echo "Qualification requires Node 24.4.1 and npm 11.4.2." >&2
+if [[ "$(node --version)" != "v24.22.0" || "$(npm --version)" != "11.19.1" ]]; then
+    echo "Qualification requires Node 24.22.0 and npm 11.19.1." >&2
     exit 1
 fi
 export CARGO_TARGET_DIR="$repo_root/target/qualification/cargo"

@@ -70,7 +70,7 @@ Metadata availability is not byte verification or freshness evidence.
 
 ## Build and connect
 
-Use Node 24.4.1/npm 11.4.2 and the exact lockfile. Installation is explicit:
+Use Node 24.22.0/npm 11.19.1 and the exact lockfile. Installation is explicit:
 
 ```bash
 npm --prefix web ci --ignore-scripts

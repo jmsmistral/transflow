@@ -25,7 +25,7 @@ jobs:
           node-version-file: .node-version
       - name: Prepare exact npm and locked dependencies
         run: |
-          npm install --global npm@11.4.2 --ignore-scripts --no-audit --no-fund
+          npm install --global npm@11.19.1 --ignore-scripts --no-audit --no-fund
           npm --prefix web ci --ignore-scripts
           npm --prefix web run prepare:types
       - name: Check types, components and reproducible production assets

@@ -7,7 +7,7 @@ The native CLI, matching Python wheel and web assets are built separately today.
 ## 1. Prepare the source tools
 
 You need Git, Python **3.14**, the Rust toolchain pinned in
-[`rust-toolchain.toml`](../rust-toolchain.toml), Node **24.4.1** and npm **11.4.2**.
+[`rust-toolchain.toml`](../rust-toolchain.toml), Node **24.22.0** and npm **11.19.1**.
 Ensure `python --version` reports Python 3.14 before creating the tooling environment.
 Dependency downloads below are explicit setup; ordinary dataset builds do not
 install packages.

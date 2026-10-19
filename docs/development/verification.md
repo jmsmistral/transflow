@@ -1,5 +1,12 @@
 # Contributor verification
 
+## Safety exception and toolchain review (2026-10-19)
+
+Node 24.22.0/npm 11.19.1 and jsdom 30.1.3 remove the obsolete encoding
+dependency. The exact ESLint deprecation exception was reviewed and renewed
+until 2026-11-18 because jsx-a11y still supports only ESLint 9. This supersedes
+the earlier expiry failures recorded below. See the [receipt](evidence/t008-toolchain-review.json).
+
 ## Compact exploration controls (2026-10-19)
 
 The sun/moon theme switch, simplified Properties/legend and compact History row
