@@ -4,14 +4,17 @@ I started building **transflow** back in 2022 as a pet project for my own use. R
 
 The idea is to build a **CLI tool + lineage UI to enable the structured development and management of data pipelines locally**, with the following features:
 
-- **Pipeline development and orchestration** - Building, running, and scheduling data pipelines.
-- **Polars and DuckDB first** - Using Polars and DuckDB (SQL) as the primary tools for data transformations.
-- **Data expectations** - Defining and validating expectations on both the inputs and outputs of individual transforms.
-- **Branch fallbacks** - Supporting branch-based fallbacks in builds and scheduled runs.
-- **Data lineage** - An intuitive lineage UI with informative overlays for exploring pipeline dependencies and other useful metadata.
-- **Data health** - Making it easy to assess the health of individual transforms and entire pipelines at a glance.
-- **Great IDE experience** - Auto-completion and catalog metadata look-ups directly from the editor.
-
+- **Pipeline development and orchestration** — Build, run and schedule data pipelines.
+- **Polars and DuckDB first** — Write data transformations in Polars or DuckDB SQL.
+- **Data expectations** — Define and validate quality checks on transform inputs and outputs.
+- **Branch fallbacks** — Resolve inputs through an ordered set of data branches for builds and scheduled runs.
+- **Data lineage** — Explore pipeline dependencies and dataset metadata through an interactive graph with informative overlays.
+- **Data health** — Assess dataset quality and build outcomes across your pipelines at a glance.
+- **Editor assistance** — Complete dataset references, inspect catalogue metadata and navigate to producers from your editor.
+- **Versioned data and provenance** — Track published outputs, captured code and exact input versions.
+- **Build caching** — Reuse eligible results to avoid unnecessary computation.
+- **Interactive exploration** — Preview datasets, run SQL queries and inspect execution history.
+- **Local ownership** — Keep pipeline code, data and execution on your machine.
 
 Write transforms in **Polars or DuckDB SQL**, build versioned datasets, and explore
 how they connect in an interactive lineage workspace. Transflow brings execution,
