@@ -64,33 +64,98 @@ export function SourceLines({
     () => sourceTokens(current?.text ?? "", current?.path ?? ""),
     [current],
   );
-  let oldLine = 0,
-    newLine = 0;
-  const lines = diff
-    ? diff.map((line) => {
-        const tokens = line.kind === "added" ? after[newLine] : before[oldLine];
-        if (line.kind !== "added") oldLine++;
-        if (line.kind !== "removed") newLine++;
-        return {
-          kind: line.kind,
-          tokens: tokens ?? [{ text: line.text, kind: "plain" }],
-        };
-      })
-    : before.map((tokens) => ({ kind: "plain", tokens }));
+  if (diff) {
+    type Line = { number: number; tokens: Token[]; kind: string };
+    const left: (Line | undefined)[] = [],
+      right: (Line | undefined)[] = [];
+    let oldIndex = 0,
+      newIndex = 0;
+    let removed: Line[] = [],
+      added: Line[] = [];
+    const flush = () => {
+      for (let i = 0; i < Math.max(removed.length, added.length); i++) {
+        left.push(removed[i]);
+        right.push(added[i]);
+      }
+      removed = [];
+      added = [];
+    };
+    for (const line of diff) {
+      if (line.kind === "same") {
+        flush();
+        left.push({
+          number: oldIndex + 1,
+          tokens: before[oldIndex++] ?? [],
+          kind: "same",
+        });
+        right.push({
+          number: newIndex + 1,
+          tokens: after[newIndex++] ?? [],
+          kind: "same",
+        });
+      } else if (line.kind === "removed") {
+        removed.push({
+          number: oldIndex + 1,
+          tokens: before[oldIndex++] ?? [],
+          kind: "removed",
+        });
+      } else {
+        added.push({
+          number: newIndex + 1,
+          tokens: after[newIndex++] ?? [],
+          kind: "added",
+        });
+      }
+    }
+    flush();
+    return (
+      <div className="source-diff-columns">
+        {[
+          { title: "Data publish version", path: source?.path, lines: left },
+          { title: "Latest saved version", path: current?.path, lines: right },
+        ].map(({ title, path, lines }) => (
+          <section key={title} aria-label={title}>
+            <header>
+              <h3>{title}</h3>
+              <span>{path}</span>
+            </header>
+            <ol className="source-lines">
+              {lines.map((line, i) => (
+                <li
+                  key={i}
+                  value={line?.number}
+                  className={`diff-${line?.kind ?? "empty"}`}
+                  aria-hidden={!line}
+                >
+                  <code>
+                    {line?.kind === "removed"
+                      ? "− "
+                      : line?.kind === "added"
+                        ? "+ "
+                        : "  "}
+                    {line?.tokens.length
+                      ? line.tokens.map((token, j) => (
+                          <span key={j} className={`syntax-${token.kind}`}>
+                            {token.text}
+                          </span>
+                        ))
+                      : " "}
+                  </code>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))}
+      </div>
+    );
+  }
   return (
     <ol className="source-lines">
-      {lines.map((line, i) => (
-        <li key={i} className={`diff-${line.kind}`}>
+      {before.map((tokens, i) => (
+        <li key={i} className="diff-plain">
           <code>
-            {diff
-              ? line.kind === "added"
-                ? "+ "
-                : line.kind === "removed"
-                  ? "− "
-                  : "  "
-              : ""}
-            {line.tokens.length
-              ? line.tokens.map((token, j) => (
+            {tokens.length
+              ? tokens.map((token, j) => (
                   <span key={j} className={`syntax-${token.kind}`}>
                     {token.text}
                   </span>

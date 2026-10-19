@@ -1,5 +1,23 @@
 # Contributor verification
 
+## Code defaults and compact Health (2026-10-20)
+
+Health starts with the dataset name, follows build events automatically and keeps
+Latest builds circles as status indicators. Output/input check circles retain
+animated details. Code starts with Latest saved version, followed by the exact
+Data publish version and an aligned side-by-side Diff. The failed-attempt tooltip
+now explicitly identifies the retained earlier successful publication.
+
+All 663 web tests, strict checks and reproducible production assets pass, as do
+27 safety regressions, specification validation and 44 checker regressions.
+Actual required-check failure preserved the output version and its warning
+certificate; internal Browser observed automatic history refresh after another
+failed build, default source choice, aligned diff rows, both widths and light/dark
+themes. See the [receipt](evidence/t086-code-health-review.json). The rebuilt
+`t111-code-health-review` workspace has a verified launcher; earlier review
+workspaces are preserved. Native runtime suites were unchanged and not rerun;
+remote CI remains owner-monitored.
+
 ## Health circle details and History layout (2026-10-19)
 
 Each filled health circle opens its own retained checks in an animated panel with

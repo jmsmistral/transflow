@@ -11,6 +11,7 @@ import { Client } from "./api/client";
 import { Workspace } from "./workspace";
 import { ScratchpadInspector } from "./ScratchpadInspector";
 import { HealthInspector } from "./HealthInspector";
+import { DatasetTooltip } from "./graph/Tooltip";
 import type { Ready } from "./execution-ui";
 import type { ApiQueryV1, ApiLineageNodeV1 } from "./generated/contracts";
 import {
@@ -874,11 +875,11 @@ test("published output checks and later consumer failure remain separate, exact 
     <HealthInspector workspace={workspace} state={state} node={node} />,
   );
   await within(
-    screen.getByRole("region", { name: "Published data checks" }),
+    screen.getByRole("region", { name: "Output dataset checks" }),
   ).findByText("Passed");
   expect(
     within(
-      screen.getByRole("region", { name: "Published data checks" }),
+      screen.getByRole("region", { name: "Output dataset checks" }),
     ).getByText("Passed"),
   ).toBeTruthy();
   expect(
@@ -892,9 +893,18 @@ test("published output checks and later consumer failure remain separate, exact 
     ).getByText("Failed"),
   ).toBeTruthy();
   expect(view.container.querySelectorAll(".health-dot")).toHaveLength(30);
+  const buildHistory = screen.getByRole("region", { name: "Latest builds" });
+  expect(within(buildHistory).queryAllByRole("button")).toHaveLength(0);
+  expect(buildHistory.querySelector(".health-history-details")).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Refresh check evidence" }),
+  ).toBeNull();
+  expect(
+    screen.getByRole("heading", { name: state.value.dataset?.path ?? "" }),
+  ).toBeTruthy();
   expect(screen.queryByText("Latest check details")).toBeNull();
   const publishedRegion = screen.getByRole("region", {
-    name: "Published data checks",
+    name: "Output dataset checks",
   });
   const publishedCircle = within(publishedRegion).getByRole("button", {
     name: /^1: Passed/,
@@ -1011,13 +1021,13 @@ test("foreign health shows retained provider certificates without starting provi
   );
   fireEvent.click(
     within(
-      screen.getByRole("region", { name: "Published data checks" }),
+      screen.getByRole("region", { name: "Output dataset checks" }),
     ).getByRole("button", { name: /^1: Passed/ }),
   );
   expect(screen.getByText("Certificate 1")).toBeTruthy();
   expect(
     within(
-      screen.getByRole("region", { name: "Published data checks" }),
+      screen.getByRole("region", { name: "Output dataset checks" }),
     ).getAllByText("Passed").length,
   ).toBeGreaterThan(0);
   expect(transport.mock.calls).toHaveLength(before);
@@ -1058,7 +1068,7 @@ test("health history keeps newest first, ten slots, severity and retained output
   );
   render(<HealthInspector workspace={workspace} state={state} node={node} />);
   const published = screen.getByRole("region", {
-    name: "Published data checks",
+    name: "Output dataset checks",
   });
   await within(published).findByText("Passed");
   expect(screen.getByRole("alert").textContent).toContain(
@@ -1078,7 +1088,7 @@ test("health history keeps newest first, ten slots, severity and retained output
   workspace.dispose();
 });
 
-test("each health circle opens its own retained checks and refresh closes the old selection", async () => {
+test("check circles open their retained evidence and runtime updates close the old selection", async () => {
   const base = history().entries[0];
   if (!base) throw new Error("Missing history fixture");
   const { workspace, state } = await setup((path, query) => {
@@ -1137,12 +1147,14 @@ test("each health circle opens its own retained checks and refresh closes the ol
     }
     return undefined;
   });
-  render(<HealthInspector workspace={workspace} state={state} node={node} />);
-  const builds = screen.getByRole("region", { name: "Latest builds" });
+  const view = render(
+    <HealthInspector workspace={workspace} state={state} node={node} />,
+  );
+  const builds = screen.getByRole("region", { name: "Input dataset checks" });
   await within(builds).findByText("Failed");
   expect(within(builds).queryByText("Latest required check")).toBeNull();
   const first = within(builds).getByRole("button", { name: /^1: Failed/ });
-  const second = within(builds).getByRole("button", { name: /^2: Succeeded/ });
+  const second = within(builds).getByRole("button", { name: /^2: Passed/ });
   fireEvent.click(first);
   expect(within(builds).getByText("Latest required check")).toBeTruthy();
   fireEvent.click(second);
@@ -1153,11 +1165,37 @@ test("each health circle opens its own retained checks and refresh closes the ol
   expect(
     within(builds).getByRole("button", { name: /^3: No recorded history/ }),
   ).toHaveProperty("disabled", true);
-  fireEvent.click(
-    screen.getByRole("button", { name: "Refresh check evidence" }),
+  expect(
+    screen.queryByRole("button", { name: "Refresh check evidence" }),
+  ).toBeNull();
+  view.rerender(
+    <HealthInspector
+      workspace={workspace}
+      state={{
+        ...state,
+        value: {
+          ...state.value,
+          context: { ...state.value.context, runtime_revision: "2" },
+        },
+      }}
+      node={node}
+    />,
   );
   await waitFor(() =>
     expect(screen.queryByText("Older passing check")).toBeNull(),
   );
+  workspace.dispose();
+});
+
+test("tooltip separates the latest failed attempt from the retained successful publication", async () => {
+  const { workspace } = await setup();
+  render(<DatasetTooltip node={node} workspace={workspace} />);
+  const tooltip = await screen.findByRole("tooltip");
+  const latest = within(tooltip).getByText("Latest attempt");
+  expect(latest.nextElementSibling?.textContent).toBe("Failed");
+  expect(
+    within(tooltip).getByText(/The failed attempt did not publish/),
+  ).toBeTruthy();
+  expect(tooltip.textContent).not.toContain("Failed · Published");
   workspace.dispose();
 });

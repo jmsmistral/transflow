@@ -52,7 +52,7 @@ GROUP BY customer_id;
 - **Versioned data and provenance** - Track published outputs, captured code and exact input versions.
 - **Data expectations** - Define and validate quality checks on transform inputs and outputs.
 - **Lineage UI** - Explore pipelines and dataset metadata via a interactive graph with informative overlays.
-- **Interactive exploration** - Preview datasets, run expoloratory SQL queries and inspect execution history.
+- **Interactive exploration** - Preview datasets, run SQL queries, compare saved and published code and inspect execution history.
 - **Branch fallbacks** - Resolve inputs through an ordered set of data branches for builds and scheduled runs.
 - **Data health** - Review recent builds and open individual input and output check results.
 - **Editor assistance** - Complete dataset references, inspect catalogue metadata and navigate to producers from your editor.

@@ -43,9 +43,12 @@ The default query execution budget is 30 seconds, configured by
 result acceptance; queue wait and supervised termination grace are separate.
 The API still supports bound parameters; the scratchpad submits an empty list.
 
-Data health lives only in the right inspector. Latest builds, Published data checks
+Data health lives only in the right inspector, headed by the dataset name without
+a duplicate row or refresh control. Committed build events refresh it automatically.
+Latest builds, Output dataset checks
 and Input dataset checks each show ten newest-first status circles and a latest
-status pill. Filled circles have a darker border and open their own retained checks
+status pill. Latest builds circles are status indicators. Filled output/input check
+circles have a darker border and open their own retained checks
 in an animated panel, with a status circle and text on each grey check card.
 Click the selected circle again to close it; empty history slots are disabled.
 Keyboard activation and reduced motion are supported. Missing history, absent checks and unavailable evidence stay neutral;
@@ -58,7 +61,14 @@ retained metadata, without executing or contacting provider code.
 History centres summary metrics between its heading and date controls. Its duration
 chart uses the available width and plots successful attempts only; failed jobs
 remain in the list and failure-rate metrics. Publication availability no longer
-adds an info badge to graph nodes.
+adds an info badge to graph nodes. A failed latest attempt is labelled independently
+from any retained earlier successful publication.
+
+Code opens with Latest saved version first, Data publish version second and Diff
+third. The first shows the latest validated capture. The published view always
+uses the displayed data version's exact producer. Diff aligns the two captures in
+side-by-side columns, with original line numbers, highlighted changes and shared
+vertical scrolling. Missing or bounded source stays explicitly unavailable for diff.
 
 Node hover cards separate Data quality from Freshness. Freshness compares successful
 direct-input publications with the displayed output publication, following named

@@ -50,3 +50,25 @@ test("highlighting escapes source markup and keeps independent diff string state
   ).toBe("def");
   expect(container.textContent).toContain("<script>alert(1)</script>");
 });
+
+test("side-by-side diff aligns added lines with placeholders and preserves each file's line numbers", () => {
+  const source = { path: "old.py", text: "a\nremoved\nz" };
+  const current = { path: "new.py", text: "a\nfirst\nsecond\nz" };
+  const { container } = render(
+    <SourceLines
+      source={source}
+      current={current}
+      diff={sourceDiff(source.text, current.text)}
+    />,
+  );
+  const columns = container.querySelectorAll(".source-diff-columns section");
+  const left = columns[0]?.querySelectorAll("li");
+  const right = columns[1]?.querySelectorAll("li");
+  expect(left).toHaveLength(4);
+  expect(right).toHaveLength(4);
+  expect(left?.[2]?.getAttribute("aria-hidden")).toBe("true");
+  expect(left?.[3]?.getAttribute("value")).toBe("3");
+  expect(right?.[3]?.getAttribute("value")).toBe("4");
+  expect(left?.[1]?.className).toBe("diff-removed");
+  expect(right?.[1]?.className).toBe("diff-added");
+});

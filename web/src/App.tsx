@@ -404,7 +404,8 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
               >
                 {mode !== "Build planner" &&
                   mode !== "Schedules" &&
-                  mode !== "Properties" && (
+                  mode !== "Properties" &&
+                  mode !== "Health" && (
                     <header className="inspector-header">
                       <h2>{mode}</h2>
                     </header>

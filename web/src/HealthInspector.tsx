@@ -7,8 +7,7 @@ import type {
   ExecutionJsonV1,
 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
-import { Button, DatasetHeader } from "./components";
-import { Icon } from "./Icons";
+import { Button } from "./components";
 import { field, versionMetadata } from "./inspectors";
 import { timestamp } from "./execution-model";
 import { checkStatus, buildStatus, type HealthPoint } from "./health-model";
@@ -119,11 +118,13 @@ function HistoryStrip({
   points,
   loading,
   error,
+  interactive = true,
 }: {
   title: string;
   points: readonly HealthPoint[];
   loading?: boolean;
   error?: string | undefined;
+  interactive?: boolean;
 }) {
   const latest = points[0];
   const detailsId = useId();
@@ -146,19 +147,28 @@ function HistoryStrip({
             : "No recorded history";
           return (
             <li key={index} aria-label={`${index + 1}: ${label}`}>
-              <button
-                type="button"
-                className={`health-dot health-${point?.tone ?? "neutral"}`}
-                title={label}
-                aria-label={`${index + 1}: ${label}`}
-                aria-expanded={expanded && selected === index}
-                aria-controls={detailsId}
-                disabled={!point}
-                onClick={() => {
-                  setSelected(index);
-                  setExpanded(selected !== index || !expanded);
-                }}
-              />
+              {interactive ? (
+                <button
+                  type="button"
+                  className={`health-dot health-${point?.tone ?? "neutral"}`}
+                  title={label}
+                  aria-label={`${index + 1}: ${label}`}
+                  aria-expanded={expanded && selected === index}
+                  aria-controls={detailsId}
+                  disabled={!point}
+                  onClick={() => {
+                    setSelected(index);
+                    setExpanded(selected !== index || !expanded);
+                  }}
+                />
+              ) : (
+                <span
+                  className={`health-dot health-${point?.tone ?? "neutral"}`}
+                  title={label}
+                  role="img"
+                  aria-label={`${index + 1}: ${label}`}
+                />
+              )}
             </li>
           );
         })}
@@ -168,32 +178,34 @@ function HistoryStrip({
           {error}
         </p>
       )}
-      <div
-        id={detailsId}
-        className="health-history-details"
-        data-expanded={expanded}
-        aria-hidden={!expanded}
-        inert={!expanded}
-      >
-        <div>
-          {point && (
-            <>
-              <p className="health-selected-at">
-                {point.label}
-                {point.at ? ` · ${timestamp(point.at, "minute")}` : ""}
-              </p>
-              <Checks
-                key={selected}
-                values={point.checks}
-                empty={point.note ?? "No checks were recorded."}
-              />
-              {point.note && point.checks === undefined && (
-                <p className="muted">{point.note}</p>
-              )}
-            </>
-          )}
+      {interactive && (
+        <div
+          id={detailsId}
+          className="health-history-details"
+          data-expanded={expanded}
+          aria-hidden={!expanded}
+          inert={!expanded}
+        >
+          <div>
+            {point && (
+              <>
+                <p className="health-selected-at">
+                  {point.label}
+                  {point.at ? ` · ${timestamp(point.at, "minute")}` : ""}
+                </p>
+                <Checks
+                  key={selected}
+                  values={point.checks}
+                  empty={point.note ?? "No checks were recorded."}
+                />
+                {point.note && point.checks === undefined && (
+                  <p className="muted">{point.note}</p>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
@@ -216,10 +228,10 @@ export function HealthInspector({
       )
     : null;
   const key = state.value.context.fingerprint;
-  const [revision, refresh] = useState(0);
+  const revision = state.value.context.runtime_revision;
   const [result, setResult] = useState<{
     key: string;
-    revision: number;
+    revision: string;
     builds: HealthPoint[];
     outputs: HealthPoint[];
     inputs: HealthPoint[];
@@ -472,25 +484,21 @@ export function HealthInspector({
           requested={state.selection.branch}
         />
       )}
-      <DatasetHeader path={dataset.path}>
-        <Button
-          aria-label="Refresh check evidence"
-          onClick={() => refresh((n) => n + 1)}
-        >
-          <Icon name="refresh" />
-        </Button>
-      </DatasetHeader>
+      <header className="health-dataset-header">
+        <h2 title={dataset.path}>{dataset.path}</h2>
+      </header>
       <div className="health-content">
         <HistoryStrip
           key={`${key}:${revision}:builds`}
           title="Latest builds"
+          interactive={false}
           points={current?.builds ?? []}
           loading={!foreign && !current}
           error={current?.error}
         />
         <HistoryStrip
           key={`${key}:${revision}:outputs`}
-          title="Published data checks"
+          title="Output dataset checks"
           points={outputs}
           loading={!foreign && !current}
         />

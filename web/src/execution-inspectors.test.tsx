@@ -324,32 +324,49 @@ async function fixture(
   if (state.kind !== "ready") throw new Error("fixture not ready");
   return { model, state, calls };
 }
-test("producing source uses the exact version definition, current and diff are explicit", async () => {
+test("latest saved source is first and default, exact published source and side-by-side diff stay explicit", async () => {
   const { model, state, calls } = await fixture();
   render(<CodeInspector workspace={model} state={state} />);
+  expect(await screen.findByText("# current")).toBeTruthy();
+  expect(screen.queryByText("# producing")).toBeNull();
+  expect(
+    screen.queryByText(/Could not find data on current branch/),
+  ).toBeNull();
+  expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
+    "Latest saved version",
+    "Data publish version",
+    "Diff",
+  ]);
+  expect(
+    calls.find((c) => c.path.includes("/source/"))?.query.version,
+  ).toBeUndefined();
+  fireEvent.click(screen.getByRole("button", { name: "Data publish version" }));
   expect(await screen.findByText("# producing")).toBeTruthy();
-  expect(screen.queryByText("# current")).toBeNull();
-  expect(screen.queryByText("Dirty capture")).toBeNull();
   expect(screen.getByText("src/producing.py")).toBeTruthy();
   expect(
     screen.getByText(/Could not find data on current branch/),
   ).toBeTruthy();
   expect(screen.getByText("def").className).toBe("syntax-keyword");
-  expect(calls.find((c) => c.path.includes("/source/"))?.query).toMatchObject({
-    version: versionId,
-    path: "src/producing.py",
-  });
-  fireEvent.click(screen.getByRole("button", { name: "Latest saved version" }));
-  expect(await screen.findByText("# current")).toBeTruthy();
+  expect(
+    calls.filter((c) => c.path.includes("/source/")).at(-1)?.query,
+  ).toMatchObject({ version: versionId, path: "src/producing.py" });
   fireEvent.click(screen.getByRole("button", { name: "Diff" }));
   await waitFor(() =>
-    expect(document.querySelector(".diff-removed code")?.textContent).toBe(
-      "− # producing",
-    ),
+    expect(
+      document.querySelector(".source-diff-columns .diff-removed code")
+        ?.textContent,
+    ).toBe("− # producing"),
   );
-  expect(document.querySelector(".diff-added code")?.textContent).toBe(
-    "+ # current",
-  );
+  expect(
+    document.querySelector(".source-diff-columns .diff-added code")
+      ?.textContent,
+  ).toBe("+ # current");
+  expect(
+    screen.getByRole("region", { name: "Data publish version" }),
+  ).toBeTruthy();
+  expect(
+    screen.getByRole("region", { name: "Latest saved version" }),
+  ).toBeTruthy();
   model.dispose();
 });
 test("SQL code uses the captured SQL file rather than its Python registration", async () => {
@@ -358,10 +375,10 @@ test("SQL code uses the captured SQL file rather than its Python registration", 
   expect(await screen.findByText("src/producing.sql")).toBeTruthy();
   expect(screen.getByText("SELECT").className).toBe("syntax-keyword");
   expect(calls.find((c) => c.path.includes("/source/"))?.query).toMatchObject({
-    version: versionId,
+    branch: "master",
     path: "src/producing.sql",
   });
-  fireEvent.click(screen.getByRole("button", { name: "Latest saved version" }));
+  fireEvent.click(screen.getByRole("button", { name: "Data publish version" }));
   await waitFor(() =>
     expect(calls.filter((c) => c.path.includes("/source/")).length).toBe(2),
   );
@@ -393,6 +410,8 @@ test("an explicitly pinned version is labelled as a version, not a missing branc
       <HistoryInspector workspace={model} state={pinned} onVersion={() => {}} />
     </>,
   );
+  expect(await screen.findByText("# current")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Data publish version" }));
   expect(await screen.findByText("# producing")).toBeTruthy();
   expect(
     screen.queryByText(/Could not find data on current branch/),

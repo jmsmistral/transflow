@@ -68,7 +68,7 @@ export function CodeInspector({
   const dataset = state.value.dataset;
   const [mode, setMode] = useState<
     "Data publish version" | "Latest saved version" | "Diff"
-  >("Data publish version");
+  >("Latest saved version");
   const [result, setResult] = useState<{
     key: string;
     producing?: (ApiSourceV1 & { complete: boolean }) | undefined;
@@ -157,7 +157,7 @@ export function CodeInspector({
       <DatasetHeader path={dataset?.path}>
         <div className="execution-switches" aria-label="Code views">
           {(
-            ["Data publish version", "Latest saved version", "Diff"] as const
+            ["Latest saved version", "Data publish version", "Diff"] as const
           ).map((name) => (
             <Button
               key={name}
@@ -174,7 +174,9 @@ export function CodeInspector({
           ))}
         </div>
       </DatasetHeader>
-      {source && <div className="source-provenance">{source.path}</div>}
+      {source && mode !== "Diff" && (
+        <div className="source-provenance">{source.path}</div>
+      )}
       {shown?.error ? (
         <Empty>Source unavailable: {shown.error}</Empty>
       ) : !shown ? (
@@ -188,9 +190,9 @@ export function CodeInspector({
         <div
           className="source-scroll"
           tabIndex={0}
-          role="textbox"
-          aria-readonly="true"
-          aria-multiline="true"
+          role={mode === "Diff" ? "region" : "textbox"}
+          aria-readonly={mode === "Diff" ? undefined : true}
+          aria-multiline={mode === "Diff" ? undefined : true}
           aria-label={
             mode === "Diff"
               ? "Source diff: producing to current retained definition"

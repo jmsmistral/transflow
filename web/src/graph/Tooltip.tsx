@@ -104,11 +104,14 @@ export function DatasetTooltip({
         <dt>Data quality</dt>
         <dd>{paint(node, "health").label}</dd>
         <dt>Latest attempt</dt>
-        <dd>
-          {paint(node, "status").label}
-          {node.overlay?.version ? " · Published" : ""}
-        </dd>
+        <dd>{paint(node, "status").label}</dd>
       </dl>
+      {node.overlay?.latest_attempt === "Failed" && node.overlay.version && (
+        <p className="muted">
+          The failed attempt did not publish. Data shown is from the last
+          successful publication.
+        </p>
+      )}
       {message && (
         <p className="muted">
           {node.identity.startsWith("pending:")

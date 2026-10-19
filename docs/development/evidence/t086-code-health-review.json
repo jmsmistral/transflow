@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-20",
+  "tasks": [
+    "T086",
+    "T088"
+  ],
+  "verification": {
+    "web": {
+      "result": "passed",
+      "tests": 663,
+      "assets": 16,
+      "command": "bash tools/check-web.sh",
+      "log": "/tmp/health-code-web.log"
+    },
+    "safety": {
+      "result": "passed",
+      "tests": 27,
+      "log": "/tmp/health-code-safety.log"
+    },
+    "specification": {
+      "result": "passed",
+      "checker_tests": 44,
+      "logs": [
+        "/tmp/health-code-spec.log",
+        "/tmp/health-code-spec-tests.log"
+      ]
+    },
+    "publication": {
+      "checks": [
+        "required input check fails without replacing the published version",
+        "earlier output warning remains independent of the latest failed attempt"
+      ],
+      "version_preserved": true,
+      "output_health": "Warning",
+      "latest_attempt": "Failed"
+    },
+    "browser": {
+      "result": "passed",
+      "workspace": "t111-code-health-review",
+      "observations": [
+        "Saved Operational alpha review opens; curated/east has a single 18px accent-colour heading and no refresh control.",
+        "Latest builds contains no buttons or check-details panel; both check sections retain expandable cards.",
+        "Live failed build advanced history from five to six retained jobs automatically via committed events.",
+        "Latest saved version opens first; published source stays on its exact prior capture.",
+        "Diff has two equal columns with matching row positions and original line numbers at narrow and wide widths.",
+        "Failed tooltip explicitly says no new publication and identifies earlier successful data.",
+        "Light and dark layouts checked; no warning/error console logs; verification coordinator stopped."
+      ]
+    },
+    "runtime_suites": {
+      "result": "not rerun",
+      "reason": "Native implementation and API/storage contracts unchanged; real coordinator builds qualify the affected UI behavior."
+    }
+  },
+  "changes": [
+    "Single larger dataset heading in Health; manual refresh and duplicate row removed.",
+    "Latest builds circles are status-only; Output dataset checks and Input dataset checks expand retained evidence.",
+    "Code defaults to Latest saved version first, then exact Data publish version, then aligned side-by-side Diff.",
+    "Tooltip distinguishes a failed latest attempt from the retained successful publication."
+  ],
+  "limits": [
+    "Latest saved version reads the latest validated source capture; unvalidated working-tree edits are not substituted.",
+    "Source bounds and unavailable/truncated diff guards remain enforced.",
+    "Remote CI remains owner-monitored."
+  ]
+}
