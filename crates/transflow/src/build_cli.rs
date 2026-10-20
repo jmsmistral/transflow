@@ -15,6 +15,7 @@ pub(crate) fn command() -> Command {
         .about("Build datasets, inspect execution and replay retained history")
         .subcommand_negates_reqs(true)
         .args_conflicts_with_subcommands(true)
+        .mut_arg("mode", |a| a.default_value("selected"))
         .mut_arg("targets", |a| {
             a.required_unless_present_any(["target", "plan", "help"])
         })

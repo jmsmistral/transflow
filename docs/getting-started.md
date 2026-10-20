@@ -82,7 +82,7 @@ published a public release. No `pip install transflow` step is needed for this g
 ## 3. Build and inspect
 
 ```bash
-transflow --workspace "$demo_workspace" build curated/customer_orders
+transflow --workspace "$demo_workspace" build curated/customer_orders --mode full
 transflow --workspace "$demo_workspace" catalog show curated/customer_orders
 transflow --workspace "$demo_workspace" plan curated/customer_orders
 ```
@@ -91,6 +91,9 @@ The build registers two source datasets and their joined output, executes requir
 checks, and publishes immutable Parquet versions. The output contains the synthetic
 customer orders described in the [walkthrough](../examples/customer-orders/README.md).
 A failed required check leaves the previous successful output available.
+
+`build` defaults to `selected`, reusing published inputs. The first build above
+uses `full` to include every eligible upstream ancestor and create those inputs.
 
 The source producers in this example refresh on each full build. To build just the
 joined output against the current source versions:

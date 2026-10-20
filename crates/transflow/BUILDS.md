@@ -10,6 +10,14 @@ A build contains one or more jobs. Each job builds one dataset; an attempt is on
 execution try of that job, and retries create additional attempts. Cached jobs reuse
 a retained version without a new execution attempt.
 
+Build defaults to `--mode selected`: only the named targets are eligible to run,
+and other inputs must already have published versions. Use `--mode full` for a
+first pipeline build or to include all eligible local upstream ancestors at every
+depth, not just direct inputs. Traversal stops at read boundaries, including
+imports, external datasets, manual sources unless explicitly refreshed, off-branch
+bindings, pins, boundaries and exclusions. Full does not include downstream or
+unrelated datasets; cache and source-refresh policies still apply within its scope.
+
 Current-working-tree builds also refresh retained catalogue browsing metadata
 under the same source and registry guards. `catalog show` can report producer
 locations without importing code. A stale plan or invalid graph preserves the
@@ -21,6 +29,7 @@ editor-overlay generation remains deferred; explicit `catalog sync` provides it.
 
 ```bash
 transflow build curated/orders --branch development
+transflow build curated/orders --mode full
 transflow build curated/orders --force --json
 transflow plan curated/orders --branch development --json
 transflow build --plan <plan-id>
@@ -32,7 +41,9 @@ transflow build replay <build-id> --branch replay-review
 ```
 
 Build accepts the same scope, boundary, exclusion, fallback, pin, parameter, source
-and resource-selection flags as `plan`. `--force` bypasses whole-job reuse. A saved
+and resource-selection flags as `plan`, whose omitted mode remains `full`.
+Use `transflow plan curated/orders --mode selected` to preview the default build
+scope. `--force` bypasses whole-job reuse within the chosen scope. A saved
 draft is accepted exactly once with its original guards; selection overrides,
 expired drafts and changed source/catalogue/heads fail rather than silently replan.
 `--plan` needs only the draft ID: it uses the captured environment selection.

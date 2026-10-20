@@ -73,7 +73,7 @@ With the quickstart's customer-orders workspace prepared:
 
 ```bash
 transflow --workspace "$HOME/transflow-demo" plan curated/customer_orders
-transflow --workspace "$HOME/transflow-demo" build curated/customer_orders
+transflow --workspace "$HOME/transflow-demo" build curated/customer_orders --mode full
 
 # From the repository checkout: build and open the lineage workspace.
 bash tools/serve-review.sh "$HOME/transflow-demo" --open

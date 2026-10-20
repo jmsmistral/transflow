@@ -997,6 +997,28 @@ mod tests {
     use super::*;
     use std::error::Error;
 
+    #[test]
+    fn build_defaults_to_selected_and_explicit_full_remains_available() -> Result<(), Box<dyn Error>>
+    {
+        for (arguments, expected) in [
+            (vec!["transflow", "build", "curated/east"], "selected"),
+            (
+                vec!["transflow", "build", "curated/east", "--mode", "full"],
+                "full",
+            ),
+            (vec!["transflow", "plan", "curated/east"], "full"),
+            (vec!["transflow", "why", "curated/east"], "full"),
+        ] {
+            let matches = command().try_get_matches_from(arguments)?;
+            let (_, args) = matches.subcommand().ok_or("missing command")?;
+            assert_eq!(
+                args.get_one::<String>("mode").map(String::as_str),
+                Some(expected)
+            );
+        }
+        Ok(())
+    }
+
     struct ClosedPipe;
 
     impl io::Write for ClosedPipe {

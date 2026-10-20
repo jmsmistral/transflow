@@ -6,7 +6,7 @@ use tf_catalog::{
     validation::{ValidatedGraph, ValidationRequest},
 };
 use tf_domain::BranchName;
-/// An omitted mode is Full.
+/// Internal requests default to Full; the CLI build adapter defaults to Selected.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum Mode {
     #[default]

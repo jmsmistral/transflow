@@ -110,7 +110,7 @@ def main() -> None:
             '@transform(x=Input("raw/rows"), output=Output("curated/base", '
             'checks=[Check(E.col("id").gte(0), "positive")]))\ndef base(x): return x\n'
         )
-        original_provider = build(provider, "curated/base", "--branch", "master")
+        original_provider = build(provider, "curated/base", "--mode", "full", "--branch", "master")
         assert original_provider["state"] == "SUCCEEDED", original_provider
         dataset = next(
             d["id"]
@@ -382,7 +382,10 @@ def main() -> None:
         passed("mismatched_provider_uuid_is_rejected_for_fresh_resolution")
         (provider / "src/base.py").write_text(provider_source)
         assert (
-            build(provider, "curated/base", "--branch", "master", "--force")["state"] == "SUCCEEDED"
+            build(provider, "curated/base", "--mode", "full", "--branch", "master", "--force")[
+                "state"
+            ]
+            == "SUCCEEDED"
         )
         (provider / "src/base.py").write_text(
             'raise RuntimeError("PROVIDER_MUST_NOT_BE_IMPORTED")\n'

@@ -30,7 +30,12 @@ registry proposals remain subject to current-authoring guards at acceptance.
 ## Plan and why
 
 Positional targets and repeatable `--target` references are combined and duplicates
-normalized. `why` requires one distinct target. Both commands accept:
+normalized. `why` requires one distinct target.
+
+Their omitted mode is `full`; `build` defaults to `selected`. Pass `--mode selected`
+to inspect the default build scope, or accept a saved plan to execute its exact scope.
+
+Both commands accept:
 
 - `--mode full|selected|between` (default full), repeatable `--boundary`, `--exclude`
   and `--refresh-source`, plus `--force` within that same scope.

@@ -172,7 +172,7 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
         git_run("init", "--template=", "-b", "master")
     registry_before = (root / ".transflow/catalog.toml").read_text()
     # First build deliberately has no validate/plan/catalog-sync ceremony.
-    first = j.build(TARGET)
+    first = j.build(TARGET, "--mode", "full")
     assert first["state"] == "SUCCEEDED" and len(first["jobs"]) == 3, first
     assert all(job["state"] == "SUCCEEDED" for job in first["jobs"])
     assert sorted(j.registry()) == j.expected["datasets"]
@@ -247,14 +247,14 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
     j.passed("public validation, plan, catalogue, lineage and execution inspection succeed")
 
     before = j.heads()
-    cached = j.build(TARGET, "--mode", "selected")
+    cached = j.build(TARGET)
     assert len(cached["jobs"]) == 1
     reuse = j.job(cached)
     assert reuse["state"] == "CACHED" and not reuse["attempts"]
     assert reuse["version"] == output["version"] and reuse["cached_from"]["checks"] == checks
     assert j.heads() == before
-    j.passed("selected repeat reuses original version and check timestamps without source refresh")
-    forced = j.build(TARGET, "--mode", "selected", "--force")
+    j.passed("default selected reuses original version and check timestamps without source refresh")
+    forced = j.build(TARGET, "--force")
     assert len(forced["jobs"]) == 1 and j.job(forced)["state"] == "SUCCEEDED"
     assert j.job(forced)["version"] != output["version"]
     assert len(j.job(forced)["attempts"][0]["checks"]) == 3
@@ -265,7 +265,7 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
     repeated = j.build(TARGET, "--mode", "full")
     assert len(repeated["jobs"]) == 3 and all(x["state"] == "SUCCEEDED" for x in repeated["jobs"])
     assert all(j.heads()[path] != before[path] for path in registry)
-    j.passed("explicit full matches default scope and refreshes always sources")
+    j.passed("explicit full includes upstream sources and refreshes always sources")
     before = j.heads()
     bounded = j.build(TARGET, "--mode", "between", "--boundary", "raw/orders", "--force")
     assert len(bounded["jobs"]) == 1 and j.job(bounded)["state"] == "SUCCEEDED"
@@ -439,7 +439,9 @@ def exercise(j: Journey, wheel: Path, wheelhouse: Path, git: str | None) -> None
     if git:
         assert committed is not None
         status = git_run("status", "--porcelain")
-        historical = j.build(TARGET, "--git-ref", committed, "--branch", "committed")
+        historical = j.build(
+            TARGET, "--mode", "full", "--git-ref", committed, "--branch", "committed"
+        )
         assert historical["state"] == "SUCCEEDED"
         assert j.data(j.job(historical)["version"]) == observed
         assert browse.read_bytes() == browse_before

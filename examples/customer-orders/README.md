@@ -17,7 +17,7 @@ cp -R examples/customer-orders/src/. /path/to/customer-analysis/src/
 cd /path/to/customer-analysis
 transflow env lock --python /path/to/prepared/python
 transflow env sync --python /path/to/prepared/python --runtime-wheel /path/to/transflow-0.0.0.dev0-py3-none-any.whl
-transflow build curated/customer_orders --python /path/to/prepared/python
+transflow build curated/customer_orders --mode full --python /path/to/prepared/python
 ```
 
 For offline setup, add `--no-index --wheelhouse /path/to/wheels` to both environment
@@ -43,7 +43,8 @@ transflow build curated/customer_orders --mode selected --force --python /path/t
 Selected mode pins the current source versions. An unchanged selected build reuses
 the derived version and its original check timestamps, with no new attempt.
 Selected force runs the join and its checks again without refreshing the sources.
-Repeating the default full build **does refresh both sources**: their default
+Selected is the build default. Repeating an explicit `--mode full` build
+**does refresh both sources**: their default
 refresh policy is `always`.
 
 For a non-Git experiment, edit the helper and build with

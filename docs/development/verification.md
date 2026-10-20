@@ -1,5 +1,23 @@
 # Contributor verification
 
+## Selected CLI build default (2026-10-20)
+
+Omitted CLI build mode now selects only explicit targets. Full already traverses
+every eligible upstream ancestor, with existing boundaries, refresh and caching
+rules. Plan/why inspection defaults and saved/API/schedule scopes are unchanged.
+First-build examples and native setup helpers explicitly request full. The
+rebuilt CLI help reports selected and the UI production assets are rebuilt.
+
+Local checks pass: 497 Rust tests including documentation tests, 48 developer-core,
+9 SQL lifecycle, 53 dispatch/CLI/schedule and 17 direct external-data scenarios.
+Formatting, Clippy, Ruff/mypy, 27 safety regressions and the public/dependency
+baseline, specification validation and 44 checker regressions pass. Initial native
+runs needed authorized socket/process access and the existing qualification
+interpreter with Polars. No UI behavior changed; Browser and full web/Python suites
+were not repeated. See the [receipt](evidence/t067-selected-build-default.json).
+The review workspace is preserved; restart its coordinator through the existing
+launcher to load the rebuilt CLI. New remote CI is owner-monitored.
+
 ## Code defaults and compact Health (2026-10-20)
 
 Health starts with the dataset name, follows build events automatically and keeps

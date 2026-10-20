@@ -47,7 +47,7 @@ def exercise(cli: Path, root: Path, python: str, probe: Path) -> list[str]:
     cases.append(
         "one public build registers and publishes a newly declared output without manual sync"
     )
-    first = build("curated/end", "--python", python, "--branch", "public")
+    first = build("curated/end", "--mode", "full", "--python", python, "--branch", "public")
     assert first["state"] == "SUCCEEDED" and len(first["jobs"]) == 4
     assert all(j["attempts"] for j in first["jobs"])
     assert build("show", first["id"])["id"] == first["id"]

@@ -81,19 +81,21 @@ def main() -> None:
         sql = root / "src/qualified_orders.sql"
         original = sql.read_text()
         sql.write_text(original.replace("region, amount", "region, -amount AS amount"))
-        failed = invoke("build", "curated/report", "--branch", "master", "--force", code=1)
+        failed = invoke(
+            "build", "curated/report", "--mode", "full", "--branch", "master", "--force", code=1
+        )
         assert failed["state"] == "FAILED" and protected_heads() == original_heads, failed
         assert any(j["state"] == "BLOCKED" for j in failed["jobs"])
         cases.append(
             "SQL output violation preserves SQL/downstream heads and blocks descendants under force"
         )
         sql.write_text(original + "\n-- SQL-only change\n")
-        changed = invoke("build", "curated/report", "--branch", "master")
+        changed = invoke("build", "curated/report", "--mode", "full", "--branch", "master")
         assert changed["state"] == "SUCCEEDED" and any(
             j["state"] == "SUCCEEDED" for j in changed["jobs"]
         ), changed
         cases.append("SQL bytes change the compute identity and execute real jobs")
-        repeat = invoke("build", "curated/report", "--branch", "master")
+        repeat = invoke("build", "curated/report", "--mode", "full", "--branch", "master")
         assert all(j["state"] == "CACHED" and not j["attempts"] for j in repeat["jobs"]), repeat
         cases.append(
             "unchanged SQL/check bindings reuse original publications without new attempts"

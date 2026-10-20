@@ -177,9 +177,9 @@ def create(root: Path, cli: Path, wheel: Path, wheelhouse: Path) -> dict[str, An
         assert reviewed["state"] == "SUCCEEDED" and len(reviewed["jobs"]) == 1, reviewed
     finally:
         customer_source.write_text(original)
-    first = run("build", "curated/report", "--branch", "master")["data"]
+    first = run("build", "curated/report", "--mode", "full", "--branch", "master")["data"]
     assert first["state"] == "SUCCEEDED" and len(first["jobs"]) == 4, first
-    cached = run("build", "curated/report", "--branch", "master")["data"]
+    cached = run("build", "curated/report", "--mode", "full", "--branch", "master")["data"]
     assert all(job["state"] == "CACHED" and not job["attempts"] for job in cached["jobs"])
     workspace = tomllib.loads((root / "workspace.toml").read_text())["workspace_id"]
     datasets = {

@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-20",
+  "tasks": [
+    "T046",
+    "T067",
+    "T068"
+  ],
+  "platform": "macOS arm64",
+  "changes": [
+    "CLI build defaults to selected; explicit full remains available",
+    "Full already traverses all eligible upstream ancestors at every depth, respecting existing read barriers, source refresh and cache policies",
+    "Plan/why, HTTP/internal defaults, saved plans and schedules are unchanged",
+    "First-build examples and native demo setup request full explicitly"
+  ],
+  "verification_status": "passed_locally",
+  "checks": {
+    "rust_format_check_clippy": "passed",
+    "cli_build_and_help": "passed; default selected",
+    "ruff": "passed",
+    "mypy": "passed; 89 source files",
+    "ui_production_build": "passed",
+    "safety": "passed; 27 regressions and public/dependency baseline",
+    "specification": "passed; final documentation validation",
+    "spec_checker_regressions": "passed; 44 tests",
+    "rust_native": "passed; 497 tests including documentation tests",
+    "developer_core": "passed; 48 scenarios across non-Git and Git-feature workspaces",
+    "sql_checks": "passed; 9 SQL pipeline lifecycle scenarios",
+    "dispatch": "passed; 53 dispatch, CLI and schedule scenarios",
+    "foreign": "passed; 17 direct external-data scenarios"
+  },
+  "environment_corrections": [
+    "Sandboxed native checks refused local ownership/process access with Operation not permitted; rerun with authorized native access",
+    "The contributor tooling interpreter lacks Polars; native data journeys use the existing prepared qualification/py314 interpreter"
+  ],
+  "logs": "target/build-default-review",
+  "limits": [
+    "Existing review workspace and running coordinator are untouched; restart the coordinator to load the rebuilt CLI default",
+    "No UI behavior changed; Browser journeys and full web/Python suites are not repeated",
+    "Remote CI is pending owner monitoring"
+  ],
+  "implementation_base": "7984faea0230f94e79632b443d651c664180689f",
+  "specification_base": "32fb96945ae2c9125fc1a49e940c2f30bcc9dd51"
+}

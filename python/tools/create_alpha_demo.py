@@ -87,9 +87,9 @@ def create(root: Path, cli: Path, wheel: Path, wheelhouse: Path) -> dict[str, An
         config.write("\n[execution]\nmax_jobs=2\ncpu_tokens=2\n")
     for name, source in SOURCES.items():
         (root / "src" / name).write_text(source)
-    first = run("build", "curated/delivery", "--branch", "master")["data"]
+    first = run("build", "curated/delivery", "--mode", "full", "--branch", "master")["data"]
     assert first["state"] == "SUCCEEDED" and len(first["jobs"]) == 4, first
-    cached = run("build", "curated/delivery", "--branch", "master")["data"]
+    cached = run("build", "curated/delivery", "--mode", "full", "--branch", "master")["data"]
     assert all(job["state"] == "CACHED" and not job["attempts"] for job in cached["jobs"])
     run("branch", "create", "review")
     # The lineage picker lists branches with data for visible nodes. Give review

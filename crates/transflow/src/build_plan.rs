@@ -32,7 +32,7 @@ pub struct Request {
     pub python: Option<String>,
     /// Resolved output data branch; source selection remains independent.
     pub branch: BranchName,
-    /// Default full, selected-only or between.
+    /// Full ancestors, selected-only, between or connecting scope.
     pub mode: Mode,
     /// Exact local producer paths or dataset UUID references.
     pub targets: Vec<String>,
