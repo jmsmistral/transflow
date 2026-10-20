@@ -214,6 +214,11 @@ use the ƒ symbol; external nodes use a compact arrow. The React Flow attributio
 is hidden through its supported option; its MIT license remains in the dependency.
 Progress/messages are centred at the bottom; no startup text covers the graph toolbar.
 
+**Build status** uses “No build on branch” when local branch facts confirm no
+attempt, including when data is available from a fallback. Missing, foreign or
+historical build metadata stays Unknown. Dashed borders indicate no publication
+across the selected branch and its fallbacks; fallback data keeps a solid border.
+
 ## Saved lineages (T084)
 
 The header's **Save** button is disabled until the lineage changes, including node

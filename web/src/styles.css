@@ -1770,7 +1770,8 @@ revo-grid.preview-grid
 .colour-dataset {
   background: #d9eef1;
 }
-.colour-unknown {
+.colour-unknown,
+.colour-no_build {
   background: #e8eaee;
 }
 .colour-missing {
@@ -1790,7 +1791,8 @@ revo-grid.preview-grid
 .theme-dark .colour-dataset {
   background: #29434a;
 }
-.theme-dark .colour-unknown {
+.theme-dark .colour-unknown,
+.theme-dark .colour-no_build {
   background: #353e4a;
 }
 .resource-icon {

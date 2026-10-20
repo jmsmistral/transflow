@@ -1,5 +1,19 @@
 # Contributor verification
 
+## Branch-specific build status (2026-10-20)
+
+Build status distinguishes No build on branch from Unknown using explicit local
+attempt absence in retained facts. Fallback publications remain independently
+available; the existing dashed-border rule still applies only when publication is
+missing across the selected branch and fallback chain. See the
+[receipt](evidence/t088-branch-build-status.json) for local checks and Browser
+verification. No backend or API contract changed; native suites are not repeated.
+The web gate passes 664 tests, strict checks and reproducible assets; final palette
+format/build checks pass. Safety passes 27 regressions and specification checks
+pass with 44 checker regressions. Internal Browser confirms three unbuilt review
+nodes, the matching legend count, solid borders with master fallback and dashed
+borders after disabling fallbacks. Its disposable coordinator and tab are closed.
+
 ## Selected CLI build default (2026-10-20)
 
 Omitted CLI build mode now selects only explicit targets. Full already traverses

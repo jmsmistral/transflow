@@ -865,16 +865,33 @@ test("plain click narrows an existing multi-node selection", async () => {
 });
 
 test("legend rows select exactly matching visible nodes in each mode", async () => {
+  const noAttempt = {
+    version: null,
+    rows: null,
+    files: null,
+    bytes: null,
+    latest_attempt: null,
+    freshness: "unknown" as const,
+    reasons: [],
+    health: "Unavailable" as const,
+    input_failed: false,
+    durations: null,
+  };
   const local = {
     ...node("a"),
     resource_type: "polars_transform" as const,
     publication: "published" as const,
+    overlay: noAttempt,
   };
   const foreign = {
     ...node("foreign", true),
     resource_type: "external" as const,
   };
-  const missing = { ...node("missing"), publication: "missing" as const };
+  const missing = {
+    ...node("missing"),
+    publication: "missing" as const,
+    overlay: noAttempt,
+  };
   const workspace = new Workspace(
     new Client(
       fixtureTransport((path) =>
@@ -905,6 +922,12 @@ test("legend rows select exactly matching visible nodes in each mode", async () 
   await waitFor(() =>
     expect(view.container.querySelectorAll(".dataset-node")).toHaveLength(3),
   );
+  expect(view.container.querySelectorAll(".unbuilt-node")).toHaveLength(1);
+  expect(
+    view.container.querySelector(
+      '.react-flow__node[data-id="missing"] .unbuilt-node',
+    ),
+  ).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Toggle legend" }));
   expect(
     screen.queryByRole("button", { name: "Select SQL Transform nodes" }),
@@ -946,6 +969,27 @@ test("legend rows select exactly matching visible nodes in each mode", async () 
         .querySelector(".react-flow__node.selected")
         ?.getAttribute("data-id"),
     ).toBe("a"),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Node colouring" }));
+  fireEvent.click(screen.getByRole("menuitemradio", { name: "Build status" }));
+  expect(screen.getAllByText("No build on branch")).toHaveLength(3);
+  fireEvent.click(
+    screen.getByRole("button", { name: "Select No build on branch nodes" }),
+  );
+  await waitFor(() =>
+    expect(
+      [...view.container.querySelectorAll(".react-flow__node.selected")]
+        .map((element) => element.getAttribute("data-id"))
+        .sort(),
+    ).toEqual(["a", "missing"]),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Select Unknown nodes" }));
+  await waitFor(() =>
+    expect(
+      view.container
+        .querySelector(".react-flow__node.selected")
+        ?.getAttribute("data-id"),
+    ).toBe("foreign"),
   );
   view.unmount();
   workspace.dispose();

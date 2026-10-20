@@ -28,6 +28,7 @@ const names: Record<string, string> = {
   external: "External Dataset",
   dataset: "Dataset",
   unknown: "Unknown",
+  no_build: "No build on branch",
   published: "Published",
   missing: "Not built on these branches",
   Running: "Running",
@@ -162,6 +163,14 @@ function duration(
     ? (BigInt(ratio.numerator) / BigInt(ratio.denominator)).toString()
     : null;
 }
+function buildStatus(node: ApiLineageNodeV1): string {
+  const attempt = node.overlay?.latest_attempt;
+  if (attempt != null) return attempt;
+  // Explicit absence in local branch facts differs from unavailable metadata.
+  return attempt === null && !node.external && node.publication !== "unknown"
+    ? "no_build"
+    : "unknown";
+}
 export function paint(
   node: ApiLineageNodeV1,
   colour: Colour,
@@ -191,7 +200,7 @@ export function paint(
       : colour === "publication"
         ? node.publication
         : colour === "status"
-          ? (f?.latest_attempt ?? "unknown")
+          ? buildStatus(node)
           : colour === "health"
             ? (f?.health ?? "Unavailable")
             : colour === "freshness"

@@ -35,6 +35,27 @@ const node: ApiLineageNodeV1 = {
   child_count: "1",
   overlay: facts,
 };
+test("confirmed absence of an attempt on this branch differs from unknown metadata even with fallback data", () => {
+  const absent = { ...node, overlay: { ...facts, latest_attempt: null } };
+  const unavailableFacts = { ...node };
+  delete unavailableFacts.overlay;
+  for (const publication of ["published", "missing"] as const) {
+    expect(paint({ ...absent, publication }, "status")).toMatchObject({
+      key: "no_build",
+      label: "No build on branch",
+    });
+  }
+  for (const unavailable of [
+    unavailableFacts,
+    { ...absent, publication: "unknown" as const },
+    { ...absent, external: true },
+  ]) {
+    expect(paint(unavailable, "status")).toMatchObject({
+      key: "unknown",
+      label: "Unknown",
+    });
+  }
+});
 test("failed latest attempt retains valid head and original output health independently of consumer failure", () => {
   expect(paint(node, "status")).toMatchObject({
     key: "Failed",
