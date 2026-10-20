@@ -151,8 +151,19 @@ export function CodeInspector({
       : null;
   return (
     <div className="execution-inspector code-inspector">
-      {mode !== "Latest saved version" && !state.selection.version && (
-        <Fallback branch={resolved} requested={state.selection.branch} />
+      {!state.selection.version && (
+        <>
+          <Fallback branch={resolved} requested={state.selection.branch} />
+          {mode === "Latest saved version" &&
+            resolved &&
+            resolved !== state.selection.branch && (
+              <div className="source-provenance">
+                Latest saved code is the workspace's current validated capture,
+                shared across data branches. Data publish version shows the code
+                that produced the fallback data.
+              </div>
+            )}
+        </>
       )}
       <DatasetHeader path={dataset?.path}>
         <div className="execution-switches" aria-label="Code views">

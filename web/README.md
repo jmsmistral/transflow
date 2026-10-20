@@ -43,7 +43,7 @@ The default query execution budget is 30 seconds, configured by
 result acceptance; queue wait and supervised termination grace are separate.
 The API still supports bound parameters; the scratchpad submits an empty list.
 
-Data health lives only in the right inspector, headed by the dataset name without
+Data health uses a pulse icon in the right inspector, headed by the dataset name without
 a duplicate row or refresh control. Committed build events refresh it automatically.
 Latest builds, Output dataset checks
 and Input dataset checks each show ten newest-first status circles and a latest
@@ -57,6 +57,9 @@ Cached and never invents a check run. Histories read up to 1,000 jobs through bo
 pages ordered by build creation time (`order=newest`) and disclose that limit when reached. Published checks use exact version
 contexts; input checks use each attempt's retained plan. Provider certificates stay
 retained metadata, without executing or contacting provider code.
+Fallback output certificates use the displayed publication's branch. Latest builds
+and input-check history remain on the selected branch, so fallback publication
+does not invent a build there.
 
 History centres summary metrics between its heading and date controls. Its duration
 chart uses the available width and plots successful attempts only; failed jobs
@@ -64,11 +67,21 @@ remain in the list and failure-rate metrics. Publication availability no longer
 adds an info badge to graph nodes. A failed latest attempt is labelled independently
 from any retained earlier successful publication.
 
+When the selected branch has no retained dataset jobs, History uses the displayed
+data's resolved branch for its job list, summary metrics and job details. The blue
+fallback banner and branch label name that branch. Any jobs on the selected branch,
+including failures without a publication, take precedence. Explicit version pins
+keep the selected History branch.
+
 Code opens with Latest saved version first, Data publish version second and Diff
 third. The first shows the latest validated capture. The published view always
 uses the displayed data version's exact producer. Diff aligns the two captures in
 side-by-side columns, with original line numbers, highlighted changes and shared
 vertical scrolling. Missing or bounded source stays explicitly unavailable for diff.
+All Code modes show the data fallback banner when applicable. Latest saved version
+also explains that the current validated source capture is shared across data
+branches; it is not a separate branch's working tree. Data publish version retains
+the fallback output's exact source. Display fallback never changes build source.
 
 Node hover cards separate Data quality from Freshness. Freshness compares successful
 direct-input publications with the displayed output publication, following named

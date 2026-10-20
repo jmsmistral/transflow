@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-20",
+  "tasks": [
+    "T086",
+    "T088",
+    "T099",
+    "T101"
+  ],
+  "changes": [
+    "Pulse Health tool icon",
+    "History jobs, metrics and details agree with fallback banner; selected-branch failures remain visible",
+    "Data fallback provenance in all Code modes; shared latest capture and exact published source remain distinct",
+    "Fallback output certificates use the publication branch",
+    "120 synthetic orders and managed SQL regional summary downstream of delivery"
+  ],
+  "verification": {
+    "web": {
+      "result": "passed",
+      "tests": 666,
+      "files": 29,
+      "assets": 16,
+      "log": "target/fallback-sql-review/web-final.log"
+    },
+    "demo": {
+      "passed": 6,
+      "cases": [
+        "fresh CLI setup registers five Polars/SQL outputs and creates cached history",
+        "fixed snapshots with registered identities seed two paused schedules and a view",
+        "repeated setup refuses existing workspace without changing its configuration",
+        "review has one head while master retains the diamond and SQL summary",
+        "output FAIL on forced source preserves every last-good head and blocks descendants",
+        "restoring source permits a real successful five-job Polars/SQL build"
+      ]
+    },
+    "sql_preview": {
+      "rows": [
+        [
+          "east",
+          "60",
+          "31950",
+          "532.5"
+        ],
+        [
+          "west",
+          "60",
+          "31270",
+          "521.17"
+        ]
+      ],
+      "orders": "120",
+      "datasets": 5,
+      "view": "Operational alpha review",
+      "existing_positions_preserved": true,
+      "master_jobs": 8,
+      "review_jobs": 0
+    },
+    "cached_reuse": {
+      "jobs": 5,
+      "attempts": 0
+    },
+    "python": [
+      "Ruff checks/format pass for affected demo tools",
+      "mypy passes 89 source files"
+    ],
+    "safety": {
+      "result": "passed",
+      "regressions": 27
+    },
+    "specification": {
+      "result": "passed"
+    },
+    "browser": {
+      "result": "passed",
+      "observations": [
+        "Saved Operational alpha review includes the new SQL edge and five nodes",
+        "Master SQL Preview has two rows with 60 orders per region and exact totals/averages",
+        "Code opens captured region_summary.sql",
+        "Review History displays eight master jobs, eight builds and 37.50 percent failure rate with master banner/header",
+        "Fallback successful job details show committed version, 60 rows and timing",
+        "Review current/published SQL source modes show fallback provenance",
+        "Review output certificate passes without a context error while branch builds/input history stay empty",
+        "Pulse icon visible; no browser warning/error logs"
+      ],
+      "screenshots": [
+        "target/fallback-sql-review/history-fallback.png",
+        "target/fallback-sql-review/sql-summary.png"
+      ]
+    }
+  },
+  "review": {
+    "workspace": "t111-code-health-review",
+    "view": "Operational alpha review",
+    "datasets": 5,
+    "orders": 120,
+    "sql_output": "analytics/region_summary",
+    "preserved": [
+      "east.py",
+      "west.py",
+      "delivery.py",
+      "existing saved node positions",
+      "root README owner edits"
+    ],
+    "launcher": "bash /Users/jms/dev/transflow-workspace/t111-code-health-review-tools/serve-preview.sh",
+    "requires_restart_after_ui_build": true,
+    "coordinator": "stopped cleanly after final Browser checks"
+  },
+  "limits": [
+    "Native runtime code unchanged; broad Rust/SDK suites not repeated",
+    "Latest saved code is workspace-wide, not a data-branch working tree",
+    "No executable-source fallback introduced",
+    "CI remains owner-monitored"
+  ]
+}

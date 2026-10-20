@@ -1,5 +1,30 @@
 # Contributor verification
 
+## Inspector fallback and mixed-engine review (2026-10-20)
+
+History now uses a single labelled branch for jobs, metrics and details. Empty
+selected-branch history can fall back to the displayed publication branch; real
+selected-branch failures remain visible. Code explains the shared current source
+capture and warns about fallback data in all modes. Health uses a pulse icon and
+correctly scopes fallback output certificates.
+
+The updated demo seeds 120 orders and five outputs, ending in a managed SQL
+regional summary downstream of delivery. The current `t111-code-health-review`
+workspace was expanded in place, preserving east/west/delivery source bytes and
+the saved view's existing positions. The original orders source and view are
+backed up in its sibling tools directory.
+
+Local checks pass: 666 web tests, strict checks and reproducible production
+assets; six real CLI demo journeys including cached reuse, required failure,
+last-good head preservation and recovery; exact SQL preview values via the API;
+Ruff/mypy, 27 safety regressions and specification validation. Internal Browser
+confirms the SQL edge/results/source, History fallback jobs/metrics/details, Code
+provenance and fallback output checks. The coordinator must restart after a UI
+build because it loads assets into memory at startup. The existing Bash launcher
+was verified against the final build. Native runtime suites are unchanged and
+not repeated; new CI remains owner-monitored. See the
+[receipt](evidence/t086-fallback-sql-review.json).
+
 ## Branch-specific build status (2026-10-20)
 
 Build status distinguishes No build on branch from Unknown using explicit local

@@ -336,6 +336,7 @@ export function HealthInspector({
                   .reverse()
                   .find((a) => a.state === "SUCCEEDED")?.attempt,
                 at: j.finished_us ?? j.created_us,
+                branch: state.selection.branch,
               },
             ]
           : [],
@@ -348,6 +349,10 @@ export function HealthInspector({
           version: meta.version,
           attempt: meta.attempt ?? undefined,
           at: meta.published ?? "",
+          branch:
+            meta.originBranch ??
+            field(dataset.head, "resolved_branch") ??
+            state.selection.branch,
         });
       publications.sort((a, b) =>
         BigInt(a.at || "0") > BigInt(b.at || "0")
@@ -369,7 +374,7 @@ export function HealthInspector({
         try {
           const retained = await workspace.scope(
             {
-              branch: state.selection.branch,
+              branch: publication.branch,
               dataset: dataset.dataset_id,
               origin: dataset.workspace_id,
               version: publication.version,
@@ -451,6 +456,7 @@ export function HealthInspector({
     meta?.version,
     meta?.attempt,
     meta?.published,
+    meta?.originBranch,
     revision,
   ]);
   if (!dataset) return <Empty>Select a dataset to inspect its health.</Empty>;

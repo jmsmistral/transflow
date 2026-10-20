@@ -38,13 +38,52 @@ export function HistoryInspector({
   state: Ready;
   onVersion: (version: Version | null) => void;
 }) {
+  return (
+    <HistoryContent
+      key={JSON.stringify(state.selection)}
+      workspace={workspace}
+      state={state}
+      onVersion={onVersion}
+    />
+  );
+}
+function HistoryContent({
+  workspace,
+  state,
+  onVersion,
+}: {
+  workspace: Workspace;
+  state: Ready;
+  onVersion: (version: Version | null) => void;
+}) {
   const dataset = state.value.dataset;
-  const [history, setHistory] = useState<HistoryResult>();
+  const [history, setHistory] = useState<
+    HistoryResult & { branch: string; key: string }
+  >();
+  const meta = dataset
+    ? versionMetadata(
+        dataset,
+        state.value.versions,
+        state.selection.version,
+        state.value.inspection,
+      )
+    : null;
+  const fallbackBranch = !state.selection.version
+    ? (meta?.originBranch ?? field(dataset?.head, "resolved_branch"))
+    : undefined;
+  const contextKey = state.value.context.fingerprint;
+  const shownHistory = history?.key === contextKey ? history : undefined;
+  const historyBranch = shownHistory?.branch ?? state.selection.branch;
   const [measured, setMeasured] = useState<{
     key: string;
     value: ApiExecutionMetricsV1;
   }>();
-  const [selected, setSelected] = useState<ApiHistoryJobV1>();
+  const [selection, setSelected] = useState<{
+    branch: string;
+    job: ApiHistoryJobV1;
+  }>();
+  const selected =
+    selection?.branch === historyBranch ? selection.job : undefined;
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [from, setFrom] = useState(() =>
@@ -52,7 +91,7 @@ export function HistoryInspector({
   );
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [range, setRange] = useState({ from, to });
-  const rangeKey = JSON.stringify(range);
+  const rangeKey = JSON.stringify([contextKey, range]);
   const metrics = measured?.key === rangeKey ? measured.value : undefined;
   const validRange = historyDateRange(from, to);
   useEffect(() => {
@@ -61,25 +100,44 @@ export function HistoryInspector({
     if (!bounds) return;
     const abort = new AbortController();
     void (async () => {
-      const scope = await workspace.scope(branchSelection(state), abort.signal);
-      const [page, measured] = await Promise.all([
-        scope.read(
+      let branch = state.selection.branch;
+      let scope = await workspace.scope(branchSelection(state), abort.signal);
+      let page = await scope.read(
+        "ApiDatasetHistoryV1",
+        `/api/v1/datasets/${dataset.dataset_id}/history`,
+        { limit: "50" },
+      );
+      // Preserve real attempts (including failures) on the selected branch.
+      // Only an empty history may use the displayed publication's branch.
+      if (!page.entries.length && fallbackBranch && fallbackBranch !== branch) {
+        branch = fallbackBranch;
+        scope = await workspace.scope({ branch }, abort.signal);
+        page = await scope.read(
           "ApiDatasetHistoryV1",
           `/api/v1/datasets/${dataset.dataset_id}/history`,
           { limit: "50" },
-        ),
-        scope.read("ApiExecutionMetricsV1", "/api/v1/metrics", {
+        );
+      }
+      const measured = await scope.read(
+        "ApiExecutionMetricsV1",
+        "/api/v1/metrics",
+        {
           dataset: dataset.dataset_id,
           ...bounds,
           window: "10",
           materialized_any: "false",
-        }),
-      ]);
-      return { page, measured };
+        },
+      );
+      return { page, measured, branch };
     })().then(
-      ({ page, measured }) => {
+      ({ page, measured, branch }) => {
         if (!abort.signal.aborted) {
-          setHistory({ entries: page.entries, next: page.next_cursor });
+          setHistory({
+            entries: page.entries,
+            next: page.next_cursor,
+            branch,
+            key: contextKey,
+          });
           setMeasured({ key: rangeKey, value: measured });
           setError("");
         }
@@ -89,21 +147,25 @@ export function HistoryInspector({
       },
     );
     return () => abort.abort();
-  }, [workspace, state, dataset, range, rangeKey]);
+  }, [workspace, state, dataset, range, rangeKey, fallbackBranch, contextKey]);
   async function more() {
     if (!dataset || busy) return;
     setBusy(true);
     const abort = new AbortController();
     try {
-      const scope = await workspace.scope(branchSelection(state), abort.signal);
-      if (history?.next && history.entries.length < 1000) {
+      const scope = await workspace.scope(
+        { branch: historyBranch },
+        abort.signal,
+      );
+      if (shownHistory?.next && shownHistory.entries.length < 1000) {
         const page = await scope.read(
           "ApiDatasetHistoryV1",
           `/api/v1/datasets/${dataset.dataset_id}/history`,
-          { cursor: history.next, limit: "50" },
+          { cursor: shownHistory.next, limit: "50" },
         );
         setHistory({
-          entries: [...history.entries, ...page.entries],
+          ...shownHistory,
+          entries: [...shownHistory.entries, ...page.entries],
           next: page.next_cursor,
         });
       }
@@ -113,26 +175,15 @@ export function HistoryInspector({
       setBusy(false);
     }
   }
-  const jobs = sortedHistory(history?.entries ?? []);
-  const meta = dataset
-    ? versionMetadata(
-        dataset,
-        state.value.versions,
-        state.selection.version,
-        state.value.inspection,
-      )
-    : null;
+  const jobs = sortedHistory(shownHistory?.entries ?? []);
   return (
     <div className="execution-inspector history-inspector">
       {!state.selection.version && (
-        <Fallback
-          branch={meta?.originBranch ?? field(dataset?.head, "resolved_branch")}
-          requested={state.selection.branch}
-        />
+        <Fallback branch={historyBranch} requested={state.selection.branch} />
       )}
       <DatasetHeader path={dataset?.path}>
         <span className="history-branch" title="History branch">
-          <Icon name="branch" /> {state.selection.branch}
+          <Icon name="branch" /> {historyBranch}
         </span>
         <div className="execution-switches">
           <Button disabled={!selected} onClick={() => setSelected(undefined)}>
@@ -168,7 +219,7 @@ export function HistoryInspector({
                 className="history-entry"
                 key={job.id}
                 aria-pressed={selected?.id === job.id}
-                onClick={() => setSelected(job)}
+                onClick={() => setSelected({ branch: historyBranch, job })}
               >
                 <Status state={job.state} />
                 <span className="history-entry-copy">
@@ -195,10 +246,10 @@ export function HistoryInspector({
                 )}
               </button>
             ))}
-            {history && !jobs.length && (
+            {shownHistory && !jobs.length && (
               <Empty>No retained jobs on this branch.</Empty>
             )}
-            {history?.next && (
+            {shownHistory?.next && (
               <Button
                 onClick={() => {
                   void more();
@@ -214,7 +265,10 @@ export function HistoryInspector({
               <JobHistoryDetail
                 key={selected.id}
                 workspace={workspace}
-                state={state}
+                state={{
+                  ...state,
+                  selection: { ...state.selection, branch: historyBranch },
+                }}
                 job={selected}
                 dataset={dataset}
               />

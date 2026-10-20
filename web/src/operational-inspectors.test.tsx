@@ -856,7 +856,7 @@ test("published output checks and later consumer failure remain separate, exact 
       : path.endsWith(`/attempts/${publishedAttempt}`)
         ? Promise.resolve(
             json(attempt(publishedAttempt, "output", "PASS"), {
-              ...context(),
+              ...context(query.branch),
               selection: {
                 kind: "local_version",
                 id: versionId,
@@ -939,10 +939,12 @@ test("published output checks and later consumer failure remain separate, exact 
     .map(([, init]) => JSON.parse(String(init?.body ?? "{}")))
     .find((body) => body.path?.endsWith(`/attempts/${publishedAttempt}`));
   expect(publishedRead.query.version).toBe(versionId);
+  expect(publishedRead.query.branch).toBe("public");
   const recentRead = transport.mock.calls
     .map(([, init]) => JSON.parse(String(init?.body ?? "{}")))
     .find((body) => body.path?.endsWith(`/attempts/${failedAttempt}`));
   expect(recentRead.query.plan).toBe(queryId);
+  expect(recentRead.query.branch).toBe("master");
   workspace.dispose();
 });
 test("a late previous dataset health response cannot paint a changed selection", async () => {
@@ -1053,7 +1055,7 @@ test("health history keeps newest first, ten slots, severity and retained output
       : path.endsWith(`/attempts/${publishedAttempt}`)
         ? Promise.resolve(
             json(attempt(publishedAttempt, "output", "PASS"), {
-              ...context(),
+              ...context(query.branch),
               selection: {
                 kind: "local_version",
                 id: versionId,
@@ -1133,7 +1135,7 @@ test("check circles open their retained evidence and runtime updates close the o
           value,
           query.version
             ? {
-                ...context(),
+                ...context(query.branch),
                 selection: {
                   kind: "local_version",
                   id: versionId,

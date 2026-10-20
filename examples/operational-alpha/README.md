@@ -1,8 +1,9 @@
 # Operational alpha review
 
-This synthetic demo combines a four-dataset diamond, output quality checks,
+This synthetic demo combines a Polars diamond and downstream SQL summary, output quality checks,
 parallel regional transforms, executed/cached history, two paused schedules,
-two live data branches and a saved lineage view. All amounts are invented integers.
+two live data branches and a saved lineage view. It has 120 invented orders, split
+equally between east and west, and five datasets.
 It creates a new workspace and refuses to overwrite an existing one.
 
 ## Create the workspace
@@ -33,13 +34,13 @@ target/debug/transflow --workspace ~/dev/transflow-workspace/t099-alpha-review \
 
 Open **Operational alpha review** through the saved lineage menu. If starting
 from an empty canvas, search `curated/delivery` in Catalogue and expand upstream.
-All four nodes are synthetic. The review branch publishes orders only;
+All five nodes are synthetic. The review branch publishes orders only;
 use the lineage fallback dialog to add master and inspect its regional/delivery versions.
 
 ## Review the integrated behavior
 
 1. Select delivery and inspect Preview, Code, History and Summary. The first
-   build executes four jobs; the repeat reuses data without fabricating attempts.
+   build executes five jobs; the repeat reuses data without fabricating attempts.
 2. Hide an ancestor, select delivery and open Builds. Choose all ancestors and
    review the actual planned resources. Force enables every eligible producer;
    the preview lists planned producers, with guarded cache evaluation at execution.
@@ -60,6 +61,12 @@ use the lineage fallback dialog to add master and inspect its regional/delivery 
 7. Data health shows the exact published version's output checks separately
    from the latest attempted job and its consumer input checks. Cached reuse
    keeps the original check evidence and creates no new attempt.
+8. Select `analytics/region_summary`. Its managed DuckDB query reads
+   `curated/delivery` through the `deliveries` input alias and produces per-region
+   order counts, totals and averages. Code shows `src/region_summary.sql`; the
+   adjacent `region_summary.py` registers its input and output. Edit the SQL and
+   run `transflow build analytics/region_summary --branch master` to rebuild only
+   the summary, or add `--mode full` to include all ancestors.
 
 Stop the foreground coordinator with Ctrl-C after review.
 

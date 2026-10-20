@@ -129,6 +129,7 @@ async function fixture(
     fail?: boolean;
     sql?: boolean;
     jobs?: ApiHistoryJobV1[];
+    emptyBranch?: string;
   } = {},
 ) {
   const calls: { path: string; query: Record<string, string> }[] = [];
@@ -196,7 +197,13 @@ async function fixture(
         if (path.endsWith("/history"))
           return Promise.resolve(
             json(
-              { entries: control.jobs ?? [historyJob], next_cursor: null },
+              {
+                entries:
+                  query.branch === control.emptyBranch
+                    ? []
+                    : (control.jobs ?? [historyJob]),
+                next_cursor: null,
+              },
               c,
             ),
           );
@@ -330,8 +337,9 @@ test("latest saved source is first and default, exact published source and side-
   expect(await screen.findByText("# current")).toBeTruthy();
   expect(screen.queryByText("# producing")).toBeNull();
   expect(
-    screen.queryByText(/Could not find data on current branch/),
-  ).toBeNull();
+    screen.getByText(/Could not find data on current branch/),
+  ).toBeTruthy();
+  expect(screen.getByText(/shared across data branches/)).toBeTruthy();
   expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
     "Latest saved version",
     "Data publish version",
@@ -482,6 +490,58 @@ test("history identifies the selected branch and submits inclusive ISO calendar 
   expect(screen.queryByText(/Build acceptance cohort/)).toBeNull();
   fireEvent.change(to, { target: { value: "2024-02-28" } });
   expect(apply).toHaveProperty("disabled", true);
+  model.dispose();
+});
+test("empty branch history reads fallback jobs, metrics and plan details under the labelled branch", async () => {
+  const { model, calls } = await fixture(false, job, { emptyBranch: "review" });
+  await model.select({
+    branch: "review",
+    dataset: datasetId,
+    origin: workspaceId,
+  });
+  const state = model.snapshot();
+  if (state.kind !== "ready") throw new Error("fixture not ready");
+  render(
+    <HistoryInspector workspace={model} state={state} onVersion={() => {}} />,
+  );
+  expect(await screen.findByText("100.00%")).toBeTruthy();
+  expect(screen.getByTitle("History branch").textContent).toContain("public");
+  expect(
+    screen.getByText(/Could not find data on current branch/),
+  ).toBeTruthy();
+  expect(
+    calls.filter((c) => c.path.endsWith("/history")).map((c) => c.query.branch),
+  ).toEqual(["review", "public"]);
+  expect(
+    calls.filter((c) => c.path.endsWith("/metrics")).at(-1)?.query.branch,
+  ).toBe("public");
+  fireEvent.click(screen.getByRole("button", { name: /FAILED · 1 attempts/ }));
+  expect(await screen.findByText("Failure: USER_CODE")).toBeTruthy();
+  expect(calls.find((c) => c.query.plan)?.query.branch).toBe("public");
+  model.dispose();
+});
+test("branch failures stay visible even when published data falls back elsewhere", async () => {
+  const { model, calls } = await fixture();
+  await model.select({
+    branch: "review",
+    dataset: datasetId,
+    origin: workspaceId,
+  });
+  const state = model.snapshot();
+  if (state.kind !== "ready") throw new Error("fixture not ready");
+  render(
+    <HistoryInspector workspace={model} state={state} onVersion={() => {}} />,
+  );
+  expect(await screen.findByText("100.00%")).toBeTruthy();
+  expect(screen.getByTitle("History branch").textContent).toContain("review");
+  expect(
+    screen.queryByText(/Could not find data on current branch/),
+  ).toBeNull();
+  expect(
+    calls
+      .filter((c) => c.path.endsWith("/history") || c.path.endsWith("/metrics"))
+      .every((c) => c.query.branch === "review"),
+  ).toBe(true);
   model.dispose();
 });
 test("history summary uses compact minute timestamps, rounded durations and concise point tooltips", async () => {

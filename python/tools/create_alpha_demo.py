@@ -26,8 +26,12 @@ from transflow import expectations as E
     E.col("amount").gte(0), "Amounts are nonnegative", id="amount", on_error="FAIL")))
 def orders():
     time.sleep(1)
-    return pl.DataFrame({"id": [1, 2, 3], "region": ["east", "west", "east"],
-                         "amount": [10, 20, 30]}).lazy()
+    ids = list(range(1, 121))
+    return pl.DataFrame({
+        "id": ids,
+        "region": ["east" if n % 2 else "west" for n in ids],
+        "amount": [150 + (n * 17) % 850 for n in ids],
+    }).lazy()
 """,
     "east.py": """import time
 import polars as pl
@@ -56,6 +60,24 @@ from transflow import Input, Output, transform
 def delivery(east, west):
     time.sleep(1)
     return pl.concat([east, west])
+""",
+    "region_summary.py": """from transflow import Input, Output, sql_transform
+
+region_summary = sql_transform(
+    "region_summary.sql",
+    deliveries=Input("curated/delivery"),
+    output=Output("analytics/region_summary"),
+)
+""",
+    "region_summary.sql": """-- The build pins the exact curated/delivery version behind this alias.
+SELECT
+    region,
+    COUNT(*) AS order_count,
+    CAST(SUM(amount) AS BIGINT) AS total_amount,
+    ROUND(AVG(amount), 2) AS average_amount
+FROM "deliveries"
+GROUP BY region
+ORDER BY region
 """,
 }
 
@@ -87,9 +109,11 @@ def create(root: Path, cli: Path, wheel: Path, wheelhouse: Path) -> dict[str, An
         config.write("\n[execution]\nmax_jobs=2\ncpu_tokens=2\n")
     for name, source in SOURCES.items():
         (root / "src" / name).write_text(source)
-    first = run("build", "curated/delivery", "--mode", "full", "--branch", "master")["data"]
-    assert first["state"] == "SUCCEEDED" and len(first["jobs"]) == 4, first
-    cached = run("build", "curated/delivery", "--mode", "full", "--branch", "master")["data"]
+    first = run("build", "analytics/region_summary", "--mode", "full", "--branch", "master")["data"]
+    assert first["state"] == "SUCCEEDED" and len(first["jobs"]) == 5, first
+    cached = run("build", "analytics/region_summary", "--mode", "full", "--branch", "master")[
+        "data"
+    ]
     assert all(job["state"] == "CACHED" and not job["attempts"] for job in cached["jobs"])
     run("branch", "create", "review")
     # The lineage picker lists branches with data for visible nodes. Give review
@@ -175,7 +199,7 @@ def create(root: Path, cli: Path, wheel: Path, wheelhouse: Path) -> dict[str, An
             "id": view_id,
             "revision": 0,
             "name": "Operational alpha review",
-            "description": "Synthetic orders, parallel regions and delivery",
+            "description": "120 synthetic orders, parallel regions, delivery and a SQL summary",
             "datasets": [
                 {
                     "identity": f"dataset:{workspace}:{datasets[path]['dataset_id']}",
@@ -186,6 +210,7 @@ def create(root: Path, cli: Path, wheel: Path, wheelhouse: Path) -> dict[str, An
                     ("curated/east", 360, 0),
                     ("curated/west", 360, 300),
                     ("curated/delivery", 720, 150),
+                    ("analytics/region_summary", 1080, 150),
                 )
             ],
             "colour": "status",
@@ -203,7 +228,7 @@ def create(root: Path, cli: Path, wheel: Path, wheelhouse: Path) -> dict[str, An
         )
     receipt = {
         "workspace": str(root),
-        "datasets": 4,
+        "datasets": 5,
         "builds": [first["id"], cached["id"], reviewed["id"]],
         "schedules": schedules,
         "view": view_id,

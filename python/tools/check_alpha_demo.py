@@ -29,9 +29,9 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="tf-alpha-") as temporary:
         root = Path(temporary).resolve() / "workspace"
         receipt = create(root, cli, wheel, wheelhouse)
-        assert receipt["datasets"] == 4 and len(receipt["schedules"]) == 2
+        assert receipt["datasets"] == 5 and len(receipt["schedules"]) == 2
         assert receipt["coordinator"] == "stopped"
-        cases.append("fresh public CLI setup registers four outputs and creates cached history")
+        cases.append("fresh CLI setup registers five Polars/SQL outputs and creates cached history")
         cases.append(
             "fixed snapshots with registered identities seed two paused schedules and a view"
         )
@@ -50,15 +50,27 @@ def main() -> None:
                 return database.execute("SELECT * FROM dataset_heads ORDER BY 1,2").fetchall()
 
         original_heads = heads()
-        assert len(original_heads) == 5
-        cases.append("review branch has one real head while master retains the complete diamond")
+        assert len(original_heads) == 6
+        cases.append("review has one head while master retains the diamond and SQL summary")
         source = root / "src/orders.py"
         original = source.read_text()
-        source.write_text(original.replace('"amount": [10, 20, 30]', '"amount": [10, -20, 30]'))
+        source.write_text(original.replace("150 + (n * 17) % 850", "-1 if n == 2 else 150"))
         assert source.read_text() != original
         try:
             failed = subprocess.run(
-                [cli, "--workspace", root, "build", "curated/delivery", "--force", "--json"],
+                [
+                    cli,
+                    "--workspace",
+                    root,
+                    "build",
+                    "analytics/region_summary",
+                    "--mode",
+                    "full",
+                    "--branch",
+                    "master",
+                    "--force",
+                    "--json",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=180,
@@ -74,14 +86,26 @@ def main() -> None:
         finally:
             source.write_text(original)
         restored = subprocess.run(
-            [cli, "--workspace", root, "build", "curated/delivery", "--force", "--json"],
+            [
+                cli,
+                "--workspace",
+                root,
+                "build",
+                "analytics/region_summary",
+                "--mode",
+                "full",
+                "--branch",
+                "master",
+                "--force",
+                "--json",
+            ],
             capture_output=True,
             text=True,
             timeout=180,
             check=True,
         )
         assert json.loads(restored.stdout)["result"]["data"]["state"] == "SUCCEEDED"
-        cases.append("restoring source permits a real successful four-job build")
+        cases.append("restoring source permits a real successful five-job Polars/SQL build")
     args.output.write_text(json.dumps({"passed": len(cases), "cases": cases}, indent=2) + "\n")
 
 
