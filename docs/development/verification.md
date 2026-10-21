@@ -1,5 +1,24 @@
 # Contributor verification
 
+## Plain wordmark and Python README visual (2026-10-22)
+
+The application header shows the transflow wordmark without the preceding diamond
+icon. The root README visual is replaced with an original, unchanged 1280 × 720
+Internal Browser capture of the rebuilt production UI: all five synthetic lineage
+nodes, the Catalogue and the Generated Python preview for `curated/east`.
+The image description and public asset provenance are updated; unrelated owner
+README prose is preserved.
+
+The final web gate passes 687 tests, strict types/lint/format checks, production
+worker probes and reproducible assets (16 files). Internal Browser confirms the
+plain wordmark, selected Python transform and matching catalogue selection, with
+no console errors. The existing `python-generated-review` workspace is reused,
+without changing its sources or saved lineage. Native/Python contracts are
+unchanged, so their broad suites are not repeated. Remote CI is owner-monitored.
+The temporary screenshot coordinator is stopped after capture.
+Specification validation, 27 safety regressions and the paired repository safety
+baseline pass; the capture contains only the synthetic demo's public UI content.
+
 ## Vite advisory CI correction (2026-10-21)
 
 The owner-reported [safety job](https://github.com/jmsmistral/transflow/actions/runs/39619790583/job/119289869805)

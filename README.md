@@ -11,7 +11,7 @@ data quality, history and scheduling into one local workflow.
 [![Lineage web UI](https://github.com/jmsmistral/transflow/actions/workflows/web.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/web.yml)
 [![Security & license checks](https://github.com/jmsmistral/transflow/actions/workflows/safety.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/safety.yml)
 
-![A synthetic orders pipeline in Transflow: explore dependencies, inspect datasets and configure schedules.](docs/assets/lineage-ui.png)
+![A synthetic orders pipeline in Transflow: explore lineage, browse datasets and inspect a Python transform.](docs/assets/lineage-ui.png)
 
 **[Get started](docs/getting-started.md)** · **[Documentation](docs/README.md)** · **[Try the SQL example](examples/sql-checks/README.md)**
 

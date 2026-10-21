@@ -251,7 +251,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
       </a>
       <header className="topbar">
         <a className="brand" href="#workspace" aria-label="Transflow workspace">
-          <span aria-hidden="true">◈</span> transflow
+          transflow
         </a>
         <div
           className="lineage-heading"
