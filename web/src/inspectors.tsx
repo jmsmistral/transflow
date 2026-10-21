@@ -35,6 +35,9 @@ export function hasGeneratedCode(value: unknown): boolean {
   const authoring = object(nested(value, "authoring"));
   return authoring?.kind === "sql" || authoring?.exported === true;
 }
+export function generatedPythonPreview(value: unknown): string | undefined {
+  return field(nested(value, "authoring"), "python_preview");
+}
 export function producingSourcePath(value: unknown): string | undefined {
   return (
     factorySourcePath(value) ??

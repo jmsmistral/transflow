@@ -1680,3 +1680,26 @@ asset checks. The internal Browser verified the exact labels, switching from
 authored code to seven-line published SQL, and no console errors. Its disposable
 coordinator stopped cleanly. Safety and specification checks passed. Native/Python
 application suites were not rerun for this text-only UI change. CI is owner-monitored.
+
+## 2026-10-21 - Expanded Python Generated preview
+
+Factory-created Python transforms now offer the compact Authored/Generated views.
+Discovery retains a bounded, optional AST expansion of the selected inner function
+with accepted dataset paths, immutable closure values and defaults resolved. It is
+explicitly marked as reconstructed inspection text. Reads never invoke a factory;
+unsupported syntax and older captures report unavailability. Authored/published
+source and diff remain distinct. Display metadata is excluded from cache identity
+and legacy execution matching.
+
+See [the preview receipt](evidence/t086-python-generated-preview.json) for actual
+gates and limits. The fresh persistent review is
+`~/dev/transflow-workspace/python-generated-review`, with a rebuilding Bash launcher
+in the matching `python-generated-review-tools` directory. It has 120 synthetic
+orders, five successfully built datasets and the saved Operational alpha review
+lineage. Prior review workspaces and the owner's README edit are preserved.
+
+Internal Browser checks covered ordinary/meta factories, saved/published previews,
+authored Diff, SQL evidence, ordinary transforms and light/dark themes. The actual
+launcher rebuilt the CLI/UI and served these assets; its verification coordinator
+was stopped. Local Python/web, targeted native, safety/specification and nine real
+factory CLI/API journeys are recorded in the receipt. CI remains owner-monitored.

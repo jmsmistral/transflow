@@ -22,6 +22,7 @@ from .dataset_handles import arguments
 from .discovery import _directory, _read, _write, collect
 from .environment import ARROW_VERSION
 from .polars_adapter import Context, ExecutionError, _file, _value
+from .python_preview import execution_declaration
 from .registration import resolve
 from .scratchpad import _connect
 from .wire import validate_document
@@ -54,7 +55,9 @@ def execute(request: dict[str, Any], send: Callable[[dict[str, object]], None]) 
     }
     discovered = collect({key: request[key] for key in fields})
     definitions = discovered["definitions"]
-    if not isinstance(definitions, list) or producer not in definitions:
+    if not isinstance(definitions, list) or execution_declaration(producer) not in [
+        execution_declaration(item) for item in definitions
+    ]:
         raise ExecutionError(
             "definition_changed", "Captured SQL producer differs from the accepted declaration"
         )

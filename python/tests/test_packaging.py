@@ -138,6 +138,7 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
             "check_numeric",
             "lifetime",
             "registration",
+            "python_preview",
             "dataset_handles",
         )
     }

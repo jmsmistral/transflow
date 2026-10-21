@@ -101,6 +101,26 @@ Definition factories run at discovery; a SQL query factory runs later, once its
 accepted input versions and checks are ready. See [managed SQL](SQL_TRANSFORMS.md)
 for value binding and the authored/generated SQL views.
 
+## Inspect an expanded Python preview
+
+Factory-created Python transforms offer Authored and Generated in the lineage
+Code panel. Authored shows the captured factory definition. Generated isolates
+the selected inner function, resolves input/output paths, substitutes captured
+immutable values and shows resolved defaults. For example, a regional factory's
+`region` becomes `'west'` in its filter.
+
+This is a reconstructed inspection preview, not Python source executed by the
+worker. Imports and global helpers remain in Authored; comments and formatting
+are normalized. Saved and published modes read their own captured previews; Diff
+compares authored source. Opening Generated never runs a factory or transform.
+
+The first preview supports ordinary synchronous function bodies without nested
+functions/classes, lambdas, comprehensions or global/nonlocal declarations. It
+does not guess decorator-only local values. Unsupported or older captures show
+an unavailable message and keep Authored accessible. Previews are bounded to
+128 KiB / 2,000 lines per function and a 1 MiB discovery-wide text budget. Preview
+metadata does not change computation identity or legacy replay matching.
+
 ## Try the synthetic workspace
 
 With the contributor CLI, wheel and offline wheelhouse already built:

@@ -245,6 +245,12 @@ pub fn finalize(
     for key in ["line", "lineage_json", "wall_timeout_seconds"] {
         object.remove(key);
     }
+    if let Some(authoring) = declaration
+        .get_mut("authoring")
+        .and_then(Value::as_object_mut)
+    {
+        authoring.remove("python_preview");
+    }
     declaration["output"]["ref"] = json!({"workspace":execution.output.workspace_id().to_string(),"dataset":execution.output.dataset_id().to_string()});
     semantic_checks(&mut declaration["output"]["checks"]);
     let mut checks = json!({"output":declaration["output"]["checks"],"inputs":{},"semantics":context.check_semantics,"environment":context.environment_fingerprint});

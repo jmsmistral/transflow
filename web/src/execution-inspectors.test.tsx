@@ -131,6 +131,8 @@ async function fixture(
     fail?: boolean;
     sql?: boolean;
     factory?: boolean;
+    pythonPreview?: boolean;
+    boundedSource?: boolean;
     factorySql?: boolean;
     generatedSql?: boolean;
     jobs?: ApiHistoryJobV1[];
@@ -179,6 +181,13 @@ async function fixture(
                               kind: control.factorySql ? "sql" : "frames",
                               exported: true,
                               definition_path: "src/factory.py",
+                              ...(control.pythonPreview
+                                ? {
+                                    python_preview: query.version
+                                      ? "# Published preview\ndef item(): return 'published'"
+                                      : "# Saved preview\ndef item(): return 'current'",
+                                  }
+                                : {}),
                             },
                           }
                         : {}),
@@ -198,13 +207,15 @@ async function fixture(
               {
                 source: workspaceId,
                 path: query.path,
-                offset: 0,
+                offset: control.boundedSource ? Number(query.offset ?? "0") : 0,
                 text: control.sql
                   ? "SELECT * FROM rows"
                   : query.version
                     ? "# producing\ndef items(): return 1"
                     : "# current\ndef items(): return 2",
-                next_offset: null,
+                next_offset: control.boundedSource
+                  ? Number(query.offset ?? "0") + 200
+                  : null,
                 git: { branch: "master", commit: "abcd", dirty: true },
               },
               c,
@@ -1200,7 +1211,13 @@ test("Python factories always show the definition in saved, published and diff v
   expect(await screen.findByText("src/factory.py")).toBeTruthy();
   expect(
     screen.getAllByRole("button").map((button) => button.textContent),
-  ).toEqual(["Latest saved version", "Data publish version", "Diff"]);
+  ).toEqual([
+    "Authored",
+    "Generated",
+    "Latest saved version",
+    "Data publish version",
+    "Diff",
+  ]);
   expect(
     screen.queryByRole("navigation", { name: "SQL source views" }),
   ).toBeNull();
@@ -1218,6 +1235,73 @@ test("Python factories always show the definition in saved, published and diff v
       .filter((call) => call.path.includes("/source/"))
       .every((call) => call.query.path === "src/factory.py"),
   ).toBe(true);
+  model.dispose();
+});
+
+test("Python Generated reads the matching saved or published preview and keeps Diff authored", async () => {
+  const { model, state } = await fixture(false, job, {
+    factory: true,
+    pythonPreview: true,
+  });
+  render(<CodeInspector workspace={model} state={state} />);
+  fireEvent.click(screen.getByRole("button", { name: /^Generated$/ }));
+  expect(await screen.findByText("# Saved preview")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Data publish version" }));
+  expect(await screen.findByText("# Published preview")).toBeTruthy();
+  expect(screen.queryByText("# Saved preview")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Diff" }));
+  expect(
+    await screen.findByRole("region", {
+      name: "Source diff: producing to current retained definition",
+    }),
+  ).toBeTruthy();
+  expect(
+    screen
+      .getByRole("button", { name: /^Authored$/ })
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
+  fireEvent.click(screen.getByRole("button", { name: /^Generated$/ }));
+  expect(await screen.findByText("# Saved preview")).toBeTruthy();
+  expect(
+    screen
+      .getByRole("button", { name: "Latest saved version" })
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
+  model.dispose();
+});
+
+test("Python Generated remains available when the authored file is a bounded excerpt", async () => {
+  const { model, state } = await fixture(false, job, {
+    factory: true,
+    pythonPreview: true,
+    boundedSource: true,
+  });
+  render(<CodeInspector workspace={model} state={state} />);
+  expect(await screen.findByText(/Showing a bounded excerpt/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: /^Generated$/ }));
+  expect(
+    await screen.findByRole("textbox", {
+      name: "Read-only generated Python preview",
+    }),
+  ).toBeTruthy();
+  expect(screen.getByText("# Saved preview")).toBeTruthy();
+  model.dispose();
+});
+
+test("Python Generated explains missing retained previews without fabricating source", async () => {
+  const { model, state } = await fixture(false, job, { factory: true });
+  render(<CodeInspector workspace={model} state={state} />);
+  fireEvent.click(screen.getByRole("button", { name: /^Generated$/ }));
+  expect(
+    await screen.findByText(/No expanded Python preview is retained/),
+  ).toBeTruthy();
+  expect(
+    screen.queryByRole("textbox", {
+      name: "Read-only generated Python preview",
+    }),
+  ).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: /^Authored$/ }));
+  expect(await screen.findByText("# current")).toBeTruthy();
   model.dispose();
 });
 

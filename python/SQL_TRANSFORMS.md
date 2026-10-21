@@ -98,8 +98,8 @@ preserving relative alignment. This presentation does not alter retained or exec
 Bound values remain in the separate attempt parameters, not interpolated into SQL.
 The Generated view displays the query string, including `$name` placeholders;
 History's selected job includes parameter evidence under Job spec. Python factories
-create configured functions rather than generated Python source files, so their
-Code view shows the authored factory definition without an Authored/Generated toggle.
+also offer an [expanded Generated preview](TRANSFORM_FACTORIES.md#inspect-an-expanded-python-preview),
+which illustrates their configured function rather than actual executed Python source.
 SQL evidence expires with retained attempt logs and may be explicitly unavailable.
 
 ## Exact type profile

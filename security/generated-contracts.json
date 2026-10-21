@@ -7,7 +7,7 @@
       ],
       "inputs": {
         "schemas/api-routes-v1.json": "45a9e92cdce4ee401794cd792425514bb12c11fb5781e5629495079533ea3e20",
-        "schemas/contracts-v1.schema.json": "92312a26b213cb5aa87299abf7ddce1d4e3a7827b9a0795f6e2979b511b4c37c",
+        "schemas/contracts-v1.schema.json": "10e90d1010357fa2e819838a08009926774be3159ab7e1f69d585beb68d7d2eb",
         "schemas/versions.json": "beb4e63198f8a245c2735b23f3fa9890697b166d20cc6812f0b47aa19ec4080f",
         "tools/contracts/generate.py": "8f5595a78863e8f0b5a0dab886ff62256e86d25180bf388184f3a9a0126bbe5d"
       },

@@ -11668,6 +11668,11 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 4294967295
+        },
+        "python_preview": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 131072
         }
       },
       "required": [

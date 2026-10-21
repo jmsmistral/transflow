@@ -23,6 +23,7 @@ from transflow.declarations import Branch, Check, Declaration, get_declaration
 
 from .canonical import DigestKind, content_digest
 from .compatibility import check_compatibility
+from .python_preview import python_preview
 from .registration import configuration, exports
 from .source_index import ModuleEntry, ModuleIndex, ModuleIndexError
 from .wire import ControlFrame, ProtocolError, _decode, validate_document, write_frame
@@ -249,6 +250,7 @@ def collect(request: dict[str, Any]) -> dict[str, object]:
     sys.path[:0] = [str(root / path) for path in request["source_roots"]]
     definitions: list[dict[str, object]] = []
     imported: list[str] = []
+    preview_budget = 1024 * 1024
     try:
         for entry in index.modules:
             try:
@@ -280,7 +282,7 @@ def collect(request: dict[str, Any]) -> dict[str, object]:
                                 "Producer must originate in captured source",
                                 entry.path,
                             )
-                        definition["authoring"] = {
+                        authoring: dict[str, object] = {
                             "format_version": 1,
                             "kind": "sql"
                             if declaration.engine == "duckdb" and declaration.sql_file is None
@@ -294,6 +296,18 @@ def collect(request: dict[str, Any]) -> dict[str, object]:
                             "definition_path": definition_path,
                             "definition_line": declaration.line,
                         }
+                        if exported and declaration.engine == "polars" and preview_budget:
+                            preview = python_preview(
+                                function, declaration, sources[definition_path]
+                            )
+                            if preview is not None:
+                                size = len(preview.encode())
+                                if size <= preview_budget:
+                                    authoring["python_preview"] = preview
+                                    preview_budget -= size
+                                else:
+                                    preview_budget = 0
+                        definition["authoring"] = authoring
                     if declaration.sql_file is not None:
                         sql_path = str(
                             PurePosixPath(str(Path(declaration.filename).relative_to(root))).parent

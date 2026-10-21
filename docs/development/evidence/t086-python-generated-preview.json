@@ -1,0 +1,90 @@
+{
+  "date": "2026-10-21",
+  "scope": "T086 Python Generated inspection prototype",
+  "behavior": [
+    "Compact Authored/Generated views for exported Python factories",
+    "Bounded optional discovery-time AST preview isolates the selected inner function",
+    "Accepted dataset paths, immutable closure values and defaults are expanded",
+    "Saved/published previews use their own captured declarations; Diff stays authored",
+    "Reads do not run factories; display text is excluded from compute and legacy execution matching"
+  ],
+  "verification": {
+    "python": {
+      "passed": 1168,
+      "includes_installed_wheel": true,
+      "preview_cases": 16
+    },
+    "web": {
+      "passed": 681,
+      "files": 30,
+      "production_assets": 16,
+      "reproducible": true
+    },
+    "native": {
+      "format_check_clippy": "passed",
+      "packages": [
+        "tf-catalog",
+        "tf-protocol"
+      ],
+      "suite": "passed",
+      "passed": 122
+    },
+    "cli_api": {
+      "format_version": 1,
+      "passed": 9,
+      "cases": [
+        "fresh ordinary/meta Python exports and SQL factory build five datasets",
+        "unchanged captured factory pipeline reuses all five outputs",
+        "Python preview API resolves actual factory paths and closure values",
+        "API SQL evidence matches durable hash and exact input version",
+        "required input failure prevents SQL generation and preserves all heads",
+        "failed SQL execution retains its own generated SQL and last-good data",
+        "generation failure has no substituted SQL evidence and preserves heads",
+        "captured factory replay succeeds without changing live files",
+        "metadata-aware selected build reads fallback pins on another branch"
+      ]
+    },
+    "browser": {
+      "surface": "Codex internal Browser",
+      "observed": [
+        "Meta factory west has resolved input/output paths and west literals with no outer factory",
+        "Ordinary factory east preview works",
+        "Published preview remains available; Diff shows authored source and Generated returns to Latest saved",
+        "Ordinary transforms keep three version controls; SQL evidence and placeholders remain intact",
+        "Light/dark themes are legible with no console errors"
+      ],
+      "coordinator": "Stopped after review launcher verification"
+    },
+    "safety": {
+      "passed": true,
+      "regressions": 27,
+      "public_files": 901,
+      "generated_contracts": 1
+    },
+    "specification": {
+      "checker": "passed"
+    }
+  },
+  "review": {
+    "workspace": "~/dev/transflow-workspace/python-generated-review",
+    "launcher": "bash ~/dev/transflow-workspace/python-generated-review-tools/serve-preview.sh",
+    "datasets": 5,
+    "sample_orders": 120,
+    "source_and_data_of_prior_workspaces": "preserved",
+    "worker_wheel_sha256": "0a4ddd7885007156be5117c6e9f4785ce90815f7527debd2d3ce106bbbb50fdb",
+    "launcher_verified": true,
+    "served_assets_match": {
+      "html": true,
+      "entry_assets": 5
+    }
+  },
+  "limits": [
+    "Reconstructed inspection preview, not executed Python source",
+    "Comments/formatting normalize; imports and global helpers stay in Authored",
+    "Nested scopes, comprehensions, global/nonlocal declarations and unresolved decorator-only locals are unavailable",
+    "Older captures need a new supported capture to acquire preview metadata",
+    "Per preview: 512 KiB source, 10000 AST nodes, 128 KiB text and 2000 lines; 1 MiB text per discovery",
+    "The broader workspace Rust run was stopped during iteration; final native qualification is scoped to affected packages",
+    "Remote CI is owner-monitored"
+  ]
+}

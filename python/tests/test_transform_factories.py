@@ -112,6 +112,9 @@ def test_imported_factory_exports_are_authoritative_and_order_independent(
         assert declaration["module"] == "exports"
         assert declaration["authoring"]["definition_path"] == "src/helpers.py"
         assert declaration["authoring"]["exported"] is True
+    preview = definitions[0]["analytics/python"]["authoring"]["python_preview"]
+    assert "Input('raw/orders')" in preview and "Output('analytics/python')" in preview
+    assert "Python must not run during discovery" in preview
 
 
 @pytest.mark.parametrize(

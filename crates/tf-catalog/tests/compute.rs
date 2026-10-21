@@ -277,3 +277,16 @@ fn handle_observable_branch_and_catalogue_paths_affect_reuse() {
     fs::write(path, registry.replace("raw/input", "raw/renamed")).unwrap();
     assert_ne!(before_rename, f.key().unwrap().digest());
 }
+
+#[test]
+fn python_preview_is_display_metadata_not_compute_identity() {
+    let mut f = Fixture::new();
+    f.definition["authoring"] = json!({"format_version":1,"kind":"meta","exported":true,
+        "configuration":"a".repeat(64),"definition_path":"src/output.py","definition_line":1});
+    let before = f.key().unwrap();
+    f.definition["authoring"]["python_preview"] =
+        json!("# Display-only expanded function\ndef output(): return 1");
+    assert_eq!(before.digest(), f.key().unwrap().digest());
+    f.definition["authoring"]["configuration"] = json!("b".repeat(64));
+    assert_ne!(before.digest(), f.key().unwrap().digest());
+}

@@ -8,6 +8,7 @@ import { SourceLines } from "./SourceLines";
 import {
   field,
   hasGeneratedCode,
+  generatedPythonPreview,
   producingSourcePath,
   versionMetadata,
 } from "./inspectors";
@@ -24,7 +25,7 @@ async function capturedSource(
   scope: Scope,
   dataset: string,
   origin: string,
-): Promise<ApiSourceV1 & { complete: boolean }> {
+): Promise<ApiSourceV1 & { complete: boolean; pythonPreview?: string }> {
   const definition = await scope.read(
     "ApiDatasetV1",
     `/api/v1/datasets/${dataset}`,
@@ -32,6 +33,7 @@ async function capturedSource(
   );
   const path = producingSourcePath(definition.producer),
     source = scope.context.source;
+  const pythonPreview = generatedPythonPreview(definition.producer);
   if (!path || !source)
     throw new Error("Producing source was not retained for this dataset.");
   let offset = 0,
@@ -52,17 +54,30 @@ async function capturedSource(
         offset: 0,
         text: new TextDecoder().decode(encoded.slice(0, 512 * 1024)),
         complete: false,
+        ...(pythonPreview ? { pythonPreview } : {}),
       };
     text += last.text;
     if (last.next_offset === null)
-      return { ...last, offset: 0, text, complete: true };
+      return {
+        ...last,
+        offset: 0,
+        text,
+        complete: true,
+        ...(pythonPreview ? { pythonPreview } : {}),
+      };
     if (last.next_offset <= offset)
       throw new Error("Source pagination did not advance.");
     offset = last.next_offset;
     if (offset >= 2000 || text.length >= 512 * 1024) break;
     text += "\n";
   } while (offset < 2000 && text.length < 512 * 1024);
-  return { ...last, offset: 0, text, complete: false };
+  return {
+    ...last,
+    offset: 0,
+    text,
+    complete: false,
+    ...(pythonPreview ? { pythonPreview } : {}),
+  };
 }
 export function CodeInspector({
   workspace,
@@ -72,7 +87,7 @@ export function CodeInspector({
   state: Ready;
 }) {
   const dataset = state.value.dataset;
-  const [content, setContent] = useState<"code" | "sql">("code");
+  const [content, setContent] = useState<"code" | "generated">("code");
   const isSql = field(dataset?.producer, "engine") === "duckdb";
   const dynamicallyGenerated = hasGeneratedCode(dataset?.producer);
   const [mode, setMode] = useState<
@@ -80,8 +95,8 @@ export function CodeInspector({
   >("Latest saved version");
   const [result, setResult] = useState<{
     key: string;
-    producing?: (ApiSourceV1 & { complete: boolean }) | undefined;
-    current?: (ApiSourceV1 & { complete: boolean }) | undefined;
+    producing?: Awaited<ReturnType<typeof capturedSource>> | undefined;
+    current?: Awaited<ReturnType<typeof capturedSource>> | undefined;
     error?: string;
   }>();
   const meta = dataset
@@ -184,10 +199,12 @@ export function CodeInspector({
                   Dynamically generated code
                 </span>
               )}
-              {isSql && (
+              {(isSql || dynamicallyGenerated) && (
                 <nav
                   className="execution-switches code-source-switches"
-                  aria-label="SQL source views"
+                  aria-label={
+                    isSql ? "SQL source views" : "Python source views"
+                  }
                 >
                   <Button
                     aria-pressed={content === "code"}
@@ -196,8 +213,16 @@ export function CodeInspector({
                     Authored
                   </Button>
                   <Button
-                    aria-pressed={content === "sql"}
-                    onClick={() => setContent("sql")}
+                    aria-pressed={content === "generated"}
+                    title={
+                      isSql
+                        ? "Actual retained SQL"
+                        : "Expanded Python preview from captured factory values"
+                    }
+                    onClick={() => {
+                      setContent("generated");
+                      if (mode === "Diff") setMode("Latest saved version");
+                    }}
                   >
                     Generated
                   </Button>
@@ -229,12 +254,40 @@ export function CodeInspector({
           ))}
         </div>
       </DatasetHeader>
-      {content === "sql" && isSql ? (
+      {content === "generated" && isSql ? (
         <GeneratedSqlInspector
           workspace={workspace}
           state={state}
           published={mode === "Data publish version"}
         />
+      ) : content === "generated" && dynamicallyGenerated ? (
+        shown?.error ? (
+          <Empty>Generated Python preview unavailable: {shown.error}</Empty>
+        ) : !shown ? (
+          <Empty>Loading generated Python preview…</Empty>
+        ) : source?.pythonPreview ? (
+          <div
+            className="source-scroll"
+            tabIndex={0}
+            role="textbox"
+            aria-readonly
+            aria-multiline
+            aria-label="Read-only generated Python preview"
+          >
+            <SourceLines
+              source={{ text: source.pythonPreview, path: "generated.py" }}
+              current={undefined}
+              diff={null}
+            />
+          </div>
+        ) : (
+          <Empty>
+            No expanded Python preview is retained for this capture. Older
+            captures and factories with unsupported syntax can still be
+            inspected in Authored. Capture the latest source with an updated
+            worker to make a preview available.
+          </Empty>
+        )
       ) : (
         <>
           {source && mode !== "Diff" && (

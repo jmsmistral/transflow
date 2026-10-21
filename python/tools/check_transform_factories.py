@@ -68,6 +68,15 @@ def verify(root: Path, cli: Path, receipt: dict[str, Any]) -> list[str]:
     try:
         with coordinator(root, cli) as registration:
             client = Client(registration)
+            for path, region in [("curated/east", "east"), ("curated/west", "west")]:
+                definition = client.call(
+                    "GET", f"/api/v1/datasets/{datasets[path]}", query={"branch": "master"}
+                )["data"]
+                preview = definition["producer"]["authoring"]["python_preview"]
+                assert "Input('raw/orders')" in preview
+                assert f"Output('{path}')" in preview and f"== '{region}'" in preview
+                assert "def make_" not in preview
+            cases.append("Python preview API resolves actual factory paths and closure values")
             sql = evidence(client, first)["generated_sql"]
             assert "FROM deliveries" in sql["sql"] and "$minimum_amount" in sql["sql"]
             assert hashlib.sha256(sql["sql"].encode()).hexdigest() == sql["sha256"]

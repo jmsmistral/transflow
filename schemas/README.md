@@ -282,3 +282,9 @@ T086 History owner review adds required `build_state` and `build_job_count` to
 `ApiHistoryJobV1`. The latter counts all jobs of the owning build, independent of
 the selected dataset, retries and page size. Generated clients and exports are
 updated together; protocol 1.0 and runtime schema 12 remain unchanged.
+
+Factory authoring metadata may include a bounded `python_preview` string. It is
+an optional reconstructed inspection view, captured during discovery, and is
+excluded from computation identity and accepted-execution comparison. Older
+declarations remain valid. Schema exports and the drift registry are regenerated
+together; this optional field does not change protocol/API/database major versions.

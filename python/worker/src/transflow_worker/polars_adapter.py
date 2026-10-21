@@ -22,6 +22,7 @@ from transflow.declarations import get_declaration, validate_result
 from .canonical import artifact_digest, file_digest, schema_digest
 from .dataset_handles import arguments
 from .discovery import DiscoveryError, _directory, _write, collect
+from .python_preview import execution_declaration
 from .registration import resolve
 from .wire import validate_document
 
@@ -246,7 +247,9 @@ def execute(request: dict[str, Any], send: Callable[[dict[str, object]], None]) 
     }
     discovered = collect({key: request[key] for key in discovery_fields})
     definitions = discovered["definitions"]
-    if not isinstance(definitions, list) or producer not in definitions:
+    if not isinstance(definitions, list) or execution_declaration(producer) not in [
+        execution_declaration(item) for item in definitions
+    ]:
         raise ExecutionError(
             "definition_changed", "Captured producer no longer matches the accepted declaration"
         )
