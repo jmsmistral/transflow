@@ -84,5 +84,33 @@
       "Native and Python application suites not repeated for UI-only change",
       "New remote CI is owner-monitored"
     ]
+  },
+  "short_labels_followup": {
+    "date": "2026-10-21",
+    "labels": [
+      "Authored",
+      "Generated"
+    ],
+    "web": {
+      "passed": 678,
+      "files": 30,
+      "production_assets": 16,
+      "reproducible": true
+    },
+    "browser": {
+      "surface": "Codex internal Browser",
+      "observed": [
+        "Exact short labels in the shared Code header",
+        "Authored factory source and published seven-line SQL remain available",
+        "No console errors"
+      ],
+      "coordinator": "Temporary verification coordinator stopped"
+    },
+    "scope": "Button text only; Python source expansion and parameter rendering are not implemented",
+    "checks": [
+      "safety",
+      "specification"
+    ],
+    "ci": "owner-monitored"
   }
 }

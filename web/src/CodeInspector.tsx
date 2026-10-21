@@ -193,13 +193,13 @@ export function CodeInspector({
                     aria-pressed={content === "code"}
                     onClick={() => setContent("code")}
                   >
-                    Authored code
+                    Authored
                   </Button>
                   <Button
                     aria-pressed={content === "sql"}
                     onClick={() => setContent("sql")}
                   >
-                    Generated SQL
+                    Generated
                   </Button>
                 </nav>
               )}

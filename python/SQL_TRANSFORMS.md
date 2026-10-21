@@ -80,7 +80,7 @@ separate, narrower query interface.
 ## Inspect authored code and generated SQL
 
 The lineage Code panel keeps Latest saved version, Data publish version and Diff.
-For SQL it adds Authored code and Generated SQL beside the dataset name, with
+For SQL it adds Authored and Generated beside the dataset name, with
 matching compact version controls. Generated transforms show an italic `d` before
 the lineage function glyph and a Dynamically generated code label in Code.
 For imported factories, authored code always shows the reusable factory definition;
@@ -96,6 +96,10 @@ since execution. Reads do not invoke query factories.
 The SQL display removes surrounding blank lines and the shared indentation margin,
 preserving relative alignment. This presentation does not alter retained or executed SQL.
 Bound values remain in the separate attempt parameters, not interpolated into SQL.
+The Generated view displays the query string, including `$name` placeholders;
+History's selected job includes parameter evidence under Job spec. Python factories
+create configured functions rather than generated Python source files, so their
+Code view shows the authored factory definition without an Authored/Generated toggle.
 SQL evidence expires with retained attempt logs and may be explicitly unavailable.
 
 ## Exact type profile

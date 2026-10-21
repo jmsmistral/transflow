@@ -1249,16 +1249,16 @@ test("SQL Code shows actual attempt SQL and never substitutes a failed generator
     true,
   );
   expect(
-    header?.contains(screen.getByRole("button", { name: "Authored code" })),
+    header?.contains(screen.getByRole("button", { name: /^Authored$/ })),
   ).toBe(true);
   expect(
-    header?.contains(screen.getByRole("button", { name: "Generated SQL" })),
+    header?.contains(screen.getByRole("button", { name: /^Generated$/ })),
   ).toBe(true);
   expect(
     screen.queryByRole("button", { name: "Factory definition" }),
   ).toBeNull();
   expect(screen.queryByRole("button", { name: "Registration" })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Generated SQL" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Generated$/ }));
   expect(
     await screen.findByRole("textbox", { name: "Read-only generated SQL" }),
   ).toBeTruthy();
@@ -1287,7 +1287,7 @@ test("SQL Code explicitly reports missing generation evidence for the latest fai
     },
   };
   render(<CodeInspector workspace={model} state={sqlState} />);
-  fireEvent.click(screen.getByRole("button", { name: "Generated SQL" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Generated$/ }));
   expect(
     await screen.findByText(/SQL was not generated for this attempt/),
   ).toBeTruthy();

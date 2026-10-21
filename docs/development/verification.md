@@ -1667,3 +1667,16 @@ errors. The disposable verification coordinator was stopped. Safety's 27 regress
 and the specification checker passed. Native/Python suites were not repeated for
 this UI-only change; remote CI is owner-monitored. The existing review launcher
 rebuilds current source on restart.
+
+## 2026-10-21 - Short authored/generated labels
+
+SQL Code controls now read Authored and Generated. The factory definition behavior
+is unchanged. The guide explains that Python factories create configured callables
+rather than generated source files, and SQL keeps bound values separate from its
+query text. Read-only inspection of the owner's sample's latest retained SQL
+execution confirmed `minimum_amount = 0`; Job spec exposes captured parameters.
+The rebuilt UI passed 678 web tests across 30 files and reproducible production
+asset checks. The internal Browser verified the exact labels, switching from
+authored code to seven-line published SQL, and no console errors. Its disposable
+coordinator stopped cleanly. Safety and specification checks passed. Native/Python
+application suites were not rerun for this text-only UI change. CI is owner-monitored.
