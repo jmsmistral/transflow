@@ -737,14 +737,14 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
         } else {
             "missing"
         };
-        let resource_type = if n.node.external {
-            "external"
-        } else if let Some(def) = validated
+        let definition = validated
             .candidate()
             .definitions()
             .iter()
-            .find(|d| d.output == n.node.identity)
-        {
+            .find(|d| d.output == n.node.identity);
+        let resource_type = if n.node.external {
+            "external"
+        } else if let Some(def) = definition {
             if def.declaration["source"] == true {
                 "source"
             } else {
@@ -763,6 +763,8 @@ fn lineage(c: &Context, r: &Request) -> Result<Value> {
             "dataset"
         };
         let mut node = json!({"identity":crate::why::identity(&n.node.identity),"paths":n.node.paths.iter().map(|p|p.as_str()).collect::<Vec<_>>(),"depth":n.depth.to_string(),"external":n.node.external,"producer":n.node.producer,"parent_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Upstream).to_string(),"child_count":graph.neighbour_count(&n.node.identity,traversal::Direction::Downstream).to_string(),"publication":publication,"resource_type":resource_type});
+        node["generated_code"] =
+            (!n.node.external && definition.is_some_and(|d| generated_code(&d.declaration))).into();
         if overlays {
             node["overlay"] = crate::api_overlays::project(
                 c,
@@ -856,6 +858,10 @@ fn enrich(c: &Context, mut entries: Vec<Value>) -> Result<Vec<Value>> {
     rt.block_on(reader.close()).map_err(bad)?;
     Ok(entries)
 }
+fn generated_code(declaration: &Value) -> bool {
+    declaration["authoring"]["kind"] == "sql" || declaration["authoring"]["exported"] == true
+}
+
 fn fuzzy_match(path: &str, query: &str) -> bool {
     let lowered = path.to_lowercase();
     let mut chars = lowered.chars();
@@ -898,4 +904,27 @@ fn entries(c: &Context, r: &Request) -> Result<Vec<Value>> {
             })
         })
         .collect())
+}
+
+#[cfg(test)]
+mod generated_code_tests {
+    use super::*;
+
+    #[test]
+    fn only_function_sql_and_explicit_factory_exports_have_generated_code() {
+        for declaration in [
+            json!({"engine":"polars"}),
+            json!({"engine":"duckdb","sql_source":{"path":"query.sql"}}),
+            json!({"authoring":{"kind":"meta","exported":false}}),
+        ] {
+            assert!(!generated_code(&declaration));
+        }
+        for declaration in [
+            json!({"authoring":{"kind":"sql","exported":false}}),
+            json!({"authoring":{"kind":"frames","exported":true}}),
+            json!({"authoring":{"kind":"meta","exported":true}}),
+        ] {
+            assert!(generated_code(&declaration));
+        }
+    }
 }

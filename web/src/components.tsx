@@ -17,16 +17,21 @@ export function DatasetHeader({
   path,
   children,
   actionsAfterName = false,
+  afterName,
 }: {
   path: string | undefined;
   children?: ReactNode;
   actionsAfterName?: boolean;
+  afterName?: ReactNode;
 }) {
   return (
     <div
-      className={`dataset-inspector-header${actionsAfterName ? " dataset-inspector-header--start" : ""}`}
+      className={`dataset-inspector-header${actionsAfterName ? " dataset-inspector-header--start" : ""}${afterName ? " dataset-inspector-header--leading" : ""}`}
     >
       <h2 title={path}>{path}</h2>
+      {afterName && (
+        <div className="dataset-inspector-leading">{afterName}</div>
+      )}
       {children && <div className="dataset-inspector-actions">{children}</div>}
     </div>
   );

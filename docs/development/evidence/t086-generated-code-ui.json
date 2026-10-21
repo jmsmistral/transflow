@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-21",
+  "scope": "T086 generated-code UI refinement",
+  "platform": "macOS arm64",
+  "changes": [
+    "Captured generation marker for function SQL and explicit Python/SQL factory exports",
+    "Smaller italic d before the function glyph, with an accessible description",
+    "One compact Code header for name, generated label, content and version buttons",
+    "Generated SQL omits the metadata row and shared whitespace margin; retained SQL is unchanged"
+  ],
+  "verification": {
+    "web": {
+      "passed": 677,
+      "files": 30,
+      "production_assets": 16,
+      "reproducible": true
+    },
+    "python": {
+      "passed": 1152
+    },
+    "rust": {
+      "formatting_compilation_clippy": "passed",
+      "focused_marker_tests": 1,
+      "focused_command": "cargo test --locked --offline -p transflow --lib generated_code_tests",
+      "workspace_suite": "running separately; no final result claimed"
+    },
+    "browser": {
+      "surface": "Codex internal Browser",
+      "observed": [
+        "Real API marks east, west and SQL summary, leaving orders and delivery unmarked",
+        "All five Code header buttons align at 28 px",
+        "d is 13 px; function glyph is 17 px",
+        "Latest and exact published SQL remain available; metadata rows are absent",
+        "SQL has seven displayed lines starting at column one with continuation alignment",
+        "Ordinary versus Python factory controls and light/dark themes remain distinct",
+        "No console errors"
+      ],
+      "coordinator": "stopped after final copied-launcher verification"
+    },
+    "safety": {
+      "regressions": 27,
+      "public_files": 898,
+      "generated_contracts": 1
+    },
+    "specification": {
+      "checker": "passed"
+    }
+  },
+  "review": {
+    "workspace": "~/dev/transflow-workspace/transform-factories-review",
+    "launcher": "bash ~/dev/transflow-workspace/transform-factories-review-tools/serve-preview.sh",
+    "previous_bundle": "transform-factories-review-tools/revisions/130e8e1",
+    "source_and_data": "preserved"
+  },
+  "limits": [
+    "Remote CI is pending owner monitoring",
+    "Whitespace cleanup affects presentation only; raw SQL and its digest remain execution evidence"
+  ]
+}

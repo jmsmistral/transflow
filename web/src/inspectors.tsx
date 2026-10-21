@@ -31,6 +31,10 @@ function nested(value: unknown, ...names: string[]): unknown {
 export function factorySourcePath(value: unknown): string | undefined {
   return field(nested(value, "authoring"), "definition_path");
 }
+export function hasGeneratedCode(value: unknown): boolean {
+  const authoring = object(nested(value, "authoring"));
+  return authoring?.kind === "sql" || authoring?.exported === true;
+}
 export function producingSourcePath(value: unknown): string | undefined {
   return (
     factorySourcePath(value) ??

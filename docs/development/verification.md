@@ -1625,3 +1625,17 @@ review launcher and explicit qualification limits. New remote CI is owner-monito
 Final local gates passed: 498 Rust tests plus one doc test, 1,152 Python tests,
 674 web tests, 70 CLI tests, native engine/lifecycle/factory journeys, safety and
 specification checks. The review launcher and its copied CLI/UI were verified.
+
+## 2026-10-21 - Generated-code UI refinement
+
+Generated transforms show a smaller italic `d` before the function glyph. Code
+places its generated label and SQL content controls beside the name, using the
+shared 28 px buttons. Generated SQL omits the attempt/source row, outer blank
+lines and common indentation; retained SQL/evidence remains unchanged.
+The [UI receipt](evidence/t086-generated-code-ui.json) records actual gates,
+real API and internal Browser observations. The existing review launcher has
+matching rebuilt CLI/UI assets; its previous bundle and workspace data are preserved.
+Local results: 677 web tests and reproducible production assets, 1,152 Python tests,
+the native marker regression, Rust formatting/compilation/Clippy, 27 safety regressions
+and specification checks passed. The broader Rust workspace run continues separately;
+its final result and new CI are not claimed here.

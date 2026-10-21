@@ -80,14 +80,20 @@ separate, narrower query interface.
 ## Inspect authored code and generated SQL
 
 The lineage Code panel keeps Latest saved version, Data publish version and Diff.
-For SQL it adds Authored code and Generated SQL. Imported factories offer Factory
+For SQL it adds Authored code and Generated SQL beside the dataset name, with
+matching compact version controls. Generated transforms show an italic `d` before
+the lineage function glyph and a Dynamically generated code label in Code.
+Imported factories offer Factory
 definition and Registration source views. Diff compares authored captured code.
 Generated SQL shows actual retained execution evidence, including SQL whose parse
 or execution failed. Latest saved mode selects the latest job's attempt; Data
 publish version selects the attempt that produced that exact publication. Cached
 reuse refers to its original producing attempt. A generation failure never falls
-back silently to older successful SQL. Evidence shows its attempt and source;
-saved code may have changed since execution. Reads do not invoke query factories.
+back silently to older successful SQL. Evidence retains its attempt and source
+in the API; the code pane omits this metadata row. Saved code may have changed
+since execution. Reads do not invoke query factories.
+The SQL display removes surrounding blank lines and the shared indentation margin,
+preserving relative alignment. This presentation does not alter retained or executed SQL.
 Bound values remain in the separate attempt parameters, not interpolated into SQL.
 SQL evidence expires with retained attempt logs and may be explicitly unavailable.
 

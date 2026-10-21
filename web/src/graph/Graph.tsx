@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useId,
   useRef,
   useState,
   useSyncExternalStore,
@@ -86,6 +87,13 @@ type DatasetNode = Node<
 function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
   const pointerDown = useRef(false);
   const [hovered, setHovered] = useState(false);
+  const descriptionId = useId();
+  const description = [
+    data.value.generated_code ? "Dynamically generated transform" : "",
+    data.colour === "roles" ? data.paint.detail : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const parents = data.value.parent_count !== "0" && !data.value.external;
   const children = data.value.child_count !== "0";
   const arrow = (
@@ -135,9 +143,7 @@ function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
       <button
         className="node-label"
         aria-label={`Details for ${label(data.value)}`}
-        aria-description={
-          data.colour === "roles" ? data.paint.detail : undefined
-        }
+        aria-describedby={description ? descriptionId : undefined}
         onMouseEnter={(event) => {
           if (event.buttons === 0) {
             pointerDown.current = false;
@@ -160,9 +166,17 @@ function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
         }}
       >
         <span
-          className={`resource-icon ${data.value.external ? "external-icon" : ""}`}
+          className={`resource-icon ${data.value.external ? "external-icon" : ""} ${data.value.generated_code ? "resource-icon--generated" : ""}`}
           aria-hidden="true"
         >
+          {data.value.generated_code && (
+            <span
+              className="generated-code-glyph"
+              title="Dynamically generated transform"
+            >
+              d
+            </span>
+          )}
           {data.value.producer ? (
             "ƒ"
           ) : (
@@ -171,6 +185,11 @@ function Dataset({ data, dragging }: NodeProps<DatasetNode>) {
         </span>{" "}
         <span>{label(data.value)}</span>
       </button>
+      {description && (
+        <span className="sr-only" id={descriptionId}>
+          {description}
+        </span>
+      )}
       {children &&
         arrow("downstream", data.childrenExpanded, data.value.child_count)}
       {data.colour !== "resource" &&

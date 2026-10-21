@@ -3,6 +3,7 @@ import type { ApiAttemptV1, ApiDatasetHistoryV1 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
 import { field, versionMetadata } from "./inspectors";
 import { SourceLines } from "./SourceLines";
+import { sqlPresentation } from "./sql-presentation";
 import { type Ready, Empty, branchSelection, message } from "./execution-ui";
 
 /** Read actual attempt evidence. A Code read must never invoke a SQL factory. */
@@ -124,7 +125,9 @@ export function GeneratedSqlInspector({
   }, [workspace, state, dataset, key, published]);
   const shown = result?.key === key ? result : null;
   const evidence = shown?.value?.generated_sql;
-  const lines = evidence?.sql.split("\n");
+  const lines = evidence
+    ? sqlPresentation(evidence.sql).split("\n")
+    : undefined;
   const excerpt = lines?.slice(0, 2000).join("\n");
   return !shown ? (
     <Empty>Loading executed SQL…</Empty>
@@ -132,15 +135,6 @@ export function GeneratedSqlInspector({
     <Empty>Generated SQL unavailable: {shown.error}</Empty>
   ) : evidence ? (
     <>
-      <div className="source-provenance">
-        {published
-          ? "SQL that produced this publication"
-          : "Latest executed SQL; saved code may have changed"}
-        {" · Attempt "}
-        {evidence.attempt}
-        {" · Source "}
-        {evidence.source}
-      </div>
       <div
         className="source-scroll"
         tabIndex={0}

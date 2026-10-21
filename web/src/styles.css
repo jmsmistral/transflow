@@ -1294,6 +1294,32 @@ summary {
   flex: 0 1 auto;
   max-width: max(90px, calc(50% - 250px));
 }
+.dataset-inspector-header--leading h2 {
+  flex: 0 1 auto;
+  max-width: 25%;
+}
+.dataset-inspector-leading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  margin-right: auto;
+}
+.code-generated-label {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.code-source-switches {
+  margin-left: 0;
+}
+.code-inspector .dataset-inspector-header {
+  overflow-x: auto;
+}
+.code-inspector .dataset-inspector-actions,
+.code-source-switches {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 .dataset-inspector-header button,
 .dataset-inspector-header select {
   min-height: 28px;
@@ -1806,6 +1832,14 @@ revo-grid.preview-grid
   width: 13px;
   height: 13px;
   flex-basis: 13px;
+}
+.resource-icon--generated {
+  flex-basis: auto;
+  gap: 3px;
+}
+.generated-code-glyph {
+  font-style: italic;
+  font-size: 13px;
 }
 .graph-notice {
   left: 50%;

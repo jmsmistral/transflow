@@ -8,6 +8,7 @@ import { SourceLines } from "./SourceLines";
 import {
   field,
   factorySourcePath,
+  hasGeneratedCode,
   producingSourcePath,
   versionMetadata,
 } from "./inspectors";
@@ -80,6 +81,7 @@ export function CodeInspector({
   const [registration, setRegistration] = useState(false);
   const isFactory = Boolean(factorySourcePath(dataset?.producer));
   const isSql = field(dataset?.producer, "engine") === "duckdb";
+  const dynamicallyGenerated = hasGeneratedCode(dataset?.producer);
   const [mode, setMode] = useState<
     "Data publish version" | "Latest saved version" | "Diff"
   >("Latest saved version");
@@ -182,7 +184,39 @@ export function CodeInspector({
             )}
         </>
       )}
-      <DatasetHeader path={dataset?.path}>
+      <DatasetHeader
+        path={dataset?.path}
+        afterName={
+          (dynamicallyGenerated || isSql) && (
+            <>
+              {dynamicallyGenerated && (
+                <span className="code-generated-label">
+                  Dynamically generated code
+                </span>
+              )}
+              {isSql && (
+                <nav
+                  className="execution-switches code-source-switches"
+                  aria-label="SQL source views"
+                >
+                  <Button
+                    aria-pressed={content === "code"}
+                    onClick={() => setContent("code")}
+                  >
+                    Authored code
+                  </Button>
+                  <Button
+                    aria-pressed={content === "sql"}
+                    onClick={() => setContent("sql")}
+                  >
+                    Generated SQL
+                  </Button>
+                </nav>
+              )}
+            </>
+          )
+        }
+      >
         <div className="execution-switches" aria-label="Code views">
           {(
             ["Latest saved version", "Data publish version", "Diff"] as const
@@ -218,22 +252,6 @@ export function CodeInspector({
             onClick={() => setRegistration(true)}
           >
             Registration
-          </Button>
-        </nav>
-      )}
-      {isSql && (
-        <nav className="execution-switches" aria-label="SQL source views">
-          <Button
-            aria-pressed={content === "code"}
-            onClick={() => setContent("code")}
-          >
-            Authored code
-          </Button>
-          <Button
-            aria-pressed={content === "sql"}
-            onClick={() => setContent("sql")}
-          >
-            Generated SQL
           </Button>
         </nav>
       )}

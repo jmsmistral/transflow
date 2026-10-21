@@ -114,6 +114,61 @@ test("depth zero, unlimited and invalid depths keep distinct semantics", () => {
   for (const invalid of ["-1", "1.5", " 1", "+1", "18446744073709551616"])
     expect(() => depthQuery(invalid)).toThrow();
 });
+test("generated transform glyphs precede the function glyph without marking ordinary nodes", async () => {
+  const workspace = new Workspace(
+    new Client(
+      fixtureTransport((path) =>
+        path.endsWith("/lineage")
+          ? Promise.resolve(
+              json(
+                page(
+                  [
+                    {
+                      ...node("a"),
+                      parent_count: "0",
+                      child_count: "1",
+                      generated_code: true,
+                    },
+                    { ...node("b"), parent_count: "1", child_count: "0" },
+                  ],
+                  [edge("a", "b")],
+                ),
+                context(),
+              ),
+            )
+          : undefined,
+      ),
+    ),
+  );
+  await workspace.connect("launch");
+  const view = render(
+    <GraphExplorer
+      workspace={workspace}
+      focusRequest={{ path: "data/a", revision: 1 }}
+    />,
+  );
+  // jsdom does not measure React Flow nodes; actual visibility is a Browser check.
+  await waitFor(() =>
+    expect(view.container.querySelectorAll(".node-label")).toHaveLength(2),
+  );
+  const generated = view.container.querySelector(
+    '[aria-label="Details for data/a"]',
+  );
+  const ordinary = view.container.querySelector(
+    '[aria-label="Details for data/b"]',
+  );
+  if (!generated || !ordinary)
+    throw new Error("Missing transform node fixture");
+  expect(generated.querySelector(".resource-icon")?.textContent).toBe("dƒ");
+  expect(
+    document.getElementById(generated.getAttribute("aria-describedby") ?? "")
+      ?.textContent,
+  ).toContain("Dynamically generated transform");
+  expect(ordinary.querySelector(".generated-code-glyph")).toBeNull();
+  expect(ordinary.querySelector(".resource-icon")?.textContent).toBe("ƒ");
+  view.unmount();
+  workspace.dispose();
+});
 test("diamond pages deduplicate shared nodes, retain aliases/roles and pending endpoints", async () => {
   const calls: Record<string, string>[] = [];
   const workspace = new Workspace(

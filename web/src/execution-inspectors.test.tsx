@@ -173,7 +173,10 @@ async function fixture(
                       ...(control.factorySql
                         ? {
                             engine: "duckdb",
-                            authoring: { definition_path: "src/factory.py" },
+                            authoring: {
+                              kind: "sql",
+                              definition_path: "src/factory.py",
+                            },
                           }
                         : {}),
                       ...(control.sql
@@ -366,6 +369,7 @@ test("latest saved source is first and default, exact published source and side-
   const { model, state, calls } = await fixture();
   render(<CodeInspector workspace={model} state={state} />);
   expect(await screen.findByText("# current")).toBeTruthy();
+  expect(screen.queryByText("Dynamically generated code")).toBeNull();
   expect(screen.queryByText("# producing")).toBeNull();
   expect(
     screen.getByText(/Could not find data on current branch/),
@@ -1201,20 +1205,33 @@ test("SQL Code shows actual attempt SQL and never substitutes a failed generator
         ...state.value.dataset,
         producer: {
           engine: "duckdb",
-          authoring: { definition_path: "src/factory.py" },
+          authoring: { kind: "sql", definition_path: "src/factory.py" },
         },
       },
     },
   };
   render(<CodeInspector workspace={model} state={sqlState} />);
   expect(await screen.findByText("# current")).toBeTruthy();
+  const header = screen
+    .getByRole("heading", { name: state.value.dataset.path })
+    .closest(".dataset-inspector-header");
+  expect(header?.contains(screen.getByText("Dynamically generated code"))).toBe(
+    true,
+  );
+  expect(
+    header?.contains(screen.getByRole("button", { name: "Authored code" })),
+  ).toBe(true);
+  expect(
+    header?.contains(screen.getByRole("button", { name: "Generated SQL" })),
+  ).toBe(true);
   fireEvent.click(screen.getByRole("button", { name: "Generated SQL" }));
   expect(
     await screen.findByRole("textbox", { name: "Read-only generated SQL" }),
   ).toBeTruthy();
   expect(
-    screen.getByText(/Latest executed SQL; saved code may have changed/),
-  ).toBeTruthy();
+    screen.queryByText(/Latest executed SQL; saved code may have changed/),
+  ).toBeNull();
+  expect(screen.queryByText(new RegExp(`Attempt ${attempt}`))).toBeNull();
   expect(
     calls.find((call) => call.path.endsWith(`/attempts/${attempt}`))?.query
       .plan,

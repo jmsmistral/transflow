@@ -8886,6 +8886,9 @@
         "producer": {
           "type": "boolean"
         },
+        "generated_code": {
+          "type": "boolean"
+        },
         "parent_count": {
           "$ref": "#/$defs/Count"
         },
