@@ -1787,6 +1787,7 @@ revo-grid.preview-grid
   background: #d9eef1;
 }
 .colour-unknown,
+.colour-not_built,
 .colour-no_build {
   background: #e8eaee;
 }
@@ -1808,6 +1809,7 @@ revo-grid.preview-grid
   background: #29434a;
 }
 .theme-dark .colour-unknown,
+.theme-dark .colour-not_built,
 .theme-dark .colour-no_build {
   background: #353e4a;
 }

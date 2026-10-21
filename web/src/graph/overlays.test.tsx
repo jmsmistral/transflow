@@ -112,3 +112,20 @@ test("connecting schedule jobs are labelled Attempt to build while simultaneous 
     badges: ["Input check failed"],
   });
 });
+
+test("known empty schedule roles are Not built while unavailable roles remain Unknown", () => {
+  expect(
+    paint({ ...node, overlay: { ...facts, roles: [] } }, "roles"),
+  ).toMatchObject({
+    key: "not_built",
+    label: "Not built",
+    detail: "Not built",
+  });
+  const unavailable = { ...facts };
+  delete unavailable.roles;
+  expect(paint({ ...node, overlay: unavailable }, "roles")).toMatchObject({
+    key: "unknown",
+    label: "Unknown",
+    detail: "Unknown",
+  });
+});

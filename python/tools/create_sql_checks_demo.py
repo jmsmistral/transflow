@@ -26,9 +26,7 @@ from transflow import expectations as E
 @transform(
     output=Output(
         "raw/orders",
-        checks=[
-            Check(E.primary_key("order_id"), "Order identifiers"),
-        ],
+        checks=[Check(E.primary_key("order_id"), "Order identifiers")],
     ),
 )
 def orders():
@@ -52,9 +50,7 @@ from transflow import expectations as E
 @transform(
     output=Output(
         "raw/customers",
-        checks=[
-            Check(E.primary_key("customer_id"), "Customer identifiers"),
-        ],
+        checks=[Check(E.primary_key("customer_id"), "Customer identifiers")],
     ),
 )
 def customers():
@@ -117,9 +113,7 @@ from transflow import expectations as E
 @transform(
     output=Output(
         "curated/report",
-        checks=[
-            Check(E.row_count().equals(E.input("rows").row_count()), "Row count is preserved"),
-        ],
+        checks=[Check(E.row_count().equals(E.input("rows").row_count()), "Row count is preserved")],
     ),
     rows=Input(
         "curated/qualified_orders",

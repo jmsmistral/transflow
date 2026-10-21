@@ -26,9 +26,7 @@ def make_region(source, target, region):
         ),
         orders=Input(
             source,
-            checks=[
-                Check(E.col("amount").gte(0), "Nonnegative amounts"),
-            ],
+            checks=[Check(E.col("amount").gte(0), "Nonnegative amounts")],
         ),
     )
     def regional(orders):

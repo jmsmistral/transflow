@@ -1,5 +1,35 @@
 # Contributor verification
 
+## Schedule nonmember label and compact checks (2026-10-22)
+
+The Build roles graph and legend distinguish confirmed empty roles (Not built)
+from unavailable metadata (Unknown). Both light and dark themes retain neutral
+node/swatches. The existing graph regression covers loading, simultaneous roles,
+the Not built count and unchanged geometry; the overlay regression covers the
+known-empty/unavailable distinction. All 688 web tests in 31 files, strict types,
+lint/format, worker probes and reproducible production assets pass.
+
+The owner further refines the authoring convention: a single check stays on its
+`checks=[Check(...)]` line, while multiple checks use separate list lines.
+The declaration guide, demo templates and canonical contributor instructions
+record that layout. AST comparisons preserve all 11 generator templates and
+declaration guide examples; Ruff lint/format passes for the changed tools.
+The existing `preview-scroll-review` workspace is backed up and reformatted in
+place, then successfully rebuilds all five datasets with its 1,500 synthetic
+orders and passing checks. Both schedules remain paused; only their fixed source
+pins advance to that verified capture, with IDs, triggers and targets preserved.
+The catalogue identities remain unchanged.
+
+The existing launcher rebuilds the CLI/UI. Internal Browser confirms Weekday
+delivery open, Not built 1, Target 1, Trigger 1 and Attempt to build 2 in the
+legend, and the complete checked dynamic factory in Authored Code. The README
+uses the unchanged 1342 × 976 JPEG capture; browser console errors are empty.
+No execution/API/storage or dependency change is introduced. Broader Rust/Python
+application suites are not repeated for the UI label and source formatting.
+All 27 safety regressions, paired safety/contract checks, specification/link
+validation and diff checks pass.
+The verification coordinator is stopped before handoff; new CI is owner-monitored.
+
 ## Output-first authoring and schedule README capture (2026-10-22)
 
 Contributor guidance and the public declaration guide require Output first,

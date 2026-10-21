@@ -406,9 +406,10 @@ paused state unchanged. Pause/Resume and confirmed deletion use guarded API acti
 Saved target/trigger/exclusion/boundary facts come from the backend, with bounded
 pagination and edit/source/policy fences. Runtime job transitions do not invalidate
 unchanged saved role facts. Hidden relevant datasets can be added explicitly.
-The sidebar has no scope-preview action or persistent complete-scope notice. Irrelevant
-Unknown labels are hidden while a schedule is active. Temporary role coloring leaves
-the saved coloring and geometry intact.
+The sidebar has no scope-preview action or persistent complete-scope notice. Datasets
+with confirmed empty schedule/scope roles show Not built in the graph and legend.
+Unavailable role information remains Unknown, with its node label hidden while a
+schedule is active. Temporary role coloring leaves saved coloring and geometry intact.
 
 The sidebar keeps browsing controls in the list and provides a blue Schedules back
 button above the heading in selected details. View schedule aligns with the name and

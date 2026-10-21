@@ -1263,7 +1263,7 @@ test("a newly accepted capture preserves canvas membership and camera on the sam
   workspace.dispose();
 });
 
-test("an active schedule hides irrelevant Unknown labels and retains target/trigger badges without changing canvas geometry", async () => {
+test("an active schedule distinguishes Not built from loading and retains simultaneous roles and canvas geometry", async () => {
   const root = node(`dataset:${workspaceId}:${datasetId}`),
     other = node(`dataset:${workspaceId}:${workspaceId}`);
   const workspace = new Workspace(
@@ -1317,8 +1317,18 @@ test("an active schedule hides irrelevant Unknown labels and retains target/trig
     />,
   );
   expect(view.container.querySelectorAll(".node-overlay-label")).toHaveLength(
-    1,
+    2,
   );
+  expect(
+    screen.getByText("Not built", { selector: ".node-overlay-label" }),
+  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Toggle legend" }));
+  expect(
+    screen.getByRole("button", { name: "Select Not built nodes" }).textContent,
+  ).toBe("Not built1");
+  expect(
+    screen.queryByRole("button", { name: "Select Unknown nodes" }),
+  ).toBeNull();
   expect(view.container.querySelector(".node-overlay-badges")).toBeNull();
   expect(
     view.container.querySelector(".node-overlay-label")?.getAttribute("title"),

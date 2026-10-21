@@ -3,8 +3,9 @@
 ## Declaration layout
 
 Put the Output first and each Input below it on a separate line. Place checks
-below the corresponding binding in a `checks=[...]` block, one Check per line.
-Use trailing commas to retain this layout, even for one binding or one check.
+below the corresponding binding. Keep a single check on one `checks=[Check(...)]`
+line; expand multiple checks into a `checks=[...]` block, one Check per line.
+Use trailing commas to retain the vertical binding and multiple-check layout.
 The same convention applies to Python, metadata-aware Python, SQL and source
 transforms, including generated sample workspaces. Keyword order is a readability
 convention; existing declarations remain valid.
@@ -24,9 +25,7 @@ from transflow import expectations as E
     ),
     orders=Input(
         "raw/orders",
-        checks=[
-            Check(E.col("amount").gte(0), "Nonnegative amounts"),
-        ],
+        checks=[Check(E.col("amount").gte(0), "Nonnegative amounts")],
     ),
 )
 def checked_orders(orders):
@@ -50,9 +49,7 @@ from transflow import expectations as E
 @transform(
     output=Output(
         "curated/items",
-        checks=[
-            Check(E.primary_key("id"), "Unique item IDs", id="item_pk"),
-        ],
+        checks=[Check(E.primary_key("id"), "Unique item IDs", id="item_pk")],
     ),
     items=Input("raw/items", branch=Branch.CURRENT),
 )

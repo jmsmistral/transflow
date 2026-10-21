@@ -28,6 +28,7 @@ const names: Record<string, string> = {
   external: "External Dataset",
   dataset: "Dataset",
   unknown: "Unknown",
+  not_built: "Not built",
   no_build: "No build on branch",
   published: "Published",
   missing: "Not built on these branches",
@@ -212,7 +213,8 @@ export function paint(
                   "planned",
                   "boundary",
                   "cached",
-                ].find((r) => roles(node, plan).includes(r)) ?? "unknown");
+                ].find((r) => roles(node, plan).includes(r)) ??
+                (f?.roles !== undefined || plan ? "not_built" : "unknown"));
   const reasons =
     plan?.freshness
       .find((s) => s.identity === node.identity)
@@ -226,7 +228,8 @@ export function paint(
       colour === "roles"
         ? roles(node, plan)
             .map((role) => names[role] ?? role)
-            .join(" · ") || "Unknown"
+            .join(" · ") ||
+          (names[key] ?? "Unknown")
         : colour === "freshness" && reasons.length
           ? reasons.join("\n")
           : (names[key] ?? "Unknown"),
