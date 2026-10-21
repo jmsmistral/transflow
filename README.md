@@ -1,11 +1,9 @@
 ![Transflow](logo.png)
 
-# Transflow
+I started building **transflow** back in 2022 as a pet project for my own use. Recently, I decided that it was a good base for experimenting with agentic coding to validate if a closely guided agent can produce production software.
 
-I started building **transflow** back in 2022 as a pet project for my own use. Recently, I decided that it was a good base for experimenting with agentic coding and seeing how far it can go.
-
-Write transforms in **Polars or DuckDB SQL**, build versioned datasets, and explore
-how they connect in an interactive lineage workspace. Transflow brings execution,
+Transflow allows you to write transforms in **Polars or DuckDB SQL**, build versioned datasets, and explore
+how they connect in an interactive lineage UI. Transflow brings execution,
 data quality, history and scheduling into one local workflow.
 
 [![Rust backend & CLI](https://github.com/jmsmistral/transflow/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/rust.yml)
