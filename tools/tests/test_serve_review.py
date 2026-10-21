@@ -21,6 +21,7 @@ class ReviewLauncherTests(unittest.TestCase):
         (self.repo / "target/debug").mkdir(parents=True)
         self.script = self.repo / "tools/serve-review.sh"
         shutil.copyfile(Path(__file__).resolve().parents[1] / "serve-review.sh", self.script)
+        (self.repo / ".node-version").write_text("24.22.0\n")
         self.bin = self.root / "bin"
         self.bin.mkdir()
         self.events = self.root / "events"
@@ -106,6 +107,21 @@ class ReviewLauncherTests(unittest.TestCase):
         self.assertEqual(result.returncode, 19)
         self.assertEqual(self.lines()[0], str(self.bin / "cargo"))
         self.assertNotIn(str(self.repo / "target/debug/transflow"), self.lines())
+        self.assertNotIn(str(self.bin / "npm"), self.lines())
+
+    def test_prepared_pinned_node_takes_precedence_over_ambient_npm(self):
+        uname = self.bin / "uname"
+        uname.write_text('#!/bin/sh\ncase "$1" in -s) echo Darwin;; -m) echo arm64;; esac\n')
+        uname.chmod(0o755)
+        pinned = self.repo / "target/toolchains/node-v24.22.0-darwin-arm64/bin"
+        pinned.mkdir(parents=True)
+        shutil.copyfile(self.bin / "npm", pinned / "npm")
+        (pinned / "npm").chmod(0o755)
+        (pinned / "node").write_text("#!/bin/sh\nexit 0\n")
+        (pinned / "node").chmod(0o755)
+        result = self.run_script(self.workspace, "--open")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.lines().count(str(pinned / "npm")), 2)
         self.assertNotIn(str(self.bin / "npm"), self.lines())
 
     def test_web_failure_does_not_launch_existing_binary(self):

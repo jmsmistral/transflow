@@ -24,6 +24,20 @@ if [[ ! -d web/node_modules ]]; then
     exit 1
 fi
 
+# Prefer the repository's already-prepared pinned Node; never install on launch.
+review_node_platform=""
+case "$(uname -s):$(uname -m)" in
+    Darwin:arm64) review_node_platform="darwin-arm64" ;;
+    Darwin:x86_64) review_node_platform="darwin-x64" ;;
+    Linux:aarch64|Linux:arm64) review_node_platform="linux-arm64" ;;
+    Linux:x86_64) review_node_platform="linux-x64" ;;
+esac
+review_node_version="$(< .node-version)"
+review_node_bin="$review_root/target/toolchains/node-v$review_node_version-$review_node_platform/bin"
+if [[ -n "$review_node_platform" && -x "$review_node_bin/node" && -x "$review_node_bin/npm" ]]; then
+    export PATH="$review_node_bin:$PATH"
+fi
+
 cargo build --locked --offline -p transflow --target-dir "$review_root/target"
 npm --prefix web run prepare:types
 npm --prefix web run build

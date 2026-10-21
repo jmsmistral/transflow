@@ -125,6 +125,10 @@ commits alone leaves `target/debug/transflow` and `web/dist` unchanged. Stop any
 previous coordinator before launching: UI assets are snapshotted at startup.
 Use the new authenticated page after restarting.
 
+Workspace-specific `serve-preview.sh` helpers delegate to this launcher so each
+run serves the current checkout. If a matching pinned Node toolchain has already
+been unpacked under `target/toolchains`, the launcher uses it before ambient tools.
+
 `--ui-dir` is an explicit contributor bundle directory. It serves a frozen snapshot
 of `index.html` and flat `assets/*.js`/`*.css` files, up to 64 files/8 MiB total,
 rejecting symlinks and unsupported entries. Rebuild and restart the coordinator

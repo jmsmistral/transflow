@@ -22,7 +22,9 @@
       "formatting_compilation_clippy": "passed",
       "focused_marker_tests": 1,
       "focused_command": "cargo test --locked --offline -p transflow --lib generated_code_tests",
-      "workspace_suite": "running separately; no final result claimed"
+      "workspace_suite": "passed",
+      "workspace_tests": 499,
+      "doc_tests": 1
     },
     "browser": {
       "surface": "Codex internal Browser",

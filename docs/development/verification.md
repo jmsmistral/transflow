@@ -1637,5 +1637,18 @@ real API and internal Browser observations. The existing review launcher has
 matching rebuilt CLI/UI assets; its previous bundle and workspace data are preserved.
 Local results: 677 web tests and reproducible production assets, 1,152 Python tests,
 the native marker regression, Rust formatting/compilation/Clippy, 27 safety regressions
-and specification checks passed. The broader Rust workspace run continues separately;
-its final result and new CI are not claimed here.
+and specification checks passed. The broader Rust workspace run subsequently
+completed successfully: 499 Rust tests and one doc test. New CI remains owner-monitored.
+
+## 2026-10-21 - Rebuilding preview launcher
+
+The factory review's `serve-preview.sh` delegates to `tools/serve-review.sh`, which
+builds the current CLI and UI before serving `web/dist`. It prefers the matching
+already-prepared pinned Node toolchain and forwards serve flags. Seven launcher
+regressions cover build ordering/failures, paths/options, missing dependencies and
+toolchain precedence. Historical copied review artifacts remain separate.
+The corrected external launcher was run twice. Its served HTML and five referenced
+entry assets matched the freshly rebuilt files byte-for-byte. Verification used
+`--no-open` (and forwarded `--port 0`); the coordinator was stopped afterward.
+Shell syntax, Ruff, safety and specification checks passed. Application behavior
+is unchanged; its suites were not repeated for this launcher correction.
