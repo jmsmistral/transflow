@@ -57,5 +57,32 @@
   "limits": [
     "Remote CI is pending owner monitoring",
     "Whitespace cleanup affects presentation only; raw SQL and its digest remain execution evidence"
-  ]
+  ],
+  "factory_definition_followup": {
+    "date": "2026-10-21",
+    "behavior": "Authored factories always show the retained definition in saved, published and diff modes; no Factory definition or Registration selector",
+    "web": {
+      "passed": 678,
+      "files": 30,
+      "production_assets": 16,
+      "reproducible": true
+    },
+    "browser": {
+      "surface": "Codex internal Browser",
+      "observed": [
+        "Python factory saved and published views show src/factory_helpers.py; diff remains available",
+        "Only the three version controls remain for Python factories",
+        "SQL authored code shows its definition; Authored code and Generated SQL remain inline",
+        "Exact published generated SQL remains available with seven clean lines",
+        "No console errors"
+      ],
+      "coordinator": "Temporary verification coordinator stopped"
+    },
+    "safety_regressions": 27,
+    "specification_checker": "passed",
+    "limits": [
+      "Native and Python application suites not repeated for UI-only change",
+      "New remote CI is owner-monitored"
+    ]
+  }
 }

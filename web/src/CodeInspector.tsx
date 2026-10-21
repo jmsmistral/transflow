@@ -7,7 +7,6 @@ import { GeneratedSqlInspector } from "./GeneratedSqlInspector";
 import { SourceLines } from "./SourceLines";
 import {
   field,
-  factorySourcePath,
   hasGeneratedCode,
   producingSourcePath,
   versionMetadata,
@@ -25,17 +24,13 @@ async function capturedSource(
   scope: Scope,
   dataset: string,
   origin: string,
-  registration = false,
 ): Promise<ApiSourceV1 & { complete: boolean }> {
   const definition = await scope.read(
     "ApiDatasetV1",
     `/api/v1/datasets/${dataset}`,
     { origin_workspace: origin },
   );
-  const path = registration
-      ? (field(definition.producer, "registration_path") ??
-        field(definition.producer, "path"))
-      : producingSourcePath(definition.producer),
+  const path = producingSourcePath(definition.producer),
     source = scope.context.source;
   if (!path || !source)
     throw new Error("Producing source was not retained for this dataset.");
@@ -78,8 +73,6 @@ export function CodeInspector({
 }) {
   const dataset = state.value.dataset;
   const [content, setContent] = useState<"code" | "sql">("code");
-  const [registration, setRegistration] = useState(false);
-  const isFactory = Boolean(factorySourcePath(dataset?.producer));
   const isSql = field(dataset?.producer, "engine") === "duckdb";
   const dynamicallyGenerated = hasGeneratedCode(dataset?.producer);
   const [mode, setMode] = useState<
@@ -104,7 +97,6 @@ export function CodeInspector({
     dataset?.dataset_id,
     meta?.version,
     mode,
-    registration,
   ]);
   useEffect(() => {
     if (!dataset) return;
@@ -133,7 +125,6 @@ export function CodeInspector({
           scope,
           dataset.dataset_id,
           dataset.workspace_id,
-          registration,
         );
       }
       if (mode !== "Data publish version") {
@@ -145,7 +136,6 @@ export function CodeInspector({
           scope,
           dataset.dataset_id,
           dataset.workspace_id,
-          registration,
         );
       }
       return { key, producing, current };
@@ -158,7 +148,7 @@ export function CodeInspector({
       },
     );
     return () => abort.abort();
-  }, [workspace, state, dataset, key, mode, meta?.version, registration]);
+  }, [workspace, state, dataset, key, mode, meta?.version]);
   const shown = result?.key === key ? result : null;
   const source =
     mode === "Latest saved version" ? shown?.current : shown?.producing;
@@ -239,22 +229,6 @@ export function CodeInspector({
           ))}
         </div>
       </DatasetHeader>
-      {isFactory && content === "code" && (
-        <nav className="execution-switches" aria-label="Factory source views">
-          <Button
-            aria-pressed={!registration}
-            onClick={() => setRegistration(false)}
-          >
-            Factory definition
-          </Button>
-          <Button
-            aria-pressed={registration}
-            onClick={() => setRegistration(true)}
-          >
-            Registration
-          </Button>
-        </nav>
-      )}
       {content === "sql" && isSql ? (
         <GeneratedSqlInspector
           workspace={workspace}

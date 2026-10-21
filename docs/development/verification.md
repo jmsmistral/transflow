@@ -1652,3 +1652,18 @@ entry assets matched the freshly rebuilt files byte-for-byte. Verification used
 `--no-open` (and forwarded `--port 0`); the coordinator was stopped afterward.
 Shell syntax, Ruff, safety and specification checks passed. Application behavior
 is unchanged; its suites were not repeated for this launcher correction.
+
+## 2026-10-21 - Factory definition without extra selectors
+
+Removed Factory definition and Registration buttons from Code. Authored factory
+code always opens the retained definition in saved, published and diff modes.
+SQL keeps its separate authored/generated views and compact version controls.
+The rebuilt UI passed all 678 web tests in 30 files and reproducible production
+asset checks. A regression confirms all three factory source modes request the
+definition even when a distinct registration path exists.
+The internal Browser verified Python saved/published/diff definitions without
+selectors, SQL authored code and retained seven-line published SQL, with no console
+errors. The disposable verification coordinator was stopped. Safety's 27 regressions
+and the specification checker passed. Native/Python suites were not repeated for
+this UI-only change; remote CI is owner-monitored. The existing review launcher
+rebuilds current source on restart.

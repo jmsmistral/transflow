@@ -83,8 +83,9 @@ The lineage Code panel keeps Latest saved version, Data publish version and Diff
 For SQL it adds Authored code and Generated SQL beside the dataset name, with
 matching compact version controls. Generated transforms show an italic `d` before
 the lineage function glyph and a Dynamically generated code label in Code.
-Imported factories offer Factory
-definition and Registration source views. Diff compares authored captured code.
+For imported factories, authored code always shows the reusable factory definition;
+there is no separate registration selector. This applies to saved, published and
+diff views. Diff compares authored captured code.
 Generated SQL shows actual retained execution evidence, including SQL whose parse
 or execution failed. Latest saved mode selects the latest job's attempt; Data
 publish version selects the attempt that produced that exact publication. Cached

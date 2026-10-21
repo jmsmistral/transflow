@@ -130,6 +130,7 @@ async function fixture(
     trigger?: ExecutionJsonV1;
     fail?: boolean;
     sql?: boolean;
+    factory?: boolean;
     factorySql?: boolean;
     generatedSql?: boolean;
     jobs?: ApiHistoryJobV1[];
@@ -170,11 +171,13 @@ async function fixture(
                       path: query.version
                         ? "src/producing.py"
                         : "src/current.py",
-                      ...(control.factorySql
+                      ...(control.factory || control.factorySql
                         ? {
-                            engine: "duckdb",
+                            ...(control.factorySql ? { engine: "duckdb" } : {}),
+                            registration_path: "src/registrations.py",
                             authoring: {
-                              kind: "sql",
+                              kind: control.factorySql ? "sql" : "frames",
+                              exported: true,
                               definition_path: "src/factory.py",
                             },
                           }
@@ -1191,6 +1194,33 @@ test("History chart excludes failed and cached attempts while retaining failure 
   model.dispose();
 });
 
+test("Python factories always show the definition in saved, published and diff views", async () => {
+  const { model, state, calls } = await fixture(false, job, { factory: true });
+  render(<CodeInspector workspace={model} state={state} />);
+  expect(await screen.findByText("src/factory.py")).toBeTruthy();
+  expect(
+    screen.getAllByRole("button").map((button) => button.textContent),
+  ).toEqual(["Latest saved version", "Data publish version", "Diff"]);
+  expect(
+    screen.queryByRole("navigation", { name: "SQL source views" }),
+  ).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Data publish version" }));
+  expect(await screen.findByText("# producing")).toBeTruthy();
+  expect(await screen.findByText("src/factory.py")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Diff" }));
+  expect(
+    await screen.findByRole("region", {
+      name: "Source diff: producing to current retained definition",
+    }),
+  ).toBeTruthy();
+  expect(
+    calls
+      .filter((call) => call.path.includes("/source/"))
+      .every((call) => call.query.path === "src/factory.py"),
+  ).toBe(true);
+  model.dispose();
+});
+
 test("SQL Code shows actual attempt SQL and never substitutes a failed generator's older SQL", async () => {
   const { model, state, calls } = await fixture(false, job, {
     factorySql: true,
@@ -1224,10 +1254,17 @@ test("SQL Code shows actual attempt SQL and never substitutes a failed generator
   expect(
     header?.contains(screen.getByRole("button", { name: "Generated SQL" })),
   ).toBe(true);
+  expect(
+    screen.queryByRole("button", { name: "Factory definition" }),
+  ).toBeNull();
+  expect(screen.queryByRole("button", { name: "Registration" })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Generated SQL" }));
   expect(
     await screen.findByRole("textbox", { name: "Read-only generated SQL" }),
   ).toBeTruthy();
+  expect(
+    screen.queryByRole("navigation", { name: "Factory source views" }),
+  ).toBeNull();
   expect(
     screen.queryByText(/Latest executed SQL; saved code may have changed/),
   ).toBeNull();
