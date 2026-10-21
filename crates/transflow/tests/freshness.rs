@@ -88,6 +88,7 @@ fn evidence(h: &Harness) -> compute::ComputeKey {
             capture,
             Execution {
                 output: key(),
+                output_branch: "master",
                 parameters: &json!({}),
                 inputs: &[],
                 writer: &writer(),

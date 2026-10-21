@@ -447,6 +447,7 @@ fn run_inner(
             launch.operation,
             [
                 "discovery.v1".to_owned(),
+                "transform.factories.v1".to_owned(),
                 "polars.execute.v1".to_owned(),
                 "duckdb.execute.v1".to_owned(),
                 "expectation.ast.v1".to_owned(),

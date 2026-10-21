@@ -741,3 +741,23 @@ def validate_NumericCheckQueryV1(value: object) -> None:
 def validate_GcResultV1(value: object) -> None:
     """Assert the GcResultV1 contract, including custom formats."""
     validate_document("GcResultV1", value)
+
+
+def validate_AuthoringV1(value: object) -> None:
+    """Assert the AuthoringV1 contract, including custom formats."""
+    validate_document("AuthoringV1", value)
+
+
+def validate_SqlFactoryDeclarationV1(value: object) -> None:
+    """Assert the SqlFactoryDeclarationV1 contract, including custom formats."""
+    validate_document("SqlFactoryDeclarationV1", value)
+
+
+def validate_ExecutionDatasetsV1(value: object) -> None:
+    """Assert the ExecutionDatasetsV1 contract, including custom formats."""
+    validate_document("ExecutionDatasetsV1", value)
+
+
+def validate_GeneratedSqlEvidenceV1(value: object) -> None:
+    """Assert the GeneratedSqlEvidenceV1 contract, including custom formats."""
+    validate_document("GeneratedSqlEvidenceV1", value)

@@ -144,13 +144,19 @@ impl CandidateCatalog {
         let mut outputs = BTreeMap::new();
         for declaration in declarations {
             let location = Location {
-                path: text(declaration, "path")?.to_owned(),
+                path: declaration["authoring"]["definition_path"]
+                    .as_str()
+                    .unwrap_or(text(declaration, "path")?)
+                    .to_owned(),
                 line: declaration["line"]
                     .as_u64()
                     .ok_or_else(|| error("Discovery source line is invalid", Vec::new()))?,
             };
-            if let Some(previous) =
-                modules.insert(text(declaration, "module")?.to_owned(), location.clone())
+            let module = text(declaration, "module")?.to_owned();
+            let exported = declaration["authoring"]["exported"] == true;
+            if let Some((previous, previous_exported)) =
+                modules.insert(module, (location.clone(), exported))
+                && !(exported && previous_exported)
             {
                 return Err(error(
                     "A producing module must have exactly one producer",

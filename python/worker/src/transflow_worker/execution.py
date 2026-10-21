@@ -73,7 +73,8 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                         "expectation.ast.v1",
                         "expectation.core.v1",
                         "expectation.g3.v1",
-                    ],
+                    ]
+                    + (["transform.factories.v1"] if "authoring" in request["producer"] else []),
                     "extensions": [],
                 }
             )
@@ -98,6 +99,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                 "expectation.ast.v1",
                 "expectation.core.v1",
                 "expectation.g3.v1",
+                "transform.factories.v1",
             ],
         }
     )

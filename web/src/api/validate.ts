@@ -273,6 +273,9 @@ function invariant(name: string, value: Record<string, unknown>): void {
         (c) =>
           c === "diagnostic.note.v1" ||
           c === "discovery.v1" ||
+          c === "transform.factories.v1" ||
+          c === "duckdb.execute.v1" ||
+          c === "expectation.g3.v1" ||
           c === "polars.execute.v1" ||
           c === "expectation.ast.v1" ||
           c === "expectation.core.v1" ||

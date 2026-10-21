@@ -10,7 +10,9 @@ T010 adds an internal immutable catalogue binding and typing-overlay prototype w
 explicit test contexts. T026 adds [immutable authoring declarations](DECLARATIONS.md) and preserved-callable
 decorators. Captured discovery and catalogue binding are implemented. T058 adds the private
 [Polars execution adapter](POLARS.md), and T059–T060 add the [typed expectation DSL and semantic kernels](EXPECTATIONS.md); T061 adds the private [canonical check helper](../crates/tf-exec/CHECKS.md).
-Public build/publication composition remains later work. See the
+Managed builds compose these adapters with required checks and guarded publication.
+[Transform factories and dataset handles](TRANSFORM_FACTORIES.md) support explicit
+Python/meta exports and single-file [SQL query factories](SQL_TRANSFORMS.md). See the
 [prototype evidence and limits](../docs/development/catalog-overlay.md). Importing the SDK does not initialize a workspace or worker.
 
 ## Contributor setup and checks

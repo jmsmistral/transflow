@@ -335,6 +335,7 @@ fn invariant(name: &str, value: &Value) -> bool {
                         *n,
                         "diagnostic.note.v1"
                             | "discovery.v1"
+                            | "transform.factories.v1"
                             | "polars.execute.v1"
                             | "expectation.ast.v1"
                             | "expectation.core.v1"

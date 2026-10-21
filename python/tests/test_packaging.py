@@ -111,6 +111,7 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
             "_declaration_values",
             "expectations",
             "errors",
+            "handles",
         )
     }
     expected |= {
@@ -136,6 +137,8 @@ def test_one_wheel_contains_both_typed_modules(wheel: Path) -> None:
             "arrow_schema",
             "check_numeric",
             "lifetime",
+            "registration",
+            "dataset_handles",
         )
     }
     metadata_files = {"METADATA", "WHEEL", "RECORD", "top_level.txt", "entry_points.txt"}

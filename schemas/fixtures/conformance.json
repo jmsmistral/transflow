@@ -9792,5 +9792,268 @@
       "deleted_bytes": "0",
       "items": []
     }
+  },
+  {
+    "name": "sql-factory-declaration",
+    "schema": "DeclarationV1",
+    "valid": true,
+    "value": {
+      "module": "producer",
+      "function": "produce",
+      "path": "src/producer.py",
+      "line": 1,
+      "source": false,
+      "engine": "duckdb",
+      "inputs": [],
+      "output": {
+        "ref": {
+          "form": "string",
+          "value": "curated/items"
+        },
+        "checks": [],
+        "schema": null
+      },
+      "parameters": [],
+      "wall_timeout_seconds": null,
+      "cache": "deterministic",
+      "refresh": null,
+      "secret_refs": [],
+      "lineage_json": null,
+      "authoring": {
+        "format_version": 1,
+        "kind": "sql",
+        "exported": true,
+        "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "definition_path": "src/factories.py",
+        "definition_line": 2
+      }
+    }
+  },
+  {
+    "name": "sql-factory-execution",
+    "schema": "SqlExecutionRequestV1",
+    "valid": true,
+    "value": {
+      "format_version": 1,
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000001",
+      "capture_root": "/synthetic/capture",
+      "source_roots": [
+        "src"
+      ],
+      "files": [],
+      "catalog": {
+        "format_version": 1,
+        "workspace_id": "00000000-0000-4000-8000-000000000001",
+        "source_snapshot_id": "00000000-0000-4000-8000-000000000001",
+        "catalog_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "entries": []
+      },
+      "environment_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_directory": "/synthetic/result",
+      "auth_token": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "producer": {
+        "module": "producer",
+        "function": "produce",
+        "path": "src/producer.py",
+        "line": 1,
+        "source": false,
+        "engine": "duckdb",
+        "inputs": [],
+        "output": {
+          "ref": {
+            "form": "string",
+            "value": "curated/items"
+          },
+          "checks": [],
+          "schema": null
+        },
+        "parameters": [],
+        "wall_timeout_seconds": null,
+        "cache": "deterministic",
+        "refresh": null,
+        "secret_refs": [],
+        "lineage_json": null,
+        "authoring": {
+          "format_version": 1,
+          "kind": "sql",
+          "exported": true,
+          "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "definition_path": "src/factories.py",
+          "definition_line": 2
+        }
+      },
+      "inputs": [],
+      "context": {
+        "build_id": "00000000-0000-4000-8000-000000000001",
+        "job_id": "00000000-0000-4000-8000-000000000001",
+        "evaluation_time": {
+          "type": "timestamp",
+          "value": "2026-09-21T00:00:00.000000Z",
+          "unit": "us",
+          "timezone": "UTC"
+        },
+        "random_seed": null,
+        "parameters": [],
+        "datasets": {
+          "branch": "master",
+          "output": {
+            "dataset_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "path": "curated/items"
+          },
+          "inputs": []
+        }
+      },
+      "compression": "zstd",
+      "row_group_size": "8192",
+      "threads": "2",
+      "memory_bytes": null,
+      "spill_bytes": "268435456"
+    }
+  },
+  {
+    "name": "factory-missing-configuration",
+    "schema": "DeclarationV1",
+    "valid": false,
+    "value": {
+      "module": "producer",
+      "function": "produce",
+      "path": "src/producer.py",
+      "line": 1,
+      "source": false,
+      "engine": "duckdb",
+      "inputs": [],
+      "output": {
+        "ref": {
+          "form": "string",
+          "value": "curated/items"
+        },
+        "checks": [],
+        "schema": null
+      },
+      "parameters": [],
+      "wall_timeout_seconds": null,
+      "cache": "deterministic",
+      "refresh": null,
+      "secret_refs": [],
+      "lineage_json": null,
+      "authoring": {
+        "format_version": 1,
+        "kind": "sql",
+        "exported": true,
+        "definition_path": "src/factories.py",
+        "definition_line": 2
+      }
+    }
+  },
+  {
+    "name": "factory-missing-definition_path",
+    "schema": "DeclarationV1",
+    "valid": false,
+    "value": {
+      "module": "producer",
+      "function": "produce",
+      "path": "src/producer.py",
+      "line": 1,
+      "source": false,
+      "engine": "duckdb",
+      "inputs": [],
+      "output": {
+        "ref": {
+          "form": "string",
+          "value": "curated/items"
+        },
+        "checks": [],
+        "schema": null
+      },
+      "parameters": [],
+      "wall_timeout_seconds": null,
+      "cache": "deterministic",
+      "refresh": null,
+      "secret_refs": [],
+      "lineage_json": null,
+      "authoring": {
+        "format_version": 1,
+        "kind": "sql",
+        "exported": true,
+        "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "definition_line": 2
+      }
+    }
+  },
+  {
+    "name": "generated-sql-evidence",
+    "schema": "GeneratedSqlEvidenceV1",
+    "valid": true,
+    "value": {
+      "format_version": 1,
+      "attempt": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "source": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "producer": {
+        "module": "producer",
+        "function": "produce",
+        "path": "src/producer.py",
+        "line": 1,
+        "source": false,
+        "engine": "duckdb",
+        "inputs": [],
+        "output": {
+          "ref": {
+            "form": "string",
+            "value": "curated/items"
+          },
+          "checks": [],
+          "schema": null
+        },
+        "parameters": [],
+        "wall_timeout_seconds": null,
+        "cache": "deterministic",
+        "refresh": null,
+        "secret_refs": [],
+        "lineage_json": null,
+        "authoring": {
+          "format_version": 1,
+          "kind": "sql",
+          "exported": true,
+          "configuration": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "definition_path": "src/factories.py",
+          "definition_line": 2
+        }
+      },
+      "inputs": [],
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sql": "SELECT 1"
+    }
+  },
+  {
+    "name": "factory-capability-frame",
+    "schema": "ControlFrameV1",
+    "valid": true,
+    "value": {
+      "protocol": {
+        "major": 1,
+        "minor": 0
+      },
+      "request_id": "00000000-0000-4000-8000-000000000001",
+      "attempt_id": "00000000-0000-4000-8000-000000000002",
+      "sequence": "18446744073709551615",
+      "required_capabilities": [
+        "discovery.v1",
+        "transform.factories.v1"
+      ],
+      "extensions": [],
+      "message": {
+        "type": "hello",
+        "operation": "discover",
+        "capabilities": [
+          "discovery.v1",
+          "transform.factories.v1"
+        ]
+      }
+    }
   }
 ]

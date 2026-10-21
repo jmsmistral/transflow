@@ -174,7 +174,15 @@ pub(crate) fn read(
                 rt.block_on(rd.close()).map_err(bad)?;
                 return crate::api_logs::read(root, id, r);
             }
-            json!({"attempt":id.to_string(),"build":build.to_string(),"job":job["id"],"dataset":job["dataset"],"plan":report["plan"]["id"],"source":report["source"],"source_availability":if tf_catalog::capture::SourceSnapshot::open(&root.join(".transflow/runtime/source-snapshots"),c.source.ok_or_else(E::missing)?).is_ok() {"retained"} else {"unavailable"},"parameters":report["plan"]["context"]["parameters"],"inputs":job["inputs"],"evidence":a,"duration_ns":tf_store::history::attempt_duration(a).map(|n|n.to_string()),"log_command":format!("transflow build logs {build}")})
+            let mut detail = json!({"attempt":id.to_string(),"build":build.to_string(),"job":job["id"],"dataset":job["dataset"],"plan":report["plan"]["id"],"source":report["source"],"source_availability":if tf_catalog::capture::SourceSnapshot::open(&root.join(".transflow/runtime/source-snapshots"),c.source.ok_or_else(E::missing)?).is_ok() {"retained"} else {"unavailable"},"parameters":report["plan"]["context"]["parameters"],"inputs":job["inputs"],"evidence":a,"duration_ns":tf_store::history::attempt_duration(a).map(|n|n.to_string()),"log_command":format!("transflow build logs {build}")});
+            detail["generated_sql"] = generated_sql(
+                root,
+                id,
+                &report["source"],
+                job,
+                &a["report"]["generated_sql_sha256"],
+            )?;
+            detail
         } else {
             if r.query.contains_key("version")
                 || r.query.contains_key("dataset")
@@ -207,4 +215,118 @@ pub(crate) fn read(
     };
     rt.block_on(rd.close()).map_err(bad)?;
     Ok(data)
+}
+
+/// SQL is inert, bounded attempt evidence; never call a producer on a read path.
+fn generated_sql(
+    root: &Path,
+    attempt: AttemptId,
+    source: &Value,
+    job: &Value,
+    retained_digest: &Value,
+) -> Result<Value> {
+    use std::io::Read;
+    let Some(retained_digest) = retained_digest.as_str() else {
+        return Ok(Value::Null);
+    };
+    let path = root
+        .join(".transflow/runtime/attempts")
+        .join(attempt.to_string())
+        .join("transform/generated-sql.json");
+    let mut file = match tf_exec::retained_logs::open(&path) {
+        Ok(file) => file,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Value::Null),
+        Err(_) => return Err(E::missing()),
+    };
+    let mut bytes = Vec::new();
+    file.by_ref()
+        .take(2 * 1024 * 1024 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(bad)?;
+    if bytes.len() > 2 * 1024 * 1024 {
+        return Err(E::missing());
+    }
+    if tf_protocol::canonical::file_digest(&mut bytes.as_slice())
+        .map_err(bad)?
+        .hex()
+        != retained_digest
+    {
+        return Err(E::conflict());
+    }
+    let value: Value = serde_json::from_slice(&bytes).map_err(bad)?;
+    tf_protocol::validate_document("GeneratedSqlEvidenceV1", &value).map_err(bad)?;
+    let sql = value["sql"].as_str().ok_or_else(E::missing)?;
+    let digest = tf_protocol::canonical::file_digest(&mut sql.as_bytes())
+        .map_err(bad)?
+        .hex();
+    if value["attempt"] != attempt.to_string()
+        || value["source"] != *source
+        || value["sha256"] != digest
+        || value["producer"]["engine"] != "duckdb"
+        || value["inputs"].as_array().is_none_or(|inputs| {
+            let Some(expected) = job["inputs"].as_array() else {
+                return true;
+            };
+            inputs.len() != expected.len()
+                || inputs.iter().zip(expected).any(|(a, b)| {
+                    a["alias"] != b["alias"]
+                        || a["dataset"]["dataset_id"] != b["binding"]["dataset"]
+                        || a["dataset"]["workspace_id"] != b["binding"]["workspace"]
+                        || a["version"] != b["version"]
+                })
+        })
+    {
+        return Err(E::conflict());
+    }
+    Ok(value)
+}
+
+#[cfg(test)]
+mod sql_tests {
+    use super::*;
+    #[test]
+    fn sql_evidence_is_attempt_bound_and_detects_tampering()
+    -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let root = std::env::temp_dir().join(format!("tf-sql-evidence-{}", std::process::id()));
+        std::fs::create_dir_all(&root)?;
+        let root = std::fs::canonicalize(root)?;
+        let attempt: AttemptId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa".parse()?;
+        let fixtures: Vec<Value> =
+            serde_json::from_str(include_str!("../../../schemas/fixtures/conformance.json"))?;
+        let value = fixtures
+            .iter()
+            .find(|v| v["name"] == "generated-sql-evidence")
+            .ok_or("missing fixture")?["value"]
+            .clone();
+        let source = value["source"].clone();
+        let job = json!({"inputs":[]});
+        assert!(generated_sql(&root, attempt, &source, &job, &Value::Null)?.is_null());
+        let directory = root
+            .join(".transflow/runtime/attempts")
+            .join(attempt.to_string())
+            .join("transform");
+        std::fs::create_dir_all(&directory)?;
+        let mut value = value;
+        value["sha256"] = tf_protocol::canonical::file_digest(
+            &mut value["sql"].as_str().ok_or("SQL missing")?.as_bytes(),
+        )?
+        .hex()
+        .into();
+        let path = directory.join("generated-sql.json");
+        let bytes = serde_json::to_vec(&value)?;
+        std::fs::write(&path, &bytes)?;
+        let digest = json!(tf_protocol::canonical::file_digest(&mut bytes.as_slice())?.hex());
+        assert_eq!(
+            generated_sql(&root, attempt, &source, &job, &digest)?,
+            value
+        );
+        assert!(generated_sql(&root, attempt, &json!("wrong source"), &job, &digest).is_err());
+        std::fs::write(&path, b"SELECT hidden")?;
+        assert!(generated_sql(&root, attempt, &source, &job, &digest).is_err());
+        std::fs::remove_file(&path)?;
+        std::os::unix::fs::symlink("/etc/passwd", &path)?;
+        assert!(generated_sql(&root, attempt, &source, &job, &digest).is_err());
+        std::fs::remove_dir_all(root)?;
+        Ok(())
+    }
 }

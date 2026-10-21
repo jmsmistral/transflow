@@ -1,0 +1,119 @@
+# Dataset handles and transform factories
+
+## Choose the arguments you need
+
+| Decorator | Input arguments | Output argument | Return |
+| --- | --- | --- | --- |
+| `@transform` | Polars LazyFrames | None | DataFrame or LazyFrame |
+| `@transform_meta` | Pinned `InputDataset` handles | Optional keyword-only handle | DataFrame or LazyFrame |
+| `@sql_transform` | Handles for arguments you declare | Optional keyword-only handle | SQL string |
+
+Ordinary decorators return the original function. Calling it directly in a unit
+test remains an ordinary Python call; managed binding/checks happen in the worker.
+`transform_meta` requires every data input argument. SQL functions may omit input
+arguments entirely, while their declared aliases still exist in the SQL query.
+`ctx` is optional and keyword-only. There are no stacked or SQL-meta decorators.
+
+```python
+from transflow import Input, Output, transform_meta
+
+
+@transform_meta(
+    deliveries=Input("curated/delivery"),
+    output=Output("analytics/delivery_copy"),
+)
+def delivery_copy(deliveries, *, output):
+    return deliveries.dataframe()
+```
+
+`.dataframe()` is a lazy Polars scan of the exact pinned version. It does not look
+up the latest head or collect the whole table. It returns the same scan on repeated
+access within the invocation. SQL handles also offer this explicit method; using
+it needs Polars in the prepared environment.
+
+| Input property | Meaning |
+| --- | --- |
+| `dataset_id` | Stable dataset UUID string, not a content hash |
+| `path` | Canonical catalogue path, such as `curated/delivery` |
+| `alias` | Binding keyword, such as `deliveries` |
+| `branch` | Build destination branch |
+| `resolved_branch` | Branch supplying this exact input, including fallback |
+| `version` | Exact pinned input version UUID |
+| `schema` | LogicalSchemaV1 document with column names, types and nullability |
+
+Handles are frozen; schema documents are independent copies. Destination branch
+and captured catalogue paths participate in handle-aware cache keys. The existing
+conservative clock rule for code mentioning `ctx`/`evaluation_time` still applies;
+use plain SQL value binding without `ctx` when Python does not need the context. `OutputDataset`
+exposes destination identity/path/alias/branch and declared schema (or `None`).
+Its version is `None` before publication. It cannot read previous output or publish.
+Incremental execution and secure credential bindings are future work.
+
+## Export generated producers explicitly
+
+A definition factory constructs decorated functions before planning. Export a flat,
+finite list or tuple named `TRANSFORMS`; a loop or comprehension is fine:
+
+```python
+from transflow import Input, Output, sql_transform
+
+
+def make_summary(source, target):
+    @sql_transform(deliveries=Input(source), output=Output(target))
+    def summary():
+        return """
+            SELECT region, COUNT(*) AS order_count
+            FROM deliveries GROUP BY region
+        """
+
+    return summary
+
+
+TRANSFORMS = [
+    make_summary("curated/east", "analytics/east_summary"),
+    make_summary("curated/west", "analytics/west_summary"),
+]
+```
+
+The same export mechanism supports `transform`, `transform_meta`, source producers
+and SQL declarations. Factories can live in captured helper modules. A module with
+`TRANSFORMS` registers only those exports; other decorated values there are ignored.
+A normal module with zero or one producer needs no list. Multiple producers need an
+explicit export. Arbitrary lists, nested containers and generators are not searched.
+The export limit is 10,000 definitions. Duplicate output producers fail structural
+validation before registration or execution.
+
+Dataset identity belongs to its stable catalogue UUID. Export selection uses an
+output-derived key, not collection order or a nested function's repeated name.
+Accepted definitions include a fingerprint of their captured closure/default
+configuration. Supported captures are immutable scalars (`None`, bool, string,
+integer, finite float) and bounded tuples of these. Mutable lists/dicts, arbitrary
+objects and captured callables are rejected; use explicit typed parameters for
+runtime settings. Workspace helper code and configuration resources are already
+included in conservative source capture. Imports remain trusted local code.
+
+The worker rebuilds the exports from captured files and compares the complete
+accepted declaration/configuration before selecting the callable. A different
+factory result fails rather than executing a different producer. No pickle or live
+source fallback is used. New dataset dependencies cannot be added during a run.
+
+Definition factories run at discovery; a SQL query factory runs later, once its
+accepted input versions and checks are ready. See [managed SQL](SQL_TRANSFORMS.md)
+for value binding and the authored/generated SQL views.
+
+## Try the synthetic workspace
+
+With the contributor CLI, wheel and offline wheelhouse already built:
+
+```bash
+target/qualification/py314/bin/python python/tools/create_factory_demo.py \
+  ../transflow-workspace/transform-factories-review \
+  --cli target/debug/transflow \
+  --wheel target/python/py314/wheels/transflow-0.0.0.dev0-py3-none-any.whl \
+  --wheelhouse target/qualification/wheelhouse
+bash tools/serve-review.sh ../transflow-workspace/transform-factories-review --open
+```
+
+The generator refuses existing directories. It creates 120 synthetic orders,
+ordinary Python and metadata-aware factory exports, a SQL factory, cached history,
+a review branch and a saved lineage. No existing workspace is overwritten.

@@ -240,6 +240,7 @@ pub(crate) async fn prepare_inner(
         &capture,
         compute::Execution {
             output: target.dataset,
+            output_branch: &plan.output.name,
             parameters: &plan.context["parameters"][&write.dataset],
             inputs: &values,
             writer: &semantics.writer,

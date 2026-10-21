@@ -21,10 +21,11 @@ from transflow.compatibility import (
 from transflow._declaration_values import (
     DeclarationError as DeclarationError, Parameter as Parameter,
 )
+from transflow.handles import InputDataset as InputDataset, OutputDataset as OutputDataset
 from transflow.declarations import (
     Branch as Branch, Check as Check, Input as Input, Output as Output,
     TransformContext as TransformContext, transform as transform,
-    source_transform as source_transform,
+    source_transform as source_transform, transform_meta as transform_meta,
     sql_transform as sql_transform,
 )
 """

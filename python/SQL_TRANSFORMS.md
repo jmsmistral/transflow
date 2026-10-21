@@ -1,43 +1,95 @@
 # Managed SQL transforms
 
-Register a SQL producer in a Python module and put its query beside that module.
-Each module declares one producer and one output. Registration reads no SQL file
-and imports no data engine.
+Keep the declaration and query in one Python file:
 
 ```python
-from transflow import Input, Output, Parameter, sql_transform
+from transflow import Input, Output, sql_transform
 
-orders = sql_transform(
-    "orders.sql",
-    rows=Input("raw/orders"),
-    output=Output("curated/orders"),
-    params={"minimum": Parameter({"type": "i64"}, {"type": "i64", "value": "10"})},
+
+@sql_transform(
+    deliveries=Input("curated/delivery"),
+    output=Output("analytics/region_summary"),
+)
+def region_summary(deliveries, *, output):
+    return """
+        SELECT region, COUNT(*) AS order_count
+        FROM deliveries
+        GROUP BY region
+    """
+```
+
+`deliveries` in SQL is the registered input alias, not a Python variable or catalogue
+path. A static query can use `def region_summary():` instead: every declared data
+alias remains available in SQL. There is no `sql_transform_meta` decorator. Declared
+Python arguments always receive [enriched handles](TRANSFORM_FACTORIES.md).
+
+The function runs once during its supervised build, after required input checks.
+Discovery registers definitions without invoking their query functions. The return
+must be a nonempty SQL string, at most 512 KiB. Python may construct query shape
+using frozen metadata and `ctx.params`; dependencies must all be declared before
+planning. Trusted imports and hidden I/O are not a purity sandbox. Use
+`cache="never"` for computations whose external state/time/randomness is not captured.
+
+Use typed parameters and DuckDB value binding for values:
+
+```python
+from transflow import Parameter
+
+
+@sql_transform(
+    deliveries=Input("curated/delivery"),
+    output=Output("analytics/large_deliveries"),
+    params={"minimum": Parameter({"type": "i64"}, {"type": "i64", "value": "100"})},
+)
+def large_deliveries(*, ctx):
+    return "SELECT * FROM deliveries WHERE amount >= $minimum"
+```
+
+Declared parameters may also affect Python query construction. Only placeholders
+present in the returned statement are passed to DuckDB; undeclared placeholders
+fail. Never interpolate untrusted values into SQL. Alias identifiers and values
+are separate concepts; quote identifiers if they are reserved words.
+
+The original paired-file form remains supported:
+
+```python
+summary = sql_transform(
+    "summary.sql",
+    deliveries=Input("curated/delivery"),
+    output=Output("analytics/region_summary"),
 )
 ```
 
-```sql
-SELECT * FROM "rows" WHERE amount >= $minimum
-```
+The `.sql` path is relative to its registration module, inside captured roots, and
+cannot be excluded or symlinked. File registrations remain immutable descriptors;
+function decorators preserve ordinary direct Python calls. Existing captured files
+up to the source-resource limit remain executable; generated-SQL inspection retains
+queries up to 512 KiB.
 
-Add the qualified DuckDB 1.5.5 and PyArrow 25.0.1 dependencies to the workspace's
-requirements, then explicitly run `env lock` and `env sync`. Builds install
-nothing. The registration is an immutable descriptor, rather than a callable
-Python transform. Named data inputs become quoted views; validation-only inputs
-are available to checks and do not become SQL views. Parameter values are bound
-separately. SQL that uses current time or randomness should declare `cache="never"`.
+Add qualified DuckDB 1.5.5 and PyArrow 25.0.1 to workspace requirements, then run
+`env lock` and `env sync` explicitly. Builds install nothing. Exact input aliases
+become managed views. Validation-only inputs participate in checks and planning,
+but are not query views or function arguments.
 
 The query must be one table-producing statement. The managed connection stays
-open through its single Parquet sink. File access is restricted to exact pinned
-inputs and the output file. Python replacement scans, automatic extension
-installation/loading and unsigned/community extensions are disabled. Optional
-extensions are not enabled by this adapter. The separate browser scratchpad has
-its own narrower query policy.
+open through its single Parquet sink. Reads are limited to exact pinned input
+files. Python replacement scans, automatic extension installation/loading and
+unsigned/community extensions are disabled. The browser scratchpad remains a
+separate, narrower query interface.
 
-The `.sql` path must be relative to the registration module, inside captured
-source roots, and not excluded or symlinked. SQL bytes and helper/lock files are
-captured and fingerprinted. Changing SQL invalidates reuse; replay reads the
-retained SQL, without changing live files. Code view displays the producing SQL
-file and can compare it with the latest retained SQL source.
+## Inspect authored code and generated SQL
+
+The lineage Code panel keeps Latest saved version, Data publish version and Diff.
+For SQL it adds Authored code and Generated SQL. Imported factories offer Factory
+definition and Registration source views. Diff compares authored captured code.
+Generated SQL shows actual retained execution evidence, including SQL whose parse
+or execution failed. Latest saved mode selects the latest job's attempt; Data
+publish version selects the attempt that produced that exact publication. Cached
+reuse refers to its original producing attempt. A generation failure never falls
+back silently to older successful SQL. Evidence shows its attempt and source;
+saved code may have changed since execution. Reads do not invoke query factories.
+Bound values remain in the separate attempt parameters, not interpolated into SQL.
+SQL evidence expires with retained attempt logs and may be explicitly unavailable.
 
 ## Exact type profile
 

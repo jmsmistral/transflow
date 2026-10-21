@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { App } from "./App";
+import { readFileSync } from "node:fs";
+import { URL as NodeURL } from "node:url";
 import { Client } from "./api/client";
 import { Workspace } from "./workspace";
 import { CodeInspector } from "./CodeInspector";
@@ -128,6 +130,8 @@ async function fixture(
     trigger?: ExecutionJsonV1;
     fail?: boolean;
     sql?: boolean;
+    factorySql?: boolean;
+    generatedSql?: boolean;
     jobs?: ApiHistoryJobV1[];
     emptyBranch?: string;
   } = {},
@@ -166,6 +170,12 @@ async function fixture(
                       path: query.version
                         ? "src/producing.py"
                         : "src/current.py",
+                      ...(control.factorySql
+                        ? {
+                            engine: "duckdb",
+                            authoring: { definition_path: "src/factory.py" },
+                          }
+                        : {}),
                       ...(control.sql
                         ? { sql_source: { path: "src/producing.sql" } }
                         : {}),
@@ -297,6 +307,27 @@ async function fixture(
                 },
                 duration_ns: "1000000000",
                 log_command: "transflow build logs",
+                ...(control.generatedSql
+                  ? {
+                      generated_sql: {
+                        ...JSON.parse(
+                          readFileSync(
+                            new NodeURL(
+                              "../../schemas/fixtures/conformance.json",
+                              import.meta.url,
+                            ),
+                            "utf8",
+                          ),
+                        ).find(
+                          (value: { name: string }) =>
+                            value.name === "generated-sql-evidence",
+                        ).value,
+                        attempt,
+                        source: workspaceId,
+                        sql: "SELECT region, COUNT(*) FROM deliveries GROUP BY region",
+                      },
+                    }
+                  : {}),
               },
               c,
             ),
@@ -1153,5 +1184,61 @@ test("History chart excludes failed and cached attempts while retaining failure 
   expect(chart.querySelector(".status-failed")).toBeNull();
   expect(view.container.querySelectorAll(".history-entry")).toHaveLength(3);
   expect(screen.getByText("100.00%")).toBeTruthy();
+  model.dispose();
+});
+
+test("SQL Code shows actual attempt SQL and never substitutes a failed generator's older SQL", async () => {
+  const { model, state, calls } = await fixture(false, job, {
+    factorySql: true,
+    generatedSql: true,
+  });
+  if (!state.value.dataset) throw new Error("Missing dataset fixture");
+  const sqlState: typeof state = {
+    ...state,
+    value: {
+      ...state.value,
+      dataset: {
+        ...state.value.dataset,
+        producer: {
+          engine: "duckdb",
+          authoring: { definition_path: "src/factory.py" },
+        },
+      },
+    },
+  };
+  render(<CodeInspector workspace={model} state={sqlState} />);
+  expect(await screen.findByText("# current")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Generated SQL" }));
+  expect(
+    await screen.findByRole("textbox", { name: "Read-only generated SQL" }),
+  ).toBeTruthy();
+  expect(
+    screen.getByText(/Latest executed SQL; saved code may have changed/),
+  ).toBeTruthy();
+  expect(
+    calls.find((call) => call.path.endsWith(`/attempts/${attempt}`))?.query
+      .plan,
+  ).toBe(plan);
+  model.dispose();
+});
+
+test("SQL Code explicitly reports missing generation evidence for the latest failure", async () => {
+  const { model, state } = await fixture(false, job, { factorySql: true });
+  if (!state.value.dataset) throw new Error("Missing dataset fixture");
+  const sqlState: typeof state = {
+    ...state,
+    value: {
+      ...state.value,
+      dataset: { ...state.value.dataset, producer: { engine: "duckdb" } },
+    },
+  };
+  render(<CodeInspector workspace={model} state={sqlState} />);
+  fireEvent.click(screen.getByRole("button", { name: "Generated SQL" }));
+  expect(
+    await screen.findByText(/SQL was not generated for this attempt/),
+  ).toBeTruthy();
+  expect(
+    screen.queryByRole("textbox", { name: "Read-only generated SQL" }),
+  ).toBeNull();
   model.dispose();
 });

@@ -7,7 +7,9 @@ import importlib
 import os
 import sys
 from collections.abc import Callable
+from datetime import datetime
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from transflow import Parameter
@@ -16,9 +18,11 @@ from transflow.declarations import SqlTransform, get_declaration
 from .arrow_schema import logical_schema, quote, sql_type
 from .canonical import file_digest, schema_digest
 from .check_adapter import pinned_files
+from .dataset_handles import arguments
 from .discovery import _directory, _read, _write, collect
 from .environment import ARROW_VERSION
-from .polars_adapter import ExecutionError, _file, _value
+from .polars_adapter import Context, ExecutionError, _file, _value
+from .registration import resolve
 from .scratchpad import _connect
 from .wire import validate_document
 
@@ -54,18 +58,12 @@ def execute(request: dict[str, Any], send: Callable[[dict[str, object]], None]) 
         raise ExecutionError(
             "definition_changed", "Captured SQL producer differs from the accepted declaration"
         )
-    registration = getattr(sys.modules[producer["module"]], producer["function"], None)
+    registration = resolve(sys.modules[producer["module"]], producer)
     declaration = get_declaration(registration)
-    if not isinstance(registration, SqlTransform) or declaration is None:
-        raise ExecutionError("definition", "SQL execution requires its captured registration")
-    source = producer["sql_source"]
-    raw = _read(Path(request["capture_root"]) / source["path"], 16 * 1024 * 1024)
-    if (
-        len(raw) != int(source["byte_length"])
-        or hashlib.sha256(raw).hexdigest() != source["sha256"]
+    if declaration is None or not (
+        isinstance(registration, SqlTransform) or callable(registration)
     ):
-        raise ExecutionError("sql_source", "Captured SQL source bytes changed")
-    sql = raw.decode("utf-8")
+        raise ExecutionError("definition", "SQL execution requires its captured registration")
     supplied = {v["name"]: v["value"] for v in request["context"]["parameters"]}
     if len(supplied) != len(request["context"]["parameters"]) or set(supplied) != {
         n for n, _ in declaration.params
@@ -75,6 +73,56 @@ def execute(request: dict[str, Any], send: Callable[[dict[str, object]], None]) 
     for name, parameter in declaration.params:
         Parameter(parameter.logical_type, supplied[name])
         parameters[name] = _value(supplied[name])
+    send({"type": "phase", "phase": "running"})
+    if isinstance(registration, SqlTransform):
+        source = producer["sql_source"]
+        raw = _read(Path(request["capture_root"]) / source["path"], 16 * 1024 * 1024)
+        if (
+            len(raw) != int(source["byte_length"])
+            or hashlib.sha256(raw).hexdigest() != source["sha256"]
+        ):
+            raise ExecutionError("sql_source", "Captured SQL source bytes changed")
+        sql = raw.decode("utf-8")
+    else:
+        timestamp = _value(request["context"]["evaluation_time"])
+        if not isinstance(timestamp, datetime) or timestamp.tzinfo is None:
+            raise ExecutionError("context", "Logical evaluation time must be an aware timestamp")
+        seed = request["context"]["random_seed"]
+        context = Context(
+            MappingProxyType(parameters),
+            request["context"]["build_id"],
+            request["context"]["job_id"],
+            request["attempt_id"],
+            timestamp,
+            None if seed is None else int(seed),
+        )
+        sql = registration(**arguments(registration, declaration, request, {}, context))
+    if (
+        not isinstance(sql, str)
+        or not sql.strip()
+        or (not isinstance(registration, SqlTransform) and len(sql.encode("utf-8")) > 512 * 1024)
+    ):
+        raise ExecutionError(
+            "sql_return", "SQL factory must return one nonempty SQL string of at most 512 KiB"
+        )
+    # Durable attempt evidence is written before parsing/execution, including failed queries.
+    # Bound values remain separate; the SQL is never expanded with parameter values.
+    if len(sql.encode("utf-8")) <= 512 * 1024:
+        _write(
+            directory / "generated-sql.json",
+            {
+                "format_version": 1,
+                "attempt": request["attempt_id"],
+                "source": request["catalog"]["source_snapshot_id"],
+                "producer": producer,
+                "inputs": [
+                    {"alias": b["alias"], "dataset": b["dataset"], "version": b["version_id"]}
+                    for b in request["inputs"]
+                ],
+                "sha256": hashlib.sha256(sql.encode()).hexdigest(),
+                "sql": sql,
+            },
+        )
     pa, pq = importlib.import_module("pyarrow"), importlib.import_module("pyarrow.parquet")
     if pa.__version__ != ARROW_VERSION:
         raise ExecutionError("engine_version", "SQL requires the qualified Arrow version")
@@ -124,8 +172,11 @@ def execute(request: dict[str, Any], send: Callable[[dict[str, object]], None]) 
                 "sql_statement",
                 "SQL producers require one table query without DDL or extension installation",
             )
-        send({"type": "phase", "phase": "running"})
-        relation = db.sql(sql, params=parameters or None)
+        names = statements[0].named_parameters
+        if not names <= parameters.keys():
+            raise ExecutionError("parameter", "SQL references an undeclared bound parameter")
+        bound = {name: parameters[name] for name in names}
+        relation = db.sql(sql, params=bound or None)
         # Schema-only query carries no result rows. The authored relation is sunk once.
         schema = logical_schema(relation.limit(0).to_arrow_reader().schema, pa)
         if declaration.output.schema is not None and schema != declaration.output.schema:

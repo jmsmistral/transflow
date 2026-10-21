@@ -288,6 +288,7 @@ pub fn explain(
                     capture,
                     compute::Execution {
                         output: key,
+                        output_branch: request.branch.as_str(),
                         parameters: &semantics.parameters,
                         inputs: &values,
                         writer: &semantics.writer,

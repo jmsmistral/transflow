@@ -10240,6 +10240,9 @@
           },
           {
             "$ref": "#/components/schemas/SqlDeclarationV1"
+          },
+          {
+            "$ref": "#/components/schemas/SqlFactoryDeclarationV1"
           }
         ]
       },
@@ -12293,6 +12296,9 @@
                 },
                 "minItems": 0,
                 "maxItems": 10000
+              },
+              "datasets": {
+                "$ref": "#/components/schemas/ExecutionDatasetsV1"
               }
             },
             "required": [
@@ -16997,6 +17003,16 @@
           },
           "log_command": {
             "type": "string"
+          },
+          "generated_sql": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/GeneratedSqlEvidenceV1"
+              }
+            ]
           }
         },
         "required": [
@@ -19219,6 +19235,9 @@
                 "type": "string"
               }
             ]
+          },
+          "authoring": {
+            "$ref": "#/components/schemas/AuthoringV1"
           }
         },
         "required": [
@@ -19401,6 +19420,9 @@
               "byte_length"
             ],
             "additionalProperties": false
+          },
+          "authoring": {
+            "$ref": "#/components/schemas/AuthoringV1"
           }
         },
         "required": [
@@ -19486,7 +19508,14 @@
             "$ref": "#/components/schemas/Sha256"
           },
           "producer": {
-            "$ref": "#/components/schemas/SqlDeclarationV1"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SqlDeclarationV1"
+              },
+              {
+                "$ref": "#/components/schemas/SqlFactoryDeclarationV1"
+              }
+            ]
           },
           "inputs": {
             "type": "array",
@@ -19569,6 +19598,9 @@
                 },
                 "minItems": 0,
                 "maxItems": 10000
+              },
+              "datasets": {
+                "$ref": "#/components/schemas/ExecutionDatasetsV1"
               }
             },
             "required": [
@@ -19924,6 +19956,329 @@
           "collectible_bytes",
           "deleted_bytes",
           "items"
+        ],
+        "additionalProperties": false
+      },
+      "AuthoringV1": {
+        "type": "object",
+        "properties": {
+          "format_version": {
+            "const": 1
+          },
+          "kind": {
+            "enum": [
+              "frames",
+              "meta",
+              "sql"
+            ]
+          },
+          "exported": {
+            "type": "boolean"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/Sha256"
+          },
+          "definition_path": {
+            "$ref": "#/components/schemas/RelativePath"
+          },
+          "definition_line": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          }
+        },
+        "required": [
+          "format_version",
+          "kind",
+          "exported",
+          "configuration",
+          "definition_path",
+          "definition_line"
+        ],
+        "additionalProperties": false
+      },
+      "SqlFactoryDeclarationV1": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "function": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "path": {
+            "$ref": "#/components/schemas/RelativePath"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "source": {
+            "const": false
+          },
+          "engine": {
+            "const": "duckdb"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeclarationInputV1"
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "output": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "$ref": "#/components/schemas/DiscoveryRefV1"
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DeclarationCheckV1"
+                },
+                "minItems": 0,
+                "maxItems": 10000
+              },
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LogicalSchemaV1"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ref",
+              "checks",
+              "schema"
+            ],
+            "additionalProperties": false
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "format": "transflow-name"
+                },
+                "logical_type": {
+                  "$ref": "#/components/schemas/LogicalType"
+                },
+                "default": {
+                  "$ref": "#/components/schemas/WireValue"
+                }
+              },
+              "required": [
+                "name",
+                "logical_type",
+                "default"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "wall_timeout_seconds": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Count"
+              }
+            ]
+          },
+          "cache": {
+            "enum": [
+              null,
+              "deterministic",
+              "never"
+            ]
+          },
+          "refresh": {
+            "oneOf": [
+              {
+                "enum": [
+                  null,
+                  "always",
+                  "manual"
+                ]
+              },
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              }
+            ]
+          },
+          "secret_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "transflow-name"
+            },
+            "minItems": 0,
+            "maxItems": 10000
+          },
+          "lineage_json": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "authoring": {
+            "$ref": "#/components/schemas/AuthoringV1"
+          }
+        },
+        "required": [
+          "module",
+          "function",
+          "path",
+          "line",
+          "source",
+          "engine",
+          "inputs",
+          "output",
+          "parameters",
+          "wall_timeout_seconds",
+          "cache",
+          "refresh",
+          "secret_refs",
+          "lineage_json",
+          "authoring"
+        ],
+        "additionalProperties": false
+      },
+      "ExecutionDatasetsV1": {
+        "type": "object",
+        "properties": {
+          "branch": {
+            "type": "string",
+            "format": "transflow-name"
+          },
+          "output": {
+            "type": "object",
+            "properties": {
+              "dataset_id": {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              "path": {
+                "$ref": "#/components/schemas/RelativePath"
+              }
+            },
+            "required": [
+              "dataset_id",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          "inputs": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "format": "transflow-name"
+                },
+                "path": {
+                  "$ref": "#/components/schemas/RelativePath"
+                },
+                "resolved_branch": {
+                  "type": "string",
+                  "format": "transflow-name"
+                }
+              },
+              "required": [
+                "alias",
+                "path",
+                "resolved_branch"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "branch",
+          "output",
+          "inputs"
+        ],
+        "additionalProperties": false
+      },
+      "GeneratedSqlEvidenceV1": {
+        "type": "object",
+        "properties": {
+          "format_version": {
+            "const": 1
+          },
+          "attempt": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "producer": {
+            "$ref": "#/components/schemas/DeclarationV1"
+          },
+          "inputs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 10000,
+            "items": {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "format": "transflow-name"
+                },
+                "dataset": {
+                  "$ref": "#/components/schemas/DatasetKey"
+                },
+                "version": {
+                  "$ref": "#/components/schemas/Uuid"
+                }
+              },
+              "required": [
+                "alias",
+                "dataset",
+                "version"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "sha256": {
+            "$ref": "#/components/schemas/Sha256"
+          },
+          "sql": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 524288
+          }
+        },
+        "required": [
+          "format_version",
+          "attempt",
+          "source",
+          "producer",
+          "inputs",
+          "sha256",
+          "sql"
         ],
         "additionalProperties": false
       }

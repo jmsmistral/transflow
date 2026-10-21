@@ -324,7 +324,8 @@ impl Coordinator<'_> {
     ) -> Result<bool> {
         let j = &self.prepared.jobs[&id];
         let a = &self.active[&id];
-        let summary = worker::report(&c);
+        let mut summary = worker::report(&c);
+        summary["generated_sql_sha256"] = json!(worker::sql_digest(&a.directory)?);
         let mut failure_class = worker::classify(&c);
         repository!(
             self.owner,

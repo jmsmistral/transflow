@@ -111,6 +111,7 @@ def run_worker(
                         frozenset(
                             {
                                 "discovery.v1",
+                                "transform.factories.v1",
                                 "expectation.ast.v1",
                                 "expectation.core.v1",
                                 "expectation.g3.v1",

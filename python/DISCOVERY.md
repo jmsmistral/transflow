@@ -26,7 +26,11 @@ A finder rejects uncaptured children beneath indexed source namespaces. This is
 not protection against deliberately hostile Python or arbitrary filesystem/network
 access: **module-level code executes**, while producer functions are never invoked.
 
-Each originating module may contain zero or one producer. Imported/re-exported
+Each ordinary module may contain zero or one producer. An explicit flat `TRANSFORMS`
+export permits multiple factory-generated producers and is authoritative for that
+module. Captured closure/default configuration is fingerprinted and rechecked at
+execution; collection order does not select identity. See
+[transform factories](TRANSFORM_FACTORIES.md). Imported/re-exported
 functions and repeated names pointing to one function are not duplicate producers.
 Discovery retains unresolved strings for T028's same-pass resolution, source
 locations, independent branch/fallback policy, checks, schemas, typed parameters,

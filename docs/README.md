@@ -6,6 +6,7 @@ a first dataset build and the lineage workspace.
 ## Write datasets
 
 - [Python declarations](../python/DECLARATIONS.md) — inputs, outputs and transforms.
+- [Dataset handles and Python/SQL factories](../python/TRANSFORM_FACTORIES.md).
 - [Polars execution](../python/POLARS.md) and [DuckDB SQL transforms](../python/SQL_TRANSFORMS.md).
 - [Quality checks](../python/EXPECTATIONS.md) — exact checks and failure policies.
 - [Catalogue references](../python/CATALOG.md) — stable dataset references in Python.

@@ -41,7 +41,10 @@ from .declarations import sql_transform as sql_transform
 from .declarations import (
     transform as transform,
 )
+from .declarations import transform_meta as transform_meta
 from .errors import TransientIOError as TransientIOError
+from .handles import InputDataset as InputDataset
+from .handles import OutputDataset as OutputDataset
 
 __all__ = [
     "TransientIOError",
@@ -53,6 +56,9 @@ __all__ = [
     "DeclarationError",
     "TransformContext",
     "transform",
+    "transform_meta",
+    "InputDataset",
+    "OutputDataset",
     "sql_transform",
     "source_transform",
     "PROTOCOL_VERSION",

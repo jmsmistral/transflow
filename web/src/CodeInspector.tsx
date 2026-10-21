@@ -3,8 +3,14 @@ import { useEffect, useState } from "react";
 import type { ApiSourceV1 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
 import { Button, DatasetHeader } from "./components";
+import { GeneratedSqlInspector } from "./GeneratedSqlInspector";
 import { SourceLines } from "./SourceLines";
-import { field, producingSourcePath, versionMetadata } from "./inspectors";
+import {
+  field,
+  factorySourcePath,
+  producingSourcePath,
+  versionMetadata,
+} from "./inspectors";
 import { sourceDiff } from "./execution-model";
 import {
   type Ready,
@@ -18,13 +24,17 @@ async function capturedSource(
   scope: Scope,
   dataset: string,
   origin: string,
+  registration = false,
 ): Promise<ApiSourceV1 & { complete: boolean }> {
   const definition = await scope.read(
     "ApiDatasetV1",
     `/api/v1/datasets/${dataset}`,
     { origin_workspace: origin },
   );
-  const path = producingSourcePath(definition.producer),
+  const path = registration
+      ? (field(definition.producer, "registration_path") ??
+        field(definition.producer, "path"))
+      : producingSourcePath(definition.producer),
     source = scope.context.source;
   if (!path || !source)
     throw new Error("Producing source was not retained for this dataset.");
@@ -66,6 +76,10 @@ export function CodeInspector({
   state: Ready;
 }) {
   const dataset = state.value.dataset;
+  const [content, setContent] = useState<"code" | "sql">("code");
+  const [registration, setRegistration] = useState(false);
+  const isFactory = Boolean(factorySourcePath(dataset?.producer));
+  const isSql = field(dataset?.producer, "engine") === "duckdb";
   const [mode, setMode] = useState<
     "Data publish version" | "Latest saved version" | "Diff"
   >("Latest saved version");
@@ -88,6 +102,7 @@ export function CodeInspector({
     dataset?.dataset_id,
     meta?.version,
     mode,
+    registration,
   ]);
   useEffect(() => {
     if (!dataset) return;
@@ -116,6 +131,7 @@ export function CodeInspector({
           scope,
           dataset.dataset_id,
           dataset.workspace_id,
+          registration,
         );
       }
       if (mode !== "Data publish version") {
@@ -127,6 +143,7 @@ export function CodeInspector({
           scope,
           dataset.dataset_id,
           dataset.workspace_id,
+          registration,
         );
       }
       return { key, producing, current };
@@ -139,7 +156,7 @@ export function CodeInspector({
       },
     );
     return () => abort.abort();
-  }, [workspace, state, dataset, key, mode, meta?.version]);
+  }, [workspace, state, dataset, key, mode, meta?.version, registration]);
   const shown = result?.key === key ? result : null;
   const source =
     mode === "Latest saved version" ? shown?.current : shown?.producing;
@@ -178,47 +195,96 @@ export function CodeInspector({
                   ? "Latest validated source capture; excludes unvalidated working-tree edits"
                   : undefined
               }
-              onClick={() => setMode(name)}
+              onClick={() => {
+                setMode(name);
+                if (name === "Diff") setContent("code");
+              }}
             >
               {name}
             </Button>
           ))}
         </div>
       </DatasetHeader>
-      {source && mode !== "Diff" && (
-        <div className="source-provenance">{source.path}</div>
+      {isFactory && content === "code" && (
+        <nav className="execution-switches" aria-label="Factory source views">
+          <Button
+            aria-pressed={!registration}
+            onClick={() => setRegistration(false)}
+          >
+            Factory definition
+          </Button>
+          <Button
+            aria-pressed={registration}
+            onClick={() => setRegistration(true)}
+          >
+            Registration
+          </Button>
+        </nav>
       )}
-      {shown?.error ? (
-        <Empty>Source unavailable: {shown.error}</Empty>
-      ) : !shown ? (
-        <Empty>Loading retained source…</Empty>
-      ) : mode === "Diff" && !diff ? (
-        <Empty>
-          Diff unavailable for a bounded excerpt. Inspect the two source views
-          separately.
-        </Empty>
+      {isSql && (
+        <nav className="execution-switches" aria-label="SQL source views">
+          <Button
+            aria-pressed={content === "code"}
+            onClick={() => setContent("code")}
+          >
+            Authored code
+          </Button>
+          <Button
+            aria-pressed={content === "sql"}
+            onClick={() => setContent("sql")}
+          >
+            Generated SQL
+          </Button>
+        </nav>
+      )}
+      {content === "sql" && isSql ? (
+        <GeneratedSqlInspector
+          workspace={workspace}
+          state={state}
+          published={mode === "Data publish version"}
+        />
       ) : (
-        <div
-          className="source-scroll"
-          tabIndex={0}
-          role={mode === "Diff" ? "region" : "textbox"}
-          aria-readonly={mode === "Diff" ? undefined : true}
-          aria-multiline={mode === "Diff" ? undefined : true}
-          aria-label={
-            mode === "Diff"
-              ? "Source diff: producing to current retained definition"
-              : "Read-only captured source"
-          }
-        >
-          <SourceLines source={source} current={shown?.current} diff={diff} />
-          {source && !source.complete && (
-            <p className="bounded-notice">
-              Showing a bounded excerpt (maximum 2,000 lines /{" "}
-              {formatSize("524288")}); use the retained snapshot for the
-              complete file.
-            </p>
+        <>
+          {source && mode !== "Diff" && (
+            <div className="source-provenance">{source.path}</div>
           )}
-        </div>
+          {shown?.error ? (
+            <Empty>Source unavailable: {shown.error}</Empty>
+          ) : !shown ? (
+            <Empty>Loading retained source…</Empty>
+          ) : mode === "Diff" && !diff ? (
+            <Empty>
+              Diff unavailable for a bounded excerpt. Inspect the two source
+              views separately.
+            </Empty>
+          ) : (
+            <div
+              className="source-scroll"
+              tabIndex={0}
+              role={mode === "Diff" ? "region" : "textbox"}
+              aria-readonly={mode === "Diff" ? undefined : true}
+              aria-multiline={mode === "Diff" ? undefined : true}
+              aria-label={
+                mode === "Diff"
+                  ? "Source diff: producing to current retained definition"
+                  : "Read-only captured source"
+              }
+            >
+              <SourceLines
+                source={source}
+                current={shown?.current}
+                diff={diff}
+              />
+              {source && !source.complete && (
+                <p className="bounded-notice">
+                  Showing a bounded excerpt (maximum 2,000 lines /{" "}
+                  {formatSize("524288")}); use the retained snapshot for the
+                  complete file.
+                </p>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

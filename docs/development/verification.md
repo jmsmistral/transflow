@@ -1608,3 +1608,20 @@ edits also passed focused lint/format/type checks and real worker qualification.
 No UI changes or internal Browser preview were needed. All test coordinators were
 stopped. Complete overlap/queue/cycle policy remains T096; scheduling CLI/editor
 remain T097/T098. CI is pending owner confirmation and was not polled.
+
+
+## 2026-10-21 - Captured transform factories and dataset handles
+
+Delivered function-based SQL, metadata-aware Python inputs/outputs and explicit
+finite factory exports shared across engines. Existing dataframe transforms and
+file-based SQL remain supported. Generated SQL is retained per attempt, hash-bound
+to its durable report, and shown separately from authored source in Code. Handle
+branch/catalogue names participate in cache identity. The built five-dataset review
+contains 120 synthetic orders, cache reuse and branch fallback.
+
+The [factory receipt](evidence/transform-factories-macos-arm64.json) records actual
+positive, negative, failure, replay and Browser checks, final local gate results,
+review launcher and explicit qualification limits. New remote CI is owner-monitored.
+Final local gates passed: 498 Rust tests plus one doc test, 1,152 Python tests,
+674 web tests, 70 CLI tests, native engine/lifecycle/factory journeys, safety and
+specification checks. The review launcher and its copied CLI/UI were verified.

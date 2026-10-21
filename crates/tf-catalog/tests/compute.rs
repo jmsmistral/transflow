@@ -27,6 +27,7 @@ struct Fixture {
     inputs: Vec<Value>,
     writer: Value,
     clock: Option<i64>,
+    branch: String,
 }
 fn workspace() -> WorkspaceId {
     WorkspaceId::from_bytes([1; 16])
@@ -70,6 +71,7 @@ impl Fixture {
             inputs,
             writer: json!({"format":"parquet","normalization":"canonical-v1"}),
             clock: None,
+            branch: "master".into(),
         }
     }
     fn key(&self) -> Result<compute::ComputeKey, compute::Error> {
@@ -104,6 +106,7 @@ impl Fixture {
             &capture,
             Execution {
                 output: key(3),
+                output_branch: &self.branch,
                 parameters: &self.parameters,
                 inputs: &self.inputs,
                 writer: &self.writer,
@@ -254,4 +257,23 @@ fn comparison_evidence_uses_same_semantic_inputs_and_survives_roundtrip() {
         baseline.components["code"],
         changed.evidence().components["code"]
     );
+}
+
+#[test]
+fn handle_observable_branch_and_catalogue_paths_affect_reuse() {
+    let mut f = Fixture::new();
+    let baseline = f.key().unwrap().digest();
+    f.branch = "review".into();
+    assert_eq!(baseline, f.key().unwrap().digest()); // Ordinary dataframe arguments are unchanged.
+    f.definition["authoring"] = json!({"format_version":1,"kind":"meta","exported":false,
+        "configuration":"a".repeat(64),"definition_path":"src/output.py","definition_line":1});
+    let with_handles = f.key().unwrap().digest();
+    f.branch = "master".into();
+    assert_ne!(with_handles, f.key().unwrap().digest());
+    f.definition["inputs"][0]["ref"]["value"] = json!(format!("dataset:{}", key(2).dataset_id()));
+    let before_rename = f.key().unwrap().digest();
+    let path = f.root.join(".transflow/catalog.toml");
+    let registry = fs::read_to_string(&path).unwrap();
+    fs::write(path, registry.replace("raw/input", "raw/renamed")).unwrap();
+    assert_ne!(before_rename, f.key().unwrap().digest());
 }

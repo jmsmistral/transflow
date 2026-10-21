@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib
-import inspect
 import os
 import stat
 import struct
@@ -21,7 +20,9 @@ from transflow._declaration_values import DeclarationError, Parameter
 from transflow.declarations import get_declaration, validate_result
 
 from .canonical import artifact_digest, file_digest, schema_digest
+from .dataset_handles import arguments
 from .discovery import DiscoveryError, _directory, _write, collect
+from .registration import resolve
 from .wire import validate_document
 
 
@@ -249,7 +250,7 @@ def execute(request: dict[str, Any], send: Callable[[dict[str, object]], None]) 
         raise ExecutionError(
             "definition_changed", "Captured producer no longer matches the accepted declaration"
         )
-    function = getattr(sys.modules[producer["module"]], producer["function"], None)
+    function = resolve(sys.modules[producer["module"]], producer)
     declaration = get_declaration(function)
     if declaration is None or not callable(function):
         raise ExecutionError(
@@ -279,13 +280,8 @@ def execute(request: dict[str, Any], send: Callable[[dict[str, object]], None]) 
         timestamp,
         None if seed is None else int(seed),
     )
-    arguments = {
-        alias: frames[alias] for alias, binding in declaration.inputs if binding.role == "data"
-    }
-    if "ctx" in inspect.signature(function).parameters:
-        arguments["ctx"] = context
     send({"type": "phase", "phase": "running"})
-    result = function(**arguments)
+    result = function(**arguments(function, declaration, request, frames, context))
     try:
         validate_result(function, result)
     except DeclarationError as exc:

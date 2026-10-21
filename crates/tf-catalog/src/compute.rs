@@ -26,6 +26,8 @@ pub enum Error {
 pub struct Execution<'a> {
     /// Stable registered/proposed output identity.
     pub output: DatasetKey,
+    /// Frozen destination branch, observable by enriched dataset handles.
+    pub output_branch: &'a str,
     /// Fully normalized typed parameter object.
     pub parameters: &'a Value,
     /// Per-alias exact input carriers from resolution, including validation-only aliases.
@@ -260,7 +262,26 @@ pub fn finalize(
         checks["inputs"][&definition.alias] = input["checks"].clone();
     }
     let config = WorkspaceConfig::parse(context.config_toml).map_err(|_| Error::Context)?;
-    let semantic = json!({"key_version":1,"output":{"workspace":execution.output.workspace_id().to_string(),"dataset":execution.output.dataset_id().to_string()},"source_files":capture.computation_files(),"source_roots":capture.source_roots(),"configuration":{"python_minor":config.python_version(),"validation_null_policy":config.null_policy()},"environment":context.environment_fingerprint,"sdk_worker":context.sdk_version,"check_semantics":context.check_semantics,"declaration":declaration,"parameters":normalized_parameters,"inputs":inputs,"writer":execution.writer,"evaluation_us":execution.evaluation_us.map(|v|v.to_string()),"secret_versions":execution.secret_versions});
+    let mut semantic = json!({"key_version":1,"output":{"workspace":execution.output.workspace_id().to_string(),"dataset":execution.output.dataset_id().to_string()},"source_files":capture.computation_files(),"source_roots":capture.source_roots(),"configuration":{"python_minor":config.python_version(),"validation_null_policy":config.null_policy()},"environment":context.environment_fingerprint,"sdk_worker":context.sdk_version,"check_semantics":context.check_semantics,"declaration":declaration,"parameters":normalized_parameters,"inputs":inputs,"writer":execution.writer,"evaluation_us":execution.evaluation_us.map(|v|v.to_string()),"secret_versions":execution.secret_versions});
+    let mut execution_semantic = json!({"writer":semantic["writer"],"evaluation_us":semantic["evaluation_us"],"secret_versions":semantic["secret_versions"]});
+    if matches!(
+        d.declaration["authoring"]["kind"].as_str(),
+        Some("meta" | "sql")
+    ) {
+        execution
+            .output_branch
+            .parse::<tf_domain::BranchName>()
+            .map_err(|_| Error::Semantics)?;
+        let catalogue = context
+            .registry
+            .sdk_projection(context.source)
+            .map_err(|_| Error::Context)?;
+        // Handles observe paths and destination branch. Keep capture IDs out of the
+        // key; the stable registry projection conservatively includes all names.
+        let handles = json!({"branch":execution.output_branch,"entries":catalogue["entries"],"aliases":catalogue["aliases"]});
+        semantic["dataset_context"] = handles.clone();
+        execution_semantic["dataset_context"] = handles;
+    }
     let digest = content_digest(DigestKind::Compute, &semantic).map_err(|_| Error::Semantics)?;
     let mut components = BTreeMap::new();
     for (name, value) in [
@@ -277,10 +298,7 @@ pub fn finalize(
             "checks",
             json!({"checks":checks,"null_policy":semantic["configuration"]["validation_null_policy"]}),
         ),
-        (
-            "execution",
-            json!({"writer":semantic["writer"],"evaluation_us":semantic["evaluation_us"],"secret_versions":semantic["secret_versions"]}),
-        ),
+        ("execution", execution_semantic),
     ] {
         components.insert(
             name.into(),

@@ -14,7 +14,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import PurePosixPath
 from types import FunctionType
-from typing import Protocol, TypeVar
+from typing import Protocol, TypeVar, overload
 from uuid import UUID
 
 from ._catalog import CatalogNode, DatasetRef, capture_reference
@@ -238,6 +238,7 @@ class Declaration:
     filename: str
     line: int
     sql_file: str | None = None
+    handles: bool = False
 
 
 F = TypeVar("F", bound=Callable[..., object])
@@ -270,10 +271,11 @@ def _decorate(
     secret_refs: Sequence[str],
     source: bool,
     sql_file: str | None = None,
+    handles: bool = False,
 ) -> Callable[[F], F]:
     if not isinstance(output, Output):
         raise DeclarationError("Declare exactly one output=Output(...)")
-    if engine != "polars" and not (engine == "duckdb" and sql_file is not None):
+    if engine not in ("polars", "duckdb") or (engine == "duckdb" and not (handles or sql_file)):
         raise DeclarationError("Only the polars transform engine is currently supported")
     if cache not in (None, "deterministic", "never"):
         raise DeclarationError("cache must be deterministic or never")
@@ -287,7 +289,7 @@ def _decorate(
     if params is not None and not isinstance(params, Mapping):
         raise DeclarationError("params must be a mapping of typed Parameter declarations")
     parameters = tuple((params or {}).items())
-    if sql_file is not None:
+    if engine == "duckdb":
         sql_aliases = [alias.casefold() for alias, binding in bound if binding.role == "data"]
         names = [name.casefold() for name, _ in parameters]
         if len(set(sql_aliases)) != len(sql_aliases) or len(set(names)) != len(names):
@@ -353,12 +355,15 @@ def _decorate(
             if name == "ctx":
                 if parameter.kind != parameter.KEYWORD_ONLY:
                     raise DeclarationError("ctx must be keyword-only; annotate it TransformContext")
+            elif name == "output" and handles:
+                if parameter.kind != parameter.KEYWORD_ONLY:
+                    raise DeclarationError("output must be keyword-only")
             elif name not in data:
                 raise DeclarationError(
                     f"Function parameter {name!r} has no role=data Input declaration; "
                     "use ctx.params"
                 )
-        missing = data - signature.parameters.keys() if sql_file is None else set()
+        missing = data - signature.parameters.keys() if engine != "duckdb" else set()
         if missing:
             raise DeclarationError(
                 "Function is missing data Input aliases: " + ", ".join(sorted(missing))
@@ -379,6 +384,7 @@ def _decorate(
             function.__code__.co_filename,
             function.__code__.co_firstlineno,
             sql_file,
+            handles,
         )
         setattr(function, _ATTRIBUTE, declaration)
         return function
@@ -393,6 +399,7 @@ class SqlTransform:
     declaration: Declaration
 
 
+@overload
 def sql_transform(
     sql_file: str,
     *,
@@ -402,12 +409,51 @@ def sql_transform(
     cache: str = "deterministic",
     lineage: object = None,
     **named_inputs: Input,
-) -> SqlTransform:
+) -> SqlTransform: ...
+
+
+@overload
+def sql_transform(
+    sql_file: None = None,
+    *,
+    output: Output,
+    params: Mapping[str, Parameter] | None = None,
+    resources: Mapping[str, int] | None = None,
+    cache: str = "deterministic",
+    lineage: object = None,
+    **named_inputs: Input,
+) -> Callable[[F], F]: ...
+
+
+def sql_transform(
+    sql_file: str | None = None,
+    *,
+    output: Output,
+    params: Mapping[str, Parameter] | None = None,
+    resources: Mapping[str, int] | None = None,
+    cache: str = "deterministic",
+    lineage: object = None,
+    **named_inputs: Input,
+) -> SqlTransform | Callable[[F], F]:
     """Register one captured SQL query, relative to this registration module.
 
     Named input aliases are SQL views; named parameters use DuckDB's $name binding.
     Importing this declaration does not read the SQL file or import an engine.
     """
+    if sql_file is None:
+        return _decorate(
+            output=output,
+            inputs=named_inputs,
+            engine="duckdb",
+            params=params,
+            resources=resources,
+            cache=cache,
+            lineage=lineage,
+            refresh=None,
+            secret_refs=(),
+            source=False,
+            handles=True,
+        )
     if (
         not isinstance(sql_file, str)
         or not sql_file.endswith(".sql")
@@ -468,6 +514,34 @@ def transform(
         refresh=None,
         secret_refs=(),
         source=False,
+    )
+
+
+def transform_meta(
+    *,
+    output: Output,
+    engine: str = "polars",
+    params: Mapping[str, Parameter] | None = None,
+    resources: Mapping[str, int] | None = None,
+    cache: str = "deterministic",
+    lineage: object = None,
+    **named_inputs: Input,
+) -> Callable[[F], F]:
+    """A Polars transform receiving pinned dataset handles instead of dataframes."""
+    if engine != "polars":
+        raise DeclarationError("transform_meta requires the polars engine")
+    return _decorate(
+        output=output,
+        inputs=named_inputs,
+        engine=engine,
+        params=params,
+        resources=resources,
+        cache=cache,
+        lineage=lineage,
+        refresh=None,
+        secret_refs=(),
+        source=False,
+        handles=True,
     )
 
 

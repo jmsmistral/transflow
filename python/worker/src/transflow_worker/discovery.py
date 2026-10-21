@@ -6,7 +6,6 @@ import hashlib
 import importlib
 import importlib.abc
 import importlib.machinery
-import inspect
 import json
 import os
 import socket
@@ -20,10 +19,11 @@ from types import CodeType, ModuleType
 from typing import Any, BinaryIO, cast
 
 from transflow._catalog import CatalogSnapshot, DatasetRef, _bind_worker
-from transflow.declarations import Branch, Check, Declaration, SqlTransform, get_declaration
+from transflow.declarations import Branch, Check, Declaration, get_declaration
 
 from .canonical import DigestKind, content_digest
 from .compatibility import check_compatibility
+from .registration import configuration, exports
 from .source_index import ModuleEntry, ModuleIndex, ModuleIndexError
 from .wire import ControlFrame, ProtocolError, _decode, validate_document, write_frame
 
@@ -253,30 +253,52 @@ def collect(request: dict[str, Any]) -> dict[str, object]:
         for entry in index.modules:
             try:
                 module = importlib.import_module(entry.name)
-                seen: set[int] = set()
-                local: list[Declaration] = []
-                for name, function in vars(module).items():
-                    if (
-                        not (inspect.isfunction(function) or isinstance(function, SqlTransform))
-                        or id(function) in seen
-                    ):
-                        continue
-                    seen.add(id(function))
-                    declaration = get_declaration(function)
-                    if declaration is not None and declaration.module == entry.name:
-                        if isinstance(function, SqlTransform):
-                            declaration = replace(declaration, qualname=name)
-                        local.append(declaration)
-                if len(local) > 1:
+                try:
+                    local = exports(module)
+                except ValueError as exc:
                     raise DiscoveryError(
-                        "multiple_producers",
-                        "A producing module must define exactly one producer",
+                        "multiple_producers"
+                        if "multiple producers" in str(exc)
+                        else "registration",
+                        str(exc),
                         entry.path,
+                    ) from exc
+                for name, function, exported in local:
+                    declaration = get_declaration(function)
+                    if declaration is None:
+                        raise DiscoveryError(
+                            "registration", "Missing producer declaration", entry.path
+                        )
+                    definition = _declaration(
+                        replace(declaration, module=entry.name, qualname=name), entry
                     )
-                for declaration in local:
-                    definition = _declaration(declaration, entry)
+                    if exported or declaration.handles:
+                        definition_path = str(Path(declaration.filename).relative_to(root))
+                        if not any(f["path"] == definition_path for f in request["files"]):
+                            raise DiscoveryError(
+                                "registration",
+                                "Producer must originate in captured source",
+                                entry.path,
+                            )
+                        definition["authoring"] = {
+                            "format_version": 1,
+                            "kind": "sql"
+                            if declaration.engine == "duckdb" and declaration.sql_file is None
+                            else "meta"
+                            if declaration.handles
+                            else "frames",
+                            "exported": exported,
+                            "configuration": hashlib.sha256(
+                                configuration(function).encode()
+                            ).hexdigest(),
+                            "definition_path": definition_path,
+                            "definition_line": declaration.line,
+                        }
                     if declaration.sql_file is not None:
-                        sql_path = str(PurePosixPath(entry.path).parent / declaration.sql_file)
+                        sql_path = str(
+                            PurePosixPath(str(Path(declaration.filename).relative_to(root))).parent
+                            / declaration.sql_file
+                        )
                         captured = next(
                             (f for f in request["files"] if f["path"] == sql_path), None
                         )
@@ -373,6 +395,7 @@ def serve(request_path: Path, socket_path: Path) -> int:
 
 def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
     sequence = 0
+    uses_factories = False
     lock = threading.Lock()
     stopped = threading.Event()
 
@@ -391,7 +414,8 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                         "expectation.ast.v1",
                         "expectation.core.v1",
                         "expectation.g3.v1",
-                    ],
+                    ]
+                    + (["transform.factories.v1"] if uses_factories else []),
                     "extensions": [],
                 }
             )
@@ -416,6 +440,7 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
                 "expectation.ast.v1",
                 "expectation.core.v1",
                 "expectation.g3.v1",
+                "transform.factories.v1",
             ],
         }
     )
@@ -429,6 +454,9 @@ def _session(request: dict[str, Any], directory: Path, stream: BinaryIO) -> int:
             raise DiscoveryError(
                 "module_index", str(exc), exc.paths[0] if exc.paths else None
             ) from exc
+        uses_factories = any(
+            "authoring" in d for d in cast(list[dict[str, object]], result["definitions"])
+        )
         digest = _write(directory / "discovery.json", result)
         stopped.set()
         thread.join()

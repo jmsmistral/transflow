@@ -153,6 +153,32 @@ pub(super) fn request(
     let output = directory.join("transform");
     private(&output)?;
     let mut value = json!({"format_version":1,"protocol":{"major":1,"minor":0},"request_id":new_id()?.to_string(),"attempt_id":attempt.to_string(),"auth_token":"0".repeat(64),"capture_root":p.capture.files_root(),"source_roots":p.capture.source_roots(),"files":p.capture.discovery_files(),"catalog":p.catalog,"environment_fingerprint":p.plan.environment["fingerprint"],"result_directory":output,"producer":raw,"inputs":bindings,"compression":"zstd","row_group_size":"8192","threads":threads.to_string(),"context":{"build_id":j.build().to_string(),"job_id":id.to_string(),"evaluation_time":timestamp(p.plan.created_us)?,"random_seed":"0","parameters":parameters}});
+    if raw.get("authoring").is_some() {
+        let entries = p.catalog["entries"]
+            .as_array()
+            .ok_or_else(|| fail("missing captured catalogue"))?;
+        let path_for = |dataset: tf_domain::DatasetKey| -> Result<String> {
+            entries
+                .iter()
+                .find(|e| {
+                    e["key"]["workspace_id"] == dataset.workspace_id().to_string()
+                        && e["key"]["dataset_id"] == dataset.dataset_id().to_string()
+                })
+                .and_then(|e| e["path"].as_str())
+                .map(str::to_owned)
+                .ok_or_else(|| fail("handle dataset is absent from captured catalogue"))
+        };
+        let metadata = contract
+            .inputs
+            .iter()
+            .map(|input| {
+                Ok(json!({"alias":input.alias,
+            "path":path_for(input.dataset)?,"resolved_branch":input.resolved_branch.as_str()}))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        value["context"]["datasets"] = json!({"branch":p.plan.output.name,
+            "output":{"dataset_id":key,"path":path_for(j.target().dataset)?},"inputs":metadata});
+    }
     if raw["engine"] == "duckdb" {
         value["memory_bytes"] = p.plan.context["resources"][&key]["memory_budget_mib"]
             .as_str()
@@ -266,6 +292,24 @@ pub(super) fn classify(c: &lifecycle::Completion<'_>) -> tf_domain::execution::F
         }
     }
     C::Other
+}
+
+/// Bind retained generated SQL bytes to the durable attempt report.
+pub(super) fn sql_digest(directory: &Path) -> Result<Option<String>> {
+    let path = directory.join("transform/generated-sql.json");
+    let mut file = match tf_exec::retained_logs::open(&path) {
+        Ok(file) => file,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => return Err(fail(e)),
+    };
+    if file.metadata().map_err(fail)?.len() > 2 * 1024 * 1024 {
+        return Err(fail("SQL evidence exceeds its retention limit"));
+    }
+    Ok(Some(
+        tf_protocol::canonical::file_digest(&mut file)
+            .map_err(fail)?
+            .hex(),
+    ))
 }
 
 #[cfg(test)]

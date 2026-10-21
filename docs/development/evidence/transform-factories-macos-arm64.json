@@ -1,0 +1,115 @@
+{
+  "format_version": 1,
+  "date": "2026-10-21",
+  "specification": "1.1.4",
+  "scope": [
+    "T026 authoring follow-up",
+    "T027 discovery follow-up",
+    "T050 cache follow-up",
+    "T086 Code inspector follow-up",
+    "T101 SQL adapter follow-up"
+  ],
+  "platform": "Darwin arm64",
+  "changes": [
+    "Function-based sql_transform with optional enriched arguments and legacy SQL-file compatibility",
+    "transform_meta pinned dataset handles, without changing transform dataframe arguments",
+    "Authoritative bounded TRANSFORMS exports for shared Python/SQL factories, captured configuration fingerprints and stable output-derived selection",
+    "Handle-visible branch/catalogue names included in compute identity",
+    "Attempt-generated SQL retained before execution and bound to the durable report digest",
+    "Authored definition/registration and generated SQL views with exact publication/latest-attempt provenance"
+  ],
+  "verification": {
+    "python": {
+      "passed": 1152,
+      "command": "bash tools/check-python.sh",
+      "followup": "Ruff and mypy pass; 21 catalogue/overlay tests rerun after fixture-manifest hash update"
+    },
+    "web": {
+      "passed": 674,
+      "files": 29,
+      "assets": 16,
+      "command": "bash tools/check-web.sh",
+      "production_assets": "rebuilt and reproducible"
+    },
+    "cli": {
+      "passed": 70,
+      "command": "bash tools/check-cli.sh"
+    },
+    "polars": {
+      "passed": 22
+    },
+    "sql": {
+      "passed": 19,
+      "canonical_matrix_groups": 3
+    },
+    "lifecycle": {
+      "passed": 21
+    },
+    "factories": {
+      "format_version": 1,
+      "passed": 8,
+      "cases": [
+        "fresh ordinary/meta Python exports and SQL factory build five datasets",
+        "unchanged captured factory pipeline reuses all five outputs",
+        "API SQL evidence matches durable hash and exact input version",
+        "required input failure prevents SQL generation and preserves all heads",
+        "failed SQL execution retains its own generated SQL and last-good data",
+        "generation failure has no substituted SQL evidence and preserves heads",
+        "captured factory replay succeeds without changing live files",
+        "metadata-aware selected build reads fallback pins on another branch"
+      ]
+    },
+    "rust": {
+      "status": "passed",
+      "tests": 498,
+      "doc_tests": 1,
+      "command": "bash tools/check-rust.sh",
+      "checks": "formatting, workspace and standalone-storage compilation, all-target Clippy and full workspace tests"
+    },
+    "safety": {
+      "regressions": 27,
+      "locked_versions": 637,
+      "active_exceptions": 1,
+      "generated_contracts": 1
+    },
+    "specification": {
+      "checker": "passed",
+      "checker_regressions": 44
+    },
+    "browser": {
+      "surface": "Codex internal Browser",
+      "passed": [
+        "built Bash launcher starts coordinator",
+        "saved five-node lineage opens",
+        "authored SQL function and generated SQL shown",
+        "exact published SQL uses the producing attempt",
+        "imported Python factory and its registration source remain distinct",
+        "review branch preserves graph and reads fallback SQL with visible provenance",
+        "light/dark contrast and keyboard panel resize",
+        "no Browser console errors"
+      ],
+      "coordinator": "stopped after final verification"
+    }
+  },
+  "test_adjustments": [
+    "Six legitimate conformance additions update the fixture count from 383 to 389",
+    "Editor forwarding stubs and their manifest digests include the new SDK exports",
+    "SQL native qualification uses a short /tmp root; the default macOS temporary path repeatedly hit startup deadline, while the same untraced 19-case matrix passes with the unchanged 60-second limit"
+  ],
+  "review": {
+    "workspace": "~/dev/transflow-workspace/transform-factories-review",
+    "launcher": "bash ~/dev/transflow-workspace/transform-factories-review-tools/serve-preview.sh",
+    "lineage": "Operational alpha review",
+    "synthetic_orders": 120,
+    "datasets": 5,
+    "bundle": "matching copied CLI and freshly built UI; frozen for this delivery"
+  },
+  "limits": [
+    "Owner-monitored cross-platform CI remains pending",
+    "Trusted module imports are not a hostile-code sandbox",
+    "Closure/default captures are immutable scalars and bounded tuples; mutable/arbitrary objects are rejected",
+    "Incremental builds, credential delivery and OpenLineage remain deferred",
+    "Generated SQL is bounded and follows attempt-log retention; missing evidence is explicit"
+  ],
+  "repository_revisions": "Separate implementation/specification master commits are reported in the paired task ledger and handoff; no atomic two-repository transaction is claimed."
+}

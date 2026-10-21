@@ -208,6 +208,7 @@ class Session:
         if not capabilities <= {
             "diagnostic.note.v1",
             "discovery.v1",
+            "transform.factories.v1",
             "duckdb.execute.v1",
             "polars.execute.v1",
             "expectation.ast.v1",

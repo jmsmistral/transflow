@@ -36,7 +36,8 @@ def main() -> None:
         value: dict[str, Any] = json.loads(result.stdout)
         return value
 
-    with tempfile.TemporaryDirectory(prefix="tf-sql-") as temporary:
+    # Keep launcher/artifact paths short for native macOS worker qualification.
+    with tempfile.TemporaryDirectory(prefix="tf-sql-", dir="/tmp") as temporary:
         root = Path(temporary).resolve()
         launcher = root / "worker"
         launcher.write_text(

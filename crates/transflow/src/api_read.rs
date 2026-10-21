@@ -838,6 +838,9 @@ fn enrich(c: &Context, mut entries: Vec<Value>) -> Result<Vec<Value>> {
                 if let Some(source) = def.declaration.get("sql_source") {
                     e["producer"]["sql_source"] = source.clone();
                 }
+                e["producer"]["authoring"] = def.declaration["authoring"].clone();
+                e["producer"]["registration_path"] = def.declaration["path"].clone();
+                e["producer"]["engine"] = def.declaration["engine"].clone();
                 e["tags"] = def.declaration["tags"].clone();
             }
         }
