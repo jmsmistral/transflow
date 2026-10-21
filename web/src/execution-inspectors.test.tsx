@@ -1208,6 +1208,7 @@ test("History chart excludes failed and cached attempts while retaining failure 
 test("Python factories always show the definition in saved, published and diff views", async () => {
   const { model, state, calls } = await fixture(false, job, { factory: true });
   render(<CodeInspector workspace={model} state={state} />);
+  fireEvent.click(screen.getByRole("button", { name: /^Authored$/ }));
   expect(await screen.findByText("src/factory.py")).toBeTruthy();
   expect(
     screen.getAllByRole("button").map((button) => button.textContent),
@@ -1238,13 +1239,17 @@ test("Python factories always show the definition in saved, published and diff v
   model.dispose();
 });
 
-test("Python Generated reads the matching saved or published preview and keeps Diff authored", async () => {
+test("Python factories default to Generated, read matching previews and keep Diff authored", async () => {
   const { model, state } = await fixture(false, job, {
     factory: true,
     pythonPreview: true,
   });
   render(<CodeInspector workspace={model} state={state} />);
-  fireEvent.click(screen.getByRole("button", { name: /^Generated$/ }));
+  expect(
+    screen
+      .getByRole("button", { name: /^Generated$/ })
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
   expect(await screen.findByText("# Saved preview")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Data publish version" }));
   expect(await screen.findByText("# Published preview")).toBeTruthy();
@@ -1277,6 +1282,7 @@ test("Python Generated remains available when the authored file is a bounded exc
     boundedSource: true,
   });
   render(<CodeInspector workspace={model} state={state} />);
+  fireEvent.click(screen.getByRole("button", { name: /^Authored$/ }));
   expect(await screen.findByText(/Showing a bounded excerpt/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: /^Generated$/ }));
   expect(
@@ -1291,7 +1297,6 @@ test("Python Generated remains available when the authored file is a bounded exc
 test("Python Generated explains missing retained previews without fabricating source", async () => {
   const { model, state } = await fixture(false, job, { factory: true });
   render(<CodeInspector workspace={model} state={state} />);
-  fireEvent.click(screen.getByRole("button", { name: /^Generated$/ }));
   expect(
     await screen.findByText(/No expanded Python preview is retained/),
   ).toBeTruthy();
@@ -1305,7 +1310,7 @@ test("Python Generated explains missing retained previews without fabricating so
   model.dispose();
 });
 
-test("SQL Code shows actual attempt SQL and never substitutes a failed generator's older SQL", async () => {
+test("SQL factories default to Generated and retain the Authored switch", async () => {
   const { model, state, calls } = await fixture(false, job, {
     factorySql: true,
     generatedSql: true,
@@ -1325,6 +1330,15 @@ test("SQL Code shows actual attempt SQL and never substitutes a failed generator
     },
   };
   render(<CodeInspector workspace={model} state={sqlState} />);
+  expect(
+    screen
+      .getByRole("button", { name: /^Generated$/ })
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
+  expect(
+    await screen.findByRole("textbox", { name: "Read-only generated SQL" }),
+  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: /^Authored$/ }));
   expect(await screen.findByText("# current")).toBeTruthy();
   const header = screen
     .getByRole("heading", { name: state.value.dataset.path })

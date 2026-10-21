@@ -83,7 +83,8 @@ also explains that the current validated source capture is shared across data
 branches; it is not a separate branch's working tree. Data publish version retains
 the fallback output's exact source. Display fallback never changes build source.
 Dynamic transforms place **Generated** before **Authored** beside the dataset
-name; changing their order does not change the selected source view.
+name and open in **Generated** by default. **Authored** remains selectable;
+Diff opens authored source. Ordinary transforms continue to open in authored code.
 
 Node hover cards separate Data quality from Freshness. Freshness compares successful
 direct-input publications with the displayed output publication, following named
@@ -281,6 +282,10 @@ inspectors remain later work.
 ## Dataset inspection (T085)
 
 The right **Properties** panel follows the selected graph or catalogue dataset, starting directly with dataset identity and the About/Columns tabs.
+Catalogue loads 50 matching datasets at a time and appends the next page near the
+bottom on vertical scroll. Search and branch changes start a fresh result list;
+the dataset count shows how many matches are loaded. Paging buttons are removed.
+Failed page reads preserve loaded entries and offer an explicit retry.
 About displays stable ID, logical path, origin, transform type, producer location,
 creation time when recorded, publication time and physical row/file/byte counts.
 The compact detail list has no row dividers. Below Connections, Freshness shows

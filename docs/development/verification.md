@@ -1,5 +1,34 @@
 # Contributor verification
 
+## Generated Code default (2026-10-21)
+
+Dynamic Python/SQL transforms open Code in Generated, with manual Authored
+selection and authored Diff preserved. Ordinary transforms retain authored code.
+Catalogue appends 50-entry pages on vertical scroll and removes First page/Next
+page. Concurrent scroll events cannot overlap page reads; errors retain the list
+and require explicit retry. Search/branch changes reset paging and discard old
+responses while keeping the search input mounted.
+
+Focused regressions cover dynamic defaults, authored switching/Diff, cursor
+continuity, retained list position, overlapping events, short-page wheel input,
+failed-page recovery and query/context fences. No review workspace is created or
+replaced. The existing rebuilding launchers load the new UI after a coordinator
+restart; an already-running coordinator retains its startup bundle.
+
+The final `bash tools/check-web.sh` passes 687 tests in 31 files, strict checks and
+reproducible production assets (16 files). The safety gate passes 27 regressions
+and the public/dependency baseline; specification validation passes. No native
+runtime or Python source changes, so their broad suites are not repeated.
+
+Internal Browser verification reuses the existing `python-generated-review`:
+Python and SQL default to Generated, Authored remains selectable, reopening Code
+restores Generated, and ordinary transforms retain authored source. Catalogue
+search, counts and the removed paging buttons are observed against its five real
+datasets, with no console errors. Multi-page appends, read failures and stale
+responses are verified by the component fixtures rather than by adding datasets
+to the owner's review workspace. The verification coordinator is stopped; the
+owner's active `preview-scroll-review` coordinator is left running unchanged.
+
 ## Scroll Preview and compact Properties (2026-10-21)
 
 Preview requests 500-row exact-version pages and appends them near the bottom on

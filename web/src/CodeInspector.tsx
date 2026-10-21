@@ -87,9 +87,11 @@ export function CodeInspector({
   state: Ready;
 }) {
   const dataset = state.value.dataset;
-  const [content, setContent] = useState<"code" | "generated">("code");
   const isSql = field(dataset?.producer, "engine") === "duckdb";
   const dynamicallyGenerated = hasGeneratedCode(dataset?.producer);
+  const [content, setContent] = useState<"code" | "generated">(
+    dynamicallyGenerated ? "generated" : "code",
+  );
   const [mode, setMode] = useState<
     "Data publish version" | "Latest saved version" | "Diff"
   >("Latest saved version");

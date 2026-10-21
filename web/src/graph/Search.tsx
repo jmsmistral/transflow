@@ -1,5 +1,5 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
-import type { Workspace } from "../workspace";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { Workspace, WorkspaceState } from "../workspace";
 import type { ApiDatasetsV1 } from "../generated/contracts";
 import { Button } from "../components";
 
@@ -42,16 +42,61 @@ export function CatalogueSearch({
     setLocalFilter(value);
     onQuery?.(value);
   };
+  return (
+    <div className="catalogue-search">
+      <input
+        type="search"
+        aria-label="Search catalogue"
+        placeholder="Search datasets…"
+        value={filter}
+        onChange={(event) => setFilter(event.target.value)}
+      />
+      <CatalogueResults
+        key={JSON.stringify([fingerprint, filter])}
+        workspace={workspace}
+        active={active}
+        filter={filter}
+        fingerprint={fingerprint}
+        state={state}
+        visible={visible}
+        select={select}
+        onPage={onPage}
+      />
+    </div>
+  );
+}
+
+function CatalogueResults({
+  workspace,
+  active,
+  filter,
+  fingerprint,
+  state,
+  visible,
+  select,
+  onPage,
+}: {
+  workspace: Workspace;
+  active: boolean;
+  filter: string;
+  fingerprint: string;
+  state: WorkspaceState;
+  visible: readonly string[];
+  select: (entry: ApiDatasetsV1["entries"][number]) => void;
+  onPage: ((paths: readonly string[]) => void) | undefined;
+}) {
   const [cursor, setCursor] = useState<string | null>(null);
   const [result, setResult] = useState<{
-    key: string;
+    cursor: string | null;
     page: ApiDatasetsV1;
   } | null>(null);
   const [message, setMessage] = useState("");
-  const key = JSON.stringify([fingerprint, filter, cursor]);
+  const [retry, setRetry] = useState(0);
+  const pending = useRef(false);
   useEffect(() => {
     if (!active || !fingerprint) return;
     const request = new AbortController();
+    pending.current = true;
     const timer = setTimeout(
       () => {
         void workspace
@@ -68,49 +113,85 @@ export function CatalogueSearch({
           .then(
             (page) => {
               if (!request.signal.aborted) {
-                setResult({ key, page });
+                pending.current = false;
+                setResult((old) => ({
+                  cursor,
+                  page: {
+                    ...page,
+                    entries:
+                      cursor && old
+                        ? [...old.page.entries, ...page.entries]
+                        : page.entries,
+                  },
+                }));
                 setMessage("");
               }
             },
             (error: unknown) => {
-              if (!request.signal.aborted)
+              if (!request.signal.aborted) {
+                pending.current = false;
                 setMessage(
                   error instanceof Error
                     ? error.message
                     : "Catalogue search failed.",
                 );
+              }
             },
           );
       },
-      filter ? 150 : 0,
+      filter && !cursor ? 150 : 0,
     );
     return () => {
       clearTimeout(timer);
       request.abort();
     };
-  }, [workspace, active, fingerprint, filter, cursor, key]);
-  const page = result?.key === key ? result.page : null;
+  }, [workspace, active, fingerprint, filter, cursor, retry]);
+  const page = result?.page;
+  const loading = active && !message && (!result || result.cursor !== cursor);
   useEffect(() => {
-    if (page) onPage?.(page.entries.map((e) => e.path));
+    onPage?.(page?.entries.map((e) => e.path) ?? []);
   }, [page, onPage]);
+  const loadMore = () => {
+    if (!active || pending.current || message || !page?.next_cursor) return;
+    pending.current = true;
+    setCursor(page.next_cursor);
+  };
   return (
-    <div className="catalogue-search">
-      <input
-        type="search"
-        aria-label="Search catalogue"
-        placeholder="Search datasets…"
-        value={filter}
-        onChange={(event) => {
-          setFilter(event.target.value);
-          setCursor(null);
-          setMessage("");
-        }}
-      />
-      {message && <p role="alert">{message}</p>}
+    <>
+      {message && (
+        <p role="alert">
+          {message}{" "}
+          <Button
+            onClick={() => {
+              pending.current = true;
+              setMessage("");
+              setRetry((value) => value + 1);
+            }}
+          >
+            Retry loading datasets
+          </Button>
+        </p>
+      )}
       <ul
         className="dataset-list"
         aria-label="Catalogue datasets"
-        aria-busy={!page && active}
+        aria-busy={loading}
+        onScroll={(event) => {
+          const list = event.currentTarget;
+          if (
+            list.scrollTop > 0 &&
+            list.scrollHeight - list.scrollTop <= list.clientHeight * 2
+          )
+            loadMore();
+        }}
+        onWheel={(event) => {
+          const list = event.currentTarget;
+          if (
+            event.deltaY > Math.abs(event.deltaX) &&
+            list.scrollHeight <= list.clientHeight
+          )
+            loadMore();
+        }}
       >
         {page?.entries.map((entry) => {
           const present = visible.includes(
@@ -149,21 +230,19 @@ export function CatalogueSearch({
         })}
       </ul>
       {page?.entries.length === 0 && <p>No datasets match this search.</p>}
-      {!page && active && !message && <p role="status">Searching catalogue…</p>}
-      {page && (
-        <div className="toolbar">
-          <Button disabled={!cursor} onClick={() => setCursor(null)}>
-            First page
-          </Button>
-          <Button
-            disabled={!page.next_cursor}
-            onClick={() => setCursor(page.next_cursor)}
-          >
-            Next page
-          </Button>
-          <small>{page.total} datasets</small>
-        </div>
+      {loading && (
+        <p role="status">
+          {page ? "Loading more datasets…" : "Searching catalogue…"}
+        </p>
       )}
-    </div>
+      {page && (
+        <small>
+          {BigInt(page.total) > BigInt(page.entries.length)
+            ? `${page.entries.length} of `
+            : ""}
+          {page.total} datasets
+        </small>
+      )}
+    </>
   );
 }
