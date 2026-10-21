@@ -19,12 +19,14 @@ target/python/py314/bin/python -I -B python/tools/create_sql_checks_demo.py \
   --cli target/debug/transflow \
   --wheel target/sql-checks/wheels/transflow-0.0.0.dev0-py3-none-any.whl \
   --wheelhouse target/qualification/wheelhouse
-target/debug/transflow --workspace ~/dev/transflow-workspace/t104-sql-checks-review \
-  serve --ui-dir "$PWD/web/dist" --open
+bash tools/serve-review.sh ~/dev/transflow-workspace/t104-sql-checks-review --open
 ```
 
 Open the saved **SQL and checks review** view. Inspect qualified orders' Preview,
-Code, History and Data health. Code shows the captured `.sql` file. The initial
+Code, History and the right-side Health inspector. This fixture deliberately uses
+paired-file SQL, so Code shows the captured `.sql` file; for a single Python-file
+declaration, see [managed SQL transforms](../../python/SQL_TRANSFORMS.md).
+The launcher rebuilds the CLI and UI before starting. The initial
 build executes producers and the repeat is cached without fabricated attempts.
 Build reports show the exact jobs and published quality evidence. Both schedules
 start paused; Run now is explicit.

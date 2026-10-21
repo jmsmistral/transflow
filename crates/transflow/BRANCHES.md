@@ -24,7 +24,7 @@ runtime owner and rechecks the preview's existence/revision in the transaction.
 A new empty branch and its audit record commit atomically. An existing matching
 branch returns the same ID without allocating another branch or audit row.
 
-The later build preparer still owns requested-target/plan acceptance and actual
+The build preparer also owns requested-target/plan acceptance and actual
 capture/environment verification before using this service.
 
 ## Explicit lifecycle commands
@@ -63,5 +63,5 @@ sentinel stores the authored default tail (an empty user branch name is invalid)
 `Reader::branch_policy_snapshot` reconstructs that captured context. Identical
 writes are idempotent and changed snapshots fail. Historical policy rows do not
 become mutable runtime defaults or prevent later lifecycle changes. The build
-preparer will call this service alongside its source capture; accepted requests
+preparer calls this service alongside its source capture; accepted requests
 continue using their recorded policy rather than re-reading edited configuration.

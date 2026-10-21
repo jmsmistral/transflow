@@ -1,10 +1,11 @@
 # Polars execution adapter (T058)
 
-The private `execute` worker operation materializes one captured Polars producer.
-It is a backend service used by future runtime dispatch, not a public `transflow
-build` command. Polars 1.44.2 is qualified on the pinned engine environment. The
-SDK still imports without Polars; execution reports a missing environment instead
-of installing dependencies. DuckDB SQL transform adapters remain later work.
+The private `execute` worker operation materializes one captured Polars producer
+within managed `transflow build` execution. Polars 1.44.2 is qualified on the pinned
+engine environment. The SDK still imports without Polars; execution reports a
+missing environment instead of installing dependencies.
+[Managed DuckDB SQL](SQL_TRANSFORMS.md) is the other
+supported transform adapter.
 
 ## Accepted execution and immutable inputs
 
@@ -20,7 +21,7 @@ The Rust `tf_exec::polars::run` caller holds runtime ownership, input leases and
 admission/timer policy and verifies the environment before dispatch. Required input
 expectations must already have passed their separate validation service. The
 adapter checks source and data integrity; it does not implement or bypass the
-later T061/T062 expectation evaluator.
+separate [canonical expectation evaluator](../crates/tf-exec/CHECKS.md).
 
 Each input must match the caller's verified immutable artifact, including manifest,
 digest and exact local object directory. Rust re-verifies it before launch. Python
@@ -36,6 +37,10 @@ The adapter additionally checks Polars' actual pool size against the request. Th
 captured-source loader verifies bytes and reimports the immutable catalogue context;
 the producer must exactly match the accepted declaration. Helpers use the same
 captured source mechanism as discovery.
+
+Ordinary `@transform` arguments are lazy dataframes. `@transform_meta` receives
+pinned [dataset handles](TRANSFORM_FACTORIES.md) with an explicit `.dataframe()`
+method; both forms use the same checked materialization and publication path.
 
 ## Single materialization and independent candidate checks
 
@@ -95,6 +100,7 @@ copies have separate resource costs; the reported RSS is the Python worker's.
 `tools/qualification/check.sh` builds the local wheel and runs this suite on the
 existing macOS arm64/Linux x86-64/Linux arm64 matrix with Python 3.14.7. Local
 [evidence](../docs/development/evidence/t058-macos-arm64.json) records only executed
-platforms. Durable runtime dispatch, public build/serve, checks and publication
-composition remain T061–T067; source refresh/secrets and other adapters remain
-later work. No expectation or dataset publication is claimed by `artifact_ready`.
+platforms. Managed builds compose execution with input/output checks, source refresh,
+cache reuse and guarded publication. Secure credential delivery remains future work.
+The low-level `artifact_ready` message itself is neither a check result nor a
+dataset publication.

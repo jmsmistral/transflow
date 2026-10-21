@@ -6,7 +6,8 @@ publishes. Callers retain exact version leases, candidate ownership, environment
 verification and the producer's resource reservation until helper cleanup completes.
 T062 integrates input/output gates below; T063 adds reusable certificates, complete
 failed-attempt evidence persistence and bounded samples.
-Public build execution remains later orchestration work.
+The public build coordinator composes these services around producer execution
+and guarded publication; the check helper itself never publishes.
 
 Rust validates resolved check policies and the actual normalized schema, compiles
 the typed AST, and replaces caller query/path fields with its own compiled plan and

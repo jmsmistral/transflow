@@ -6,7 +6,8 @@ a first dataset build and the lineage workspace.
 ## Write datasets
 
 - [Python declarations](../python/DECLARATIONS.md) — inputs, outputs and transforms.
-- [Dataset handles and Python/SQL factories](../python/TRANSFORM_FACTORIES.md).
+- [Dataset handles and Python/SQL factories](../python/TRANSFORM_FACTORIES.md) -
+  reusable definitions, `transform_meta` and generated-code inspection.
 - [Polars execution](../python/POLARS.md) and [DuckDB SQL transforms](../python/SQL_TRANSFORMS.md).
 - [Quality checks](../python/EXPECTATIONS.md) — exact checks and failure policies.
 - [Catalogue references](../python/CATALOG.md) — stable dataset references in Python.
@@ -29,7 +30,8 @@ a first dataset build and the lineage workspace.
 ## Explore the workspace
 
 - [Lineage UI reference](../web/README.md) — graph exploration, saved views,
-  previews, SQL scratchpad, code, history and inspectors.
+  scroll-loaded catalogue/preview, SQL scratchpad, authored/generated code,
+  history and data health.
 - [HTTP API](../crates/tf-api/README.md).
 - [CLI conventions and diagnostics](../crates/transflow/README.md).
 

@@ -28,14 +28,14 @@ workspace records generated view, schedule and build identities.
 ## Open the UI
 
 ```bash
-target/debug/transflow --workspace ~/dev/transflow-workspace/t099-alpha-review \
-  serve --ui-dir "$PWD/web/dist" --open
+bash tools/serve-review.sh ~/dev/transflow-workspace/t099-alpha-review --open
 ```
 
 Open **Operational alpha review** through the saved lineage menu. If starting
 from an empty canvas, search `curated/delivery` in Catalogue and expand upstream.
 All five nodes are synthetic. The review branch publishes orders only;
 use the lineage fallback dialog to add master and inspect its regional/delivery versions.
+The launcher rebuilds the CLI/UI before starting; stop an older coordinator first.
 
 ## Review the integrated behavior
 
@@ -58,8 +58,9 @@ use the lineage fallback dialog to add master and inspect its regional/delivery 
 6. In SQL scratchpad, run `SELECT region, SUM(amount) FROM dataset GROUP BY region`.
    Results use the selected immutable version. File/network reads and mutation
    statements are rejected by the separate scratchpad policy.
-7. Data health shows the exact published version's output checks separately
-   from the latest attempted job and its consumer input checks. Cached reuse
+7. Open Health in the right inspector. Its ten-circle histories separate Latest
+   builds, Output dataset checks and Input dataset checks. Click an output/input
+   history circle for its retained check details. Cached reuse
    keeps the original check evidence and creates no new attempt.
 8. Select `analytics/region_summary`. Its managed DuckDB query reads
    `curated/delivery` through the `deliveries` input alias and produces per-region
@@ -67,6 +68,10 @@ use the lineage fallback dialog to add master and inspect its regional/delivery 
    adjacent `region_summary.py` registers its input and output. Edit the SQL and
    run `transflow build analytics/region_summary --branch master` to rebuild only
    the summary, or add `--mode full` to include all ancestors.
+
+This fixture retains the supported paired-file SQL form. For Python/meta factories,
+single-file SQL and Authored/Generated inspection, use the separate
+[factory demo](../../python/TRANSFORM_FACTORIES.md#try-the-synthetic-workspace).
 
 Stop the foreground coordinator with Ctrl-C after review.
 

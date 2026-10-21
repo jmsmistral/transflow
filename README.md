@@ -36,13 +36,19 @@ def order_totals(orders: pl.LazyFrame) -> pl.LazyFrame:
     return orders.group_by("customer_id").agg(pl.col("amount").sum())
 ```
 
-Prefer SQL? Register a captured SQL file with named input views using
+Prefer SQL? Keep the declaration and query together with
 [`sql_transform`](python/SQL_TRANSFORMS.md):
 
-```sql
-SELECT customer_id, SUM(amount) AS amount
-FROM orders
-GROUP BY customer_id;
+```python
+from transflow import Input, Output, sql_transform
+
+
+@sql_transform(
+    orders=Input("raw/orders"),
+    output=Output("curated/order_totals"),
+)
+def order_totals():
+    return "SELECT customer_id, SUM(amount) AS amount FROM orders GROUP BY customer_id"
 ```
 
 ## Features
@@ -51,8 +57,9 @@ GROUP BY customer_id;
 - **Polars and DuckDB first** - Write data transformations in Polars or DuckDB SQL.
 - **Versioned data and provenance** - Track published outputs, captured code and exact input versions.
 - **Data expectations** - Define and validate quality checks on transform inputs and outputs.
-- **Lineage UI** - Explore pipelines and dataset metadata via a interactive graph with informative overlays.
-- **Interactive exploration** - Preview datasets, run SQL queries, compare saved and published code and inspect execution history.
+- **Reusable transform factories** - Generate Python and SQL transforms from shared definitions, with optional dataset metadata handles.
+- **Lineage UI** - Explore pipelines and dataset metadata via an interactive graph with informative overlays.
+- **Interactive exploration** - Browse datasets, preview rows, run SQL queries and inspect authored/generated code and execution history.
 - **Branch fallbacks** - Resolve inputs through an ordered set of data branches for builds and scheduled runs.
 - **Data health** - Review recent builds and open individual input and output check results.
 - **Editor assistance** - Complete dataset references, inspect catalogue metadata and navigate to producers from your editor.
@@ -72,7 +79,7 @@ environment and create a runnable example. The public PyPI release is still ahea
 With the quickstart's customer-orders workspace prepared:
 
 ```bash
-transflow --workspace "$HOME/transflow-demo" plan curated/customer_orders
+transflow --workspace "$HOME/transflow-demo" plan curated/customer_orders --mode full
 transflow --workspace "$HOME/transflow-demo" build curated/customer_orders --mode full
 
 # From the repository checkout: build and open the lineage workspace.
@@ -85,11 +92,12 @@ views keep the graph you are working with.
 
 ## Explore more
 
-- **[Getting started](docs/getting-started.md)** — from source checkout to your first build and browser workspace.
+- **[Getting started](docs/getting-started.md)** - from source checkout to your first build and browser workspace.
 - **[Write Python transforms](python/DECLARATIONS.md)** · **[Write SQL transforms](python/SQL_TRANSFORMS.md)** · **[Add quality checks](python/EXPECTATIONS.md)**.
+- **[Reuse transform factories and dataset handles](python/TRANSFORM_FACTORIES.md)**.
 - **[Build and inspect datasets](crates/transflow/BUILDS.md)** · **[Set up schedules](crates/transflow/SCHEDULES.md)**.
-- **[Browse all guides](docs/README.md)** — authoring, operations, UI and API reference.
-- **[Contribute](docs/development/README.md)** — source layout, setup and verification.
+- **[Browse all guides](docs/README.md)** - authoring, operations, UI and API reference.
+- **[Contribute](docs/development/README.md)** - source layout, setup and verification.
 
 Transflow is under active development. The current preview uses a native Rust CLI,
 a matched Python SDK/worker wheel, and a separately built web UI. See the

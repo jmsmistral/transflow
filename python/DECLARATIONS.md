@@ -43,12 +43,15 @@ with typed comparisons, boolean composition, explicit promotion and input refere
 Discovery emits versioned canonical syntax; workspace validation resolves policies
 and checks structural semantics. G1 column/metric convenience methods, membership,
 null/float/schema predicates and exact key/truth kernels are available. Artifact
-evaluation is implemented by [T061](../crates/tf-exec/CHECKS.md); lifecycle integration
-remains T062.
+evaluation and managed-build input/output gates are implemented by the
+[canonical check service](../crates/tf-exec/CHECKS.md).
 Lambdas, SQL strings and engine expressions are not accepted as expectations.
 
-Exactly the `role="data"` aliases are dataframe parameters. `role="validation"`
-inputs remain in metadata but do not appear in the signature. Optional `ctx` must be
+With `@transform`, exactly the `role="data"` aliases are lazy dataframe parameters.
+`@transform_meta` receives pinned handles and requires `.dataframe()` to read them;
+function-based `@sql_transform` supplies handles for the arguments it declares and
+may omit input arguments altogether. `role="validation"` inputs remain in metadata
+but do not appear in the signature. Optional `ctx` must be
 keyword-only; annotate it `TransformContext` for type checking. Runtime signature
 validation inspects call mechanics without resolving annotation types. The worker injects the frozen execution context; ordinary direct calls
 remain ordinary Python calls. Annotations are preserved on the original callable without evaluating imports,

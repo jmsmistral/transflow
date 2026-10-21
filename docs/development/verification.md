@@ -1,5 +1,30 @@
 # Contributor verification
 
+## Public documentation refresh (2026-10-22)
+
+The owner-committed README title/banner and introductory prose from `25c63fc` are
+preserved. The 104-line introduction now demonstrates single-file SQL, links
+factory/handle authoring and describes authored/generated inspection. The
+quickstart, documentation index, Python/Polars/declaration references, build and
+branch guides, demo launch instructions, check-service guide and web reference
+are reconciled with current source. Obsolete statements that managed builds,
+SQL, checks or the UI are future work are removed. Paired-file SQL demo fixtures
+remain valid and are explicitly distinguished from the newer factory example.
+
+Both README authoring snippets execute against real Polars 1.44.2 and DuckDB
+1.5.5 with matching expected synthetic totals. The captured declarations are
+accepted by the current SDK; CLI help confirms build defaults to selected and
+plan to full. README/quickstart shell blocks pass Bash syntax checks. The README
+banner/title and introductory section are compared with the owner's commit.
+Application source, assets, dependency locks and runtime contracts are unchanged;
+application/browser/native suites and builds are not repeated for this doc review.
+New CI remains owner-monitored.
+
+Specification/link validation, all 44 checker regressions, 27 safety regressions,
+the paired repository safety baseline, web Markdown formatting and diff checks
+pass. No public release, native editor qualification or unrun application suite is
+inferred from this documentation review.
+
 ## README banner (2026-10-22)
 
 The owner-supplied root `logo.png` is displayed above the README title using a

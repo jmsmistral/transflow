@@ -138,7 +138,10 @@ a short table leaves an unruled blank area after its fixed-width columns even
 when all displayed cells are selected, and no more than 1,000 rows can be
 displayed. Exercise an absent selected-branch head: ordered fallbacks precede
 the browse-only retained-branch suggestion. Page requests
-must keep the initially bound exact version. Select a registered foreign dataset:
+must keep the initially bound exact version. Use a synthetic dataset above 500
+rows to verify 500-row pages append on vertical scroll without a load-more footer,
+up to the 1,000-row display cap. Catalogue appends 50-entry pages on scroll without
+First page/Next page buttons; search/branch changes reset paging. Select a registered foreign dataset:
 metadata counts come from its retained manifest, while provider byte availability
 and freshness remain distinct; a preview reads the provider under its lease.
 Exercise unavailable schema/read. With at least two visible nodes, select both,

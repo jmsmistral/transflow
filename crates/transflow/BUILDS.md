@@ -3,8 +3,9 @@
 After explicit environment lock/sync, `transflow build curated/orders` captures and
 validates the complete graph, reconciles new output declarations, plans the selected
 scope, executes required checks and waits for publication. No separate trust,
-discovery or catalogue-sync command is required. The initial execution adapter is
-Polars; failed checks or attempts preserve the last successful head.
+discovery or catalogue-sync command is required. Producers can use Polars or
+[managed DuckDB SQL](../../python/SQL_TRANSFORMS.md); failed checks or attempts
+preserve the last successful head.
 
 A build contains one or more jobs. Each job builds one dataset; an attempt is one
 execution try of that job, and retries create additional attempts. Cached jobs reuse
@@ -17,6 +18,12 @@ depth, not just direct inputs. Traversal stops at read boundaries, including
 imports, external datasets, manual sources unless explicitly refreshed, off-branch
 bindings, pins, boundaries and exclusions. Full does not include downstream or
 unrelated datasets; cache and source-refresh policies still apply within its scope.
+
+Without `--branch`, builds follow the attached Git branch when configured, or the
+workspace default (initially `master`) when Git is absent or following is disabled.
+With automatic Git following, detached HEAD requires an explicit destination.
+From inside a workspace,
+`--workspace` is optional; the CLI finds the nearest workspace root.
 
 Current-working-tree builds also refresh retained catalogue browsing metadata
 under the same source and registry guards. `catalog show` can report producer
@@ -84,8 +91,9 @@ opens its secure connection page and `--port N` selects the HTTP port.
 Only one build executes at a time per coordinator; a concurrent submission is
 explicitly refused. Independent jobs within a build still run concurrently under
 the configured resource pool. Ctrl-C on `serve` cancels active work and stops it.
-There is no automatic daemon installation. Workspace UI and scheduling
-are later tasks. Standalone CLI `plan`/catalogue mutations currently require the owner
+There is no automatic daemon installation. The [lineage UI](../../web/README.md)
+and [schedules](SCHEDULES.md) use the same coordinator. Standalone CLI
+`plan`/catalogue mutations currently require the owner
 to be stopped; build submissions and HTTP mutations use that owner directly.
 
 ## Retry and restart policy

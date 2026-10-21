@@ -61,18 +61,28 @@ the join runs. The source version remains published and the derived last-good
 head remains available. Duplicate customer IDs behave the same way. Force still
 runs required checks; it cannot override a failed output check.
 
-Public dataset preview/history commands and `serve --open` are not delivered yet.
-Use `build show` for execution/check history; the acceptance runner reads actual
-retained Parquet to verify values. The current `serve` is a headless CLI
-coordinator. [External registration and direct reads](../../crates/transflow/EXTERNAL.md)
-are available and have a separate two-workspace qualification journey.
+Use `build show` for CLI execution/check history. To browse data and code in the
+UI, return to the implementation checkout and launch the prepared workspace:
+
+```bash
+bash tools/serve-review.sh /path/to/customer-analysis --open
+```
+
+The launcher rebuilds the CLI/UI and opens an authenticated lineage page. Search
+for the output in Catalogue, add it to the graph and expand upstream. Preview,
+History and Code inspect the selected dataset. See the
+[quickstart](../../docs/getting-started.md) for source capture and restart behavior.
+[External registration and direct reads](../../crates/transflow/EXTERNAL.md)
+have a separate two-workspace qualification journey.
 
 Ordinary builds refresh retained catalogue-browse metadata after guarded registry
 reconciliation. `catalog show` can then report producer locations without importing
 Python. Invalid candidates and stale plans preserve the last valid display graph;
 Git-ref builds and replay preserve the current authoring display. Runtime C refs
-resolve after registration. Editor overlays still require explicit `catalog sync`;
-automatic overlays and native editor qualification are deferred to T031/T108/G3.
+resolve after registration. Typing overlays still require explicit `catalog sync`.
+Dataset-reference completion, hover and producer navigation are available through
+the [local editor service](../../docs/editors.md), whose guide records native
+editor qualification limits. Automatic typing-overlay generation remains separate.
 
 ## Contributor acceptance
 

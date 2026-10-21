@@ -4,16 +4,18 @@ One distribution named **transflow** contains two typed Python modules:
 `transflow` (SDK) and `transflow_worker` (worker). They share one version and wheel,
 with source responsibilities retained under `sdk/` and `worker/`.
 
-The development package supports Python 3.14. It provides version and
-bootstrap compatibility metadata, plus worker help/version/compatibility commands.
-T010 adds an internal immutable catalogue binding and typing-overlay prototype with
-explicit test contexts. T026 adds [immutable authoring declarations](DECLARATIONS.md) and preserved-callable
-decorators. Captured discovery and catalogue binding are implemented. T058 adds the private
-[Polars execution adapter](POLARS.md), and T059–T060 add the [typed expectation DSL and semantic kernels](EXPECTATIONS.md); T061 adds the private [canonical check helper](../crates/tf-exec/CHECKS.md).
-Managed builds compose these adapters with required checks and guarded publication.
-[Transform factories and dataset handles](TRANSFORM_FACTORIES.md) support explicit
-Python/meta exports and single-file [SQL query factories](SQL_TRANSFORMS.md). See the
-[prototype evidence and limits](../docs/development/catalog-overlay.md). Importing the SDK does not initialize a workspace or worker.
+The development package supports Python 3.14. Author datasets with preserved-callable
+[Python decorators](DECLARATIONS.md), [Polars transforms](POLARS.md), or
+[DuckDB SQL transforms](SQL_TRANSFORMS.md) written in one Python file or paired with
+a captured SQL file. [Transform factories and dataset handles](TRANSFORM_FACTORIES.md)
+support explicit multi-producer exports and optional metadata-aware Python inputs.
+Managed builds discover captured definitions, bind exact input versions, run
+[quality checks](EXPECTATIONS.md) and publish only after required checks pass.
+
+[Catalogue references](CATALOG.md) and [local editor assistance](../docs/editors.md)
+help with dataset names and producer navigation. Importing the SDK does not
+initialize a workspace or worker. See the [source quickstart](../docs/getting-started.md)
+for a matching native CLI, wheel and prepared workspace environment.
 
 ## Contributor setup and checks
 
@@ -41,10 +43,10 @@ target/python/demo/bin/python -I -m transflow_worker compatibility
 ```
 
 The report checks installed package/version consistency and worker protocol 1.0.
-T014 provides [bounded framing and generated validators](../crates/tf-protocol/README.md).
-The report now says `wire_protocol_implemented: true`, but `supported_operations`
-now contains `discover` and `execute`: [isolated discovery](DISCOVERY.md) and the
-[Polars data plane](POLARS.md) are implemented; check/query operations remain unavailable. Major mismatch
+The worker uses [bounded framing and generated validators](../crates/tf-protocol/README.md).
+The report says `wire_protocol_implemented: true`; `supported_operations` contains
+`discover` and `execute`. Validation and interactive SQL use separate private
+helper interfaces, rather than additional operations in this report. Major mismatch
 fails immediately; sessions separately check minor compatibility and mutually
 supported capabilities. This diagnostic JSON is not the worker control channel.
 
@@ -59,8 +61,8 @@ The Rust executable is still a separate native artifact.
 The build backend is setuptools 84.0.0 with build 1.6.1, already present in T003's
 resolver baseline. Development pins add Ruff 0.16.8, mypy 2.3.1 and pytest 9.1.1.
 The Python 3.14 tooling lock includes transitive hashes. Engines are not
-dependencies of this bootstrap wheel; add the qualified runtime dependencies as
-their implementations land. Normal checks do not resolve or download packages.
+dependencies of the wheel; declare qualified engines in workspace requirements
+before explicit environment lock/sync. Normal checks do not resolve or download packages.
 
 To deliberately regenerate locks, use the corresponding prepared interpreter's
 pip-tools 7.6.1 with `python/requirements-dev.in`, `--generate-hashes`,
@@ -69,17 +71,19 @@ Review changes and requalify Python 3.14 on all target platforms.
 
 The installed `transflow_worker.canonical` module provides canonical JSON, streaming
 file SHA-256 and selected content fingerprints without third-party runtime packages.
-See the [canonical contract](../schemas/canonical-v1.md); complete cache/source field
-selection and storage/publication remain unimplemented.
+See the [canonical contract](../schemas/canonical-v1.md). Managed builds use retained
+source, cache keys and guarded publication; the low-level helpers do not publish.
 
 T022 adds `transflow_worker.source_index`, an immutable pre-import module index
 using the selected interpreter’s stdlib and identifier rules. It accepts explicit
 captured paths, does not import user code, and rejects conflicting roots/modules
-and SDK/runtime shadowing. Actual discovery remains T027.
+and SDK/runtime shadowing. Captured discovery uses this index before producer imports.
 
 ## Restricted SQL helper
 
 T079 adds the private [SQL validator and isolated helper](worker/SQL.md). It uses
 DuckDB 1.5.5 and optional PyArrow 25.0.1 from the native qualification environment.
-It is not a public query command; T080 owns coordinator/query lifecycle integration.
+It powers the authenticated [query API](../crates/tf-api/README.md#interactive-queries)
+and the lineage UI's SQL scratchpad, with independent deadlines, cancellation and
+bounded result pages. It is separate from managed SQL transform execution.
 Existing workspace dependency locks are unchanged.

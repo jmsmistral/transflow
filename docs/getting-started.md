@@ -94,6 +94,10 @@ A failed required check leaves the previous successful output available.
 
 `build` defaults to `selected`, reusing published inputs. The first build above
 uses `full` to include every eligible upstream ancestor and create those inputs.
+`plan` defaults to `full`; use `plan --mode selected` to preview the default build
+scope. Without `--branch`, builds follow the attached Git branch when configured,
+or the workspace default (initially `master`) outside Git. From inside the
+workspace directory, omit `--workspace`: Transflow finds the nearest workspace.
 
 The source producers in this example refresh on each full build. To build just the
 joined output against the current source versions:
@@ -115,6 +119,13 @@ for the selected workspace and opens an authenticated browser page. Search for
 `curated/customer_orders` in Catalogue, add it to the graph and expand upstream.
 Select a dataset to explore Preview, SQL scratchpad, History and Code. Save the
 lineage to return to that graph later.
+
+After editing a producer or helper, build the affected target again. Code's
+Latest saved version shows the latest validated source capture, not unsaved or
+unvalidated working-tree edits. Data publish version shows the source that
+produced the displayed data. A failed build keeps the last successful publication.
+For reusable Python/SQL definitions and the Generated view, see
+[transform factories and dataset handles](../python/TRANSFORM_FACTORIES.md).
 
 Stop the foreground coordinator with Ctrl-C. After pulling UI changes, stop the
 old coordinator and launch again: it serves the asset snapshot from its startup.

@@ -181,8 +181,8 @@ timer inside browser qualification. Selection tests supply their own imperative
 grid adapter. File isolation and unhandled-error detection remain enabled; real
 grid layout, virtualization and gestures are covered by the internal Browser.
 
-React Flow/ELK interaction and worker layout remain T083. React 19.3.0,
-TypeScript 6.0.3, Vite 8.3.3, jsdom 30.1.3 and ESLint 9.39.5 are pinned exactly.
+React Flow/ELK interaction and worker layout are covered by T083. React 19.3.0,
+TypeScript 6.0.3, Vite 8.3.3, Vitest 5.0.3, jsdom 30.1.3 and ESLint 9.39.5 are pinned exactly.
 Existing development dependency exceptions remain in the safety inventory; no
 new package was added. Public fixtures and browser journeys use synthetic data.
 
@@ -201,9 +201,9 @@ The adjacent **Fallback branches** dialog adds, reorders and removes the view-lo
 tail. Empty means no fallback; **Use workspace defaults** clears the override.
 The server normalizes it and binds it into read context fingerprints. Frozen
 versions/plans reject overrides. Workspace configuration is unchanged. Build controls
-are still a later task; they must pass this override explicitly when implemented.
+pass this view override explicitly to guarded plan requests.
 
-Drag the canvas to pan, Shift-drag for box selection, and Shift/Cmd/Ctrl-click to select multiple nodes. Drag nodes or use their arrow keys to change positions. There is no pin/unpin state. Delete/Backspace removes only focused graph selections from the view. Persisted positions and visual undo/redo are delivered in T084. Context fingerprints fence requests and reset the graph when the context changes. The worker foundation remains bundled and production-tested; it is not invoked by graph membership changes.
+Drag the canvas to pan, Shift-drag for box selection, and Shift/Cmd/Ctrl-click to select multiple nodes. Drag nodes or use their arrow keys to change positions. There is no pin/unpin state. Delete/Backspace removes only focused graph selections from the view. Saved lineages retain positions and visual undo/redo. Data-branch and fallback changes preserve graph membership, positions, selection and camera while refreshing facts under the new context; late responses are discarded. The worker foundation remains bundled and production-tested; it is not invoked by graph membership changes.
 
 ### UI review iteration: catalogue and canvas navigation
 
@@ -276,8 +276,8 @@ Documents are bounded to 500 datasets, finite coordinates within ±1,000,000,
 zoom 0.05–2 and 1 MiB. Lists page 100 summaries; reopening resolves stable dataset
 identities in bounded context-owned reads. Missing identities fail explicitly;
 there is no silent truncation. Branch following does not promise historical bytes
-or complete G2/G3 qualification: advanced health
-inspectors remain later work.
+or complete G2/G3 qualification. The Health inspector separates latest builds,
+published output checks and consumer input checks as described above.
 
 ## Dataset inspection (T085)
 
