@@ -90,6 +90,22 @@ stated UTC date. Wildcards, duplicate/unused exceptions and missing ownership or
 rationale fail. All reported advisories block by default, without a severity
 threshold; secret findings cannot be suppressed through this policy.
 
+### Vite advisory correction (2026-10-21)
+
+The reported safety CI job rejected Vite 8.3.0 using freshly queried advisory
+data. Its log listed three launch-editor advisories; a fresh local OSV query also
+reported three Vite development-server advisories for that version. Both the
+application and standalone qualification manifests now pin Vite 8.3.3, with
+updated lockfiles, license inventory and advisory evidence. Upstream's
+[8.3.3 release](https://github.com/vitejs/vite/releases/tag/v8.3.3) updates the
+bundled launch-editor and fixes development-server path checks.
+
+CI continues to query current advisories on each run. Offline local checks use
+the saved report, so a recent passing report can predate newly added or expanded
+advisory ranges. Refresh the report when investigating a CI advisory failure,
+even if it is still within the seven-day age limit. Advisory blocking and the
+existing exact deprecation exception remain enforced.
+
 ### Development-tool review (2026-10-19)
 
 The expired exceptions were reviewed against current package metadata. Node is

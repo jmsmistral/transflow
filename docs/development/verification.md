@@ -1,5 +1,35 @@
 # Contributor verification
 
+## Vite advisory CI correction (2026-10-21)
+
+The owner-reported [safety job](https://github.com/jmsmistral/transflow/actions/runs/39619790583/job/119289869805)
+at `2e7d06b` completed its 27 regressions, then rejected Vite 8.3.0 using freshly
+queried advisory data. The supplied log shows three launch-editor findings;
+a fresh local OSV query during this investigation finds six matches against
+8.3.0, including the three development-server advisories. The saved local report
+was dated 2026-10-19 and predated updated advisory ranges.
+
+Both web manifests and lockfiles now pin Vite 8.3.3, with its compatible Rolldown
+1.2.15 bindings and OXC types 0.155.0. License inventory and advisory evidence
+are regenerated. A fresh query of 637 locked versions reports zero advisory
+matches. No advisory exception or workflow relaxation is added; CI still queries
+current data and the existing exact ESLint deprecation exception remains scoped.
+
+Local macOS arm64 checks pass: 687 web tests, strict types/lint/format checks,
+reproducible production assets (16 files) and worker probes; the standalone web
+qualification typecheck, six probes and production build; 27 safety regressions,
+standalone and paired repository scans, inventory/exception/generated-contract
+checks. The UI bundle is rebuilt. Native Rust/Python source and runtime contracts
+are unchanged, so their broad suites are not repeated. Remote CI remains
+owner-monitored after the corrective push.
+
+Specification validation passes. Internal Browser smoke checks against the
+rebuilt production bundle confirm generated Python and SQL views, the five-entry
+Catalogue and no console errors in the existing `python-generated-review`
+workspace. No review workspace is created. The verification coordinator is
+stopped; the owner's active `preview-scroll-review` coordinator is preserved.
+Screenshot evidence is retained locally at `target/vite-security-review.png`.
+
 ## Generated Code default (2026-10-21)
 
 Dynamic Python/SQL transforms open Code in Generated, with manual Authored

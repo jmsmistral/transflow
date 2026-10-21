@@ -5,8 +5,8 @@
     "tools/qualification/python/py314.lock": "368680daa726b6b16dac4fe9f924ace236f800f4c4e054d0254a029e99897101",
     "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
     "tools/qualification/rust/Cargo.lock": "1ef271b4144b8a3e8d397eb6e040b883e52d91d51e3da1625f14112a7cb537fa",
-    "tools/qualification/web/package-lock.json": "8121cbedca233a15d8f21c6d20773db70bc73ed77ed43292ef1daa3df88e689a",
-    "web/package-lock.json": "ff234293e568f5809ae10df5c34c5c851535820ad2af40d04d36fbe371507cdb"
+    "tools/qualification/web/package-lock.json": "907b0fd8905e7f1bd629859575997304f128800550fb8d290411792d93523756",
+    "web/package-lock.json": "a3e7b6e3429cdb2a8ef0f2fd48b2602476ed86ff3acf03326c11a8c0c143378d"
   },
   "packages": [
     {
@@ -4022,7 +4022,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@oxc-project/types@0.150.0",
+      "id": "npm:@oxc-project/types@0.155.0",
       "licenses": [
         "MIT"
       ],
@@ -4031,7 +4031,7 @@
         "web/package-lock.json"
       ],
       "name": "@oxc-project/types",
-      "version": "0.150.0"
+      "version": "0.155.0"
     },
     {
       "deprecations": [],
@@ -4062,7 +4062,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-android-arm-eabi@1.2.9",
+      "id": "npm:@rolldown/binding-android-arm-eabi@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4071,12 +4071,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-android-arm-eabi",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-android-arm64@1.2.9",
+      "id": "npm:@rolldown/binding-android-arm64@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4085,12 +4085,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-android-arm64",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-darwin-arm64@1.2.9",
+      "id": "npm:@rolldown/binding-darwin-arm64@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4099,12 +4099,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-darwin-arm64",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-darwin-x64@1.2.9",
+      "id": "npm:@rolldown/binding-darwin-x64@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4113,12 +4113,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-darwin-x64",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-freebsd-x64@1.2.9",
+      "id": "npm:@rolldown/binding-freebsd-x64@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4127,12 +4127,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-freebsd-x64",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-linux-arm-gnueabihf@1.2.9",
+      "id": "npm:@rolldown/binding-linux-arm-gnueabihf@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4141,12 +4141,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-linux-arm-gnueabihf",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-linux-arm64-gnu@1.2.9",
+      "id": "npm:@rolldown/binding-linux-arm64-gnu@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4155,12 +4155,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-linux-arm64-gnu",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-linux-arm64-musl@1.2.9",
+      "id": "npm:@rolldown/binding-linux-arm64-musl@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4169,12 +4169,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-linux-arm64-musl",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-linux-ppc64-gnu@1.2.9",
+      "id": "npm:@rolldown/binding-linux-ppc64-gnu@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4183,12 +4183,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-linux-ppc64-gnu",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-linux-s390x-gnu@1.2.9",
+      "id": "npm:@rolldown/binding-linux-s390x-gnu@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4197,12 +4197,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-linux-s390x-gnu",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-linux-x64-gnu@1.2.9",
+      "id": "npm:@rolldown/binding-linux-x64-gnu@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4211,12 +4211,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-linux-x64-gnu",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-linux-x64-musl@1.2.9",
+      "id": "npm:@rolldown/binding-linux-x64-musl@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4225,12 +4225,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-linux-x64-musl",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-openharmony-arm64@1.2.9",
+      "id": "npm:@rolldown/binding-openharmony-arm64@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4239,12 +4239,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-openharmony-arm64",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-win32-arm64-msvc@1.2.9",
+      "id": "npm:@rolldown/binding-win32-arm64-msvc@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4253,12 +4253,12 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-win32-arm64-msvc",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@rolldown/binding-win32-x64-msvc@1.2.9",
+      "id": "npm:@rolldown/binding-win32-x64-msvc@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -4267,7 +4267,7 @@
         "web/package-lock.json"
       ],
       "name": "@rolldown/binding-win32-x64-msvc",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
@@ -7672,7 +7672,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:rolldown@1.2.9",
+      "id": "npm:rolldown@1.2.15",
       "licenses": [
         "MIT"
       ],
@@ -7681,7 +7681,7 @@
         "web/package-lock.json"
       ],
       "name": "rolldown",
-      "version": "1.2.9"
+      "version": "1.2.15"
     },
     {
       "deprecations": [],
@@ -8315,7 +8315,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:vite@8.3.0",
+      "id": "npm:vite@8.3.3",
       "licenses": [
         "MIT"
       ],
@@ -8324,7 +8324,7 @@
         "web/package-lock.json"
       ],
       "name": "vite",
-      "version": "8.3.0"
+      "version": "8.3.3"
     },
     {
       "deprecations": [],

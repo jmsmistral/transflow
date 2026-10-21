@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": "24.22.0", "npm": "11.19.1" },
+  "engines": {
+    "node": "24.22.0",
+    "npm": "11.19.1"
+  },
   "packageManager": "npm@11.19.1",
   "scripts": {
     "prepare:types": "node patch-elk.mjs --apply",
@@ -21,6 +24,6 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "typescript": "6.0.3",
-    "vite": "8.3.0"
+    "vite": "8.3.3"
   }
 }

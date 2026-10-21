@@ -35,7 +35,7 @@ pins are unchanged. See the [receipt](evidence/t008-toolchain-review.json).
 | Node / npm | 24.22.0 / 11.19.1; macOS arm64 web qualification on 2026-10-19, updated Linux CI pending |
 | React / React DOM | 19.3.0 |
 | React Flow / ELK | @xyflow/react 12.11.6 / elkjs 0.12.0, with the declaration fix below |
-| TypeScript / Vite | 6.0.3 / 8.3.0 |
+| TypeScript / Vite | 6.0.3 / 8.3.3 |
 
 The complete direct Rust pins and transitive resolution live in
 [Cargo.toml](../../tools/qualification/rust/Cargo.toml) and
