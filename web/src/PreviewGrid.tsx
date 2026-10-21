@@ -49,6 +49,7 @@ export function PreviewGrid({
   formatCell,
   formatType,
   onError,
+  onNearEnd,
 }: {
   page: GridPage;
   path: string;
@@ -56,6 +57,7 @@ export function PreviewGrid({
   formatCell: (value: WireValue | null) => string;
   formatType: (index: number) => string;
   onError: (message: string) => void;
+  onNearEnd?: () => void;
 }) {
   const grid = useRef<HTMLRevoGridElement>(null);
   const container = useRef<HTMLDivElement>(null);
@@ -121,6 +123,16 @@ export function PreviewGrid({
       ref={container}
       className="preview-grid-wrap"
       aria-label={`${path} preview`}
+      onWheel={async (event) => {
+        if (!onNearEnd || event.deltaY <= Math.abs(event.deltaX)) return;
+        const providers = await grid.current?.getProviders();
+        if (!providers) return;
+        // A byte-limited page can be shorter than a screen. Let a downward
+        // wheel gesture request its next page even without a scrollbar yet.
+        const height = providers.viewport.stores.rgRow.store.get("virtualSize");
+        const total = providers.dimension.stores.rgRow.store.get("realSize");
+        if (height > 0 && total <= height) onNearEnd();
+      }}
       onMouseDownCapture={(event) => {
         // RevoGrid focuses the cell under a right-click on mousedown, which
         // replaces an existing range before the context menu can copy it.
@@ -220,6 +232,23 @@ export function PreviewGrid({
         resize
         canMoveColumns={false}
         hideAttribution
+        onViewportscroll={async ({ detail }) => {
+          if (
+            !onNearEnd ||
+            detail.dimension !== "rgRow" ||
+            detail.coordinate <= 0
+          )
+            return;
+          const providers = await grid.current?.getProviders();
+          if (!providers) return;
+          const height =
+            providers.viewport.stores.rgRow.store.get("virtualSize");
+          const total = providers.dimension.stores.rgRow.store.get("realSize");
+          // Prefetch within one screen of the end, using the grid's logical
+          // dimensions rather than its compressed DOM scrollbar coordinates.
+          if (height > 0 && detail.coordinate + height * 2 >= total)
+            onNearEnd();
+        }}
       />
       {menu && (
         <div

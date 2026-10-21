@@ -442,6 +442,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                     </div>
                   ) : (
                     <PropertiesInspector
+                      workspace={workspace}
                       state={inspectorState}
                       selected={selectedNodes}
                     />

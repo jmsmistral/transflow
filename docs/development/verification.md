@@ -1,5 +1,24 @@
 # Contributor verification
 
+## Scroll Preview and compact Properties (2026-10-21)
+
+Preview requests 500-row exact-version pages and appends them near the bottom on
+vertical scroll, retaining the 1,000-row display cap. The load-more footer is
+removed. Duplicate scroll events cannot overlap page requests; byte-limited
+short pages advance on a downward wheel gesture, while errors retain loaded rows
+and require explicit restart. Properties adds publication freshness and a single
+read-only output-check history strip. Generated precedes Authored in Code.
+
+All 683 web tests, strict checks and reproducible 16-asset builds pass, along with
+27 safety regressions, specification validation and 44 checker regressions.
+Local verification and the real coordinator/internal Browser review are recorded
+in the [receipt](evidence/t085-scroll-properties-review.json). The separate
+`preview-scroll-review` workspace contains 1,500 synthetic orders and five built
+datasets. Its Bash launcher rebuilds the CLI/UI before serving; previous review
+workspaces and the owner's root README edits are preserved. Native/API contracts
+are unchanged, so their broad suites are not repeated. Remote CI remains
+owner-monitored.
+
 ## Inspector fallback and mixed-engine review (2026-10-20)
 
 History now uses a single labelled branch for jobs, metrics and details. Empty

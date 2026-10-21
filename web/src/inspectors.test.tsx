@@ -305,6 +305,7 @@ test("properties hide the previous dataset during multi-selection", async () => 
   });
   render(
     <PropertiesInspector
+      workspace={workspace}
       state={workspace.snapshot()}
       selected={[node(datasetId), node(versionId)]}
     />,
@@ -365,23 +366,37 @@ test("foreign manifest contributes exact physical counts without asserting byte 
   ).toBeUndefined();
 });
 
-test("preview cursor keeps the same immutable version and appends bounded rows", async () => {
+function scrollPreview(coordinate: number, dimension = "rgRow") {
+  fireEvent(
+    screen.getByRole("table"),
+    new CustomEvent("viewportscroll", {
+      detail: { dimension, coordinate },
+    }),
+  );
+}
+
+test("scroll paging uses 500-row requests, pins the version and ignores duplicate events", async () => {
   const base = transport();
+  let complete: ((value: Response) => void) | undefined;
   const fetcher = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
     if (String(url).startsWith("/api/v1/previews?")) {
       const request = JSON.parse(String(init?.body)) as {
         cursor?: string;
         version: string;
+        rows: number;
       };
       expect(request.version).toBe(versionId);
+      expect(request.rows).toBe(500);
+      if (request.cursor)
+        return new Promise<Response>((resolve) => {
+          complete = resolve;
+        });
       return Promise.resolve(
         json(
           {
             ...preview,
-            rows: request.cursor
-              ? preview.rows.slice(1)
-              : preview.rows.slice(0, 1),
-            next_cursor: request.cursor ? null : "opaque-next",
+            rows: Array.from({ length: 500 }, () => preview.rows[0] ?? []),
+            next_cursor: "opaque-next",
           },
           exact,
         ),
@@ -399,13 +414,35 @@ test("preview cursor keeps the same immutable version and appends bounded rows",
   render(<App workspace={workspace} />);
   await selectGraphDataset();
   fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
-  fireEvent.click(
-    await screen.findByRole("button", { name: "Load next 100 rows" }),
+  await waitFor(() => expect(screen.getByText(/Showing 500\+/)).toBeTruthy());
+  expect(screen.queryByRole("button", { name: /Load next/ })).toBeNull();
+  scrollPreview(11900, "rgCol");
+  scrollPreview(100);
+  await Promise.resolve();
+  expect(complete).toBeUndefined();
+  scrollPreview(11760);
+  scrollPreview(11760);
+  await waitFor(() => expect(complete).toBeDefined());
+  scrollPreview(11760);
+  complete?.(
+    json(
+      {
+        ...preview,
+        rows: Array.from({ length: 500 }, () => preview.rows[1] ?? []),
+        next_cursor: "more-rows",
+      },
+      exact,
+    ),
   );
-  await waitFor(() => expect(screen.getAllByRole("row")).toHaveLength(3));
+  await waitFor(() =>
+    expect(screen.getByText(/Showing 1000.*preview limit/)).toBeTruthy(),
+  );
+  scrollPreview(23760);
+  await Promise.resolve();
   const requests = fetcher.mock.calls.filter(([url]) =>
     String(url).startsWith("/api/v1/previews?"),
   );
+  expect(requests).toHaveLength(2);
   expect(JSON.parse(String(requests[1]?.[1]?.body))).toMatchObject({
     cursor: "opaque-next",
     version: versionId,
@@ -413,16 +450,55 @@ test("preview cursor keeps the same immutable version and appends bounded rows",
   workspace.dispose();
 });
 
-test("preview stops offering pages after 1000 displayed rows", async () => {
-  const workspace = new Workspace(
-    new Client(
-      transport({
-        ...preview,
-        rows: Array.from({ length: 1000 }, () => preview.rows[0] ?? []),
-        next_cursor: "more-rows",
-      }),
-    ),
+test("a short byte-limited page loads on wheel, preserves rows on failure and restarts explicitly", async () => {
+  const base = transport();
+  let requests = 0;
+  const fetcher = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+    if (!String(url).startsWith("/api/v1/previews?")) return base(url, init);
+    requests += 1;
+    const request = JSON.parse(String(init?.body)) as { cursor?: string };
+    if (request.cursor)
+      return Promise.reject(new Error("Preview page unavailable"));
+    return Promise.resolve(
+      json({ ...preview, next_cursor: "byte-limited-next" }, exact),
+    );
+  });
+  const workspace = new Workspace(new Client(fetcher));
+  await workspace.connect("launch");
+  await workspace.select({
+    branch: "master",
+    dataset: datasetId,
+    origin: workspaceId,
+  });
+  render(<App workspace={workspace} />);
+  await selectGraphDataset();
+  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+  await waitFor(() => expect(screen.getByText(/Showing 2\+/)).toBeTruthy());
+  fireEvent.wheel(screen.getByRole("table"), { deltaX: 100, deltaY: 0 });
+  await Promise.resolve();
+  expect(requests).toBe(1);
+  fireEvent.wheel(screen.getByRole("table"), { deltaY: 100 });
+  expect(await screen.findByRole("alert")).toBeTruthy();
+  expect(screen.getAllByRole("row")).toHaveLength(3);
+  fireEvent.wheel(screen.getByRole("table"), { deltaY: 100 });
+  await Promise.resolve();
+  expect(requests).toBe(2);
+  fireEvent.click(screen.getByRole("button", { name: "Restart preview" }));
+  await waitFor(() => expect(screen.getByText(/Showing 2\+/)).toBeTruthy());
+  expect(requests).toBe(3);
+  expect(screen.queryByRole("alert")).toBeNull();
+  workspace.dispose();
+});
+
+test("preview does not request more rows at the 1000-row display limit", async () => {
+  const fetcher = vi.fn(
+    transport({
+      ...preview,
+      rows: Array.from({ length: 1000 }, () => preview.rows[0] ?? []),
+      next_cursor: "more-rows",
+    }),
   );
+  const workspace = new Workspace(new Client(fetcher));
   await workspace.connect("launch");
   await workspace.select({
     branch: "master",
@@ -435,9 +511,14 @@ test("preview stops offering pages after 1000 displayed rows", async () => {
   await waitFor(() =>
     expect(screen.getByText(/Showing 1000.*preview limit/)).toBeTruthy(),
   );
+  expect(screen.queryByRole("button", { name: /Load next/ })).toBeNull();
+  scrollPreview(23760);
+  await Promise.resolve();
   expect(
-    screen.queryByRole("button", { name: "Load next 100 rows" }),
-  ).toBeNull();
+    fetcher.mock.calls.filter(([url]) =>
+      String(url).startsWith("/api/v1/previews?"),
+    ),
+  ).toHaveLength(1);
   expect(screen.getAllByRole("row")).toHaveLength(1001);
   workspace.dispose();
 });

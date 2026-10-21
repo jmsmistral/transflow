@@ -1212,8 +1212,8 @@ test("Python factories always show the definition in saved, published and diff v
   expect(
     screen.getAllByRole("button").map((button) => button.textContent),
   ).toEqual([
-    "Authored",
     "Generated",
+    "Authored",
     "Latest saved version",
     "Data publish version",
     "Diff",

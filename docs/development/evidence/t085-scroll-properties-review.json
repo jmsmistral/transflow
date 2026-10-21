@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-21",
+  "scope": "T085 scroll Preview and Properties summary; T086 control order",
+  "platform": "macOS arm64, pinned Node 24, real local coordinator",
+  "behavior": [
+    "500-row exact-version cursor requests, subject to backend row and byte budgets",
+    "Vertical scrolling near the end appends the next page without a button or footer row",
+    "One request in flight; short byte-limited pages advance on downward wheel gestures",
+    "Errors retain displayed rows and require explicit restart; the client cap remains 1000 rows",
+    "Properties adds matching-publication data freshness and ten read-only output-check history circles",
+    "Properties omits the connection hint, consumer-input history and interactive check details",
+    "Dynamic Python and SQL controls show Generated before Authored without changing defaults"
+  ],
+  "verification": {
+    "safety": {
+      "passed": true,
+      "regressions": 27,
+      "public_files": 902,
+      "generated_contracts": 1
+    },
+    "specification": {
+      "checker": "passed",
+      "regressions": 44
+    },
+    "web": {
+      "command": "bash tools/check-web.sh with the prepared pinned Node on PATH",
+      "passed": 683,
+      "files": 30,
+      "strict_typecheck_lint_format": "passed",
+      "production_assets": 16,
+      "reproducible": true,
+      "cases": [
+        "500-row request size, exact version and cursor continuity",
+        "Horizontal and early scrolls do not fetch; repeated near-end events submit one page",
+        "Two pages append to 1000 rows and do not request a third page",
+        "Short byte-limited pages, failure preservation and explicit restart",
+        "Existing late-response context fencing and grid selection/copy regressions",
+        "Properties uses output certificates without reading failed consumer attempts",
+        "Ten noninteractive status circles, freshness version fence and control order"
+      ]
+    },
+    "browser": {
+      "surface": "Codex internal Browser",
+      "observed": [
+        "raw/orders initially displays 500 of 1500 rows with a next-page indicator",
+        "Mouse scrolling appends the second page while retaining the position around row 500",
+        "Further scrolling reaches row 1000 and shows the explicit preview limit",
+        "The table fills its panel without a load-more button or footer row",
+        "Properties shows Up-to-date, ten read-only output circles and the correct Passed or No checks state",
+        "The removed connection hint and latest-attempt text are absent",
+        "SQL Code shows Generated before Authored, with Authored still selected initially"
+      ],
+      "console_errors": [],
+      "final_assets": "Rebuilt by the review launcher and checked in a fresh coordinator session",
+      "coordinator": "Stopped after verification"
+    },
+    "native_api_python": "Runtime contracts and sources are unchanged; broad suites are not repeated. The existing CLI and installed worker built the five-dataset review pipeline."
+  },
+  "review": {
+    "workspace": "~/dev/transflow-workspace/preview-scroll-review",
+    "launcher": "bash ~/dev/transflow-workspace/preview-scroll-review-tools/serve-preview.sh",
+    "orders": 1500,
+    "datasets": 5,
+    "saved_lineage": "Operational alpha review, version 2",
+    "launcher_rebuilds_cli_and_ui": true,
+    "previous_workspaces_and_root_readme_edits": "preserved"
+  },
+  "limits": [
+    "Preview displays at most 1000 rows; this change does not introduce dataset-wide sorting or filtering",
+    "Coordinator restart is required to load rebuilt assets",
+    "Remote CI remains owner-monitored"
+  ]
+}

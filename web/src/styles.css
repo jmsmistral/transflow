@@ -1127,6 +1127,7 @@ summary {
 .properties-body > h4,
 .properties-body > p,
 .properties-body > dl,
+.properties-body > .property-health,
 .properties-body > .column-list {
   margin-left: 18px;
   margin-right: 18px;
@@ -1443,12 +1444,6 @@ revo-grid.preview-grid
 }
 .preview-grid-menu button:hover {
   background: var(--soft);
-}
-.preview-load-more {
-  flex: none;
-  padding: 5px 12px;
-  border-top: 1px solid var(--line);
-  background: var(--surface);
 }
 .preview-error {
   padding: 10px 14px;
@@ -4380,6 +4375,15 @@ revo-grid.preview-grid
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+.property-health .health-section {
+  padding: 0;
+  border: 0;
+}
+.property-health .health-history-heading h3 {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
 }
 .health-history-heading h3 {
   margin: 0;

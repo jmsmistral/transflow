@@ -207,12 +207,6 @@ export function CodeInspector({
                   }
                 >
                   <Button
-                    aria-pressed={content === "code"}
-                    onClick={() => setContent("code")}
-                  >
-                    Authored
-                  </Button>
-                  <Button
                     aria-pressed={content === "generated"}
                     title={
                       isSql
@@ -225,6 +219,12 @@ export function CodeInspector({
                     }}
                   >
                     Generated
+                  </Button>
+                  <Button
+                    aria-pressed={content === "code"}
+                    onClick={() => setContent("code")}
+                  >
+                    Authored
                   </Button>
                 </nav>
               )}

@@ -82,6 +82,8 @@ All Code modes show the data fallback banner when applicable. Latest saved versi
 also explains that the current validated source capture is shared across data
 branches; it is not a separate branch's working tree. Data publish version retains
 the fallback output's exact source. Display fallback never changes build source.
+Dynamic transforms place **Generated** before **Authored** beside the dataset
+name; changing their order does not change the selected source view.
 
 Node hover cards separate Data quality from Freshness. Freshness compares successful
 direct-input publications with the displayed output publication, following named
@@ -281,7 +283,12 @@ inspectors remain later work.
 The right **Properties** panel follows the selected graph or catalogue dataset, starting directly with dataset identity and the About/Columns tabs.
 About displays stable ID, logical path, origin, transform type, producer location,
 creation time when recorded, publication time and physical row/file/byte counts.
-The compact detail list has no row dividers. Columns lists the current preview
+The compact detail list has no row dividers. Below Connections, Freshness shows
+the backend's data-only publication freshness. Data health repeats the dedicated
+Health panel's ten newest-first output-check circles and latest status pill,
+without clickable circles or details. Input failures remain separate from
+published output quality; the connection hint is omitted.
+Columns lists the current preview
 version's logical schema with types and nullability. Missing metadata is labelled
 unknown or unavailable; a real zero stays zero. Description and data-health remain
 explicitly unavailable where their metadata is absent. With no graph node selected
@@ -299,8 +306,12 @@ The preview uses the selected
 branch's head, ordered configured fallbacks, then an available retained branch for
 browsing if none has a head. That last choice never changes build fallback policy.
 Each read binds an exact immutable version and requests the available schema columns
-within the coordinator's 128-column limit. Pages are bounded to 100 physical rows,
-with the coordinator's cursor, limits and provider leases. The UI displays at most
+within the coordinator's 128-column limit. Preview requests 500 physical rows per
+page, subject to the coordinator's byte/row limits and provider leases. Scrolling
+near the bottom automatically appends the next cursor page without a load-more
+button or footer row. Only one page request runs at a time; a failed page keeps
+the displayed rows and offers **Restart preview** instead of retrying on scroll.
+The UI displays at most
 1,000 rows across those pages. Its MIT-licensed RevoGrid Community component is
 read-only and virtualized; headers preserve schema field-name case and fixed-width
 columns leave an unruled blank area at the right, matching the space below the rows;

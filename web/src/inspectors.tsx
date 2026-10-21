@@ -1,5 +1,5 @@
 import { formatSize } from "./format-size";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   ApiDatasetV1,
   ApiDatasetInspectionV1,
@@ -15,6 +15,7 @@ import { Button, DatasetHeader, InspectorNotice } from "./components";
 import { decode } from "./api/client";
 import { Icon } from "./Icons";
 import { PreviewGrid } from "./PreviewGrid";
+import { HealthInspector } from "./HealthInspector";
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -211,9 +212,11 @@ function Columns({ schema }: { schema: LogicalSchemaV1 | null }) {
   );
 }
 export function PropertiesInspector({
+  workspace,
   state,
   selected,
 }: {
+  workspace: Workspace;
   state: WorkspaceState;
   selected: readonly ApiLineageNodeV1[];
 }) {
@@ -338,20 +341,27 @@ export function PropertiesInspector({
               value={graphNode?.child_count ?? "Unknown"}
             />
           </dl>
+          <h4>Freshness</h4>
           <p className="muted">
-            Explore the lineage graph for connection names and roles.
+            {(graphNode?.overlay?.version ?? undefined) === meta?.version
+              ? graphNode?.overlay?.data_freshness === "current"
+                ? "Up-to-date"
+                : graphNode?.overlay?.data_freshness === "stale"
+                  ? "Out-of-date"
+                  : graphNode?.overlay?.data_freshness === "never_built"
+                    ? "Never built"
+                    : "Unavailable"
+              : "Unavailable"}
           </p>
           <h4>Data health</h4>
-          <p className="muted">
-            Output checks:{" "}
-            {graphNode?.overlay?.version === meta?.version
-              ? graphNode?.overlay?.health === "NoChecks"
-                ? "No output checks"
-                : (graphNode?.overlay?.health ?? "Unavailable")
-              : "Unavailable"}{" "}
-            · Latest attempt:{" "}
-            {graphNode?.overlay?.latest_attempt ?? "Unavailable"}
-          </p>
+          {state.kind === "ready" && (
+            <HealthInspector
+              workspace={workspace}
+              state={state}
+              node={graphNode}
+              outputsOnly
+            />
+          )}
         </>
       )}
     </section>
@@ -441,6 +451,8 @@ function PreviewContent({
   } | null>(null);
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
+  const paging = useRef(false);
+  const [loading, setLoading] = useState(true);
   const key = JSON.stringify([
     ready?.context.fingerprint,
     dataset?.workspace_id,
@@ -458,6 +470,7 @@ function PreviewContent({
     )
       return;
     const request = new AbortController();
+    paging.current = true;
     void workspace
       .preview(
         {
@@ -465,7 +478,7 @@ function PreviewContent({
           origin_workspace: dataset.workspace_id,
           version,
           columns,
-          rows: 100,
+          rows: 500,
           ...(cursor ? { cursor } : {}),
         },
         request.signal,
@@ -473,6 +486,8 @@ function PreviewContent({
       .then(
         (page) => {
           if (request.signal.aborted) return;
+          paging.current = false;
+          setLoading(false);
           setMessage("");
           setResult((old) => ({
             key,
@@ -486,10 +501,13 @@ function PreviewContent({
           }));
         },
         (error: unknown) => {
-          if (!request.signal.aborted)
+          if (!request.signal.aborted) {
+            paging.current = false;
+            setLoading(false);
             setMessage(
               error instanceof Error ? error.message : "Preview failed.",
             );
+          }
         },
       );
     return () => request.abort();
@@ -564,13 +582,14 @@ function PreviewContent({
           This version has no previewable columns.
         </p>
       ) : (
-        <div className="preview-table-wrap">
+        <div className="preview-table-wrap" aria-busy={loading}>
           {message && (
             <div role="alert" className="preview-error">
               {message}{" "}
               <Button
                 onClick={() => {
                   setMessage("");
+                  setLoading(true);
                   setResult(null);
                   setCursor(null);
                   setRetry((value) => value + 1);
@@ -599,16 +618,23 @@ function PreviewContent({
                     : "";
                 }}
                 onError={setMessage}
+                onNearEnd={() => {
+                  if (
+                    !paging.current &&
+                    !message &&
+                    page.next_cursor &&
+                    page.rows.length < 1000
+                  ) {
+                    // Lock before React schedules the cursor update so a burst
+                    // of scroll events cannot submit the same page twice.
+                    paging.current = true;
+                    setLoading(true);
+                    setCursor(page.next_cursor);
+                  }
+                }}
               />
               {page.rows.length === 0 && (
                 <p className="preview-empty">This version contains no rows.</p>
-              )}
-              {page.next_cursor && page.rows.length < 1000 && (
-                <div className="preview-load-more">
-                  <Button onClick={() => setCursor(page.next_cursor)}>
-                    Load next 100 rows
-                  </Button>
-                </div>
               )}
             </>
           )}

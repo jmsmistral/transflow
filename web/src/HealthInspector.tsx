@@ -213,10 +213,12 @@ function HistoryStrip({
 export function HealthInspector({
   workspace,
   state,
+  outputsOnly = false,
 }: {
   workspace: Workspace;
   state: Ready;
   node: ApiLineageNodeV1 | undefined;
+  outputsOnly?: boolean;
 }) {
   const dataset = state.value.dataset;
   const meta = dataset
@@ -256,7 +258,7 @@ export function HealthInspector({
       } while (
         cursor &&
         jobs.length < 1000 &&
-        (jobs.flatMap((j) => j.attempts).length < 10 ||
+        ((!outputsOnly && jobs.flatMap((j) => j.attempts).length < 10) ||
           jobs.filter((j) => j.produced_version).length < 10)
       );
       const timings = jobs
@@ -285,7 +287,7 @@ export function HealthInspector({
           ]),
         ).values(),
       ];
-      for (const timing of requested) {
+      for (const timing of outputsOnly ? [] : requested) {
         try {
           const retained = await workspace.scope(
             { branch: state.selection.branch, plan: timing.owner.plan },
@@ -458,6 +460,7 @@ export function HealthInspector({
     meta?.published,
     meta?.originBranch,
     revision,
+    outputsOnly,
   ]);
   if (!dataset) return <Empty>Select a dataset to inspect its health.</Empty>;
   const current =
@@ -482,6 +485,19 @@ export function HealthInspector({
         ]
       : []
     : (current?.outputs ?? []);
+  if (outputsOnly)
+    return (
+      <div className="property-health">
+        <HistoryStrip
+          key={`${key}:${revision}:outputs`}
+          title="Output dataset checks"
+          points={outputs}
+          loading={!foreign && !current}
+          error={current?.error}
+          interactive={false}
+        />
+      </div>
+    );
   return (
     <div className="health-inspector">
       {!state.selection.version && (

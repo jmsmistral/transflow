@@ -11,6 +11,7 @@ import { Client } from "./api/client";
 import { Workspace } from "./workspace";
 import { ScratchpadInspector } from "./ScratchpadInspector";
 import { HealthInspector } from "./HealthInspector";
+import { PropertiesInspector } from "./inspectors";
 import { DatasetTooltip } from "./graph/Tooltip";
 import type { Ready } from "./execution-ui";
 import type { ApiQueryV1, ApiLineageNodeV1 } from "./generated/contracts";
@@ -849,6 +850,76 @@ function history() {
     next_cursor: null,
   };
 }
+test("Properties shows publication freshness and ten read-only output-check circles", async () => {
+  const { workspace, state, transport } = await setup((path, query) =>
+    path.endsWith("/history")
+      ? Promise.resolve(json(history(), context(query.branch)))
+      : path.endsWith(`/attempts/${publishedAttempt}`)
+        ? Promise.resolve(
+            json(attempt(publishedAttempt, "output", "PASS"), {
+              ...context(query.branch),
+              selection: {
+                kind: "local_version",
+                id: versionId,
+                digest: "f".repeat(64),
+              },
+              fingerprint: "f".repeat(64),
+            }),
+          )
+        : undefined,
+  );
+  if (!node.overlay) throw new Error("Fixture overlay is missing");
+  const selectedNode = {
+    ...node,
+    overlay: { ...node.overlay, data_freshness: "stale" as const },
+  };
+  const selected = [selectedNode];
+  const view = render(
+    <PropertiesInspector
+      workspace={workspace}
+      state={state}
+      selected={selected}
+    />,
+  );
+  expect(screen.getByRole("heading", { name: "Freshness" })).toBeTruthy();
+  expect(screen.getByText("Out-of-date")).toBeTruthy();
+  expect(screen.queryByText(/Explore the lineage graph/)).toBeNull();
+  expect(screen.queryByText(/Latest attempt:/)).toBeNull();
+  const outputs = screen.getByRole("region", { name: "Output dataset checks" });
+  await within(outputs).findByText("Passed");
+  expect(within(outputs).getAllByRole("listitem")).toHaveLength(10);
+  expect(within(outputs).getAllByRole("img")).toHaveLength(10);
+  expect(within(outputs).queryByRole("button")).toBeNull();
+  expect(outputs.querySelector(".health-history-details")).toBeNull();
+  expect(screen.queryByRole("region", { name: "Latest builds" })).toBeNull();
+  expect(
+    screen.queryByRole("region", { name: "Input dataset checks" }),
+  ).toBeNull();
+  expect(
+    transport.mock.calls.some(([, init]) =>
+      String(init?.body).includes(`/attempts/${failedAttempt}`),
+    ),
+  ).toBe(false);
+  view.rerender(
+    <PropertiesInspector
+      workspace={workspace}
+      state={state}
+      selected={[
+        {
+          ...selectedNode,
+          overlay: { ...selectedNode.overlay, version: workspaceId },
+        },
+      ]}
+    />,
+  );
+  expect(screen.queryByText("Out-of-date")).toBeNull();
+  expect(
+    screen.getByRole("heading", { name: "Freshness" }).nextElementSibling
+      ?.textContent,
+  ).toBe("Unavailable");
+  workspace.dispose();
+});
+
 test("published output checks and later consumer failure remain separate, exact and escaped", async () => {
   const { workspace, state, transport } = await setup((path, query) =>
     path.endsWith("/history")
