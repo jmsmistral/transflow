@@ -1,5 +1,40 @@
 # Python authoring declarations (T026)
 
+## Declaration layout
+
+Put the Output first and each Input below it on a separate line. Place checks
+below the corresponding binding in a `checks=[...]` block, one Check per line.
+Use trailing commas to retain this layout, even for one binding or one check.
+The same convention applies to Python, metadata-aware Python, SQL and source
+transforms, including generated sample workspaces. Keyword order is a readability
+convention; existing declarations remain valid.
+
+```python
+from transflow import Check, Input, Output, transform
+from transflow import expectations as E
+
+
+@transform(
+    output=Output(
+        "curated/orders",
+        checks=[
+            Check(E.primary_key("id"), "Unique order IDs"),
+            Check(E.row_count().gt(0), "At least one order"),
+        ],
+    ),
+    orders=Input(
+        "raw/orders",
+        checks=[
+            Check(E.col("amount").gte(0), "Nonnegative amounts"),
+        ],
+    ),
+)
+def checked_orders(orders):
+    return orders
+```
+
+## Declarations and binding
+
 `Input`, `Output`, `Check`, `transform`, `transform_meta`, `sql_transform` and `source_transform` are available from
 `transflow`. Decorators return the original function, preserving its signature,
 annotations and normal direct-call behaviour. They attach a frozen `Declaration`,
@@ -13,10 +48,13 @@ from transflow import expectations as E
 
 
 @transform(
-    items=Input("raw/items", branch=Branch.CURRENT),
     output=Output(
-        "curated/items", checks=Check(E.primary_key("id"), "Unique item IDs", id="item_pk")
+        "curated/items",
+        checks=[
+            Check(E.primary_key("id"), "Unique item IDs", id="item_pk"),
+        ],
     ),
+    items=Input("raw/items", branch=Branch.CURRENT),
 )
 def curated(items):
     return items

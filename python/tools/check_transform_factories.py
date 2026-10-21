@@ -54,6 +54,37 @@ def verify(root: Path, cli: Path, receipt: dict[str, Any]) -> list[str]:
     authored = source.read_text()
     first = invoke("build", "show", receipt["builds"][0])
     first_job = next(j for j in first["jobs"] if j["dataset"] == sql_id)
+    east_job = next(j for j in first["jobs"] if j["dataset"] == datasets["curated/east"])
+    east_checks = east_job["attempts"][-1]["checks"]
+    assert len([c for c in east_checks if c["phase"] == "output"]) == 2
+    assert any(c["phase"] == "input" and c["alias"] == "orders" for c in east_checks)
+    assert all(c["outcome"] == "PASS" for c in east_checks)
+    cases.append("dynamic regional transform passes its declared input and output checks")
+
+    regional_path = root / "src/factory_helpers.py"
+    regional_source = regional_path.read_text()
+    filter_expression = 'orders.filter(pl.col("region") == region)'
+    assert regional_source.count(filter_expression) == 1
+    try:
+        regional_path.write_text(
+            regional_source.replace(filter_expression, 'orders.filter(pl.col("region") != region)')
+        )
+        rejected = invoke("build", "curated/east", "--branch", "master", "--force", code=1)
+        assert rejected["state"] == "FAILED" and heads() == original
+        checks = rejected["jobs"][0]["attempts"][-1]["checks"]
+        assert any(
+            c["phase"] == "output"
+            and c["name"] == "expected_region"
+            and c["outcome"] == "VIOLATION"
+            for c in checks
+        )
+        cases.append("dynamic output check rejects the wrong region and preserves every head")
+    finally:
+        regional_path.write_text(regional_source)
+    recovered = invoke("build", "curated/east", "--branch", "master")
+    assert recovered["state"] == "SUCCEEDED" and heads() == original
+    assert recovered["jobs"][0]["state"] == "CACHED"
+    cases.append("restored regional factory reuses its original checked publication")
 
     def evidence(client: Client, report: dict[str, Any]) -> dict[str, Any]:
         job = next(j for j in report["jobs"] if j["dataset"] == sql_id)
@@ -73,8 +104,8 @@ def verify(root: Path, cli: Path, receipt: dict[str, Any]) -> list[str]:
                     "GET", f"/api/v1/datasets/{datasets[path]}", query={"branch": "master"}
                 )["data"]
                 preview = definition["producer"]["authoring"]["python_preview"]
-                assert "Input('raw/orders')" in preview
-                assert f"Output('{path}')" in preview and f"== '{region}'" in preview
+                assert "Input('raw/orders'" in preview
+                assert f"Output('{path}'" in preview and f"== '{region}'" in preview
                 assert "def make_" not in preview
             cases.append("Python preview API resolves actual factory paths and closure values")
             sql = evidence(client, first)["generated_sql"]

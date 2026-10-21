@@ -22,3 +22,9 @@ milestones, verification totals, detailed UI change logs or internal architectur
 notes. Put those in the specification task ledger, `docs/development/verification.md`
 and the relevant reference guide; update `docs/README.md` when adding a guide.
 See `docs/development/README.md` for contributor orientation.
+
+## Transform authoring layout
+
+Follow the output-first, multiline declaration style in
+`python/DECLARATIONS.md#declaration-layout` for new transforms, documentation
+examples and all generated sample workspaces.

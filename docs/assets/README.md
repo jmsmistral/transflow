@@ -3,11 +3,12 @@
 The repository-root [`logo.png`](../../logo.png) is the owner-supplied Transflow
 banner, displayed above the root README title. Its image bytes are unchanged.
 
-`lineage-ui.png` is an original Transflow UI screenshot captured on 2026-10-22
-from the existing synthetic `python-generated-review` workspace and the rebuilt
-production UI. It shows the plain transflow wordmark, all five connected datasets,
-the Catalogue and the Generated Python preview for `curated/east`.
-The image is an unchanged 1280 × 720 browser capture. It contains no user-provided
+`lineage-ui.jpg` is an original Transflow UI screenshot captured on 2026-10-22
+from the existing synthetic `preview-scroll-review` workspace and the rebuilt
+production UI. It shows the paused Weekday delivery schedule, the trigger/target
+role legend and Authored code for the dynamic `curated/east` factory, with output
+checks above input checks. The workspace retains 1,500 synthetic orders.
+The image is an unchanged 1099 × 976 JPEG browser capture. It contains no user-provided
 reference screenshot or production data; the visible workspace identifier belongs
 to the synthetic demo.
 

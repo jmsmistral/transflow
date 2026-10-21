@@ -1,5 +1,37 @@
 # Contributor verification
 
+## Output-first authoring and schedule README capture (2026-10-22)
+
+Contributor guidance and the public declaration guide require Output first,
+one Input per line and a checks list with one Check per line. This is a source
+layout convention, without a runtime keyword-order restriction. All three demo
+generators, the customer-orders fixture and current authoring snippets use it.
+Static inspection confirms the layout on 29 sample declarations. The factory
+demo adds two output checks and one input check to its dynamic east transform.
+
+The newest existing review workspace, `preview-scroll-review`, is updated in
+place and successfully rebuilds all five datasets with its 1,500 orders. All three
+east checks pass. Original sources, catalogue, saved view and schedule definitions
+are backed up in its sibling tools directory's `authoring-layout-backup`.
+Dataset identities and the saved lineage are unchanged. Only the two paused
+schedules' source pins advance to the verified capture; names, targets, triggers
+and other definition fields remain unchanged.
+
+Its existing Bash launcher rebuilds the CLI and production UI before serving.
+Internal Browser confirms Weekday delivery open in the right inspector, the
+trigger/target role legend and Authored Code for the checked dynamic factory.
+The README uses that unchanged 1099 × 976 JPEG capture, with no console errors.
+Authored preserves source layout; the existing Generated preview still normalizes
+its AST. The temporary coordinator is stopped after capture. Application runtime,
+API/storage contracts and dependency locks are unchanged; broad application suites
+are not repeated. New CI remains owner-monitored.
+
+Final checks pass: Ruff lint/format for the four changed demo/qualification tools,
+the 29-declaration layout inspection, 12 real factory CLI/API journeys (including
+new check PASS, wrong-region rejection, unchanged heads and cached recovery),
+27 safety regressions, paired safety/contract checks and specification/link
+validation. The README banner/title and opening prose are preserved.
+
 ## Public documentation refresh (2026-10-22)
 
 The owner-committed README title/banner and introductory prose from `25c63fc` are

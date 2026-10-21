@@ -10,19 +10,38 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import create_alpha_demo as alpha  # noqa: E402
 
-REGIONAL = """from transflow import Input, Output, transform, transform_meta
+REGIONAL = """from transflow import Check, Input, Output, transform, transform_meta
+from transflow import expectations as E
 import polars as pl
 
 
 def make_region(source, target, region):
-    @transform(orders=Input(source), output=Output(target))
+    @transform(
+        output=Output(
+            target,
+            checks=[
+                Check(E.row_count().gt(0), "At least one order"),
+                Check(E.col("region").equals(region), "Expected region"),
+            ],
+        ),
+        orders=Input(
+            source,
+            checks=[
+                Check(E.col("amount").gte(0), "Nonnegative amounts"),
+            ],
+        ),
+    )
     def regional(orders):
         return orders.filter(pl.col("region") == region)
+
     return regional
 
 
 def make_meta_region(source, target, region):
-    @transform_meta(orders=Input(source), output=Output(target))
+    @transform_meta(
+        output=Output(target),
+        orders=Input(source),
+    )
     def regional(orders, *, output):
         # These values belong to the accepted plan, including fallback branches.
         assert orders.alias == "orders"
@@ -31,6 +50,7 @@ def make_meta_region(source, target, region):
         assert output.path == target and output.version is None
         assert output.branch == orders.branch
         return orders.dataframe().filter(pl.col("region") == region)
+
     return regional
 """
 EXPORTS = """from factory_helpers import make_region, make_meta_region
@@ -46,10 +66,9 @@ SQL = '''from transflow import Input, Output, Parameter, sql_transform
 
 def make_summary(source, target):
     @sql_transform(
-        deliveries=Input(source),
         output=Output(target),
-        params={"minimum_amount": Parameter(
-            {"type": "i64"}, {"type": "i64", "value": "0"})},
+        deliveries=Input(source),
+        params={"minimum_amount": Parameter({"type": "i64"}, {"type": "i64", "value": "0"})},
     )
     def summary(deliveries, *, output):
         assert deliveries.alias == "deliveries"
@@ -66,6 +85,7 @@ def make_summary(source, target):
             GROUP BY region
             ORDER BY region
         """
+
     return summary
 
 

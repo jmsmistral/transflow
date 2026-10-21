@@ -11,7 +11,7 @@ data quality, history and scheduling into one local workflow.
 [![Lineage web UI](https://github.com/jmsmistral/transflow/actions/workflows/web.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/web.yml)
 [![Security & license checks](https://github.com/jmsmistral/transflow/actions/workflows/safety.yml/badge.svg?branch=master)](https://github.com/jmsmistral/transflow/actions/workflows/safety.yml)
 
-![A synthetic orders pipeline in Transflow: explore lineage, browse datasets and inspect a Python transform.](docs/assets/lineage-ui.png)
+![A synthetic Transflow pipeline with schedule trigger/target roles and a dynamic Python factory's input/output checks.](docs/assets/lineage-ui.jpg)
 
 **[Get started](docs/getting-started.md)** · **[Documentation](docs/README.md)** · **[Try the SQL example](examples/sql-checks/README.md)**
 
@@ -29,8 +29,8 @@ from transflow import Input, Output, transform
 
 
 @transform(
-    orders=Input("raw/orders"),
     output=Output("curated/order_totals"),
+    orders=Input("raw/orders"),
 )
 def order_totals(orders: pl.LazyFrame) -> pl.LazyFrame:
     return orders.group_by("customer_id").agg(pl.col("amount").sum())
@@ -44,8 +44,8 @@ from transflow import Input, Output, sql_transform
 
 
 @sql_transform(
-    orders=Input("raw/orders"),
     output=Output("curated/order_totals"),
+    orders=Input("raw/orders"),
 )
 def order_totals():
     return "SELECT customer_id, SUM(amount) AS amount FROM orders GROUP BY customer_id"

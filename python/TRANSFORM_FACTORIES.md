@@ -19,8 +19,8 @@ from transflow import Input, Output, transform_meta
 
 
 @transform_meta(
-    deliveries=Input("curated/delivery"),
     output=Output("analytics/delivery_copy"),
+    deliveries=Input("curated/delivery"),
 )
 def delivery_copy(deliveries, *, output):
     return deliveries.dataframe()
@@ -59,7 +59,10 @@ from transflow import Input, Output, sql_transform
 
 
 def make_summary(source, target):
-    @sql_transform(deliveries=Input(source), output=Output(target))
+    @sql_transform(
+        output=Output(target),
+        deliveries=Input(source),
+    )
     def summary():
         return """
             SELECT region, COUNT(*) AS order_count
@@ -137,4 +140,7 @@ bash tools/serve-review.sh ../transflow-workspace/transform-factories-review --o
 
 The generator refuses existing directories. It creates 120 synthetic orders,
 ordinary Python and metadata-aware factory exports, a SQL factory, cached history,
-a review branch and a saved lineage. No existing workspace is overwritten.
+a review branch and a saved lineage. The dynamic east transform has two output
+checks and one input check, using the
+[output-first declaration layout](DECLARATIONS.md#declaration-layout).
+No existing workspace is overwritten.

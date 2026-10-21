@@ -25,8 +25,11 @@ from transflow import expectations as E
 
 @transform(
     output=Output(
-        "raw/orders", checks=Check(E.primary_key("order_id"), "Order identifiers")
-    )
+        "raw/orders",
+        checks=[
+            Check(E.primary_key("order_id"), "Order identifiers"),
+        ],
+    ),
 )
 def orders():
     return pl.DataFrame(
@@ -49,8 +52,10 @@ from transflow import expectations as E
 @transform(
     output=Output(
         "raw/customers",
-        checks=Check(E.primary_key("customer_id"), "Customer identifiers"),
-    )
+        checks=[
+            Check(E.primary_key("customer_id"), "Customer identifiers"),
+        ],
+    ),
 )
 def customers():
     return pl.DataFrame({"customer_id": [1, 2, 3]}).lazy()
@@ -59,54 +64,45 @@ def customers():
 from transflow import expectations as E
 
 qualified_orders = sql_transform(
-    "qualified_orders.sql",
-    orders=Input(
-        "raw/orders",
-        checks=Check(
-            E.input("current_customers")
-            .row_count()
-            .gt(E.input("previous_customers").row_count()),
-            "Current customer list is larger",
-        ),
-    ),
-    current_customers=Input("raw/customers", branch="master", role="validation"),
-    previous_customers=Input("raw/customers", branch="review", role="validation"),
     output=Output(
         "curated/qualified_orders",
         checks=[
             Check(E.primary_key("order_id"), "Order identifiers"),
             Check(
-                E.col("customer_id").in_dataset(
-                    "current_customers", column="customer_id"
-                ),
+                E.col("customer_id").in_dataset("current_customers", column="customer_id"),
                 "Known customers",
             ),
             Check(E.group_by("customer_id").count().lte(1), "One order per customer"),
-            Check(
-                E.col("region").matches("east|west", mode="full"), "Recognized regions"
-            ),
+            Check(E.col("region").matches("east|west", mode="full"), "Recognized regions"),
             Check(E.col("amount").null_count().equals(0), "Amounts are present"),
             Check(
                 E.col("amount").gte(
-                    E.literal(
-                        {
-                            "type": "decimal",
-                            "value": "0.00",
-                            "precision": 18,
-                            "scale": 2,
-                        }
-                    )
+                    E.literal({"type": "decimal", "value": "0.00", "precision": 18, "scale": 2})
                 ),
                 "Nonnegative amounts",
             ),
         ],
     ),
+    orders=Input(
+        "raw/orders",
+        checks=[
+            Check(
+                E.input("current_customers")
+                .row_count()
+                .gt(E.input("previous_customers").row_count()),
+                "Current customer list is larger",
+            ),
+        ],
+    ),
+    current_customers=Input("raw/customers", branch="master", role="validation"),
+    previous_customers=Input("raw/customers", branch="review", role="validation"),
     params={
         "minimum": Parameter(
             {"type": "decimal", "precision": 18, "scale": 2},
             {"type": "decimal", "value": "15.00", "precision": 18, "scale": 2},
         )
     },
+    sql_file="qualified_orders.sql",
 )
 """,
     "qualified_orders.sql": """SELECT order_id, customer_id, region, amount
@@ -119,20 +115,22 @@ from transflow import expectations as E
 
 
 @transform(
-    rows=Input(
-        "curated/qualified_orders",
-        checks=Check(
-            E.col("customer_id").in_dataset("customers", column="customer_id"),
-            "Consumer customer check",
-        ),
-    ),
-    customers=Input("raw/customers", role="validation"),
     output=Output(
         "curated/report",
-        checks=Check(
-            E.row_count().equals(E.input("rows").row_count()), "Row count is preserved"
-        ),
+        checks=[
+            Check(E.row_count().equals(E.input("rows").row_count()), "Row count is preserved"),
+        ],
     ),
+    rows=Input(
+        "curated/qualified_orders",
+        checks=[
+            Check(
+                E.col("customer_id").in_dataset("customers", column="customer_id"),
+                "Consumer customer check",
+            ),
+        ],
+    ),
+    customers=Input("raw/customers", role="validation"),
 )
 def report(rows):
     return rows

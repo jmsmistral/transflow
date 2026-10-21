@@ -3,7 +3,9 @@ import polars as pl
 from transflow import Output, source_transform
 
 
-@source_transform(output=Output("raw/orders"))
+@source_transform(
+    output=Output("raw/orders"),
+)
 def orders() -> pl.DataFrame:
     # Synthetic input; a real source can fetch an API inside this function.
     return pl.DataFrame(

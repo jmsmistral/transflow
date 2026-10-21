@@ -22,22 +22,35 @@ import polars as pl
 from transflow import Check, Output, transform
 from transflow import expectations as E
 
-@transform(output=Output("raw/orders", checks=Check(
-    E.col("amount").gte(0), "Amounts are nonnegative", id="amount", on_error="FAIL")))
+
+@transform(
+    output=Output(
+        "raw/orders",
+        checks=[
+            Check(E.col("amount").gte(0), "Amounts are nonnegative", id="amount", on_error="FAIL"),
+        ],
+    ),
+)
 def orders():
     time.sleep(1)
     ids = list(range(1, 121))
-    return pl.DataFrame({
-        "id": ids,
-        "region": ["east" if n % 2 else "west" for n in ids],
-        "amount": [150 + (n * 17) % 850 for n in ids],
-    }).lazy()
+    return pl.DataFrame(
+        {
+            "id": ids,
+            "region": ["east" if n % 2 else "west" for n in ids],
+            "amount": [150 + (n * 17) % 850 for n in ids],
+        }
+    ).lazy()
 """,
     "east.py": """import time
 import polars as pl
 from transflow import Input, Output, transform
 
-@transform(rows=Input("raw/orders"), output=Output("curated/east"))
+
+@transform(
+    output=Output("curated/east"),
+    rows=Input("raw/orders"),
+)
 def east(rows):
     time.sleep(2)
     return rows.filter(pl.col("region") == "east")
@@ -46,7 +59,11 @@ def east(rows):
 import polars as pl
 from transflow import Input, Output, transform
 
-@transform(rows=Input("raw/orders"), output=Output("curated/west"))
+
+@transform(
+    output=Output("curated/west"),
+    rows=Input("raw/orders"),
+)
 def west(rows):
     time.sleep(2)
     return rows.filter(pl.col("region") == "west")
@@ -55,8 +72,12 @@ def west(rows):
 import polars as pl
 from transflow import Input, Output, transform
 
-@transform(east=Input("curated/east"), west=Input("curated/west"),
-           output=Output("curated/delivery"))
+
+@transform(
+    output=Output("curated/delivery"),
+    east=Input("curated/east"),
+    west=Input("curated/west"),
+)
 def delivery(east, west):
     time.sleep(1)
     return pl.concat([east, west])
@@ -64,9 +85,9 @@ def delivery(east, west):
     "region_summary.py": """from transflow import Input, Output, sql_transform
 
 region_summary = sql_transform(
-    "region_summary.sql",
-    deliveries=Input("curated/delivery"),
     output=Output("analytics/region_summary"),
+    deliveries=Input("curated/delivery"),
+    sql_file="region_summary.sql",
 )
 """,
     "region_summary.sql": """-- The build pins the exact curated/delivery version behind this alias.

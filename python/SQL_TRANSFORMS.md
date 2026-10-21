@@ -7,8 +7,8 @@ from transflow import Input, Output, sql_transform
 
 
 @sql_transform(
-    deliveries=Input("curated/delivery"),
     output=Output("analytics/region_summary"),
+    deliveries=Input("curated/delivery"),
 )
 def region_summary(deliveries, *, output):
     return """
@@ -37,8 +37,8 @@ from transflow import Parameter
 
 
 @sql_transform(
-    deliveries=Input("curated/delivery"),
     output=Output("analytics/large_deliveries"),
+    deliveries=Input("curated/delivery"),
     params={"minimum": Parameter({"type": "i64"}, {"type": "i64", "value": "100"})},
 )
 def large_deliveries(*, ctx):
@@ -54,9 +54,9 @@ The original paired-file form remains supported:
 
 ```python
 summary = sql_transform(
-    "summary.sql",
-    deliveries=Input("curated/delivery"),
     output=Output("analytics/region_summary"),
+    deliveries=Input("curated/delivery"),
+    sql_file="summary.sql",
 )
 ```
 
