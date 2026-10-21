@@ -1,5 +1,13 @@
 # Contributor verification
 
+## README banner (2026-10-22)
+
+The owner-supplied root `logo.png` is displayed above the README title using a
+relative Markdown image with Transflow alt text. The image bytes and existing
+README prose are preserved. Specification/link validation, 27 safety regressions,
+the paired repository safety baseline and diff checks pass. This changes public
+documentation only; application tests and builds are not repeated.
+
 ## Vitest mocker advisory CI correction (2026-10-22)
 
 The owner-reported [safety job](https://github.com/jmsmistral/transflow/actions/runs/39666911590/job/119454259696)

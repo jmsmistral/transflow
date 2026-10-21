@@ -1,3 +1,5 @@
+![Transflow](logo.png)
+
 # Transflow
 
 I started building **transflow** back in 2022 as a pet project for my own use. Recently, I decided that it was a good base for experimenting with agentic coding and seeing how far it can go.
