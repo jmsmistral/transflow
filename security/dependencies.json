@@ -6,7 +6,7 @@
     "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
     "tools/qualification/rust/Cargo.lock": "1ef271b4144b8a3e8d397eb6e040b883e52d91d51e3da1625f14112a7cb537fa",
     "tools/qualification/web/package-lock.json": "907b0fd8905e7f1bd629859575997304f128800550fb8d290411792d93523756",
-    "web/package-lock.json": "a3e7b6e3429cdb2a8ef0f2fd48b2602476ed86ff3acf03326c11a8c0c143378d"
+    "web/package-lock.json": "ed0d6dd09a94fa6e79c58fe774f6c7d01261b54ea4feacd3d3e8dd846bd1bc42"
   },
   "packages": [
     {
@@ -4645,7 +4645,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@vitest/mocker@5.0.1",
+      "id": "npm:@vitest/mocker@5.0.3",
       "licenses": [
         "MIT"
       ],
@@ -4653,12 +4653,12 @@
         "web/package-lock.json"
       ],
       "name": "@vitest/mocker",
-      "version": "5.0.1"
+      "version": "5.0.3"
     },
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:@vitest/spy@5.0.1",
+      "id": "npm:@vitest/spy@5.0.3",
       "licenses": [
         "MIT"
       ],
@@ -4666,7 +4666,7 @@
         "web/package-lock.json"
       ],
       "name": "@vitest/spy",
-      "version": "5.0.1"
+      "version": "5.0.3"
     },
     {
       "deprecations": [],
@@ -7172,7 +7172,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:magic-string@1.4.1",
+      "id": "npm:magic-string@1.4.3",
       "licenses": [
         "MIT"
       ],
@@ -7180,7 +7180,7 @@
         "web/package-lock.json"
       ],
       "name": "magic-string",
-      "version": "1.4.1"
+      "version": "1.4.3"
     },
     {
       "deprecations": [],
@@ -7895,19 +7895,6 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:siginfo@2.0.0",
-      "licenses": [
-        "ISC"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "siginfo",
-      "version": "2.0.0"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
       "id": "npm:source-map-js@1.2.2",
       "licenses": [
         "BSD-3-Clause"
@@ -7918,19 +7905,6 @@
       ],
       "name": "source-map-js",
       "version": "1.2.2"
-    },
-    {
-      "deprecations": [],
-      "ecosystem": "npm",
-      "id": "npm:stackback@0.0.2",
-      "licenses": [
-        "MIT"
-      ],
-      "locks": [
-        "web/package-lock.json"
-      ],
-      "name": "stackback",
-      "version": "0.0.2"
     },
     {
       "deprecations": [],
@@ -8329,7 +8303,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:vitest@5.0.1",
+      "id": "npm:vitest@5.0.3",
       "licenses": [
         "MIT"
       ],
@@ -8337,7 +8311,7 @@
         "web/package-lock.json"
       ],
       "name": "vitest",
-      "version": "5.0.1"
+      "version": "5.0.3"
     },
     {
       "deprecations": [],
@@ -8459,7 +8433,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:why-is-node-running@2.3.0",
+      "id": "npm:why-is-node-running@3.2.1",
       "licenses": [
         "MIT"
       ],
@@ -8467,7 +8441,7 @@
         "web/package-lock.json"
       ],
       "name": "why-is-node-running",
-      "version": "2.3.0"
+      "version": "3.2.1"
     },
     {
       "deprecations": [],

@@ -36,6 +36,7 @@ pins are unchanged. See the [receipt](evidence/t008-toolchain-review.json).
 | React / React DOM | 19.3.0 |
 | React Flow / ELK | @xyflow/react 12.11.6 / elkjs 0.12.0, with the declaration fix below |
 | TypeScript / Vite | 6.0.3 / 8.3.3 |
+| Vitest | 5.0.3, including matching mocker/spy security patches |
 
 The complete direct Rust pins and transitive resolution live in
 [Cargo.toml](../../tools/qualification/rust/Cargo.toml) and

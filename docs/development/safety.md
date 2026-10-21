@@ -69,8 +69,8 @@ Review the resulting inventory and exception changes together with the locks.
 
 ## Inventory and exceptions
 
-[dependencies.json](../../security/dependencies.json) records 637 distinct package
-versions: 223 crates.io, 391 npm and 23 PyPI. Every entry includes its contributing
+[dependencies.json](../../security/dependencies.json) records 635 distinct package
+versions: 223 crates.io, 389 npm and 23 PyPI. Every entry includes its contributing
 lockfiles and declared license text/expression. The seven locks cover application,
 package/web tooling and isolated T003 qualification dependencies, including
 platform-specific transitive packages. They are not all shipped runtime dependencies.
@@ -89,6 +89,17 @@ with an owner, rationale and expiry. An exception expires at the start of its
 stated UTC date. Wildcards, duplicate/unused exceptions and missing ownership or
 rationale fail. All reported advisories block by default, without a severity
 threshold; secret findings cannot be suppressed through this policy.
+
+### Vitest advisory correction (2026-10-22)
+
+The subsequent safety failure reports two advisories in `@vitest/mocker` 5.0.1,
+independent of the preceding Vite correction. A fresh local OSV query reproduces
+both. The web project now pins Vitest 5.0.3 and its matching mocker/spy packages,
+which fix [manual mock injection](https://github.com/advisories/GHSA-qxg6-89mg-rqv8)
+and [Windows redirect traversal](https://github.com/advisories/GHSA-xp26-3454-mjgp).
+The lockfile, declared-license inventory and complete advisory report are refreshed.
+The standalone qualification project does not depend on Vitest. Existing advisory
+blocking, live CI queries and exact expiring exceptions remain enforced.
 
 ### Vite advisory correction (2026-10-21)
 

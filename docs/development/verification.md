@@ -1,5 +1,32 @@
 # Contributor verification
 
+## Vitest mocker advisory CI correction (2026-10-22)
+
+The owner-reported [safety job](https://github.com/jmsmistral/transflow/actions/runs/39666911590/job/119454259696)
+at `9510b17` passes 27 regressions, then rejects two new findings for
+`@vitest/mocker` 5.0.1: GHSA-qxg6-89mg-rqv8 and GHSA-xp26-3454-mjgp. A fresh
+local OSV query reproduces both against the previous 637-version inventory.
+This is separate from the Vite 8.3.0 findings fixed by `fca5bab`.
+
+The application web project now pins Vitest 5.0.3, with matching mocker/spy,
+magic-string 1.4.3 and why-is-node-running 3.2.1. The latter removes obsolete
+siginfo/stackback dependencies. The reviewed inventory contains 635 versions;
+the standalone qualification project has no Vitest dependency. Lockfile,
+declared-license and advisory evidence are refreshed without policy exceptions
+or workflow changes.
+
+The final web gate passes 687 tests in 31 files, strict types/lint/format checks,
+worker probes and reproducible production assets. The rebuilt UI's 16 files are
+byte-identical to the preceding verified bundle, so Browser journeys and the
+public screenshot are not repeated or replaced. Native/Python source and runtime
+contracts are unchanged; their broad suites are not repeated. Remote CI remains
+owner-monitored after the corrective push.
+
+The fresh full OSV query reports zero advisory matches across all 635 locked
+versions. Specification validation, 27 safety regressions, implementation-only
+and paired safety scans, license/exception checks and generated-contract checks
+pass. The existing exact ESLint deprecation exception is unchanged.
+
 ## Plain wordmark and Python README visual (2026-10-22)
 
 The application header shows the transflow wordmark without the preceding diamond
