@@ -1343,7 +1343,9 @@ test("an active schedule distinguishes Not built from loading and retains simult
   ).toEqual(geometry);
   view.rerender(<GraphExplorer workspace={workspace} focusRequest={request} />);
   fireEvent.click(screen.getByRole("button", { name: "Node colouring" }));
-  fireEvent.click(screen.getByRole("menuitemradio", { name: "Build roles" }));
+  for (const name of ["Build roles", "Median duration", "Mean duration"])
+    expect(screen.queryByRole("menuitemradio", { name })).toBeNull();
+  fireEvent.click(screen.getByRole("menuitemradio", { name: "Build status" }));
   expect(view.container.querySelectorAll(".node-overlay-label")).toHaveLength(
     2,
   );

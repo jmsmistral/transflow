@@ -70,7 +70,7 @@ const accepted: ApiQueryV1 = {
       version: versionId,
     },
   ],
-  sql: 'SELECT * FROM "dataset"',
+  sql: 'SELECT * FROM "dataset" ',
   parameters: [],
   elapsed_ms: "0",
   error: null,
@@ -1308,8 +1308,12 @@ test("scratchpad pills and filters use submitted SQL, retain loading rows and re
   fireEvent.click(screen.getByRole("button", { name: "Sort descending" }));
   await screen.findByRole("status", { name: "Updating preview" });
   await waitFor(() => expect(release).toBeTypeOf("function"));
-  expect(screen.getByLabelText("amount: Sort descending")).toBeTruthy();
-  expect(requests[1]?.sql).toContain('SELECT * FROM "dataset"\n)');
+  expect(
+    screen
+      .getByLabelText("amount: Sort descending")
+      .closest(".scratchpad-result-actions"),
+  ).toBeTruthy();
+  expect(requests[1]?.sql).toContain('SELECT * FROM "dataset" \n)');
   expect(requests[1]?.sql).toContain('ORDER BY "amount" DESC');
   await act(async () =>
     release?.(
@@ -1329,7 +1333,7 @@ test("scratchpad pills and filters use submitted SQL, retain loading rows and re
   hold = false;
   fireEvent.click(screen.getByRole("button", { name: "Reset preview" }));
   await screen.findByText("9007199254740993");
-  expect(requests[2]?.sql).toBe('SELECT * FROM "dataset"');
+  expect(requests[2]?.sql).toBe('SELECT * FROM "dataset" ');
   expect(screen.queryByLabelText("amount: Sort descending")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Run query" }));
   await waitFor(() => expect(requests[3]?.sql).toBe("SELECT 42 FROM dataset"));
@@ -1503,8 +1507,10 @@ test("scratchpad starts with and completes the selected quoted catalogue name", 
   );
   const editor = screen.getByRole("textbox", { name: "SQL query" });
   expect((editor as HTMLTextAreaElement).value).toBe(
-    'SELECT * FROM "raw/example"',
+    'SELECT * FROM "raw/example" ',
   );
+  fireEvent.click(editor);
+  expect(screen.queryByRole("listbox")).toBeNull();
   fireEvent.change(editor, { target: { value: 'SELECT * FROM "raw/' } });
   const selected = await screen.findByRole("option", {
     name: "raw/example, Selected dataset",
@@ -1612,5 +1618,97 @@ test("catalogue completion ignores old searches and supports escape, arrow keys 
   await screen.findByRole("listbox");
   fireEvent.keyDown(editor, { key: "Escape" });
   expect(screen.queryByRole("listbox")).toBeNull();
+  workspace.dispose();
+});
+
+test.each([{ metaKey: true }, { ctrlKey: true }])(
+  "scratchpad runs with modifier Enter and suppresses duplicate execution while busy: %o",
+  async (modifier) => {
+    let finish: ((response: Response) => void) | undefined;
+    let submitted = 0;
+    const { workspace, state } = await setup(successful, (url) => {
+      if (!url.startsWith("/api/v1/queries?")) return;
+      submitted++;
+      return new Promise<Response>((resolve) => {
+        finish = resolve;
+      });
+    });
+    render(
+      <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+    );
+    const editor = screen.getByRole("textbox", { name: "SQL query" });
+    fireEvent.keyDown(editor, { key: "Enter", ...modifier });
+    await waitFor(() => expect(submitted).toBe(1));
+    fireEvent.keyDown(editor, { key: "Enter", ...modifier });
+    expect(submitted).toBe(1);
+    await act(async () => finish?.(json(accepted, context())));
+    await screen.findByText("9007199254740993");
+    workspace.dispose();
+  },
+);
+
+test("scratchpad empty result keeps headers without an extra notice row", async () => {
+  const { workspace, state } = await setup(
+    (path) =>
+      path.endsWith("/results")
+        ? Promise.resolve(
+            json(
+              {
+                id: queryId,
+                schema,
+                rows: [],
+                next_offset: null,
+                truncated: false,
+              },
+              context(),
+            ),
+          )
+        : successful(path),
+    (url) =>
+      url.startsWith("/api/v1/queries?")
+        ? Promise.resolve(json(accepted, context()))
+        : undefined,
+  );
+  render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+  await screen.findByRole("columnheader", { name: "amount" });
+  expect(screen.queryByText("The query returned no rows.")).toBeNull();
+  workspace.dispose();
+});
+
+test("scratchpad keeps Reset accessible after a filter acceptance failure", async () => {
+  let attempts = 0;
+  const { workspace, state } = await setup(successful, (url, init) => {
+    if (!url.startsWith("/api/v1/queries?")) return;
+    attempts++;
+    return attempts === 2
+      ? Promise.resolve(
+          new Response(
+            JSON.stringify({
+              error: { message: "Query admission unavailable" },
+            }),
+            { status: 503 },
+          ),
+        )
+      : Promise.resolve(
+          json({ ...accepted, ...JSON.parse(String(init?.body)) }, context()),
+        );
+  });
+  render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+  await screen.findByText("9007199254740993");
+  fireEvent.click(
+    screen.getByRole("button", { name: "Column options for amount" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Sort descending" }));
+  await screen.findByRole("alert");
+  expect(screen.queryByText("Starting query…")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Reset preview" }));
+  await waitFor(() => expect(attempts).toBe(3));
+  await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
   workspace.dispose();
 });

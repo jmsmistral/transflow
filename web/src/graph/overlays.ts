@@ -6,7 +6,7 @@ import type {
   ApiOverlayFactsV1,
 } from "../generated/contracts";
 export type Colour = GraphViewV1["colour"];
-export const colourOptions: ReadonlyArray<readonly [Colour, string]> = [
+const colourLabels: ReadonlyArray<readonly [Colour, string]> = [
   ["resource", "Resource Type"],
   ["publication", "Publication"],
   ["status", "Build status"],
@@ -20,6 +20,13 @@ export const colourOptions: ReadonlyArray<readonly [Colour, string]> = [
   ["health", "Data health"],
   ["roles", "Build roles"],
 ];
+// Retain labels for saved views and automatic schedule roles, while keeping
+// the user-facing menu focused on the supported colouring choices.
+export const colourOptions = colourLabels.filter(
+  ([key]) => !["duration_median", "duration_mean", "roles"].includes(key),
+);
+export const colourLabel = (colour: Colour) =>
+  colourLabels.find(([key]) => key === colour)?.[1] ?? "Resource Type";
 const names: Record<string, string> = {
   polars_transform: "Polars Transform",
   sql_transform: "SQL Transform",

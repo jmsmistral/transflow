@@ -1,5 +1,51 @@
 # Contributor verification
 
+## Table sizing and compact inspector controls (2026-10-22)
+
+Preview and scratchpad remember resized widths through menus, criterion changes,
+loading and paging within a view. Dataset/schema/view changes reset widths.
+Scratchpad adds Cmd/Ctrl+Enter, an initial trailing space, result-side Reset/pills
+in the existing toolbar and header-only empty results. Failed rerun acceptance
+retains Reset without a stale Starting query label. The colour menu omits median,
+mean and build roles while automatic schedule roles and legacy modes remain.
+Schedules hide empty role headings, use concise empty copy and a green New action.
+Build preview replaces Plan details with the plan context's ordered branch search
+candidates, including its starting branch and configured master. Warnings and
+per-resource cards remain; no backend execution or resolution behavior changes.
+
+Local verification:
+
+- Full web gate: 740 tests in 38 files; strict type/lint/format checks, worker
+  probes and 16 reproducible production assets pass.
+- Focused operational regression run: 37 tests pass, including keyboard execution,
+  duplicate-submission guards, initial completion suppression, empty results and
+  recovery after failed filter acceptance. Grid regression covers resize/menu,
+  sorting, loading, paging and dataset reset; plan/schedule/graph tests cover
+  captured branch order, hidden empty groups and automatic roles.
+- Internal Browser with the real coordinator in the existing
+  `~/dev/transflow-workspace/transform-factories-review`: raw/orders expands from
+  170 to 370 px and retains that width after menu opening and sorting. Cmd+Enter
+  executes the default quoted query. Filtering yields 60 rows, then 0 rows with
+  headers and no notice. Reset/pills share the right header. Schedule list has
+  only its non-empty trigger group for raw/orders and the exact requested empty
+  message for analytics/region_summary; New schedule is green. Opening the saved
+  Delivery after publication schedule retains Target/Trigger/Not built roles.
+  Ancestor build preview shows four resources and Fall-back branches: master,
+  with no Plan details button. No browser console errors were observed.
+
+- Safety passes 27 regressions, 921 public candidate files, 635 locked versions
+  and one existing exception. Specification/link checks and 44 checker regressions
+  pass; diff whitespace checks pass in both repositories.
+- After rebuilding/restarting the final assets, Cmd+Enter with an open completion
+  executes the query instead of inserting the suggestion (120 rows); light/dark
+  rendering and right-hand criteria controls were checked without console errors.
+
+Screenshots/logs are local `target/ui-refinements-*` artifacts. No build or
+publication was performed. The owner review workspace is preserved; both owned
+verification coordinator instances were stopped after use.
+Native/Python application suites are not repeated for these UI-only changes;
+remote CI remains owner-monitored.
+
 ## Catalogue SQL completion and compact build cards (2026-10-22)
 
 The scratchpad suggests catalogue datasets at FROM/JOIN table positions and with

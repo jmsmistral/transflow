@@ -9,7 +9,7 @@ import { ApiFailure } from "./api/client";
 import type { Workspace } from "./workspace";
 import { type Ready, message } from "./execution-ui";
 import { Button } from "./components";
-import { PlanDetails, PlanResources } from "./PlanDetails";
+import { PlanFallbackBranches, PlanResources } from "./PlanDetails";
 import { Icon } from "./Icons";
 import { BuildModal } from "./BuildReport";
 import { useBuildEvidence, useBuildClock } from "./build-evidence";
@@ -364,7 +364,9 @@ export function BuildPlanner({
                       </Button>
                     </div>
                   )}
-                  <PlanDetails plan={plan} />
+                  {draft && (
+                    <PlanFallbackBranches plan={plan} context={draft.context} />
+                  )}
                 </section>
               )}
               <footer className="planner-actions">

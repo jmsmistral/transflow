@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from "react";
-import type { PlanResultV1 } from "./generated/contracts";
+import type { ApiContextV1, PlanResultV1 } from "./generated/contracts";
 import { Icon } from "./Icons";
 import { formatSize } from "./format-size";
 
@@ -210,34 +210,13 @@ export function PlanResources({ plan }: { plan: PlanResultV1 }) {
   );
 }
 
-const freshnessLabels = {
-  Current: "Up-to-date",
-  Stale: "Out-of-date",
-  Unknown: "Unavailable",
-};
-
-const reasonLabels: Readonly<Record<string, string>> = {
-  NEVER_BUILT: "No published version exists",
-  INPUT_VERSION_CHANGED: "An input version changed",
-  CODE_CHANGED: "Transform code changed",
-  ENVIRONMENT_CHANGED: "The execution environment changed",
-  PARAMETERS_CHANGED: "Parameter values changed",
-  CHECK_DEFINITION_CHANGED: "Check definitions changed",
-  EXECUTION_POLICY_CHANGED: "Execution policy changed",
-  SOURCE_REFRESH_DUE: "A source refresh is due",
-  ARTIFACT_MISSING: "Published data files are missing",
-  ARTIFACT_CORRUPT: "Published data files are corrupt",
-  ANCESTOR_STALE: "An upstream dataset needs updating",
-  BOUNDARY_FALLBACK: "An input uses a fallback branch",
-  CATALOG_ADDITION_PENDING: "This dataset needs catalogue registration",
-  SOURCE_DEFINITION_UNAVAILABLE: "The source definition is unavailable",
-  BOUNDARY_STALE: "Published input data is unavailable",
-  CACHE_DISABLED: "Caching is disabled",
-  CACHE_MATCH: "Retained computation matches this context",
-  METADATA_UNKNOWN: "Freshness comparison is unavailable",
-};
-
-export function PlanDetails({ plan }: { plan: PlanResultV1 }) {
+export function PlanFallbackBranches({
+  plan,
+  context,
+}: {
+  plan: PlanResultV1;
+  context: ApiContextV1;
+}) {
   return (
     <div className="planner-evidence">
       {plan.warnings.map((warning, index) => (
@@ -246,107 +225,14 @@ export function PlanDetails({ plan }: { plan: PlanResultV1 }) {
           {warning}
         </p>
       ))}
-      <Expansion title="Plan details">
-        <Facts
-          items={[
-            ["Branch", plan.branch],
-            ["Jobs in scope", plan.writes.length],
-            ["Published input bindings", plan.reads.length],
-          ]}
-        />
-        {!!plan.reads.length && (
-          <>
-            <h4>Published inputs</h4>
-            {plan.reads.map((read) => (
-              <div
-                className="plan-detail-card"
-                key={`${read.consumer}:${read.alias}`}
-              >
-                <strong>{read.path}</strong>
-                <Facts
-                  items={[
-                    ["Used by", read.consumer_path],
-                    ["Branch", read.resolved_branch],
-                    ["Resolution", read.resolution],
-                    [
-                      "Origin",
-                      read.origin_workspace &&
-                      read.origin_workspace !== plan.workspace
-                        ? "External workspace"
-                        : "Local workspace",
-                    ],
-                  ]}
-                />
-              </div>
-            ))}
-          </>
-        )}
-        {!!plan.pending_registrations.length && (
-          <>
-            <h4>New datasets</h4>
-            <p className="muted">Registered when you run this build.</p>
-            {plan.pending_registrations.map((item) => (
-              <p key={item.dataset}>{item.path}</p>
-            ))}
-          </>
-        )}
-        {!!Object.keys(plan.source_decisions ?? {}).length && (
-          <>
-            <h4>Source refresh</h4>
-            {Object.entries(plan.source_decisions ?? {}).map(
-              ([dataset, decision]) => (
-                <div className="plan-detail-card" key={dataset}>
-                  <strong>
-                    {plan.writes.find((item) => item.dataset === dataset)
-                      ?.path ??
-                      plan.reads.find((item) => item.dataset === dataset)
-                        ?.path ??
-                      dataset}
-                  </strong>
-                  <Facts
-                    items={[
-                      [
-                        "Action",
-                        decision.executes ? "Refresh source" : "Reuse source",
-                      ],
-                      ["Reason", decision.reason],
-                    ]}
-                  />
-                </div>
-              ),
-            )}
-          </>
-        )}
-        {!!plan.freshness.length && (
-          <>
-            <h4>Freshness</h4>
-            <p className="muted">Current branch versions, before this build.</p>
-            {plan.freshness.map((item) => (
-              <Expansion
-                key={item.identity}
-                title={item.path ?? item.identity}
-                label={`Freshness for ${item.path ?? item.identity}`}
-              >
-                <Facts
-                  items={[
-                    ["Input data", freshnessLabels[item.direct_data]],
-                    ["Transform code", freshnessLabels[item.direct_logic]],
-                    ["Upstream datasets", freshnessLabels[item.inherited]],
-                  ]}
-                />
-                {item.reasons.map((reason, index) => (
-                  <p className="plan-reason" key={index} title={reason.message}>
-                    {reasonLabels[reason.code] ?? reason.message}
-                    {reason.path.length > 1 && (
-                      <small>{reason.path.join(" → ")}</small>
-                    )}
-                  </p>
-                ))}
-              </Expansion>
-            ))}
-          </>
-        )}
-      </Expansion>
+      <section aria-label="Fall-back branches">
+        <h3>Fall-back branches</h3>
+        <ol className="plan-branches">
+          {context.fallback_policy.map((branch) => (
+            <li key={branch}>{branch}</li>
+          ))}
+        </ol>
+      </section>
     </div>
   );
 }

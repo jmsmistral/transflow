@@ -10,6 +10,10 @@ leaving the pane cancels owned active work. Results use the same typed read-only
 grid and safe clipboard format as Preview. Truncation, failure and cancellation
 states remain visible. Result expiry does not publish
 data or substitute a moving head. Fallback data has Preview's branch warning.
+The initial query ends with a space to avoid suggesting its completed table name
+on first focus. Cmd+Enter (Ctrl+Enter on other platforms) runs the query using the
+same readiness and concurrency guards as Run query.
+
 Type `FROM` or `JOIN` to autocomplete catalogue paths, or press Ctrl+Space at a
 table name. Arrow keys select a suggestion; Enter/Tab inserts its quoted path;
 Escape closes the menu. The menu appears below the cursor when there is room,
@@ -52,7 +56,9 @@ header tooltips show types, including decimal precision and timestamp metadata.
 Copy and downloads preserve exact values.
 
 Scratchpad results support the same column and clicked-cell filters and sorting
-as Preview. Reset preview and criterion pills share the existing top toolbar.
+as Preview. Reset preview and criterion pills sit on the right of the existing
+top toolbar above results, before result metadata and Download TSV. Empty results
+keep column headers and the count without an additional notice row.
 Controls rerun the last submitted SQL over its pinned dataset versions, filtering
 its output before the result cap. Editor edits apply only on Run query; Reset
 reruns the original SQL. Nondeterministic SQL can produce different values on a
@@ -288,6 +294,10 @@ across the selected branch and its fallbacks; fallback data keeps a solid border
 
 ## Saved lineages (T084)
 
+The colour menu omits Median duration, Mean duration and Build roles. Existing
+saved colour modes remain readable, and opening a schedule still applies its
+roles and legend automatically.
+
 The header's **Save** button is disabled until the lineage changes, including node
 movement, membership, colour, description or branch settings. Camera pan/zoom is
 transient and never enables Save or appears in saved documents. Opening a lineage
@@ -385,6 +395,8 @@ actions disabled; nested values can still be entered through the column popup
 subject to the existing query engine's supported-type limits. Long labels are
 ellipsized, and Escape, arrow keys and outside click operate the compact menu.
 
+User-resized column widths persist through menus, filter/sort replacements and
+paging, until the dataset, schema or inspector view changes.
 Each Preview column has a small arrow button opening one popup. Its first section
 contains Include/Exclude, an exact-value input with Apply, Exclude nulls and Show
 only nulls. Its separated lower section contains only Sort ascending and Sort
@@ -461,7 +473,7 @@ refresh, exact pins, parameters, require-current inputs and source refs. These a
 fields are not shown in the inspector.
 
 **Next (View preview)** does not execute producers or register outputs. It shows the
-planned build datasets only; reused input boundaries remain in collapsed Plan details.
+planned build datasets only; reused input paths and branches appear in each resource card.
 Force, selection/context changes and
 expiry automatically prepare a new guarded preview; transient conflicts refresh context
 and retry up to three times with backoff. Preparation errors remain visible with an
@@ -476,10 +488,10 @@ remain jobs in scope, not predicted materializations.
 The graph temporarily highlights writes and fades other nodes. **Add to graph**
 adds hidden registered resources in batches of up to 100 without moving existing
 nodes. Pending registrations become browsable on acceptance.
-**Plan details** opens with the same animation and shows branch/counts, published
-input paths and fallback branches, new datasets, source decisions and freshness
-reasons. Warnings remain visible before expansion. No Select nodes on graph row or
-native disclosure arrows are shown. Empty/invalid/expired/conflicting plans cannot run.
+**Fall-back branches** lists the captured branch search order from top to bottom,
+starting with the selected branch and including master at its configured position.
+An explicit no-fallback policy shows only its starting branch. Warnings remain
+visible. Empty/invalid/expired/conflicting plans cannot run.
 
 **Run build** sends only the reviewed plan ID, matching context and durable idempotency
 receipt. Interrupted acceptance retries that receipt rather than creating another build.
@@ -489,6 +501,10 @@ workspace through publication conflicts with capped, cancellation-aware backoff.
 The same-branch canvas keeps its membership, positions, selection and camera.
 
 ## Schedule inspector (T098)
+
+**New schedule** is a green primary action. Selected-dataset groups appear only
+when they contain matching schedules; an empty selection scope shows
+“No available schedules for selected nodes”.
 
 Schedules shows related definitions for selected nodes, or for the visible graph when
 nothing is selected. **All workspace schedules** is an explicit alternative. Target

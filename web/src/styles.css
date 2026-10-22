@@ -3499,13 +3499,6 @@ revo-grid.preview-grid
   color: var(--muted);
   font-size: 11px;
 }
-.plan-reason {
-  overflow-wrap: anywhere;
-}
-.plan-reason small {
-  display: block;
-  color: var(--muted);
-}
 @media (prefers-reduced-motion: reduce) {
   .plan-expansion-content {
     transition: none;
@@ -4239,7 +4232,8 @@ revo-grid.preview-grid
 .schedule-editor-actions {
   justify-content: flex-end;
 }
-.schedule-editor-actions .button-primary {
+.schedule-editor-actions .button-primary,
+.schedule-list-toolbar .button-primary {
   color: var(--surface);
   background: var(--accent);
   border-color: var(--accent);
@@ -4483,8 +4477,7 @@ revo-grid.preview-grid
   font-size: 12px;
   min-width: 0;
 }
-.scratchpad-unavailable,
-.scratchpad-result-notice {
+.scratchpad-unavailable {
   margin: 0;
   padding: 8px 12px;
   font-size: 12px;
@@ -4911,4 +4904,17 @@ revo-grid.preview-grid
 .scratchpad-preview-controls .preview-criteria-pill {
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.plan-branches {
+  margin: 8px 0 16px;
+  padding-left: 24px;
+  color: var(--text);
+}
+.plan-branches li {
+  padding: 5px 0 5px 4px;
+  overflow-wrap: anywhere;
+}
+.plan-branches li::marker {
+  color: var(--muted);
 }

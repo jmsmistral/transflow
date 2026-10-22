@@ -1194,13 +1194,6 @@ export function Schedules({
       )}
       {!chosen && (
         <>
-          <p className="muted">
-            {all
-              ? "All saved workspace schedules"
-              : selected.length
-                ? "Schedules related to selected datasets"
-                : "Schedules related to visible graph datasets"}
-          </p>
           {selected.length > 0 && !all ? (
             <>
               {(
@@ -1208,25 +1201,24 @@ export function Schedules({
                   ["targets", "Builds selected datasets"],
                   ["triggers", "Triggered by selected datasets"],
                 ] as const
-              ).map(([role, title]) => (
-                <section key={role}>
-                  <h3>{title}</h3>
-                  {matches
-                    .filter((r) => {
-                      const d = savedDefinition(r);
-                      return d && related(d, scopeNodes)[role];
-                    })
-                    .map((r) => (
+              ).map(([role, title]) => {
+                const rows = matches.filter((row) => {
+                  const definition = savedDefinition(row);
+                  return definition && related(definition, scopeNodes)[role];
+                });
+                return rows.length ? (
+                  <section key={role}>
+                    <h3>{title}</h3>
+                    {rows.map((row) => (
                       <ScheduleRow
-                        key={r.id}
-                        row={r}
-                        onSelect={() => {
-                          choose(r.id);
-                        }}
+                        key={row.id}
+                        row={row}
+                        onSelect={() => choose(row.id)}
                       />
                     ))}
-                </section>
-              ))}
+                  </section>
+                ) : null;
+              })}
             </>
           ) : (
             matches.map((r) => (
@@ -1241,8 +1233,9 @@ export function Schedules({
           )}
           {!matches.length && (
             <Empty>
-              No schedules match this graph context. Create a schedule or show
-              all workspace schedules.
+              {selected.length && !all
+                ? "No available schedules for selected nodes"
+                : "No available schedules"}
             </Empty>
           )}
           {next && (

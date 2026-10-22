@@ -63,11 +63,13 @@ export function SqlEditor({
   selectedPath,
   value,
   onChange,
+  onRun,
 }: {
   workspace: Workspace;
   selectedPath: string;
   value: string;
   onChange: (value: string) => void;
+  onRun: () => void;
 }) {
   const editor = useRef<HTMLTextAreaElement>(null);
   const id = useId();
@@ -189,7 +191,14 @@ export function SqlEditor({
         onScroll={() => setCompletion(null)}
         onKeyDown={(event) => {
           if (event.nativeEvent.isComposing) return;
-          if ((event.ctrlKey || event.metaKey) && event.code === "Space") {
+          if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+            event.preventDefault();
+            setCompletion(null);
+            onRun();
+          } else if (
+            (event.ctrlKey || event.metaKey) &&
+            event.code === "Space"
+          ) {
             event.preventDefault();
             suggest(event.currentTarget);
           } else if (completion && event.key === "Escape") {

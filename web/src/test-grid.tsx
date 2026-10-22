@@ -11,6 +11,7 @@ import type {
   ColumnTemplateFunc,
   ColumnTemplateProp,
   VNode,
+  ColumnRegular,
 } from "@revolist/revogrid";
 
 // Render our native header template without starting Stencil's component runtime.
@@ -56,15 +57,26 @@ export const RevoGrid = forwardRef<
     columns: {
       prop: string;
       name: string;
+      size?: number;
       columnTemplate?: ColumnTemplateFunc;
     }[];
     source: Record<string, string>[];
     "aria-label"?: string;
     className?: string;
+    onAftercolumnresize?: (
+      event: CustomEvent<Record<number, ColumnRegular>>,
+    ) => void;
     onViewportscroll?: (event: CustomEvent<ViewPortScrollEvent>) => void;
   }
 >(function TestGrid(
-  { columns, source, "aria-label": label, className, onViewportscroll },
+  {
+    columns,
+    source,
+    "aria-label": label,
+    className,
+    onViewportscroll,
+    onAftercolumnresize,
+  },
   ref,
 ) {
   const table = useRef<HTMLTableElement>(null);
@@ -84,16 +96,28 @@ export const RevoGrid = forwardRef<
     const element = table.current;
     const scroll = (event: Event) =>
       onViewportscroll?.(event as CustomEvent<ViewPortScrollEvent>);
+    const resize = (event: Event) =>
+      onAftercolumnresize?.(
+        event as CustomEvent<Record<number, ColumnRegular>>,
+      );
     element?.addEventListener("viewportscroll", scroll);
-    return () => element?.removeEventListener("viewportscroll", scroll);
-  }, [onViewportscroll]);
+    element?.addEventListener("aftercolumnresize", resize);
+    return () => {
+      element?.removeEventListener("viewportscroll", scroll);
+      element?.removeEventListener("aftercolumnresize", resize);
+    };
+  }, [onViewportscroll, onAftercolumnresize]);
   return (
     <table ref={table} aria-label={label} className={className}>
       <thead>
         <tr>
           <th>#</th>
           {columns.map((column) => (
-            <th key={column.prop} aria-label={column.name}>
+            <th
+              key={column.prop}
+              aria-label={column.name}
+              style={{ width: column.size }}
+            >
               {column.columnTemplate
                 ? headerContent(
                     column.columnTemplate(

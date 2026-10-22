@@ -1116,3 +1116,36 @@ test("connecting toggle follows graph trigger edits, blocks incomplete saves and
   });
   workspace.dispose();
 });
+
+test("empty selected schedule groups hide their headings and use the concise empty state", async () => {
+  const { workspace, state } = await setup();
+  const unrelated = {
+    identity: `dataset:${workspaceId}:ffffffff-ffff-4fff-8fff-ffffffffffff`,
+    paths: ["unrelated"],
+    depth: "0",
+    external: false,
+    producer: true,
+    parent_count: "0",
+    child_count: "0",
+    publication: "published",
+    resource_type: "polars_transform",
+  } as const;
+  render(
+    <Schedules
+      workspace={workspace}
+      state={state}
+      selected={[unrelated]}
+      visible={[]}
+      onRoles={vi.fn()}
+      onPlan={vi.fn()}
+      onAdd={vi.fn()}
+    />,
+  );
+  await screen.findByText("No available schedules for selected nodes");
+  expect(screen.queryByText("Builds selected datasets")).toBeNull();
+  expect(screen.queryByText("Triggered by selected datasets")).toBeNull();
+  expect(
+    screen.queryByText("Schedules related to selected datasets"),
+  ).toBeNull();
+  workspace.dispose();
+});

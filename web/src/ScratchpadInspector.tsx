@@ -99,7 +99,7 @@ function Scratchpad({
   >([]);
   const [previousRows, setPreviousRows] = useState(false);
   const [sql, setSql] = useState(
-    () => `SELECT * FROM ${quoteSqlName(dataset?.path ?? "dataset")}`,
+    () => `SELECT * FROM ${quoteSqlName(dataset?.path ?? "dataset")} `,
   );
   const [job, setJob] = useState<ApiQueryV1>();
   const [result, setResult] = useState<ApiQueryResultsV1>();
@@ -486,6 +486,7 @@ function Scratchpad({
       if (!lifetime.closed && lifetime.query === query) setDownloading(false);
     }
   }
+  const hasCriteria = criteria.filters.length > 0 || criteria.sorts.length > 0;
   return (
     <div className="scratchpad-inspector">
       <Fallback branch={resolved} requested={state.selection.branch} />
@@ -498,6 +499,8 @@ function Scratchpad({
         <Button
           className="button-primary"
           disabled={busy || downloading || !version || !sql.trim()}
+          title="Run query (⌘ Enter / Ctrl+Enter)"
+          aria-keyshortcuts="Meta+Enter Control+Enter"
           onClick={() => void run()}
         >
           <Icon name="play" /> Run query
@@ -514,35 +517,38 @@ function Scratchpad({
             <Icon name="cycle" /> Running query…
           </span>
         )}
-        {(criteria.filters.length > 0 || criteria.sorts.length > 0) && (
-          <div className="scratchpad-preview-controls">
-            <Button
-              disabled={busy || downloading}
-              onClick={() => void run(emptyPreviewCriteria)}
-            >
-              Reset preview
-            </Button>
-            <PreviewCriteriaPills criteria={criteria} />
-          </div>
-        )}
-        {(job || busy) && (
+        {(job || busy || hasCriteria) && (
           <div className="scratchpad-result-actions">
-            <div
-              className="scratchpad-status"
-              role="status"
-              aria-label="Query status"
-            >
-              {busy && !readFailed && (!job || !terminal(job))
-                ? null
-                : readFailed && job && !terminal(job)
-                  ? "Query status unavailable"
-                  : job
-                    ? `${job.state === "SUCCEEDED" ? "" : `${job.state} · `}${job.rows} rows · ${readableDuration((BigInt(job.elapsed_ms) * 1000000n).toString())}`
-                    : "Starting query…"}
-              {job?.truncated && (
-                <span> · Results truncated at the query limits.</span>
-              )}
-            </div>
+            {hasCriteria && (
+              <div className="scratchpad-preview-controls">
+                <Button
+                  disabled={busy || downloading}
+                  onClick={() => void run(emptyPreviewCriteria)}
+                >
+                  Reset preview
+                </Button>
+                <PreviewCriteriaPills criteria={criteria} />
+              </div>
+            )}
+
+            {(job || busy) && (
+              <div
+                className="scratchpad-status"
+                role="status"
+                aria-label="Query status"
+              >
+                {busy && !readFailed && (!job || !terminal(job))
+                  ? null
+                  : readFailed && job && !terminal(job)
+                    ? "Query status unavailable"
+                    : job
+                      ? `${job.state === "SUCCEEDED" ? "" : `${job.state} · `}${job.rows} rows · ${readableDuration((BigInt(job.elapsed_ms) * 1000000n).toString())}`
+                      : "Starting query…"}
+                {job?.truncated && (
+                  <span> · Results truncated at the query limits.</span>
+                )}
+              </div>
+            )}
             {result && job?.state === "SUCCEEDED" && (
               <Button
                 title="Download all available result rows as a tab-delimited file"
@@ -563,6 +569,7 @@ function Scratchpad({
             selectedPath={dataset?.path ?? "dataset"}
             value={sql}
             onChange={setSql}
+            onRun={() => void run()}
           />
           {!version && (
             <p className="scratchpad-unavailable">
@@ -616,11 +623,6 @@ function Scratchpad({
                 }
                 onError={setError}
               />
-              {result.rows.length === 0 && (
-                <p className="scratchpad-result-notice">
-                  The query returned no rows.
-                </p>
-              )}
             </>
           ) : !error || busy ? (
             <div className="scratchpad-empty-results">

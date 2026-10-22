@@ -49,19 +49,7 @@ export function previewSelectionText(
   return tabSeparatedText(headers, rows);
 }
 
-export function PreviewGrid({
-  page,
-  path,
-  dark,
-  formatCell,
-  formatType,
-  onError,
-  onNearEnd,
-  criteria,
-  onCriteriaChange,
-  busy = false,
-  disabled = false,
-}: {
+type PreviewGridProps = {
   page: GridPage;
   path: string;
   dark: boolean;
@@ -73,7 +61,31 @@ export function PreviewGrid({
   onCriteriaChange?: (criteria: PreviewCriteria) => void;
   busy?: boolean;
   disabled?: boolean;
-}) {
+};
+
+export function PreviewGrid(props: PreviewGridProps) {
+  return (
+    <PreviewGridView
+      key={JSON.stringify([props.path, props.page.schema])}
+      {...props}
+    />
+  );
+}
+
+function PreviewGridView({
+  page,
+  path,
+  dark,
+  formatCell,
+  formatType,
+  onError,
+  onNearEnd,
+  criteria,
+  onCriteriaChange,
+  busy = false,
+  disabled = false,
+}: PreviewGridProps) {
+  const [widths, setWidths] = useState<Record<string, number>>({});
   const blocked = busy || disabled;
   const grid = useRef<HTMLRevoGridElement>(null);
   const container = useRef<HTMLDivElement>(null);
@@ -125,7 +137,9 @@ export function PreviewGrid({
       page.schema.fields.map((field, index) => ({
         prop: `c${index}`,
         name: field.name,
-        size: Math.max(170, Math.min(310, field.name.length * 9 + 52)),
+        size:
+          widths[`c${index}`] ??
+          Math.max(170, Math.min(310, field.name.length * 9 + 52)),
         sortable: false,
         filter: false,
         columnProperties: () => ({ "aria-label": field.name }),
@@ -192,7 +206,7 @@ export function PreviewGrid({
           title: formatType(index),
         }),
       })),
-    [page, formatType, criteria, onCriteriaChange, columnMenu?.column],
+    [page, formatType, criteria, onCriteriaChange, columnMenu?.column, widths],
   );
 
   async function selectedArea(): Promise<Area | null> {
@@ -370,6 +384,18 @@ export function PreviewGrid({
           useClipboard={false}
           stretch={false}
           resize
+          onAftercolumnresize={({ detail }) => {
+            setWidths((previous) => ({
+              ...previous,
+              ...Object.fromEntries(
+                Object.values(detail).flatMap((column) =>
+                  column.size != null && column.size > 0
+                    ? [[column.prop, column.size]]
+                    : [],
+                ),
+              ),
+            }));
+          }}
           canMoveColumns={false}
           hideAttribution
           onViewportscroll={async ({ detail }) => {

@@ -1,7 +1,11 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { BuildPlanner } from "./BuildPlanner";
-import { PlanResources, PlanDetails, cacheReadiness } from "./PlanDetails";
+import {
+  PlanResources,
+  PlanFallbackBranches,
+  cacheReadiness,
+} from "./PlanDetails";
 import { selection, resources, type Options } from "./planning";
 import { Client } from "./api/client";
 import { Workspace } from "./workspace";
@@ -255,7 +259,13 @@ describe("readable build evidence", () => {
     const { container } = render(
       <>
         <PlanResources plan={evidence} />
-        <PlanDetails plan={evidence} />
+        <PlanFallbackBranches
+          plan={evidence}
+          context={{
+            ...planContext,
+            fallback_policy: ["review", "stable", "master"],
+          }}
+        />
       </>,
     );
     expect(container.querySelector("details")).toBeNull();
@@ -285,17 +295,14 @@ describe("readable build evidence", () => {
     fireEvent.click(toggle);
     expect(content.getAttribute("aria-hidden")).toBe("true");
     expect(content.hasAttribute("inert")).toBe(true);
-    fireEvent.click(screen.getByRole("button", { name: "Plan details" }));
-    expect(screen.getByText("fallback")).toBeTruthy();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Freshness for raw/example" }),
-    );
-    expect(screen.getByText("Freshness comparison is unavailable").title).toBe(
-      "Original diagnostic with before and after hashes",
-    );
+    expect(screen.queryByRole("button", { name: "Plan details" })).toBeNull();
     expect(
-      screen.getByText("An unfamiliar backend reason remains visible"),
-    ).toBeTruthy();
+      [
+        ...screen
+          .getByRole("region", { name: "Fall-back branches" })
+          .querySelectorAll("li"),
+      ].map((item) => item.textContent),
+    ).toEqual(["review", "stable", "master"]);
   });
 });
 async function setup({

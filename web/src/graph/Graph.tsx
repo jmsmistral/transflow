@@ -55,6 +55,7 @@ import {
   paint,
   basis,
   colourOptions,
+  colourLabel,
   type Paint,
   type Colour,
 } from "./overlays";
@@ -1145,8 +1146,7 @@ function GraphView({
             action: () => setColour(key),
           }))}
         >
-          {colourOptions.find(([key]) => key === paintColour)?.[1] ??
-            "Resource Type"}
+          {colourLabel(paintColour)}
         </Menu>
         {legendOpen && (
           <div className="graph-colour-legend" aria-label="Graph legend">

@@ -87,8 +87,8 @@ bash tools/serve-review.sh "$HOME/transflow-demo" --open
 ```
 
 Select a dataset to inspect its values and producing code. Run a scratchpad SQL
-query, open a previous build, or follow its upstream dependencies. Saved lineage
-views keep the graph you are working with.
+query with Cmd+Enter (Ctrl+Enter on other platforms), open a previous build, or
+follow its upstream dependencies. Saved lineage views keep the graph you are working with.
 
 ## Explore more
 
