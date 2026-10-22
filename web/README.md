@@ -495,6 +495,11 @@ visible. Empty/invalid/expired/conflicting plans cannot run.
 
 **Run build** sends only the reviewed plan ID, matching context and durable idempotency
 receipt. Interrupted acceptance retries that receipt rather than creating another build.
+The report keeps its last verified snapshot while refreshing. Canceled reads are
+silent; runtime context conflicts retry with a fresh scope up to three times,
+250 ms apart, before showing an error. Persistent conflicts and genuine failures
+retain the Retry action.
+
 The live Build report opens automatically; changing the next selection or canceling
 its preview does not cancel an accepted build. Event refresh retains the last verified
 workspace through publication conflicts with capped, cancellation-aware backoff.

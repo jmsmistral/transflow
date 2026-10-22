@@ -11,7 +11,7 @@ import { expect, test, vi } from "vitest";
 import { App } from "./App";
 import { readFileSync } from "node:fs";
 import { URL as NodeURL } from "node:url";
-import { Client } from "./api/client";
+import { ApiFailure, Client } from "./api/client";
 import { Workspace } from "./workspace";
 import { CodeInspector } from "./CodeInspector";
 import { HistoryInspector } from "./HistoryInspector";
@@ -880,6 +880,147 @@ test("a noncached Build report keeps unknown execution start and queue wait unav
     within(dialog).queryByLabelText("Not applicable: no execution queued"),
   ).toBeNull();
   view.unmount();
+  model.dispose();
+});
+
+test.each(["scope", "timeline", "report"])(
+  "build evidence quietly retries %s conflicts with a fresh complete snapshot",
+  async (stage) => {
+    const { model, state } = await fixture();
+    const original = model.scope.bind(model);
+    let failures = 2;
+    const scope = vi
+      .spyOn(model, "scope")
+      .mockImplementation(async (...args) => {
+        const result = await original(...args);
+        const conflict = () => {
+          if (failures-- > 0)
+            throw new ApiFailure("conflict", "Context changed");
+        };
+        if (stage === "scope") conflict();
+        return {
+          ...result,
+          read: async (...readArgs) => {
+            if (
+              (stage === "timeline" &&
+                readArgs[0] === "ApiExecutionTimelineV1") ||
+              (stage === "report" && readArgs[0] === "ExecutionJsonV1")
+            )
+              conflict();
+            return result.read(...readArgs);
+          },
+        };
+      });
+    vi.useFakeTimers();
+    try {
+      const hook = renderHook(() => useBuildEvidence(model, state, job));
+      for (const delay of [0, 250]) {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(delay);
+        });
+        expect(hook.result.current.error).toBe("");
+        expect(hook.result.current.result).toBeUndefined();
+      }
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(250);
+      });
+      expect(scope).toHaveBeenCalledTimes(3);
+      expect(hook.result.current.result?.timeline.build).toBe(build);
+      expect(hook.result.current.error).toBe("");
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(6000);
+      });
+      expect(scope).toHaveBeenCalledTimes(3);
+      hook.unmount();
+    } finally {
+      vi.useRealTimers();
+      model.dispose();
+    }
+  },
+);
+
+test("build evidence ignores canceled scopes and still reads terminal evidence", async () => {
+  const { model, state } = await fixture();
+  const scope = vi
+    .spyOn(model, "scope")
+    .mockRejectedValueOnce(
+      new DOMException("The operation was aborted.", "AbortError"),
+    );
+  vi.useFakeTimers();
+  try {
+    const hook = renderHook(() => useBuildEvidence(model, state, job));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(hook.result.current.error).toBe("");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    expect(hook.result.current.result?.timeline.state).toBe("FAILED");
+    expect(hook.result.current.error).toBe("");
+    expect(scope).toHaveBeenCalledTimes(2);
+    hook.unmount();
+  } finally {
+    vi.useRealTimers();
+    model.dispose();
+  }
+});
+
+test("persistent build conflicts remain visible and recover through Retry", async () => {
+  const { model, state } = await fixture();
+  const original = model.scope.bind(model);
+  const scope = vi
+    .spyOn(model, "scope")
+    .mockRejectedValue(new ApiFailure("conflict", "Context changed"));
+  vi.useFakeTimers();
+  try {
+    const hook = renderHook(() => useBuildEvidence(model, state, job));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    expect(scope).toHaveBeenCalledTimes(3);
+    expect(hook.result.current.error).toBe("Context changed");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6000);
+    });
+    expect(scope).toHaveBeenCalledTimes(3);
+    scope.mockImplementation(original);
+    act(() => hook.result.current.refresh());
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(hook.result.current.error).toBe("");
+    expect(hook.result.current.result?.timeline.build).toBe(build);
+    hook.unmount();
+  } finally {
+    vi.useRealTimers();
+    model.dispose();
+  }
+});
+
+test("build refresh keeps last-good evidence and discards superseded errors", async () => {
+  const { model, state } = await fixture();
+  const hook = renderHook(() => useBuildEvidence(model, state, job));
+  await waitFor(() => expect(hook.result.current.result).toBeDefined());
+  const previous = hook.result.current.result;
+  let rejectOld: (error: Error) => void = () => {};
+  const scope = vi.spyOn(model, "scope").mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectOld = reject;
+      }),
+  );
+  act(() => hook.result.current.refresh());
+  expect(scope).toHaveBeenCalledTimes(1);
+  expect(hook.result.current.result).toBe(previous);
+  act(() => hook.result.current.refresh());
+  await waitFor(() => expect(hook.result.current.result).not.toBe(previous));
+  await act(async () => {
+    rejectOld(new ApiFailure("failed", "Obsolete failure"));
+  });
+  expect(hook.result.current.error).toBe("");
+  expect(hook.result.current.result?.timeline.build).toBe(build);
+  hook.unmount();
   model.dispose();
 });
 

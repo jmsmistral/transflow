@@ -1,5 +1,37 @@
 # Contributor verification
 
+## Quiet build report refresh recovery (2026-10-22)
+
+T086 treats canceled read scopes as normal replacement and retries runtime context
+conflicts with a newly acquired complete timeline/report scope (three attempts,
+250 ms apart). Last-good evidence remains visible; persistent conflicts, connection
+failures and mismatched build identities remain explicit. Terminal evidence still
+stops polling, and superseded completions cannot update the report.
+
+Local evidence:
+
+- Full `bash tools/check-web.sh`: 753 tests in 38 files, strict type/lint/format,
+  production worker probes and 16 reproducible assets pass. Six new regression
+  cases cover conflicts during scope/timeline/report reads, cancellation before
+  terminal evidence, exhausted retries/manual recovery and superseded errors.
+- Internal Browser reproduced abort/conflict banners on the owner's already-running
+  `preview-scroll-review` coordinator, which retained the old UI bundle in memory.
+  Two synthetic five-dataset builds succeeded; no sources or saved views changed.
+- A separate verification coordinator reused existing `python-generated-review`
+  with the rebuilt bundle. Build `6291c000-3872-448c-89a6-41596dd5ea03` succeeded
+  for all five datasets. 122 DOM samples over ten seconds include Queued, Running
+  and Succeeded with zero refresh alerts. Browser error/warning logs are empty.
+- Safety: 27 regressions, 921 public candidate files, 635 locked versions and one
+  existing exception pass. Specification/link checks and 44 checker regressions
+  pass; both repository diff whitespace checks pass.
+
+Samples, screenshot and complete logs are ignored `target/build-report-*` artifacts.
+The owned verification coordinator is stopped after review; the owner's original
+coordinator remains running and needs relaunching to pick up the new UI bundle.
+Use the unchanged `preview-scroll-review-tools/serve-preview.sh` launcher. No new
+workspace was created. Rust/Python execution and API contracts are unchanged and
+those application suites were not repeated. CI remains owner-monitored.
+
 ## Stable live build colours and pinned actions (2026-10-22)
 
 T084/T087/T088 keep the last verified canvas snapshot during runtime refreshes

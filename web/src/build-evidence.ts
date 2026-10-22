@@ -6,6 +6,7 @@ import type {
   ExecutionJsonV1,
 } from "./generated/contracts";
 import type { Workspace } from "./workspace";
+import { ApiFailure } from "./api/client";
 import { type Scope, type Ready, message } from "./execution-ui";
 
 export const terminalBuild = (state: string) =>
@@ -28,7 +29,10 @@ export function useBuildEvidence(
     const abort = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     let active = !terminalBuild(job.build_state);
+    let conflicts = 0;
     async function read() {
+      let delay = 1500;
+      let retry = false;
       try {
         const scope = await workspace.scope(
           { branch: state.selection.branch, plan: job.plan },
@@ -51,15 +55,36 @@ export function useBuildEvidence(
           );
         if (abort.signal.aborted) return;
         active = !terminalBuild(timeline.state);
+        conflicts = 0;
         setResult({ timeline, report, scope });
         setError("");
       } catch (error) {
-        if (!abort.signal.aborted) setError(message(error));
+        if (abort.signal.aborted) return;
+        if (
+          (error instanceof Error || error instanceof DOMException) &&
+          error.name === "AbortError"
+        ) {
+          // Workspace refreshes cancel old scopes before React rebinds this hook.
+          // Cancellation is not a failed build read, including for terminal jobs.
+          retry = true;
+        } else if (
+          error instanceof ApiFailure &&
+          error.kind === "conflict" &&
+          ++conflicts < 3
+        ) {
+          // Runtime facts can change between context, timeline and report reads.
+          // Acquire a fresh scope and replace the entire snapshot on success.
+          retry = true;
+          delay = 250;
+        } else {
+          conflicts = 0;
+          setError(message(error));
+        }
       }
-      if (!abort.signal.aborted && active)
+      if (!abort.signal.aborted && (active || retry))
         timer = setTimeout(() => {
           void read();
-        }, 1500);
+        }, delay);
     }
     void read();
     return () => {
