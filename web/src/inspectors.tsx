@@ -625,23 +625,30 @@ function PreviewContent({
       <DatasetHeader
         path={dataset.path}
         afterName={
-          querying ? (
-            <Button
-              onClick={() => changeCriteria(emptyPreviewCriteria)}
-              title="Clear all filters and sorting"
-            >
-              Reset preview
-            </Button>
+          querying || state.selection.version ? (
+            <>
+              {state.selection.version && (
+                <span title={state.selection.version}>
+                  Version <strong>{state.selection.version.slice(0, 8)}</strong>
+                  {resolved ? ` · Branch ${resolved}` : ""}
+                </span>
+              )}
+              {querying && (
+                <Button
+                  onClick={() => changeCriteria(emptyPreviewCriteria)}
+                  title="Clear all filters and sorting"
+                >
+                  Reset preview
+                </Button>
+              )}
+              {querying && query.running && (
+                <Button onClick={query.cancel}>Cancel</Button>
+              )}
+            </>
           ) : undefined
         }
       >
         <div className="preview-toolbar-details">
-          {state.selection.version && (
-            <span title={state.selection.version}>
-              Version <strong>{state.selection.version.slice(0, 8)}</strong>
-              {resolved ? ` · Branch ${resolved}` : ""}
-            </span>
-          )}
           {published && (
             <span>
               Published <strong>{date(published)}</strong>
@@ -667,10 +674,6 @@ function PreviewContent({
             </span>
           )}
           {schema && <span>{schema.fields.length} columns</span>}
-          {criteria.filters.length > 0 && <span>Filtered preview</span>}
-          {querying && query.running && (
-            <Button onClick={query.cancel}>Cancel</Button>
-          )}
         </div>
       </DatasetHeader>
       {!version ? (
@@ -763,15 +766,9 @@ function PreviewContent({
                   }
                 }}
               />
-              {displayed.rows.length === 0 &&
-                !(querying && query.loading) &&
-                !failure && (
-                  <p className="preview-empty">
-                    {querying
-                      ? "No rows match this preview."
-                      : "This version contains no rows."}
-                  </p>
-                )}
+              {displayed.rows.length === 0 && !querying && !failure && (
+                <p className="preview-empty">This version contains no rows.</p>
+              )}
             </>
           )}
         </div>

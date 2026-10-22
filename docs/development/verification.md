@@ -1,5 +1,24 @@
 # Contributor verification
 
+## Compact empty Preview (2026-10-22)
+
+Remove Filtered preview and the no-matching-rows message. Empty query results
+retain the headers and Showing 0 rows. The right-hand metadata is limited to
+published time and row/column counts; Cancel and historical version identity
+sit beside the dataset name. The existing deferred filter regression now checks
+zero results and Reset, while the pinned-version identity regression remains
+passing. The full web gate passes 702 tests, strict checks and reproducible
+production assets. All 27 safety regressions and paired safety checks pass.
+
+The owner's `preview-scroll-review` coordinator was already running with its
+previous assets, so it is preserved. The existing stopped
+`transform-factories-review` sample is used for actual rebuilt-UI verification:
+both unwanted labels are absent, the three headers and 0-row count remain, and
+Browser console errors are empty. Capture: `target/preview-empty-review.jpg`.
+No sample definitions or saved lineages change. The temporary spare coordinator
+is stopped before handoff; the owner must restart their review coordinator to
+load the new bundle. Specification/link checks pass; new CI is owner-monitored.
+
 ## Retained Preview loading and Reset placement (2026-10-22)
 
 Filtering/sorting now retains the previous exact-version table beneath a

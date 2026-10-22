@@ -170,7 +170,7 @@ async function fixture() {
     pending: async () => {
       await waitFor(() => expect(complete).toBeDefined());
     },
-    finish: async (wrongId = false) => {
+    finish: async (wrongId = false, empty = false) => {
       await waitFor(() => expect(complete).toBeDefined());
       const resolve = complete;
       complete = undefined;
@@ -180,7 +180,7 @@ async function fixture() {
             {
               id: wrongId ? datasetId : queryId,
               schema,
-              rows: [[{ type: "i64", value: "2" }]],
+              rows: empty ? [] : [[{ type: "i64", value: "2" }]],
               next_offset: null,
               truncated: false,
             },
@@ -206,7 +206,7 @@ test.each(["sort", "filter"])(
     else {
       fireEvent.change(
         screen.getByRole("textbox", { name: "Filter value for id" }),
-        { target: { value: "2" } },
+        { target: { value: "999" } },
       );
       fireEvent.click(screen.getByRole("button", { name: "Apply id filter" }));
     }
@@ -227,7 +227,10 @@ test.each(["sort", "filter"])(
       screen.getByRole("button", { name: "Reset preview" }).parentElement
         ?.className,
     ).toBe("dataset-inspector-leading");
-    await f.finish();
+    await f.finish(false, action === "filter");
+    const resultRows = action === "filter" ? 0 : 1;
+    expect(screen.queryByText("Filtered preview")).toBeNull();
+    expect(screen.queryByText("No rows match this preview.")).toBeNull();
     await waitFor(() => expect(grid?.getAttribute("aria-busy")).toBe("false"));
     expect(grid?.getAttribute("aria-disabled")).toBe("false");
     expect(
@@ -236,13 +239,13 @@ test.each(["sort", "filter"])(
     expect(
       screen.queryByRole("status", { name: "Updating preview" }),
     ).toBeNull();
-    expect(originalTable.querySelectorAll("tbody tr")).toHaveLength(1);
+    expect(originalTable.querySelectorAll("tbody tr")).toHaveLength(resultRows);
     f.holdPhysical();
     fireEvent.click(screen.getByRole("button", { name: "Reset preview" }));
     expect(
       screen.getByRole("status", { name: "Updating preview" }),
     ).toBeTruthy();
-    expect(originalTable.querySelectorAll("tbody tr")).toHaveLength(1);
+    expect(originalTable.querySelectorAll("tbody tr")).toHaveLength(resultRows);
     await f.finishPhysical();
     await waitFor(() =>
       expect(originalTable.querySelectorAll("tbody tr")).toHaveLength(2),

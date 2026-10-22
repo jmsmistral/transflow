@@ -350,6 +350,10 @@ preferences stop the rotation. Cancel stops an active query. Reset preview sits
 beside the dataset name and clears both criteria. Sort direction appears in the
 column header, without a separate Sorted preview label. Failed replacements keep
 the old rows disabled with an explicit error; Reset or Restart remains available.
+The right-hand metadata contains only published time and row/column counts;
+query actions and pinned-version identity sit beside the dataset name. Empty
+query results retain the column headers and Showing 0 rows, without a filtered
+preview label or an extra no-matching-rows message.
 Failed page reads retain earlier results and require Restart preview, without
 scroll retry loops. Context or selection changes discard retained rows, cancel
 owned work and reject late responses.
