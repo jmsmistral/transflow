@@ -4,6 +4,7 @@ import "./revogrid.css";
 import type { ColumnTemplateFunc } from "@revolist/revogrid";
 import { tabSeparatedText } from "./tabular-text";
 import { PreviewColumnMenu } from "./PreviewColumnMenu";
+import { Icon } from "./Icons";
 import type { PreviewCriteria } from "./preview-query";
 import type {
   ApiPreviewV1,
@@ -57,6 +58,8 @@ export function PreviewGrid({
   onNearEnd,
   criteria,
   onCriteriaChange,
+  busy = false,
+  disabled = false,
 }: {
   page: GridPage;
   path: string;
@@ -67,7 +70,10 @@ export function PreviewGrid({
   onNearEnd?: () => void;
   criteria?: PreviewCriteria;
   onCriteriaChange?: (criteria: PreviewCriteria) => void;
+  busy?: boolean;
+  disabled?: boolean;
 }) {
+  const blocked = busy || disabled;
   const grid = useRef<HTMLRevoGridElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; area: Area } | null>(
@@ -196,7 +202,10 @@ export function PreviewGrid({
       ref={container}
       className="preview-grid-wrap"
       aria-label={`${path} preview`}
+      aria-busy={busy}
+      aria-disabled={blocked}
       onWheel={async (event) => {
+        if (blocked) return;
         if (inColumnMenu(event.target)) return;
         if (!onNearEnd || event.deltaY <= Math.abs(event.deltaX)) return;
         const providers = await grid.current?.getProviders();
@@ -208,12 +217,14 @@ export function PreviewGrid({
         if (height > 0 && total <= height) onNearEnd();
       }}
       onMouseDownCapture={(event) => {
+        if (blocked) return;
         if (inColumnMenu(event.target)) return;
         // RevoGrid focuses the cell under a right-click on mousedown, which
         // replaces an existing range before the context menu can copy it.
         if (event.button === 2) event.preventDefault();
       }}
       onKeyDownCapture={(event) => {
+        if (blocked) return;
         if (inColumnMenu(event.target)) return;
         if (
           (event.metaKey || event.ctrlKey) &&
@@ -224,6 +235,7 @@ export function PreviewGrid({
         }
       }}
       onCopyCapture={(event) => {
+        if (blocked) return;
         if (inColumnMenu(event.target)) return;
         // Some browsers dispatch their native copy command without exposing the
         // shortcut keydown to the grid. Keep keyboard copy header-inclusive.
@@ -231,6 +243,7 @@ export function PreviewGrid({
         void copySelection();
       }}
       onContextMenu={(event) => {
+        if (blocked) return;
         if (inColumnMenu(event.target)) return;
         event.preventDefault();
         const bounds = container.current?.getBoundingClientRect();
@@ -278,7 +291,7 @@ export function PreviewGrid({
         });
       }}
     >
-      {columnMenu && criteria && onCriteriaChange && (
+      {!blocked && columnMenu && criteria && onCriteriaChange && (
         <PreviewColumnMenu
           key={columnMenu.column}
           column={columnMenu.column}
@@ -288,58 +301,74 @@ export function PreviewGrid({
           onClose={() => setColumnMenu(null)}
         />
       )}
-      {page.rows.length > 0 && (
-        <button
-          type="button"
-          className="preview-grid-select-all"
-          aria-label="Select all displayed cells"
-          title="Select all displayed cells"
-          onClick={() => {
-            void grid.current?.setCellsFocus(
-              { x: 0, y: 0 },
-              { x: page.schema.fields.length - 1, y: page.rows.length - 1 },
-            );
-          }}
+      {busy ? (
+        <span
+          className="preview-grid-select-all preview-grid-loading"
+          role="status"
+          aria-label="Updating preview"
         >
-          ▦
-        </button>
+          <Icon name="cycle" />
+        </span>
+      ) : (
+        page.rows.length > 0 && (
+          <button
+            type="button"
+            className="preview-grid-select-all"
+            aria-label="Select all displayed cells"
+            title="Select all displayed cells"
+            disabled={blocked}
+            onClick={() => {
+              void grid.current?.setCellsFocus(
+                { x: 0, y: 0 },
+                { x: page.schema.fields.length - 1, y: page.rows.length - 1 },
+              );
+            }}
+          >
+            ▦
+          </button>
+        )
       )}
-      <RevoGrid
-        ref={grid}
-        onClick={() => setMenu(null)}
-        aria-label={`${path} data grid`}
-        className="preview-grid"
-        theme={dark ? "dark" : "default"}
-        columns={columns}
-        source={source}
-        rowHeaders
-        range
-        readonly
-        useClipboard={false}
-        stretch={false}
-        resize
-        canMoveColumns={false}
-        hideAttribution
-        onViewportscroll={async ({ detail }) => {
-          setColumnMenu(null);
-          if (
-            !onNearEnd ||
-            detail.dimension !== "rgRow" ||
-            detail.coordinate <= 0
-          )
-            return;
-          const providers = await grid.current?.getProviders();
-          if (!providers) return;
-          const height =
-            providers.viewport.stores.rgRow.store.get("virtualSize");
-          const total = providers.dimension.stores.rgRow.store.get("realSize");
-          // Prefetch within one screen of the end, using the grid's logical
-          // dimensions rather than its compressed DOM scrollbar coordinates.
-          if (height > 0 && detail.coordinate + height * 2 >= total)
-            onNearEnd();
-        }}
-      />
-      {menu && (
+      <div className="preview-grid-content" inert={blocked}>
+        <RevoGrid
+          ref={grid}
+          onClick={() => setMenu(null)}
+          aria-label={`${path} data grid`}
+          className="preview-grid"
+          theme={dark ? "dark" : "default"}
+          columns={columns}
+          source={source}
+          rowHeaders
+          range
+          readonly
+          useClipboard={false}
+          stretch={false}
+          resize
+          canMoveColumns={false}
+          hideAttribution
+          onViewportscroll={async ({ detail }) => {
+            setColumnMenu(null);
+            if (
+              blocked ||
+              !onNearEnd ||
+              detail.dimension !== "rgRow" ||
+              detail.coordinate <= 0
+            )
+              return;
+            const providers = await grid.current?.getProviders();
+            if (!providers) return;
+            const height =
+              providers.viewport.stores.rgRow.store.get("virtualSize");
+            const total =
+              providers.dimension.stores.rgRow.store.get("realSize");
+            // Prefetch within one screen of the end, using the grid's logical
+            // dimensions rather than its compressed DOM scrollbar coordinates.
+            if (height > 0 && detail.coordinate + height * 2 >= total)
+              onNearEnd();
+          }}
+        />
+      </div>
+      {blocked && <div className="preview-grid-shade" aria-hidden="true" />}
+      {!blocked && menu && (
         <div
           className="preview-grid-menu"
           role="menu"

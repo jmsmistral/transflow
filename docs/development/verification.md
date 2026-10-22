@@ -1,5 +1,42 @@
 # Contributor verification
 
+## Retained Preview loading and Reset placement (2026-10-22)
+
+Filtering/sorting now retains the previous exact-version table beneath a
+surface-coloured veil. The top-left select-all corner becomes the same rotating
+cycle icon used for running builds/queries. The grid is inert for pointer,
+keyboard, selection/copy and paging until replacement rows arrive. Reduced-motion
+styling stops rotation. Failed/canceled replacements stop the spinner and retain
+the old table disabled with explicit error text and external Reset/Restart
+controls. Context/version changes discard retained rows. Reset also preserves
+the previous table while reloading physical rows. Reset preview now sits beside
+the dataset name with a 24-pixel gap; the Sorted preview label is removed.
+
+The full web gate passes 702 tests in 35 files. Final affected checks pass 28
+tests, strict types, lint/format and reproducible production builds with 16 assets.
+New deterministic cases hold result/physical reads to check table identity,
+inert state, spinner lifecycle, success, failed receipt validation, Reset and a
+branch change followed by a late page. Existing query ownership/cancellation
+regressions remain passing. Logs: `target/preview-busy-web.log`,
+`target/preview-busy-focused-final.log` and the corresponding final strict/build
+logs. An initial test fixture omitted required version metadata; the fixture was
+corrected before qualification, without weakening production validation.
+
+The existing synthetic `preview-scroll-review` launcher rebuilds the final UI.
+Internal Browser observes retained physical rows during sorting, the animated
+corner, inert grid and veil together; success starts at ID 1500. Dark-theme
+region=east replacement retains the old table, then starts at ID 1499. Reset
+returns to physical ID 1. Cancel stops the spinner and explicitly disables the
+old rows until Reset. The measured Reset gap is 24 pixels and Browser console
+errors are empty. Final captures: `target/preview-busy-loading.jpg` and
+`target/preview-busy-dark-loading.jpg`. No sample source, schedule or saved
+lineage is changed. Native execution/API/dependency contracts are unchanged;
+their broad suites are not rerun for this frontend correction.
+All 27 safety regressions, paired privacy/inventory/contract checks and
+specification/link validation pass. The public scan covers 912 candidate files
+and the unchanged 635-version inventory with one existing exception. The
+verification coordinator is stopped before handoff; new CI is owner-monitored.
+
 ## Control borders and Preview arrow spacing (2026-10-22)
 
 Shared focus styling now uses a one-pixel outline on the control edge, replacing

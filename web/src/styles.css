@@ -1337,6 +1337,9 @@ summary {
   min-width: 0;
   max-width: 460px;
 }
+.preview-inspector .dataset-inspector-header--leading {
+  gap: 24px;
+}
 .preview-toolbar-details {
   display: flex;
   align-items: center;
@@ -1363,6 +1366,20 @@ summary {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+.preview-grid-content {
+  position: absolute;
+  inset: 0;
+}
+.preview-grid-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: var(--surface);
+  opacity: 0.65;
+}
+.preview-grid-wrap[aria-busy="true"] .preview-grid-shade {
+  cursor: wait;
 }
 revo-grid.preview-grid {
   width: 100%;
@@ -1422,6 +1439,23 @@ revo-grid.preview-grid
 }
 .preview-grid-select-all:hover {
   color: var(--accent);
+}
+.preview-grid-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: wait;
+  color: #327dcc;
+}
+.preview-grid-loading .icon {
+  width: 18px;
+  height: 18px;
+  animation: schedule-running 1.3s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .preview-grid-loading .icon {
+    animation: none;
+  }
 }
 .preview-grid-menu {
   position: absolute;

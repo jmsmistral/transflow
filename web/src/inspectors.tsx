@@ -491,16 +491,15 @@ function PreviewContent({
   );
   const queryPage = useMemo<GridPage | null>(
     () =>
-      !querying || !schema
+      !querying || !query.page
         ? null
         : {
-            schema: query.page?.schema ?? schema,
-            rows:
-              query.page?.rows.map((row) =>
-                row.map((value) => ({ value, truncated: false })),
-              ) ?? [],
+            schema: query.page.schema,
+            rows: query.page.rows.map((row) =>
+              row.map((value) => ({ value, truncated: false })),
+            ),
           },
-    [querying, schema, query.page],
+    [querying, query.page],
   );
   const [cursor, setCursor] = useState<string | null>(null);
   const [result, setResult] = useState<{
@@ -511,6 +510,10 @@ function PreviewContent({
   const [retry, setRetry] = useState(0);
   const paging = useRef(false);
   const [loading, setLoading] = useState(true);
+  const [retained, setRetained] = useState<{
+    key: string;
+    page: GridPage;
+  } | null>(null);
   const key = JSON.stringify([
     ready?.context.fingerprint,
     dataset?.workspace_id,
@@ -582,9 +585,15 @@ function PreviewContent({
     querying,
   ]);
   const page = result?.key === key ? result.page : null;
-  const displayed = querying ? queryPage : page;
+  const currentPage = querying ? queryPage : page;
+  const displayed =
+    currentPage ?? (retained?.key === key ? retained.page : null);
+  const previousRows = !!displayed && !currentPage;
+  const replacing = !currentPage && (querying ? query.loading : loading);
   const failure = (querying ? query.error : "") || message;
   function changeCriteria(next: PreviewCriteria) {
+    // Keep only this exact context/version's previous table beneath the veil.
+    if (displayed) setRetained({ key, page: displayed });
     setCursor(null);
     setResult(null);
     setLoading(true);
@@ -613,7 +622,19 @@ function PreviewContent({
             <strong>{resolved}</strong>
           </div>
         )}
-      <DatasetHeader path={dataset.path}>
+      <DatasetHeader
+        path={dataset.path}
+        afterName={
+          querying ? (
+            <Button
+              onClick={() => changeCriteria(emptyPreviewCriteria)}
+              title="Clear all filters and sorting"
+            >
+              Reset preview
+            </Button>
+          ) : undefined
+        }
+      >
         <div className="preview-toolbar-details">
           {state.selection.version && (
             <span title={state.selection.version}>
@@ -646,21 +667,9 @@ function PreviewContent({
             </span>
           )}
           {schema && <span>{schema.fields.length} columns</span>}
-          {querying && (
-            <span>
-              {criteria.filters.length ? "Filtered preview" : "Sorted preview"}
-            </span>
-          )}
+          {criteria.filters.length > 0 && <span>Filtered preview</span>}
           {querying && query.running && (
             <Button onClick={query.cancel}>Cancel</Button>
-          )}
-          {querying && (
-            <Button
-              onClick={() => changeCriteria(emptyPreviewCriteria)}
-              title="Clear all filters and sorting"
-            >
-              Reset preview
-            </Button>
           )}
         </div>
       </DatasetHeader>
@@ -691,9 +700,10 @@ function PreviewContent({
         >
           {failure && (
             <div role="alert" className="preview-error">
-              {failure}{" "}
+              {failure} {previousRows && "Previous rows are shown disabled. "}
               <Button
                 onClick={() => {
+                  if (displayed) setRetained({ key, page: displayed });
                   setMessage("");
                   if (querying) {
                     query.restart();
@@ -709,16 +719,17 @@ function PreviewContent({
               </Button>
             </div>
           )}
-          {(!displayed || (querying && query.loading && !query.page)) &&
-            !failure && (
-              <p role="status" className="preview-empty">
-                {querying ? "Updating preview…" : "Loading bounded preview…"}
-              </p>
-            )}
+          {!displayed && !failure && (
+            <p role="status" className="preview-empty">
+              Loading bounded preview…
+            </p>
+          )}
           {displayed && (
             <>
               <PreviewGrid
                 page={displayed}
+                busy={replacing}
+                disabled={previousRows}
                 path={dataset.path}
                 dark={dark}
                 formatCell={wire}
@@ -732,6 +743,7 @@ function PreviewContent({
                 criteria={criteria}
                 onCriteriaChange={changeCriteria}
                 onNearEnd={() => {
+                  if (previousRows) return;
                   if (querying) {
                     if (!failure) query.more();
                     return;

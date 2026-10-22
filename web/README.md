@@ -343,9 +343,16 @@ Filtering/sorting runs the existing restricted query service over the whole exac
 version before the 1,000-row result cap. Identifiers come from the schema and are
 quoted, while filter values remain separately bound parameters. Query results page
 in 500-row batches on scroll, with existing time/byte/spill limits and cancellation.
-The header labels filtered/sorted results, and Cancel stops an active query. Failed
-page reads retain earlier results and require Restart preview, without scroll retry
-loops. Context or selection changes cancel owned work and reject late responses.
+Applying a filter or sort keeps the previous exact-version table visible beneath
+a surface-coloured veil, with the build-style rotating indicator in its top-left
+corner. The grid is disabled until replacement rows arrive; reduced-motion
+preferences stop the rotation. Cancel stops an active query. Reset preview sits
+beside the dataset name and clears both criteria. Sort direction appears in the
+column header, without a separate Sorted preview label. Failed replacements keep
+the old rows disabled with an explicit error; Reset or Restart remains available.
+Failed page reads retain earlier results and require Restart preview, without
+scroll retry loops. Context or selection changes discard retained rows, cancel
+owned work and reject late responses.
 Column statistics remain future work. Column types remain in tooltips rather
 than a second header line. Typed null, truncated cells, decimal precision,
 timestamp units and nested values remain distinct. An unavailable version,
