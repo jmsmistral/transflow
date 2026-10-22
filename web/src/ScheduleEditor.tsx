@@ -32,6 +32,7 @@ import {
   type ScheduleEditSession,
   type ScheduleGraphAction,
 } from "./schedule-model";
+import { ScheduleDisclosure } from "./ScheduleDisclosure";
 import { ScheduleBranchesEditor } from "./ScheduleBranchesEditor";
 
 function hasClock(trigger: ScheduleTriggerV1): boolean {
@@ -40,6 +41,17 @@ function hasClock(trigger: ScheduleTriggerV1): boolean {
     ((trigger.kind === "and" || trigger.kind === "or") &&
       trigger.children.some(hasClock))
   );
+}
+function clockLabel(trigger: ScheduleTriggerV1, id: string): string {
+  if (trigger.kind === "cron" && trigger.id === id)
+    return `${trigger.expression} · ${trigger.timezone}`;
+  if (trigger.kind === "and" || trigger.kind === "or") {
+    for (const child of trigger.children) {
+      const label = clockLabel(child, id);
+      if (label) return label;
+    }
+  }
+  return "";
 }
 export function Switch({
   label,
@@ -74,6 +86,58 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
       <span>{label}</span>
       {children}
     </label>
+  );
+}
+function DurationField({
+  label,
+  value,
+  onChange,
+  allowZero = false,
+}: {
+  label: string;
+  value: number;
+  onChange: (seconds: number) => void;
+  allowZero?: boolean;
+}) {
+  const [unit, setUnit] = useState(
+    value > 0 && value % 3600 === 0
+      ? 3600
+      : value > 0 && value % 60 === 0
+        ? 60
+        : 1,
+  );
+  const id = useId();
+  return (
+    <div className="schedule-duration-field">
+      <label htmlFor={id}>{label}</label>
+      <div>
+        <input
+          id={id}
+          type="number"
+          required
+          min={allowZero ? 0 : 1 / unit}
+          step="any"
+          value={Number.isFinite(value) ? value / unit : ""}
+          onChange={(e) =>
+            onChange(
+              Number.isFinite(e.target.valueAsNumber)
+                ? Math.round(e.target.valueAsNumber * unit)
+                : NaN,
+            )
+          }
+        />
+        <select
+          aria-label={`${label} unit`}
+          value={unit}
+          onChange={(e) => setUnit(Number(e.target.value))}
+        >
+          <option value={1}>seconds</option>
+          <option value={60}>minutes</option>
+          <option value={3600}>hours</option>
+        </select>
+      </div>
+      {allowZero && <small>Set to 0 to disable this limit.</small>}
+    </div>
   );
 }
 export function DatasetChoices({
@@ -223,41 +287,92 @@ export function TriggerEditor({
   depth?: number;
   paths?: ReadonlyMap<string, string>;
 }) {
+  const group = value.kind === "and" || value.kind === "or";
+  const label = kinds.find(([kind]) => kind === value.kind)?.[1] ?? value.kind;
+  const upstream =
+    value.kind === "schedule_succeeded"
+      ? schedules.find((s) => s.id === value.schedule_id)
+      : undefined;
+  const subject =
+    "dataset" in value
+      ? (datasets.find((d) => identity(keyOf(d)) === identity(value.dataset))
+          ?.path ??
+        paths?.get(identity(value.dataset)) ??
+        "Choose a dataset")
+      : value.kind === "cron"
+        ? `${value.expression} · ${value.timezone}`
+        : value.kind === "schedule_succeeded"
+          ? ((upstream ? savedDefinition(upstream)?.name : undefined) ??
+            "Choose a schedule")
+          : value.kind === "build_succeeded"
+            ? `${value.targets.length} build targets`
+            : value.kind === "manual"
+              ? "Run this schedule when you choose."
+              : `${value.children.length} conditions`;
   return (
-    <fieldset
-      className={`schedule-condition ${depth === 0 ? "schedule-section" : ""}`}
+    <ScheduleDisclosure
+      title={label}
+      description={subject}
+      initialOpen={depth === 0 || group}
+      className="schedule-trigger-card"
     >
-      <legend>{depth === 0 ? "When to build" : "Condition"}</legend>
-      <Field label="Condition type">
-        <select
-          value={value.kind}
-          onChange={(e) =>
-            onChange(newTrigger(e.target.value, datasets, branch))
-          }
-        >
-          {kinds
-            .filter(
-              ([kind]) =>
-                (depth === 0 || kind !== "manual") &&
-                (depth < 7 || !["and", "or"].includes(kind)),
-            )
-            .map(([kind, name]) => (
-              <option key={kind} value={kind}>
-                {name}
-              </option>
-            ))}
-        </select>
-      </Field>
-      {value.kind !== "manual" &&
-        value.kind !== "and" &&
-        value.kind !== "or" && (
-          <Field label="Condition ID">
-            <input
-              value={value.id}
-              onChange={(e) => onChange({ ...value, id: e.target.value })}
-            />
-          </Field>
-        )}
+      {group ? (
+        <div className="schedule-match">
+          <span>Match</span>
+          <div role="group" aria-label="Combine conditions">
+            <Button
+              aria-pressed={value.kind === "and"}
+              onClick={() => onChange({ ...value, kind: "and" })}
+            >
+              All (AND)
+            </Button>
+            <Button
+              aria-pressed={value.kind === "or"}
+              onClick={() => onChange({ ...value, kind: "or" })}
+            >
+              Any (OR)
+            </Button>
+          </div>
+          <p className="muted">
+            {value.kind === "and"
+              ? "Build after every condition has occurred."
+              : "Build when any condition occurs. Separate matches may start separate builds."}
+          </p>
+        </div>
+      ) : (
+        <Field label="Condition type">
+          <select
+            value={value.kind}
+            onChange={(e) => {
+              const kind = e.target.value;
+              if (kind === "and" || kind === "or") {
+                onChange({
+                  kind,
+                  children:
+                    value.kind === "manual"
+                      ? [
+                          newTrigger("cron", datasets, branch),
+                          newTrigger("cron", datasets, branch),
+                        ]
+                      : [value, newTrigger("cron", datasets, branch)],
+                });
+              } else onChange(newTrigger(kind, datasets, branch));
+            }}
+          >
+            {kinds
+              .filter(
+                ([kind]) =>
+                  (depth === 0 || kind !== "manual") &&
+                  (depth < 7 || !["and", "or"].includes(kind)),
+              )
+              .map(([kind, name]) => (
+                <option key={kind} value={kind}>
+                  {name}
+                </option>
+              ))}
+          </select>
+        </Field>
+      )}
       {value.kind === "cron" && (
         <>
           <Field label="Cron expression">
@@ -327,21 +442,6 @@ export function TriggerEditor({
               onChange={(e) => onChange({ ...value, branch: e.target.value })}
             />
           </Field>
-          <Field label="Input binding">
-            <select
-              value={value.payload_mode}
-              onChange={(e) =>
-                onChange({
-                  ...value,
-                  payload_mode:
-                    e.target.value === "signal_only" ? "signal_only" : "pin",
-                })
-              }
-            >
-              <option value="pin">Pin the exact published version</option>
-              <option value="signal_only">Signal only</option>
-            </select>
-          </Field>
           {value.kind === "dataset_head_changed" && (
             <Switch
               label="Include resets"
@@ -398,7 +498,15 @@ export function TriggerEditor({
       {(value.kind === "and" || value.kind === "or") && (
         <>
           {value.children.map((child, i) => (
-            <div className="schedule-child" key={i}>
+            <div
+              className="schedule-child"
+              key={"id" in child ? child.id : `group-${i}`}
+            >
+              {i > 0 && (
+                <div className="schedule-condition-join">
+                  {value.kind.toUpperCase()}
+                </div>
+              )}
               <TriggerEditor
                 value={child}
                 onChange={(v) =>
@@ -413,21 +521,23 @@ export function TriggerEditor({
                 depth={depth + 1}
                 {...(paths ? { paths } : {})}
               />
-              {value.children.length > 2 && (
-                <Button
-                  onClick={() =>
-                    onChange({
-                      ...value,
-                      children: value.children.filter((_, j) => j !== i),
-                    })
-                  }
-                >
-                  Remove condition
-                </Button>
-              )}
+              <Button
+                className="schedule-remove-condition"
+                aria-label={`Remove condition ${i + 1}`}
+                onClick={() => {
+                  const children = value.children.filter((_, j) => j !== i);
+                  const remaining = children[0];
+                  if (children.length === 1 && remaining) onChange(remaining);
+                  else if (children.length > 1)
+                    onChange({ ...value, children });
+                }}
+              >
+                Remove
+              </Button>
             </div>
           ))}
           <Button
+            className="schedule-add-button"
             disabled={value.children.length >= 64}
             onClick={() =>
               onChange({
@@ -439,11 +549,24 @@ export function TriggerEditor({
               })
             }
           >
-            <Icon name="new" /> Add condition
+            Add condition
           </Button>
         </>
       )}
-    </fieldset>
+      {!group && value.kind !== "manual" && depth < 7 && (
+        <Button
+          className="schedule-add-button"
+          onClick={() =>
+            onChange({
+              kind: "and",
+              children: [value, newTrigger("cron", datasets, branch)],
+            })
+          }
+        >
+          Add condition
+        </Button>
+      )}
+    </ScheduleDisclosure>
   );
 }
 function PolicyJson({
@@ -516,6 +639,7 @@ export function ScheduleEditor({
   const saveAndExit = useRef(false);
   const [policyError, setPolicyError] = useState("");
   const [confirmExit, setConfirmExit] = useState(false);
+  const [touched, setTouched] = useState(false);
   const exitDialog = useRef<HTMLDialogElement>(null),
     form = useRef<HTMLFormElement>(null),
     cancelButton = useRef<HTMLButtonElement>(null);
@@ -551,7 +675,7 @@ export function ScheduleEditor({
     if (
       JSON.stringify(draft) !== JSON.stringify(initial) ||
       policyError ||
-      form.current?.querySelector(":invalid")
+      (touched && form.current?.querySelector(":invalid"))
     )
       setConfirmExit(true);
     else onCancel();
@@ -578,6 +702,7 @@ export function ScheduleEditor({
       // Incomplete graph drafts and event/manual-only definitions have no clock
       // preview to request. Do not show whole-definition validation as a clock error.
       if (
+        !draft.name.trim() ||
         !draft.build.targets.length ||
         !hasClock(draft.trigger) ||
         connectionError
@@ -610,11 +735,11 @@ export function ScheduleEditor({
   }, [draft, workspace, connectionError]);
   const saveRequest = useRef<AbortController | null>(null);
   useEffect(() => () => saveRequest.current?.abort(), []);
-  const source = draft.build.source;
   return (
     <form
       ref={form}
       className="schedule-editor"
+      onChangeCapture={() => setTouched(true)}
       onSubmit={(e) => {
         e.preventDefault();
         if (policyError || connectionError) {
@@ -681,25 +806,23 @@ export function ScheduleEditor({
             Cancel
           </button>
         </div>
-        <p className="muted">
-          Save replaces the current definition. Accepted work keeps its captured
-          settings.
-        </p>
       </header>
-      <Field label="Schedule name">
+      <div className="schedule-identity-fields">
         <input
+          aria-label="Schedule name"
+          placeholder="Schedule name"
           required
           value={draft.name}
           onChange={(e) => setDraft({ ...draft, name: e.target.value })}
         />
-      </Field>
-      <Field label="Description">
         <textarea
+          aria-label="Description"
+          placeholder="Description"
           rows={2}
           value={draft.description}
           onChange={(e) => setDraft({ ...draft, description: e.target.value })}
         />
-      </Field>
+      </div>
       <section
         className="schedule-section schedule-targets"
         aria-label="Datasets to build"
@@ -737,13 +860,58 @@ export function ScheduleEditor({
           )}
         </div>
         <Button
+          className="schedule-add-button"
           disabled={busy || !additions.length}
           onClick={() => act("target", additions)}
         >
-          <Icon name="new" />
           Add {additions.length} selected{" "}
           {additions.length === 1 ? "node" : "nodes"}
         </Button>
+      </section>
+      <section
+        className="schedule-section schedule-trigger-section"
+        aria-label="When to build"
+      >
+        <h4>When to build</h4>
+        <TriggerEditor
+          value={draft.trigger}
+          onChange={(trigger) =>
+            setDraft((d) => {
+              const next = { ...d, trigger };
+              return connecting ? withTriggerConnections(next, true) : next;
+            })
+          }
+          datasets={datasets}
+          schedules={schedules}
+          branch={draft.build.data_branch}
+          paths={graphPaths}
+        />
+        {clock && clock.leaves.length > 0 && (
+          <ScheduleDisclosure
+            title="Next intended times"
+            description="Preview upcoming times in each condition’s timezone"
+            className="schedule-clock"
+          >
+            {clock.leaves.map((l) => (
+              <div key={l.id}>
+                <span>{clockLabel(draft.trigger, l.id)}</span>
+                <ul>
+                  {l.fires.map((f) => (
+                    <li key={f.at_us}>
+                      {f.local.replace("T", " ")} · {f.timezone}
+                    </li>
+                  ))}
+                </ul>
+                <small>Timezone rules {l.fires[0]?.tzdb_version}</small>
+              </div>
+            ))}
+          </ScheduleDisclosure>
+        )}
+        {clockError && (
+          <p role="status" className="muted">
+            {clockError}
+          </p>
+        )}
       </section>
       <section
         className="schedule-connecting"
@@ -760,7 +928,7 @@ export function ScheduleEditor({
         />
         <p className="muted" role={connectionError ? "alert" : undefined}>
           {connectionIssue(draft) ||
-            "Reuse published trigger datasets and build every eligible dataset on the paths to your targets. Other inputs remain read boundaries."}
+            "Attempt to build every dataset between Triggers and Targets."}
         </p>
         {!connecting && draft.build.build_mode !== "selected" && (
           <p className="muted">
@@ -781,403 +949,356 @@ export function ScheduleEditor({
         onBranch={(data_branch) => build({ data_branch })}
         onFallback={(fallback_branches) => build({ fallback_branches })}
       />
-      <Field label="Source selection">
-        <select
-          value={source.kind}
-          onChange={(e) => {
-            switch (e.target.value) {
-              case "git_ref":
-                build({ source: { kind: "git_ref", ref: "refs/heads/main" } });
-                break;
-              case "fixed_snapshot":
-                build({
-                  source: {
-                    kind: "fixed_snapshot",
-                    snapshot_id:
-                      workspace.snapshot().kind === "ready"
-                        ? initial.build.source.kind === "fixed_snapshot"
-                          ? initial.build.source.snapshot_id
-                          : ""
-                        : "",
-                  },
-                });
-                break;
-              default:
-                build({
-                  source: { kind: "working_tree", allow_additive_sync: false },
-                });
-            }
-          }}
+      <ScheduleDisclosure
+        title="Advanced options"
+        description="Build behavior, retries and timing"
+        className="schedule-advanced"
+      >
+        <ScheduleDisclosure
+          title="Build scope"
+          description="Choose which datasets to build and reuse"
         >
-          <option value="fixed_snapshot">
-            Fixed validated source snapshot
-          </option>
-          <option value="git_ref">Named clean Git ref</option>
-          <option value="working_tree">Mutable working tree</option>
-        </select>
-      </Field>
-      {source.kind === "git_ref" && (
-        <Field label="Source Git ref">
-          <input
-            value={source.ref}
-            onChange={(e) =>
-              build({ source: { ...source, ref: e.target.value } })
-            }
-          />
-        </Field>
-      )}
-      {source.kind === "fixed_snapshot" && (
-        <Field label="Source snapshot">
-          <input
-            value={source.snapshot_id}
-            onChange={(e) =>
-              build({ source: { ...source, snapshot_id: e.target.value } })
-            }
-          />
-        </Field>
-      )}
-      {source.kind === "working_tree" && (
-        <>
-          <p className="schedule-notice">
-            <Icon name="info" /> Each occurrence captures the current working
-            files. Later edits can change automatic builds.
-          </p>
-          <Switch
-            label="Allow additive dataset registration"
-            value={source.allow_additive_sync}
-            onChange={(allow_additive_sync) =>
-              build({ source: { ...source, allow_additive_sync } })
-            }
-          />
-        </>
-      )}
-      <TriggerEditor
-        value={draft.trigger}
-        onChange={(trigger) =>
-          setDraft((d) => {
-            const next = { ...d, trigger };
-            return connecting ? withTriggerConnections(next, true) : next;
-          })
-        }
-        datasets={datasets}
-        schedules={schedules}
-        branch={draft.build.data_branch}
-        paths={graphPaths}
-      />
-      {clock && clock.leaves.length > 0 && (
-        <section className="schedule-clock">
-          <h4>Next intended times</h4>
-          {clock.leaves.map((l) => (
-            <div key={l.id}>
-              <strong>{l.id}</strong>
-              <ul>
-                {l.fires.map((f) => (
-                  <li key={f.at_us}>
-                    {f.local.replace("T", " ")} · {f.timezone}
-                  </li>
-                ))}
-              </ul>
-              <small>Timezone rules {l.fires[0]?.tzdb_version}</small>
-            </div>
-          ))}
-        </section>
-      )}
-      {clockError && (
-        <p role="status" className="muted">
-          {clockError}
-        </p>
-      )}
-      <details>
-        <summary>Advanced options</summary>
-        {!connecting && (
-          <Field label="Build scope">
-            <select
-              value={draft.build.build_mode}
-              onChange={(e) => {
-                const mode = e.target.value;
-                build({
-                  build_mode:
-                    mode === "selected"
-                      ? "selected"
-                      : mode === "between"
-                        ? "between"
-                        : mode === "connecting"
-                          ? "connecting"
-                          : "full",
-                });
-              }}
-            >
-              <option value="selected">Selected datasets only</option>
-              <option value="full">Targets and required ancestors</option>
-              <option value="between">Between explicit read boundaries</option>
-              {draft.build.build_mode === "connecting" && (
-                <option value="connecting">
-                  Connecting selected target endpoints (saved scope)
+          {!connecting && (
+            <Field label="Build scope">
+              <select
+                value={draft.build.build_mode}
+                onChange={(e) => {
+                  const mode = e.target.value;
+                  build({
+                    build_mode:
+                      mode === "selected"
+                        ? "selected"
+                        : mode === "between"
+                          ? "between"
+                          : mode === "connecting"
+                            ? "connecting"
+                            : "full",
+                  });
+                }}
+              >
+                <option value="selected">Selected datasets only</option>
+                <option value="full">Targets and required ancestors</option>
+                <option value="between">
+                  Between explicit read boundaries
                 </option>
-              )}
-            </select>
-          </Field>
-        )}
-        <Switch
-          label="Force build on up-to-date datasets"
-          value={draft.build.force}
-          onChange={(force) => build({ force })}
-        />
-        <Switch
-          label="Abort dependent work after a required failure"
-          value={draft.policies.abort_on_failure}
-          onChange={(abort_on_failure) => policies({ abort_on_failure })}
-        />
-        <Field label="Maximum attempts per job">
-          <input
-            type="number"
-            min={1}
-            max={10}
-            value={draft.policies.max_attempts}
-            onChange={(e) => policies({ max_attempts: e.target.valueAsNumber })}
+                {draft.build.build_mode === "connecting" && (
+                  <option value="connecting">
+                    Connecting selected target endpoints (saved scope)
+                  </option>
+                )}
+              </select>
+            </Field>
+          )}
+          <Switch
+            label="Force build on up-to-date datasets"
+            value={draft.build.force}
+            onChange={(force) => build({ force })}
           />
-        </Field>
-        <fieldset>
-          <legend>Retryable infrastructure failures</legend>
-          {(
-            [
-              "worker_crash",
-              "provider_unavailable",
-              "resource_unavailable",
-            ] as const
-          ).map((c) => (
-            <label className="schedule-check" key={c}>
-              <input
-                type="checkbox"
-                checked={draft.policies.retryable_classes.includes(c)}
-                onChange={(e) =>
-                  policies({
-                    retryable_classes: e.target.checked
-                      ? [...draft.policies.retryable_classes, c]
-                      : draft.policies.retryable_classes.filter((v) => v !== c),
-                  })
-                }
-              />
-              {c.replaceAll("_", " ")}
-            </label>
-          ))}
-          <small>
-            Authentication, protocol, input integrity and data-quality failures
-            are never retried by these options.
-          </small>
-        </fieldset>
-        <Switch
-          label="Allow overlapping builds"
-          value={draft.policies.allow_overlapping_builds}
-          onChange={(allow_overlapping_builds) =>
-            policies({ allow_overlapping_builds })
-          }
-        />
-        {draft.policies.allow_overlapping_builds && (
-          <p className="schedule-notice">
-            <Icon name="info" /> Concurrent builds still wait for exclusive
-            dataset write reservations.
-          </p>
-        )}
-        <Field label="When a build is already active">
-          <select
-            value={draft.policies.overlap_policy}
-            onChange={(e) =>
-              policies({
-                overlap_policy:
-                  e.target.value === "skip"
-                    ? "skip"
-                    : e.target.value === "queue"
-                      ? "queue"
-                      : "coalesce_latest",
-              })
-            }
-          >
-            <option value="coalesce_latest">
-              Keep the latest compatible pending occurrence
-            </option>
-            <option value="queue">Queue pending occurrences</option>
-            <option value="skip">Skip with a recorded reason</option>
-          </select>
-        </Field>
-        <Field label="Maximum pending occurrences">
-          <input
-            type="number"
-            min={1}
-            max={100}
-            value={draft.policies.max_pending}
-            onChange={(e) => policies({ max_pending: e.target.valueAsNumber })}
+        </ScheduleDisclosure>
+        <ScheduleDisclosure
+          title="Failures and retries"
+          description="Control what happens when a job fails"
+        >
+          <Switch
+            label="Abort dependent work after a required failure"
+            value={draft.policies.abort_on_failure}
+            onChange={(abort_on_failure) => policies({ abort_on_failure })}
           />
-        </Field>
-        <Field label="Missed clock ticks">
-          <select
-            value={draft.policies.misfire_policy}
-            onChange={(e) =>
-              policies({
-                misfire_policy:
-                  e.target.value === "skip"
-                    ? "skip"
-                    : e.target.value === "catch_up"
-                      ? "catch_up"
-                      : "coalesce_latest",
-              })
-            }
-          >
-            <option value="skip">Skip</option>
-            <option value="coalesce_latest">
-              Keep latest per time condition
-            </option>
-            <option value="catch_up">Bounded catch-up</option>
-          </select>
-        </Field>
-        <Field label="Maximum catch-up ticks">
-          <input
-            type="number"
-            min={1}
-            max={100}
-            value={draft.policies.max_catch_up}
-            onChange={(e) => policies({ max_catch_up: e.target.valueAsNumber })}
-          />
-        </Field>
-        <Switch
-          label="No event expiry (explicit acknowledgment)"
-          value={draft.policies.acknowledge_no_expiry}
-          onChange={(v) =>
-            policies({
-              acknowledge_no_expiry: v,
-              token_window_seconds: v ? null : 86400,
-            })
-          }
-        />
-        {draft.policies.token_window_seconds !== null && (
-          <Field label="Event window (seconds)">
+          <Field label="Maximum attempts per job">
             <input
               type="number"
               min={1}
-              value={draft.policies.token_window_seconds}
+              max={10}
+              value={draft.policies.max_attempts}
               onChange={(e) =>
-                policies({ token_window_seconds: e.target.valueAsNumber })
+                policies({ max_attempts: e.target.valueAsNumber })
               }
             />
           </Field>
-        )}
-        <Field label="Maximum consecutive automatic builds">
-          <input
-            type="number"
-            min={1}
-            max={100}
-            value={draft.policies.max_consecutive_builds}
-            onChange={(e) =>
-              policies({ max_consecutive_builds: e.target.valueAsNumber })
+          {draft.policies.max_attempts > 1 && (
+            <div className="schedule-policy-group">
+              <p className="schedule-control-label">Retry these failures</p>
+              {(
+                [
+                  "worker_crash",
+                  "provider_unavailable",
+                  "resource_unavailable",
+                ] as const
+              ).map((c) => (
+                <label className="schedule-check" key={c}>
+                  <input
+                    type="checkbox"
+                    checked={draft.policies.retryable_classes.includes(c)}
+                    onChange={(e) =>
+                      policies({
+                        retryable_classes: e.target.checked
+                          ? [...draft.policies.retryable_classes, c]
+                          : draft.policies.retryable_classes.filter(
+                              (v) => v !== c,
+                            ),
+                      })
+                    }
+                  />
+                  {c.replaceAll("_", " ")}
+                </label>
+              ))}
+              <small>
+                Authentication, protocol, input integrity and data-quality
+                failures are never retried by these options.
+              </small>
+            </div>
+          )}
+        </ScheduleDisclosure>
+        <ScheduleDisclosure
+          title="Overlapping runs"
+          description="Choose what happens while a build is active"
+        >
+          <Switch
+            label="Allow overlapping builds"
+            value={draft.policies.allow_overlapping_builds}
+            onChange={(allow_overlapping_builds) =>
+              policies({ allow_overlapping_builds })
             }
           />
-        </Field>
-        <Field label="Minimum automatic delay (seconds)">
-          <input
-            type="number"
-            min={0}
+          {draft.policies.allow_overlapping_builds && (
+            <p className="schedule-notice">
+              <Icon name="info" /> Concurrent builds still wait for exclusive
+              dataset write reservations.
+            </p>
+          )}
+          <Field label="When a build is already active">
+            <select
+              value={draft.policies.overlap_policy}
+              onChange={(e) =>
+                policies({
+                  overlap_policy:
+                    e.target.value === "skip"
+                      ? "skip"
+                      : e.target.value === "queue"
+                        ? "queue"
+                        : "coalesce_latest",
+                })
+              }
+            >
+              <option value="coalesce_latest">
+                Keep the latest compatible pending occurrence
+              </option>
+              <option value="queue">Queue pending occurrences</option>
+              <option value="skip">Skip with a recorded reason</option>
+            </select>
+          </Field>
+          {draft.policies.overlap_policy !== "skip" && (
+            <Field label="Maximum pending occurrences">
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={draft.policies.max_pending}
+                onChange={(e) =>
+                  policies({ max_pending: e.target.valueAsNumber })
+                }
+              />
+            </Field>
+          )}
+        </ScheduleDisclosure>
+        <ScheduleDisclosure
+          title="Timing and limits"
+          description="Missed runs, event expiry and execution limits"
+        >
+          <Field label="Missed clock ticks">
+            <select
+              value={draft.policies.misfire_policy}
+              onChange={(e) =>
+                policies({
+                  misfire_policy:
+                    e.target.value === "skip"
+                      ? "skip"
+                      : e.target.value === "catch_up"
+                        ? "catch_up"
+                        : "coalesce_latest",
+                })
+              }
+            >
+              <option value="skip">Skip</option>
+              <option value="coalesce_latest">
+                Keep latest per time condition
+              </option>
+              <option value="catch_up">Bounded catch-up</option>
+            </select>
+          </Field>
+          {draft.policies.misfire_policy === "catch_up" && (
+            <Field label="Maximum catch-up ticks">
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={draft.policies.max_catch_up}
+                onChange={(e) =>
+                  policies({ max_catch_up: e.target.valueAsNumber })
+                }
+              />
+            </Field>
+          )}
+          <Switch
+            label="Keep events until they are used"
+            value={draft.policies.acknowledge_no_expiry}
+            onChange={(v) =>
+              policies({
+                acknowledge_no_expiry: v,
+                token_window_seconds: v ? null : 86400,
+              })
+            }
+          />
+          {draft.policies.acknowledge_no_expiry && (
+            <p className="muted">
+              Events will not expire. Older events may combine with new ones
+              much later.
+            </p>
+          )}
+          {draft.policies.token_window_seconds !== null && (
+            <DurationField
+              label="Event expiry"
+              value={draft.policies.token_window_seconds}
+              onChange={(seconds) =>
+                policies({ token_window_seconds: seconds })
+              }
+            />
+          )}
+          <Field label="Maximum consecutive automatic builds">
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={draft.policies.max_consecutive_builds}
+              onChange={(e) =>
+                policies({ max_consecutive_builds: e.target.valueAsNumber })
+              }
+            />
+          </Field>
+          <DurationField
+            label="Minimum delay between automatic builds"
             value={draft.policies.minimum_delay_seconds}
-            onChange={(e) =>
-              policies({ minimum_delay_seconds: e.target.valueAsNumber })
-            }
+            onChange={(seconds) => policies({ minimum_delay_seconds: seconds })}
+            allowZero
           />
-        </Field>
-        <Field label="Job deadline (seconds; 0 disables)">
-          <input
-            type="number"
-            min={0}
+          <DurationField
+            label="Job time limit"
             value={draft.build.timeout_seconds}
-            onChange={(e) => build({ timeout_seconds: e.target.valueAsNumber })}
+            onChange={(seconds) => build({ timeout_seconds: seconds })}
+            allowZero
           />
-        </Field>
-        <Field label="Validation deadline (seconds; 0 disables)">
-          <input
-            type="number"
-            min={0}
+          <DurationField
+            label="Validation time limit"
             value={draft.build.validation_timeout_seconds}
-            onChange={(e) =>
-              build({ validation_timeout_seconds: e.target.valueAsNumber })
+            onChange={(seconds) =>
+              build({ validation_timeout_seconds: seconds })
             }
+            allowZero
           />
-        </Field>
-        {!connecting && (
+        </ScheduleDisclosure>
+        <ScheduleDisclosure
+          title="Input datasets"
+          description="Read boundaries, exclusions and refreshed sources"
+        >
+          {!connecting && draft.build.build_mode === "between" && (
+            <DatasetChoices
+              label="Read boundaries"
+              value={draft.build.boundaries}
+              datasets={datasets}
+              onChange={(boundaries) => build({ boundaries })}
+            />
+          )}
           <DatasetChoices
-            label="Read boundaries"
-            value={draft.build.boundaries}
+            label="Excluded datasets"
+            value={draft.build.exclusions}
             datasets={datasets}
-            onChange={(boundaries) => build({ boundaries })}
+            local
+            onChange={(exclusions) => build({ exclusions })}
           />
-        )}
-        <DatasetChoices
-          label="Excluded datasets"
-          value={draft.build.exclusions}
-          datasets={datasets}
-          local
-          onChange={(exclusions) => build({ exclusions })}
-        />
-        <DatasetChoices
-          label="Refresh source datasets"
-          value={draft.build.refresh_sources}
-          datasets={datasets}
-          local
-          onChange={(refresh_sources) => build({ refresh_sources })}
-        />
-        <Switch
-          label="Require current boundary data"
-          value={draft.build.require_current}
-          onChange={(require_current) => build({ require_current })}
-        />
-        <PolicyJson
-          label="Named input branch policies (JSON)"
-          value={draft.build.input_fallback_policy}
-          onChange={(v) => {
-            try {
-              const valid = decode("ScheduleDefinitionV1", {
-                ...initial,
-                build: { ...initial.build, input_fallback_policy: v },
-              });
-              build({
-                input_fallback_policy: valid.build.input_fallback_policy,
-              });
-              setPolicyError("");
-            } catch {
-              setPolicyError("Check the named input branch policy JSON");
-              throw Error("Invalid named input policies");
-            }
-          }}
-        />
-        <PolicyJson
-          label="Provider input policies (JSON)"
-          value={draft.build.provider_fallback_policies}
-          onChange={(v) => {
-            try {
-              const valid = decode("ScheduleDefinitionV1", {
-                ...initial,
-                build: { ...initial.build, provider_fallback_policies: v },
-              });
-              build({
-                provider_fallback_policies:
-                  valid.build.provider_fallback_policies,
-              });
-              setPolicyError("");
-            } catch {
-              setPolicyError("Check the provider input policy JSON");
-              throw Error("Invalid provider input policies");
-            }
-          }}
-        />
-        <PolicyJson
-          label="Parameter overrides (JSON)"
-          value={draft.build.parameters}
-          onChange={(v) => {
-            const valid = decode("ScheduleDefinitionV1", {
-              ...initial,
-              build: { ...initial.build, parameters: v },
-            });
-            build({ parameters: valid.build.parameters });
-          }}
-        />
-      </details>
+          <DatasetChoices
+            label="Refresh source datasets"
+            value={draft.build.refresh_sources}
+            datasets={datasets}
+            local
+            onChange={(refresh_sources) => build({ refresh_sources })}
+          />
+          <Switch
+            label="Require current boundary data"
+            value={draft.build.require_current}
+            onChange={(require_current) => build({ require_current })}
+          />
+        </ScheduleDisclosure>
+        <ScheduleDisclosure
+          title="Input policies and parameters"
+          description="Overrides for named inputs and transform parameters"
+        >
+          <ScheduleDisclosure
+            title="Named input branches"
+            description="Fallback rules for inputs that request a specific branch"
+          >
+            <PolicyJson
+              label="Named input branch policies (JSON)"
+              value={draft.build.input_fallback_policy}
+              onChange={(v) => {
+                try {
+                  const valid = decode("ScheduleDefinitionV1", {
+                    ...initial,
+                    build: { ...initial.build, input_fallback_policy: v },
+                  });
+                  build({
+                    input_fallback_policy: valid.build.input_fallback_policy,
+                  });
+                  setPolicyError("");
+                } catch {
+                  setPolicyError("Check the named input branch policy JSON");
+                  throw Error("Invalid named input policies");
+                }
+              }}
+            />
+          </ScheduleDisclosure>
+          <ScheduleDisclosure
+            title="External workspace inputs"
+            description="Fallback rules for datasets in other workspaces"
+          >
+            <PolicyJson
+              label="Provider input policies (JSON)"
+              value={draft.build.provider_fallback_policies}
+              onChange={(v) => {
+                try {
+                  const valid = decode("ScheduleDefinitionV1", {
+                    ...initial,
+                    build: { ...initial.build, provider_fallback_policies: v },
+                  });
+                  build({
+                    provider_fallback_policies:
+                      valid.build.provider_fallback_policies,
+                  });
+                  setPolicyError("");
+                } catch {
+                  setPolicyError("Check the provider input policy JSON");
+                  throw Error("Invalid provider input policies");
+                }
+              }}
+            />
+          </ScheduleDisclosure>
+          <ScheduleDisclosure
+            title="Transform parameters"
+            description="Values passed to transforms when this schedule runs"
+          >
+            <PolicyJson
+              label="Parameter overrides (JSON)"
+              value={draft.build.parameters}
+              onChange={(v) => {
+                const valid = decode("ScheduleDefinitionV1", {
+                  ...initial,
+                  build: { ...initial.build, parameters: v },
+                });
+                build({ parameters: valid.build.parameters });
+              }}
+            />
+          </ScheduleDisclosure>
+        </ScheduleDisclosure>
+      </ScheduleDisclosure>
       {(error || policyError) && (
         <p className="execution-error" role="alert">
           {error || policyError}

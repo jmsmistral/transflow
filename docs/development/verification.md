@@ -1,5 +1,52 @@
 # Contributor verification
 
+## Schedule editor redesign (2026-10-22)
+
+T098 rebuilds the schedule form around editable trigger cards and independently
+expandable Advanced options groups. AND/OR changes retain existing leaves; removing
+one of two conditions keeps its sibling. Names start empty, descriptions are fixed
+two-row fields, and internal source/condition/binding controls are omitted without
+changing defaults or saved execution settings. Branch order, typography, primary
+hover contrast, action alignment and canvas-strip padding are updated. Duration
+controls convert display units to stored integer seconds.
+
+Design references: [Carbon forms](https://www.carbondesignsystem.com/building-blocks/core/patterns/forms)
+for grouping and progressive disclosure, and the
+[W3C accordion pattern](https://www.w3.org/WAI/ARIA/apg/patterns/accordion/)
+for button semantics and keyboard expansion. Name/description use the owner's
+requested placeholders with persistent accessible names.
+
+Actual verification:
+
+- Full `bash tools/check-web.sh`: 756 tests in 38 files, strict type/lint/format,
+  production worker probes and 16 reproducible assets pass. Focused schedule and
+  branch checks pass 27 tests. Regressions cover hidden-setting preservation,
+  AND/OR edits, two-child collapse, blank-name validation, untouched Cancel,
+  grouped policy edits and duration-unit conversion.
+- Codex Internal Browser, using the existing `python-generated-review` synthetic
+  workspace and rebuilt coordinator, verifies light/dark lists, actual primary
+  hover states, placeholder fields, sticky aligned actions, keyboard card expansion,
+  AND/OR draft edits, Advanced groups, one hour to 60 minutes, and unsaved/untouched
+  cancellation. It inspects the existing paused Weekday delivery schedule and
+  confirms both original schedules remain. Browser error/warning logs are empty.
+- Automatic approval review rejected saving a test schedule because it would
+  create persistent schedule state. No alternate save path was attempted. Browser
+  verification therefore covers unsaved editing and cancellation; save payloads,
+  ETag guards and preservation are covered by automated tests.
+
+- Safety passes 27 regressions, 922 public candidate files, 635 locked versions
+  and the existing exception. Specification/link checks and all 44 checker
+  regressions pass. Both repository whitespace checks pass.
+
+Screenshots and logs are ignored `target/schedule-*` artifacts. The verification
+coordinator was stopped; the owner's `preview-scroll-review` coordinator and saved
+workspace were preserved. No new workspace was created. The existing launcher
+was inspected and passed Bash syntax validation; it rebuilds CLI/UI on restart:
+`bash /Users/jms/dev/transflow-workspace/preview-scroll-review-tools/serve-preview.sh`.
+Rust/Python execution and wire/storage contracts are unchanged; their application
+suites were not repeated. CI remains owner-monitored.
+
+
 ## Quiet build report refresh recovery (2026-10-22)
 
 T086 treats canceled read scopes as normal replacement and retries runtime context

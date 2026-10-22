@@ -10,6 +10,34 @@ A build contains one or more dataset jobs. An occurrence is an accepted scheduli
 request and may instead be queued, held, coalesced, skipped or canceled without a
 build. History keeps those distinctions.
 
+## Create and edit in lineage
+
+Choose **New schedule**, enter a name and optional description, then select the
+datasets to build. **When to build** uses expandable condition cards. Add a
+condition and choose **All (AND)** or **Any (OR)** to combine triggers; conditions
+can also contain nested groups. Switching AND/OR keeps the existing conditions.
+AND waits for evidence from every condition. Separate OR matches can start
+separate builds; OR does not combine them into one event.
+
+The data branch and ordered fallbacks are separate from trigger event branches.
+The first row shows the data branch, followed by fallbacks in search order.
+**Connecting build** attempts to build datasets between trigger and target nodes.
+
+**Advanced options** groups build scope, failures/retries, overlapping runs,
+timing/limits, input datasets and custom input/parameter overrides. Each group
+expands separately. Retry classes appear when more than one attempt is allowed;
+catch-up limits appear with catch-up enabled. Time values accept seconds, minutes
+or hours. Keeping events indefinitely requires explicitly enabling that option.
+Upcoming clock times are available under **Next intended times**.
+
+Save and Cancel stay together at the top while scrolling. New names start empty;
+placeholders are hints rather than saved values. The editor omits source selectors,
+snapshot identifiers, condition IDs and input-binding controls. New definitions
+retain the coordinator's source defaults and exact pins for new dataset triggers;
+editing preserves existing source selectors, trigger IDs and payload modes.
+Inspect those settings in **View schedule**; use the CLI definition workflow below
+to change source or payload policy. Accepted runs retain their original settings.
+
 ## CLI
 
 ```bash
@@ -132,7 +160,7 @@ workspace branches, with complete API pagination and bounded result pages. The m
 fallback editor supports add, drag, up/down and remove without switching the lineage
 branch. No source/input-default reset button is shown. Info icons beside detail labels
 explain their settings; expiry is displayed in hours, minutes or seconds. Exact pin
-wording stays in the full view/editor, while the compact condition summary omits it.
+wording stays in the full view, while condition cards omit it.
 
 
 ## Live schedule status

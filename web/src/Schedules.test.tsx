@@ -459,13 +459,20 @@ test("compound editor emits typed time trees and policy switches remain accessib
   fireEvent.change(screen.getByLabelText("Condition type"), {
     target: { value: "and" },
   });
-  expect(screen.getAllByLabelText("Cron expression").length).toBe(2);
+  // Adding a group preserves the existing event, then adds a time condition.
+  fireEvent.click(screen.getByRole("button", { name: /Time \(cron\).*Show/ }));
+  expect(screen.getAllByLabelText("Cron expression").length).toBe(1);
   const timezone = screen.getAllByLabelText("Timezone")[0];
   if (!timezone) throw Error("timezone control");
   fireEvent.change(timezone, {
     target: { value: "Asia/Dubai" },
   });
-  fireEvent.click(screen.getByText("Advanced options"));
+  fireEvent.click(
+    screen.getByRole("button", { name: /Advanced options.*Show/ }),
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /Overlapping runs.*Show/ }),
+  );
   fireEvent.click(
     screen.getByRole("switch", { name: "Allow overlapping builds" }),
   );
@@ -475,7 +482,7 @@ test("compound editor emits typed time trees and policy switches remain accessib
   expect(save.mock.calls[0]?.[0]).toMatchObject({
     trigger: {
       kind: "and",
-      children: [{ kind: "cron", timezone: "Asia/Dubai" }, { kind: "cron" }],
+      children: [definition.trigger, { kind: "cron", timezone: "Asia/Dubai" }],
     },
     policies: { allow_overlapping_builds: true },
   });
@@ -738,7 +745,10 @@ test("graph editing shows only targets, changes no saved state before Save, and 
   if (!session) throw Error("missing edit session");
   const edit = session as ScheduleEditSession;
   act(() => edit.act("trigger", [second]));
-  expect(screen.getAllByLabelText("Condition ID")).toHaveLength(2);
+  expect(screen.queryByLabelText("Condition ID")).toBeNull();
+  expect(
+    screen.getByRole("group", { name: "Combine conditions" }),
+  ).toBeTruthy();
   act(() => edit.exit());
   await screen.findByRole("dialog", { name: "Save schedule changes?" });
   fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
@@ -1147,5 +1157,157 @@ test("empty selected schedule groups hide their headings and use the concise emp
   expect(
     screen.queryByText("Schedules related to selected datasets"),
   ).toBeNull();
+  workspace.dispose();
+});
+
+test("schedule editor keeps hidden execution choices and nested conditions through AND/OR edits", async () => {
+  const { workspace, state } = await setup();
+  const original: ScheduleDefinitionV1 = {
+    ...definition,
+    trigger: {
+      kind: "and",
+      children: [
+        definition.trigger,
+        {
+          kind: "cron",
+          id: "time-preserved",
+          expression: "0 8 * * 1-5",
+          timezone: "UTC",
+          duplicate_time: "both",
+        },
+      ],
+    },
+  };
+  const save = vi.fn().mockResolvedValue(undefined);
+  render(
+    <ScheduleEditor
+      workspace={workspace}
+      initial={original}
+      record={record}
+      datasets={state.value.datasets.entries}
+      schedules={[record]}
+      onSave={save}
+      onCancel={vi.fn()}
+    />,
+  );
+  for (const label of [
+    "Condition ID",
+    "Input binding",
+    "Source selection",
+    "Source snapshot",
+  ])
+    expect(screen.queryByLabelText(label)).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Any (OR)" }));
+  fireEvent.change(screen.getByLabelText("Description"), {
+    target: { value: "Reviewed schedule" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save schedule" }));
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  expect(save.mock.calls[0]?.[0]).toEqual({
+    ...original,
+    description: "Reviewed schedule",
+    trigger: { ...original.trigger, kind: "or" },
+  });
+  // Removing one child collapses the group without replacing its remaining leaf.
+  fireEvent.click(screen.getByRole("button", { name: "Remove condition 2" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save schedule" }));
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+  expect(save.mock.calls[1]?.[0].trigger).toEqual(definition.trigger);
+  workspace.dispose();
+});
+
+test("new schedule starts with an empty name and accessible placeholder fields", async () => {
+  const { workspace, state } = await setup();
+  render(
+    <Schedules
+      workspace={workspace}
+      state={state}
+      selected={[graphNode(datasetId)]}
+      visible={[identity(target)]}
+      onRoles={vi.fn()}
+      onPlan={vi.fn()}
+      onAdd={vi.fn()}
+    />,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "New schedule" }));
+  const name = (await screen.findByRole("textbox", {
+    name: "Schedule name",
+  })) as HTMLInputElement;
+  expect(name.value).toBe("");
+  expect(name.placeholder).toBe("Schedule name");
+  expect(name.checkValidity()).toBe(false);
+  expect(
+    (
+      screen.getByRole("textbox", {
+        name: "Description",
+      }) as HTMLTextAreaElement
+    ).placeholder,
+  ).toBe("Description");
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  expect(
+    screen.queryByRole("dialog", { name: "Save schedule changes?" }),
+  ).toBeNull();
+  expect(screen.getByRole("button", { name: "New schedule" })).toBeTruthy();
+  workspace.dispose();
+});
+
+test("advanced sections preserve policy values while exposing relevant retry and timing controls", async () => {
+  const { workspace, state } = await setup();
+  const save = vi.fn().mockResolvedValue(undefined);
+  render(
+    <ScheduleEditor
+      workspace={workspace}
+      initial={definition}
+      record={record}
+      datasets={state.value.datasets.entries}
+      schedules={[record]}
+      onSave={save}
+      onCancel={vi.fn()}
+    />,
+  );
+  const advanced = screen.getByRole("button", {
+    name: /Advanced options.*Show/,
+  });
+  expect(advanced.getAttribute("aria-expanded")).toBe("false");
+  fireEvent.click(advanced);
+  fireEvent.click(
+    screen.getByRole("button", { name: /Failures and retries.*Show/ }),
+  );
+  fireEvent.change(screen.getByLabelText("Maximum attempts per job"), {
+    target: { value: "3" },
+  });
+  fireEvent.click(screen.getByRole("checkbox", { name: "worker crash" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: /Failures and retries.*Hide/ }),
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /Timing and limits.*Show/ }),
+  );
+  expect(
+    (screen.getByLabelText("Event expiry") as HTMLInputElement).value,
+  ).toBe("24");
+  fireEvent.change(screen.getByLabelText("Job time limit unit"), {
+    target: { value: "60" },
+  });
+  expect(
+    (screen.getByLabelText("Job time limit") as HTMLInputElement).value,
+  ).toBe("60");
+  fireEvent.change(screen.getByLabelText("Job time limit"), {
+    target: { value: "90" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: /Timing and limits.*Hide/ }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save schedule" }));
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  expect(save.mock.calls[0]?.[0]).toEqual({
+    ...definition,
+    build: { ...definition.build, timeout_seconds: 5400 },
+    policies: {
+      ...definition.policies,
+      max_attempts: 3,
+      retryable_classes: ["worker_crash"],
+    },
+  });
   workspace.dispose();
 });

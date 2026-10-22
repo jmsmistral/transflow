@@ -252,18 +252,20 @@ export function ScheduleBranchesEditor({
         }}
       />
       <h4>Fallback branches</h4>
-      <ScheduleBranchPicker
-        workspace={workspace}
-        label="Add fallback branch"
-        value=""
-        exclude={[branch, ...fallback]}
-        onChange={(name) => onFallback([...fallback, name])}
-      />
       <p className="fallback-order">
-        Try <strong>{branch}</strong> first, then these branches from top to
-        bottom.
+        Read from the data branch first, then try fallbacks in order.
       </p>
-      <ol className="fallback-list" aria-label="Schedule fallback order">
+      <div className="schedule-first-branch">
+        <span className="schedule-branch-position">1</span>
+        <Icon name="branch" />
+        <span>{branch}</span>
+        <small>Data branch</small>
+      </div>
+      <ol
+        start={2}
+        className="fallback-list"
+        aria-label="Schedule fallback order"
+      >
         {fallback.map((name, i) => (
           <li
             key={name}
@@ -313,7 +315,13 @@ export function ScheduleBranchesEditor({
           </li>
         ))}
       </ol>
-      {!fallback.length && <p className="muted">No fallback branches.</p>}
+      <ScheduleBranchPicker
+        workspace={workspace}
+        label="Add fallback branch"
+        value=""
+        exclude={[branch, ...fallback]}
+        onChange={(name) => onFallback([...fallback, name])}
+      />
     </section>
   );
 }

@@ -927,6 +927,7 @@ export function Schedules({
     ).data;
     return {
       ...definition,
+      name: "",
       build: { ...definition.build, build_mode: "selected" as const },
     };
   };
@@ -1207,7 +1208,7 @@ export function Schedules({
                   return definition && related(definition, scopeNodes)[role];
                 });
                 return rows.length ? (
-                  <section key={role}>
+                  <section className="schedule-list-group" key={role}>
                     <h3>{title}</h3>
                     {rows.map((row) => (
                       <ScheduleRow
