@@ -1,5 +1,37 @@
 # Contributor verification
 
+## Control borders and Preview arrow spacing (2026-10-22)
+
+Shared focus styling now uses a one-pixel outline on the control edge, replacing
+the detached two-pixel ring. Composite fallback selection has one aligned wrapper
+outline and no inherited select margin. Graph keyboard focus follows the node
+body; its selection outline is thinner. Preview column arrows have eight pixels
+of right clearance, filter tabs share one divider, and the lineage description
+input can shrink within the header.
+
+The full web gate passes 698 tests in 34 files, strict types, lint, formatting,
+worker probes and reproducible production builds with 16 assets. The existing
+`preview-scroll-review-tools/serve-preview.sh` rebuilds and serves the current UI.
+Internal Browser checks cover light/dark Preview input and Apply, Tab navigation,
+Escape focus restoration, lineage description, branch/Catalogue search, fallback
+selection, History dates, schedule description and graph keyboard focus. Measured
+Preview arrow clearance is 8 pixels; input/Apply separation remains 5 pixels;
+field outlines are 1 pixel with -1 pixel offset. The description editor fits in
+its parent/header. No Browser console errors occur. Final captures and readings
+are retained in `target/control-borders-review.jpg`,
+`target/control-borders-dark.jpg`, `target/control-borders-description.jpg` and
+`target/control-borders-browser.json`. These are macOS desktop observations,
+not a new cross-platform accessibility certification.
+
+The changes are CSS and guidance only. No execution, API, dependency, saved
+lineage, source or schedule definition changes are made. The broad Rust/Python
+suites and native query qualification are not rerun for this styling correction.
+All 27 safety regressions, the paired privacy/inventory/contract scan and
+specification/link validation pass. The inventory remains 635 package versions
+with one existing exception. Logs are retained as `target/control-borders-web.log`,
+`target/control-borders-safety.log` and `target/control-borders-spec.log`.
+The verification coordinator is stopped before handoff; new CI is owner-monitored.
+
 ## Preview column filters and sort (2026-10-22)
 
 Preview headers now expose a compact column-arrow popup. Its inline top section

@@ -23,8 +23,9 @@ button:disabled {
   opacity: 0.5;
 }
 :focus-visible {
-  outline: 2px solid var(--focus, #397569);
-  outline-offset: 2px;
+  /* Keep focus on the control edge, including tightly joined buttons. */
+  outline: 1px solid var(--focus, #397569);
+  outline-offset: -1px;
 }
 .app {
   --bg: #f5f7f9;
@@ -579,12 +580,15 @@ dd {
   left: calc(100% + 4px);
 }
 .react-flow__node.selected .dataset-node {
-  outline: 1.5px solid var(--focus);
-  outline-offset: 2px;
+  outline: 1px solid var(--focus);
+  outline-offset: 1px;
 }
 .react-flow__node:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+  outline: none;
+}
+.react-flow__node:focus-visible .dataset-node {
+  outline: 1px solid var(--focus);
+  outline-offset: 1px;
 }
 .graph-list {
   overflow: auto;
@@ -935,6 +939,7 @@ summary {
 .fallback-select select {
   width: 100%;
   min-width: 0;
+  margin: 0;
   padding: 8px 34px 8px 8px;
   border: 0;
   appearance: none;
@@ -942,8 +947,8 @@ summary {
   color: var(--ink);
 }
 .fallback-select:focus-within {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+  outline: 1px solid var(--focus);
+  outline-offset: -1px;
 }
 .fallback-select select:focus-visible {
   outline: none;
@@ -1446,6 +1451,7 @@ revo-grid.preview-grid
   gap: 6px;
   width: 100%;
   min-width: 0;
+  padding-right: 8px;
 }
 .preview-column-name {
   flex: 1;
@@ -1535,8 +1541,10 @@ revo-grid.preview-grid
 }
 .preview-filter-modes button:last-child {
   border-radius: 0 3px 3px 0;
+  margin-left: -1px;
 }
 .preview-filter-modes button[aria-pressed="true"] {
+  position: relative;
   background: var(--selection-bg);
   color: var(--selection-ink);
   border-color: var(--focus);
@@ -1790,8 +1798,8 @@ revo-grid.preview-grid
   vertical-align: middle;
 }
 .graph-diagram:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline: 1px solid var(--focus);
+  outline-offset: -1px;
 }
 .catalogue-panel {
   display: flex;
@@ -2024,6 +2032,8 @@ revo-grid.preview-grid
   height: 13px;
 }
 .lineage-description input {
+  flex: 1;
+  min-width: 0;
   width: 100%;
   padding: 2px 4px;
   font-size: 12px;

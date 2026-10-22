@@ -359,9 +359,14 @@ for the coordinator's content policy. TypeScript checks application source
 strictly; `skipLibCheck` excludes errors in the grid package's published declaration
 files (`lodash` and `@type` imports).
 
-UI focus and node selection use thin, muted teal outlines (with a lighter dark-theme
-variant). Custom menu rows separate icons, labels and checkmarks, with consistent
-height and inset focus styling that cannot overlap adjacent rows.
+Controls use a one-pixel focus outline on their border edge, with no outward
+gap or layout shift. Composite selectors show one outline around the wrapper;
+menu-row focus stays inset. Muted teal focus colours have a lighter dark-theme
+variant. Custom menu rows keep consistent height and separated icons, labels and
+checkmarks. Graph keyboard focus follows the node body, and its thin selection
+outline preserves status styling. Preview column arrows sit eight pixels inside
+the column divider. Joined filter buttons share a single divider. The lineage
+description editor fits within the header without extending over nearby actions.
 
 The Open lineage dialog has fuzzy name search across bounded saved-lineage pages,
 highlighted matches, version labels and committed last-save timestamps. UI dates
