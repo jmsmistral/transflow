@@ -1,5 +1,47 @@
 # Contributor verification
 
+## Stable live build colours and pinned actions (2026-10-22)
+
+T084/T087/T088 keep the last verified canvas snapshot during runtime refreshes
+and newly accepted captures on the same current branch/fallback selector. Replace
+metadata atomically instead of clearing every node to Unknown. Real branch/policy
+and explicit historical/plan changes retain their context fences. Failed metadata
+reads still report errors and clear affected facts. Build actions now live outside
+the scrollable content and sit flush with the inspector bottom.
+
+Local evidence:
+
+- Full `bash tools/check-web.sh`: 747 tests in 38 files, strict type/lint/format,
+  production worker probes and 16 reproducible assets pass.
+- Regression cases cover delayed and superseded updates, same-selector capture
+  changes, real branch/fallback changes, verified unknown results, deterministic
+  failures, bounded conflict retries and disconnect cleanup. Existing camera,
+  selection, concurrent membership and build-acceptance tests remain passing.
+- Actual coordinator/Internal Browser, existing `transform-factories-review`:
+  selected all five nodes in Build status, forced a build and closed its report.
+  Temporarily slowed synthetic stages to observe the complete sequence, then
+  restored all four source files exactly. Final 19-second sample has 219 rendered
+  observations: raw/orders Running, both regions Running, delivery Running,
+  summary Running and all Succeeded. Zero Unknown samples, zero hidden-canvas
+  samples and one unchanged camera transform. Blue/green fills matched the labels.
+- An earlier browser pass exposed an additional flash during accepted-source
+  rebinding; the final implementation and sample include that correction.
+- Expanded resource cards scroll above the fixed footer. In the 1280 x 720
+  review, content bottom equals footer top at 596 px and footer bottom equals
+  panel bottom at 656.5 px, including after a 461 px content scroll. Light/dark
+  checks pass; no browser console errors observed.
+- Original source restoration was followed by successful cached build
+  `82fa40fd-9176-42cb-8a7f-b6dca7dbfffe`, reusing the normal synthetic outputs.
+
+Safety passes all 27 regressions, 921 public files, 635 locked versions and one
+existing exception. Specification/link checks and all 44 checker regressions pass;
+both repository diff checks pass. Browser samples, screenshots
+and complete gate logs are ignored `target/live-build-*` artifacts. The sample
+history is preserved, including diagnostic builds. The owner's active review
+workspace is untouched. Both owned verification coordinators were stopped and temporary tabs closed.
+Rust/Python application suites are unchanged and not repeated for this UI change;
+remote CI remains owner-monitored.
+
 ## Table sizing and compact inspector controls (2026-10-22)
 
 Preview and scratchpad remember resized widths through menus, criterion changes,

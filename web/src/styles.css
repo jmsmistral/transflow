@@ -3253,9 +3253,8 @@ revo-grid.preview-grid
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  position: sticky;
-  bottom: -12px;
-  padding: 12px 0;
+  flex: 0 0 auto;
+  padding: 12px 16px;
   background: var(--surface);
   border-top: 1px solid var(--line);
 }
@@ -3526,8 +3525,15 @@ revo-grid.preview-grid
 }
 .build-planner {
   min-height: 0;
+  overflow: hidden;
+}
+.planner-content {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   padding: 16px;
+  display: flex;
+  flex-direction: column;
 }
 .planner-empty > .icon {
   flex: 0 0 60px;

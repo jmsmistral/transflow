@@ -58,7 +58,7 @@ def order_totals():
 - **Versioned data and provenance** - Track published outputs, captured code and exact input versions.
 - **Data expectations** - Define and validate quality checks on transform inputs and outputs.
 - **Reusable transform factories** - Generate Python and SQL transforms from shared definitions, with optional dataset metadata handles.
-- **Lineage UI** - Explore pipelines and dataset metadata via an interactive graph with informative overlays.
+- **Lineage UI** - Explore pipelines and dataset metadata via an interactive graph with informative overlays and live build status.
 - **Interactive exploration** - Preview, filter and sort dataset rows, join catalog datasets with SQL autocomplete and inspect authored/generated code and execution history.
 - **Branch fallbacks** - Resolve inputs through an ordered set of data branches for builds and scheduled runs.
 - **Data health** - Review recent builds and open individual input and output check results.

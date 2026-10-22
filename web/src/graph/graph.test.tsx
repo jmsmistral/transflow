@@ -1185,7 +1185,7 @@ test("timing revisions refresh graph metadata without remounting its selection o
   ).toBe(viewport);
   await waitFor(() => expect(release).toBeDefined());
   expect(view.container.querySelector(".node-overlay-label")?.textContent).toBe(
-    "Unknown",
+    "2 rows",
   );
   release?.();
   await waitFor(() =>

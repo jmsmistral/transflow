@@ -499,6 +499,13 @@ The live Build report opens automatically; changing the next selection or cancel
 its preview does not cancel an accepted build. Event refresh retains the last verified
 workspace through publication conflicts with capped, cancellation-aware backoff.
 The same-branch canvas keeps its membership, positions, selection and camera.
+During runtime updates and newly accepted captures on that current branch, node
+colours and labels retain the last verified snapshot until replacement facts
+arrive together. They do not briefly reset to Unknown between jobs. Switching
+branch/fallback or a historical/plan selection clears the previous facts; failed
+refreshes remain explicit and unavailable metadata is still Unknown.
+The action row stays flush with the bottom of the Build inspector. Resources,
+expanded cards and warnings scroll above it without showing beneath the buttons.
 
 ## Schedule inspector (T098)
 

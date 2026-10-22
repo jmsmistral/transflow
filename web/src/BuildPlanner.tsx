@@ -244,170 +244,183 @@ export function BuildPlanner({
   const count = targets ? targets.split("\n").length : 0;
   return (
     <div className="build-planner">
-      {accepted && (
-        <div className="planner-receipt">
-          <Button
-            disabled={accepted.plan.branch !== state.selection.branch}
-            onClick={() => setShowBuild(true)}
-          >
-            View latest build
-          </Button>
-        </div>
-      )}
-      {!count && !locked ? (
-        <div className="planner-empty" role="status">
-          <Icon name="build" />
-          <p>Select valid resources to begin a build</p>
-          <small>Select datasets with local producers on the lineage.</small>
-        </div>
-      ) : (
-        <>
-          <div className="planner-count">
-            {reviewing && plan
-              ? `${plan.writes.length} ${plan.writes.length === 1 ? "resource" : "resources"} in build`
-              : `${count} ${count === 1 ? "resource" : "resources"} selected`}
+      <div className="planner-content">
+        {accepted && (
+          <div className="planner-receipt">
+            <Button
+              disabled={accepted.plan.branch !== state.selection.branch}
+              onClick={() => setShowBuild(true)}
+            >
+              View latest build
+            </Button>
           </div>
-          <div className="planner-heading">
-            <strong>Builds</strong>
-            <span className="muted">
-              {reviewing ? "Finalize build options" : "Select a build strategy"}
-            </span>
+        )}
+        {!count && !locked ? (
+          <div className="planner-empty" role="status">
+            <Icon name="build" />
+            <p>Select valid resources to begin a build</p>
+            <small>Select datasets with local producers on the lineage.</small>
           </div>
-          {!reviewing ? (
-            <>
-              <fieldset
-                className="planner-strategies"
-                disabled={locked}
-                aria-label="Build strategy"
-              >
-                {(
-                  [
-                    ["selected", "Selected resources only"],
+        ) : (
+          <>
+            <div className="planner-count">
+              {reviewing && plan
+                ? `${plan.writes.length} ${plan.writes.length === 1 ? "resource" : "resources"} in build`
+                : `${count} ${count === 1 ? "resource" : "resources"} selected`}
+            </div>
+            <div className="planner-heading">
+              <strong>Builds</strong>
+              <span className="muted">
+                {reviewing
+                  ? "Finalize build options"
+                  : "Select a build strategy"}
+              </span>
+            </div>
+            {!reviewing ? (
+              <>
+                <fieldset
+                  className="planner-strategies"
+                  disabled={locked}
+                  aria-label="Build strategy"
+                >
+                  {(
                     [
-                      "connecting",
-                      "All transforms in between selected resources",
-                    ],
-                    ["full", "All ancestor resources"],
-                  ] as const
-                ).map(([value, label]) => (
-                  <label key={value}>
-                    <input
-                      type="radio"
-                      name="build-strategy"
-                      value={value}
-                      checked={options.mode === value}
-                      onChange={() =>
-                        setSettings((s) => ({ ...s, mode: value }))
-                      }
-                    />
-                    {label}
-                  </label>
-                ))}
-              </fieldset>
-              {selected.length > count && (
-                <p className="muted">
-                  {selected.length - count} selected resources have no local
-                  producer and cannot be built here.
-                </p>
-              )}
-              <footer className="planner-actions">
-                <Button
-                  className="button-primary"
-                  disabled={!count || locked}
-                  onClick={() => void preview()}
-                >
-                  Next (View preview)
-                </Button>
-              </footer>
-            </>
-          ) : (
-            <>
-              <fieldset
-                disabled={locked || busy === "preview"}
-                className="planner-toggles"
-              >
-                <label className="planner-check">
-                  <input
-                    type="checkbox"
-                    role="switch"
-                    checked={options.force}
-                    onChange={(e) => {
-                      setSettings((s) => ({ ...s, force: e.target.checked }));
-                      setAutoPreview(true);
-                    }}
-                  />
-                  Force build on up-to-date resources{" "}
-                  <span title="Forces materialization within this scope. All checks still apply.">
-                    <Icon name="info" />
-                  </span>
-                </label>
-              </fieldset>
-              {busy === "preview" && <p role="status">Preparing preview…</p>}
-              {plan && (
-                <section className="plan-review" aria-label="Plan preview">
-                  <h3>Resources to be built</h3>
-                  <PlanResources plan={plan} />
-                  {!!hidden.length && (
-                    <div className="planner-notice">
-                      <Icon name="info" />
-                      <span>
-                        {hidden.length} relevant{" "}
-                        {hidden.length === 1 ? "resource is" : "resources are"}{" "}
-                        outside the displayed lineage.
-                      </span>
-                      <Button
-                        onClick={() =>
-                          onAdd(hidden.slice(0, 100).map((r) => r.path))
+                      ["selected", "Selected resources only"],
+                      [
+                        "connecting",
+                        "All transforms in between selected resources",
+                      ],
+                      ["full", "All ancestor resources"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <label key={value}>
+                      <input
+                        type="radio"
+                        name="build-strategy"
+                        value={value}
+                        checked={options.mode === value}
+                        onChange={() =>
+                          setSettings((s) => ({ ...s, mode: value }))
                         }
-                      >
-                        Add to graph
-                      </Button>
-                    </div>
-                  )}
-                  {draft && (
-                    <PlanFallbackBranches plan={plan} context={draft.context} />
-                  )}
-                </section>
-              )}
-              <footer className="planner-actions">
-                <Button disabled={locked} onClick={cancel}>
-                  Cancel
-                </Button>
-                {error && failedKey === key && !uncertain && (
-                  <Button
-                    disabled={!!busy || !count}
-                    onClick={() => void preview()}
-                  >
-                    Retry preview
-                  </Button>
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </fieldset>
+                {selected.length > count && (
+                  <p className="muted">
+                    {selected.length - count} selected resources have no local
+                    producer and cannot be built here.
+                  </p>
                 )}
-                <Button
-                  className="button-primary"
-                  disabled={
-                    !draft ||
-                    !plan?.writes.length ||
-                    !!busy ||
-                    (!uncertain && (stale || expired || rejected))
-                  }
-                  onClick={() => void accept()}
+              </>
+            ) : (
+              <>
+                <fieldset
+                  disabled={locked || busy === "preview"}
+                  className="planner-toggles"
                 >
-                  <Icon name="build" />
-                  {busy === "accept"
-                    ? "Starting…"
-                    : uncertain
-                      ? "Retry build acceptance"
-                      : "Run build"}
-                </Button>
-              </footer>
-            </>
-          )}
-          {error && (
-            <p className="planner-error" role="alert">
-              {error}
-            </p>
-          )}
-        </>
-      )}
+                  <label className="planner-check">
+                    <input
+                      type="checkbox"
+                      role="switch"
+                      checked={options.force}
+                      onChange={(e) => {
+                        setSettings((s) => ({ ...s, force: e.target.checked }));
+                        setAutoPreview(true);
+                      }}
+                    />
+                    Force build on up-to-date resources{" "}
+                    <span title="Forces materialization within this scope. All checks still apply.">
+                      <Icon name="info" />
+                    </span>
+                  </label>
+                </fieldset>
+                {busy === "preview" && <p role="status">Preparing preview…</p>}
+                {plan && (
+                  <section className="plan-review" aria-label="Plan preview">
+                    <h3>Resources to be built</h3>
+                    <PlanResources plan={plan} />
+                    {!!hidden.length && (
+                      <div className="planner-notice">
+                        <Icon name="info" />
+                        <span>
+                          {hidden.length} relevant{" "}
+                          {hidden.length === 1
+                            ? "resource is"
+                            : "resources are"}{" "}
+                          outside the displayed lineage.
+                        </span>
+                        <Button
+                          onClick={() =>
+                            onAdd(hidden.slice(0, 100).map((r) => r.path))
+                          }
+                        >
+                          Add to graph
+                        </Button>
+                      </div>
+                    )}
+                    {draft && (
+                      <PlanFallbackBranches
+                        plan={plan}
+                        context={draft.context}
+                      />
+                    )}
+                  </section>
+                )}
+              </>
+            )}
+            {error && (
+              <p className="planner-error" role="alert">
+                {error}
+              </p>
+            )}
+          </>
+        )}
+      </div>
+      {(!!count || locked) &&
+        (!reviewing ? (
+          <footer className="planner-actions">
+            <Button
+              className="button-primary"
+              disabled={!count || locked}
+              onClick={() => void preview()}
+            >
+              Next (View preview)
+            </Button>
+          </footer>
+        ) : (
+          <footer className="planner-actions">
+            <Button disabled={locked} onClick={cancel}>
+              Cancel
+            </Button>
+            {error && failedKey === key && !uncertain && (
+              <Button
+                disabled={!!busy || !count}
+                onClick={() => void preview()}
+              >
+                Retry preview
+              </Button>
+            )}
+            <Button
+              className="button-primary"
+              disabled={
+                !draft ||
+                !plan?.writes.length ||
+                !!busy ||
+                (!uncertain && (stale || expired || rejected))
+              }
+              onClick={() => void accept()}
+            >
+              <Icon name="build" />
+              {busy === "accept"
+                ? "Starting…"
+                : uncertain
+                  ? "Retry build acceptance"
+                  : "Run build"}
+            </Button>
+          </footer>
+        ))}
       {accepted &&
         showBuild &&
         accepted.plan.branch === state.selection.branch && (

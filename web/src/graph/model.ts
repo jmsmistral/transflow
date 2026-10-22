@@ -35,6 +35,11 @@ export const edgeId = (edge: GraphEdgeV1): string =>
 export const label = (
   node: Pick<ApiLineageNodeV1, "paths" | "identity">,
 ): string => node.paths[0] ?? node.identity;
+function withoutFacts(node: ApiLineageNodeV1): ApiLineageNodeV1 {
+  const fresh = { ...node };
+  delete fresh.overlay;
+  return { ...fresh, publication: "unknown" };
+}
 export function depthQuery(value: string): Query {
   if (value === "") return {};
   if (!/^\d+$/.test(value) || BigInt(value) > 18446744073709551615n)
@@ -63,6 +68,7 @@ export class GraphModel {
   private generation = 0;
   private pendingAdds = new Set<string>();
   private viewSelector = "";
+  private factsContext = "";
   private cache: GraphCache;
   constructor(private readonly workspace: Workspace) {
     this.cache = new GraphCache(workspace);
@@ -93,6 +99,21 @@ export class GraphModel {
       }
       const context = state.value.context.fingerprint;
       const visualContext = contextIdentity(state.value.context);
+      const c = state.value.context;
+      // Accepting a build creates a new capture on the current selector. Keep
+      // its last verified canvas snapshot until the replacement is complete;
+      // branch/fallback or explicit historical/plan selection is a new view.
+      const factsContext =
+        c.selection.kind === "retained_current"
+          ? JSON.stringify([
+              c.workspace,
+              c.branch,
+              c.selection,
+              c.fallback_policy,
+            ])
+          : visualContext;
+      const retainFacts = this.factsContext === factsContext;
+      this.factsContext = factsContext;
       const selector = JSON.stringify([
         state.value.context.workspace,
         state.value.context.selection,
@@ -109,11 +130,10 @@ export class GraphModel {
         const identities = this.state.nodes.map((node) => node.identity);
         this.set({
           context,
-          nodes: this.state.nodes.map((node) => {
-            const fresh = { ...node };
-            delete fresh.overlay;
-            return { ...fresh, publication: "unknown" };
-          }),
+          // Runtime events and same-selector captures replace facts atomically.
+          nodes: retainFacts
+            ? this.state.nodes
+            : this.state.nodes.map(withoutFacts),
         });
         if (identities.length) {
           const metadata = new AbortController();
@@ -197,6 +217,10 @@ export class GraphModel {
           (error instanceof Error && error.name === "AbortError");
         if (!conflict || attempt === 2) {
           this.set({
+            // Retention covers in-flight refreshes, not unavailable metadata.
+            nodes: this.state.nodes.map((node) =>
+              ids.includes(node.identity) ? withoutFacts(node) : node,
+            ),
             message:
               error instanceof Error
                 ? error.message
