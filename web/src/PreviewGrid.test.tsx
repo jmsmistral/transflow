@@ -265,7 +265,7 @@ test.each(["include", "exclude"] as const)(
             { column: "date", kind: "include", value: "old" },
             { column: "description", kind: "exclude", value: "keep" },
           ],
-          sort: { column: "value", direction: "desc" },
+          sorts: [{ column: "value", direction: "desc" }],
         }}
         onCriteriaChange={onChange}
       />,
@@ -283,7 +283,7 @@ test.each(["include", "exclude"] as const)(
         { column: "description", kind: "exclude", value: "keep" },
         { column: "date", kind, value: "2026-10-01" },
       ],
-      sort: { column: "value", direction: "desc" },
+      sorts: [{ column: "value", direction: "desc" }],
     });
     expect(gridState.area).toEqual({ x: 1, y: 0, x1: 2, y1: 1 });
     expect(screen.queryByRole("menu")).toBeNull();
@@ -305,7 +305,7 @@ test("partial cells keep Copy available but disable both value filters", async (
       formatCell={() => "partial"}
       formatType={() => "string"}
       onError={vi.fn()}
-      criteria={{ filters: [], sort: null }}
+      criteria={{ filters: [], sorts: [] }}
       onCriteriaChange={vi.fn()}
     />,
   );
@@ -334,7 +334,7 @@ test("cell menu supports keyboard navigation, Escape and outside dismissal", asy
       formatCell={() => "value"}
       formatType={() => "string"}
       onError={vi.fn()}
-      criteria={{ filters: [], sort: null }}
+      criteria={{ filters: [], sorts: [] }}
       onCriteriaChange={vi.fn()}
     />,
   );
@@ -375,7 +375,7 @@ test("a late selection read cannot reopen the cell menu after the grid becomes b
     formatCell: () => "value",
     formatType: () => "string",
     onError: vi.fn(),
-    criteria: { filters: [], sort: null },
+    criteria: { filters: [], sorts: [] },
     onCriteriaChange: vi.fn(),
   };
   const view = render(<PreviewGrid {...props} />);

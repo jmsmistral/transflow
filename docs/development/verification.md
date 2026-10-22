@@ -1,5 +1,49 @@
 # Contributor verification
 
+## Preview criteria pills and scratchpad table controls (2026-10-22)
+
+Cell values omit datatype annotations, including decimal precision/scale, timestamp
+unit/timezone and the binary prefix. Exact text remains intact in cells, Copy and
+TSV downloads; column-header tooltips retain type information.
+
+Preview and SQL results show compact column/icon pills for each active filter and
+sort, including priority numbers for multiple sorts. Sorts accumulate in selection
+order; changing direction preserves priority and clicking an active sort removes
+only that column. Reset and node/context changes clear criteria. Scratchpad Reset
+and pills share the existing top toolbar, with no extra results row. Header menus, cell Include/Exclude,
+loading veil and 500-row scroll paging reuse Preview controls; the load-more button
+is removed. Query results retain the existing 1,000-row bound.
+
+Scratchpad controls compose a restricted outer SELECT over the last submitted SQL,
+using the same exact-version bindings and bound filter parameters. They filter
+aggregate/output columns before the cap and preserve the authored query's LIMIT.
+Editor edits apply only on Run query; Reset reruns the submitted SQL. Nondeterministic
+expressions can reevaluate. Downloads use the active query and cannot export retained
+rows after replacement failure. Failed pages retain rows and stop scroll retries.
+
+The full web gate passes 714 tests in 35 files, strict types/lint/format and
+16 reproducible production assets. The final plain-value refinement passes 54
+focused inspector/grid tests plus types, lint, format and a production rebuild. Regression cases
+cover sort priority, clear/reset/context changes, quoted SQL with terminal comments,
+dollar/escaped literals, retained rows, edited-versus-submitted SQL, duplicate scroll
+events, page failure and late pages. The pinned DuckDB AST policy and execution
+accept a wrapped CTE/aggregate query with a bound output filter.
+
+Internal Browser on the rebuilt existing `preview-scroll-review` observes Preview
+pills and node-change clearing, scratchpad Include east with 750 results, two sort
+priorities, scroll through row 750, Reset, and aggregate-output filtering. An invalid
+decimal filter produces a conversion diagnostic with retained disabled rows and no
+enabled download; Reset recovers. The final rebuilt UI shows plain aggregate
+values 431250/418500, retains decimal(38, 0) in the column tooltip, and places
+Reset/pills in the existing toolbar without an extra row. Both themes are checked
+and Browser console errors are empty. Captures are ignored synthetic files under
+`target/criteria-*-review.jpg`. No workspace source or saved lineage is changed.
+All 27 safety regressions and paired privacy/inventory/contract checks pass
+(914 candidate files, 635 package versions, one existing exception), as does
+specification/link validation. Native API/execution contracts and dependency locks
+are unchanged. The verification coordinator is stopped at handoff. CI is left to
+the owner after paired master push.
+
 ## Preview cell value filters (2026-10-22)
 
 The cell context menu adds only Include only "value" and Exclude "value" above

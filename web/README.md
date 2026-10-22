@@ -14,6 +14,19 @@ name. The name stays on the left; controls and metadata keep their context witho
 repeating the tab title. Long names truncate visually and retain their full tooltip.
 The right Health inspector scrolls its details separately from this header.
 
+Cell values contain only their values, without appended datatype labels. Column
+header tooltips show types, including decimal precision and timestamp metadata.
+Copy and downloads preserve exact values.
+
+Scratchpad results support the same column and clicked-cell filters and sorting
+as Preview. Reset preview and criterion pills share the existing top toolbar.
+Controls rerun the last submitted SQL over its pinned dataset version, filtering
+its output before the result cap. Editor edits apply only on Run query; Reset
+reruns the original SQL. Nondeterministic SQL can produce different values on a
+rerun. Results load in 500-row batches as you scroll, up to the existing 1,000-row
+limit. A page failure retains rows and requires Run query or Reset to retry.
+Download TSV includes all available rows from the displayed query.
+
 The scratchpad uses an editor on the left and an always-present Results pane on
 the right. Run query (play icon) and Cancel query sit beside the dataset name,
 above the editor. The initial Results notice has a local database glyph and the
@@ -341,8 +354,10 @@ ellipsized, and Escape, arrow keys and outside click operate the compact menu.
 Each Preview column has a small arrow button opening one popup. Its first section
 contains Include/Exclude, an exact-value input with Apply, Exclude nulls and Show
 only nulls. Its separated lower section contains only Sort ascending and Sort
-descending. Single-column sorting is typed, with nulls last in either direction;
-clicking the selected sort clears it. Each column has one filter, combined with
+descending. Sorting is typed, with nulls last in either direction. Sort columns accumulate
+in selection order; changing direction retains priority and clicking the selected
+sort clears only that column. Compact pills show each active filter/sort and its
+column, with sort priorities and full details in tooltips. Each column has one filter, combined with
 other columns by AND. Exclude value retains nulls; Exclude nulls removes them.
 Scalar values use the column's numeric/boolean/date/time type, with string values
 matched case-sensitively and empty strings preserved. Nested values compare their

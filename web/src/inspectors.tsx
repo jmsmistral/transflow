@@ -14,6 +14,7 @@ import type { Workspace, WorkspaceState } from "./workspace";
 import { Button, DatasetHeader, InspectorNotice } from "./components";
 import { decode } from "./api/client";
 import { Icon } from "./Icons";
+import { PreviewCriteriaPills } from "./PreviewCriteriaPills";
 import { PreviewGrid, type GridPage } from "./PreviewGrid";
 import {
   emptyPreviewCriteria,
@@ -381,11 +382,6 @@ export function wire(value: WireValue | null): string {
   if (value.type === "struct")
     return `{${value.fields.map((item) => `${item.name}: ${wire(item.value)}`).join(", ")}}`;
   if (value.type === "bool") return String(value.value);
-  if (value.type === "timestamp")
-    return `${value.value} (${value.unit}${value.timezone ? `, ${value.timezone}` : ""})`;
-  if (value.type === "decimal")
-    return `${value.value} (decimal ${value.precision}, ${value.scale})`;
-  if (value.type === "binary") return `Binary · ${value.value}`;
   return value.value;
 }
 export function PreviewInspector({
@@ -452,7 +448,7 @@ function PreviewContent({
   );
   const [criteria, setCriteria] =
     useState<PreviewCriteria>(emptyPreviewCriteria);
-  const querying = criteria.filters.length > 0 || criteria.sort !== null;
+  const querying = criteria.filters.length > 0 || criteria.sorts.length > 0;
   const queryRequest = useMemo(
     () =>
       querying &&
@@ -641,6 +637,7 @@ function PreviewContent({
                   Reset preview
                 </Button>
               )}
+              {querying && <PreviewCriteriaPills criteria={criteria} />}
               {querying && query.running && (
                 <Button onClick={query.cancel}>Cancel</Button>
               )}

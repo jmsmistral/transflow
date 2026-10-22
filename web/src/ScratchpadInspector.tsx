@@ -9,6 +9,12 @@ import { decode } from "./api/client";
 import { same } from "./api/validate";
 import { Button, DatasetHeader } from "./components";
 import { Icon } from "./Icons";
+import { PreviewCriteriaPills } from "./PreviewCriteriaPills";
+import {
+  emptyPreviewCriteria,
+  scratchpadPreviewQuery,
+  type PreviewCriteria,
+} from "./preview-query";
 import { PreviewGrid } from "./PreviewGrid";
 import { tabSeparatedText } from "./tabular-text";
 import { field, typeName, versionMetadata, wire } from "./inspectors";
@@ -22,6 +28,7 @@ type Owned = {
   polling: boolean;
   pollAgain: boolean;
   downloading: boolean;
+  paging: boolean;
   downloadUrl?: string;
   abort: AbortController;
   timer?: ReturnType<typeof setTimeout>;
@@ -80,6 +87,10 @@ function Scratchpad({
   resolved: string | undefined;
 }) {
   const dataset = state.value.dataset;
+  const [criteria, setCriteria] =
+    useState<PreviewCriteria>(emptyPreviewCriteria);
+  const submittedSql = useRef("");
+  const [previousRows, setPreviousRows] = useState(false);
   const [sql, setSql] = useState("SELECT * FROM dataset");
   const [job, setJob] = useState<ApiQueryV1>();
   const [result, setResult] = useState<ApiQueryResultsV1>();
@@ -98,6 +109,7 @@ function Scratchpad({
       polling: false,
       pollAgain: false,
       downloading: false,
+      paging: false,
       abort: new AbortController(),
     };
     owned.current = lifetime;
@@ -122,13 +134,13 @@ function Scratchpad({
     const response = await workspace.client.read(
       "ApiQueryResultsV1",
       `/api/v1/queries/${query.id}/results`,
-      { branch: query.context.branch, offset: String(offset), limit: "200" },
+      { branch: query.context.branch, offset: String(offset), limit: "500" },
       lifetime.abort.signal,
       query.context,
     );
     if (
       response.data.id !== query.id ||
-      response.data.rows.length > 200 ||
+      response.data.rows.length > 500 ||
       response.data.rows.some(
         (row) => row.length !== response.data.schema.fields.length,
       ) ||
@@ -168,7 +180,10 @@ function Scratchpad({
         finished = true;
         if (response.data.state === "SUCCEEDED") {
           const first = await page(lifetime);
-          if (!lifetime.closed) setResult(first);
+          if (!lifetime.closed && lifetime.query === query) {
+            setResult(first);
+            setPreviousRows(false);
+          }
         } else if (response.data.state !== "CANCELED")
           setError(
             response.data.error ??
@@ -202,7 +217,7 @@ function Scratchpad({
       }
     }
   }
-  async function run() {
+  async function run(nextCriteria?: PreviewCriteria) {
     const lifetime = owned.current;
     if (
       !dataset ||
@@ -210,13 +225,22 @@ function Scratchpad({
       !lifetime ||
       lifetime.running ||
       lifetime.downloading ||
-      !sql.trim()
+      (!nextCriteria && !sql.trim())
     )
       return;
     if (lifetime.downloadUrl) {
       URL.revokeObjectURL(lifetime.downloadUrl);
       delete lifetime.downloadUrl;
     }
+    const sourceSql = nextCriteria ? submittedSql.current : sql;
+    const next = nextCriteria ?? emptyPreviewCriteria;
+    const composed =
+      nextCriteria && result && (next.filters.length || next.sorts.length)
+        ? scratchpadPreviewQuery(sourceSql, result.schema, next)
+        : { sql: sourceSql, parameters: [] };
+    submittedSql.current = sourceSql;
+    setCriteria(next);
+    setPreviousRows(!!nextCriteria && !!result);
     lifetime.running = true;
     lifetime.cancelRequested = false;
     delete lifetime.query;
@@ -226,11 +250,10 @@ function Scratchpad({
     setReadFailed(false);
     setMoreBusy(false);
     setJob(undefined);
-    setResult(undefined);
+    if (!nextCriteria) setResult(undefined);
     try {
       const request = decode("ApiQueryRequestV1", {
-        sql,
-        parameters: [],
+        ...composed,
         bindings: [
           {
             alias: "dataset",
@@ -314,11 +337,15 @@ function Scratchpad({
       !lifetime ||
       !result ||
       result.next_offset === null ||
-      moreBusy ||
+      lifetime.paging ||
+      lifetime.running ||
+      previousRows ||
+      error ||
       lifetime.downloading
     )
       return;
     const query = lifetime.query;
+    lifetime.paging = true;
     setMoreBusy(true);
     try {
       const next = await page(lifetime, result.next_offset);
@@ -334,6 +361,7 @@ function Scratchpad({
       if (!lifetime.closed && lifetime.query === query)
         setError(message(failure));
     } finally {
+      lifetime.paging = false;
       if (!lifetime.closed && lifetime.query === query) setMoreBusy(false);
     }
   }
@@ -345,6 +373,7 @@ function Scratchpad({
       !query ||
       !result ||
       !job ||
+      previousRows ||
       job.state !== "SUCCEEDED" ||
       lifetime.closed ||
       lifetime.downloading ||
@@ -424,6 +453,17 @@ function Scratchpad({
             <Icon name="cycle" /> Running query…
           </span>
         )}
+        {(criteria.filters.length > 0 || criteria.sorts.length > 0) && (
+          <div className="scratchpad-preview-controls">
+            <Button
+              disabled={busy || downloading}
+              onClick={() => void run(emptyPreviewCriteria)}
+            >
+              Reset preview
+            </Button>
+            <PreviewCriteriaPills criteria={criteria} />
+          </div>
+        )}
         {(job || busy) && (
           <div className="scratchpad-result-actions">
             <div
@@ -445,7 +485,7 @@ function Scratchpad({
             {result && job?.state === "SUCCEEDED" && (
               <Button
                 title="Download all available result rows as a tab-delimited file"
-                disabled={busy || moreBusy || downloading}
+                disabled={busy || moreBusy || downloading || previousRows}
                 onClick={() => void download()}
               >
                 <Icon name="download" />
@@ -478,7 +518,7 @@ function Scratchpad({
         >
           {error && (
             <p className="execution-error" role="alert">
-              {error}
+              {error} {previousRows && "Previous rows are shown disabled. "}
               {readFailed && (
                 <Button
                   onClick={() => {
@@ -500,6 +540,11 @@ function Scratchpad({
                     row.map((value) => ({ value, truncated: false })),
                   ),
                 }}
+                busy={busy && previousRows}
+                disabled={previousRows || downloading}
+                criteria={criteria}
+                onCriteriaChange={(next) => void run(next)}
+                onNearEnd={() => void more()}
                 path="SQL query results"
                 dark={dark}
                 formatCell={wire}
@@ -516,14 +561,6 @@ function Scratchpad({
                 <p className="scratchpad-result-notice">
                   The query returned no rows.
                 </p>
-              )}
-              {result.next_offset !== null && (
-                <Button
-                  disabled={moreBusy || downloading}
-                  onClick={() => void more()}
-                >
-                  More result rows
-                </Button>
               )}
             </>
           ) : !error || busy ? (

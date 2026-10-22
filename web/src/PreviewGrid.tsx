@@ -138,15 +138,19 @@ export function PreviewGrid({
                     { class: "preview-column-name", title: formatType(index) },
                     field.name,
                   ),
-                  ...(criteria.sort?.column === field.name
+                  ...(criteria.sorts.some((sort) => sort.column === field.name)
                     ? [
                         h(
                           "span",
                           {
                             class: "preview-column-sort",
-                            "aria-label": `Sorted ${criteria.sort.direction === "asc" ? "ascending" : "descending"}`,
+                            "aria-label": `Sorted ${criteria.sorts.find((sort) => sort.column === field.name)?.direction === "asc" ? "ascending" : "descending"}`,
                           },
-                          criteria.sort.direction === "asc" ? "↑" : "↓",
+                          criteria.sorts.find(
+                            (sort) => sort.column === field.name,
+                          )?.direction === "asc"
+                            ? "↑"
+                            : "↓",
                         ),
                       ]
                     : []),

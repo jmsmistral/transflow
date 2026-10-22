@@ -10,11 +10,11 @@ export type PreviewFilter =
   | { column: string; kind: "null" | "not_null" };
 export type PreviewCriteria = {
   filters: readonly PreviewFilter[];
-  sort: { column: string; direction: "asc" | "desc" } | null;
+  sorts: readonly { column: string; direction: "asc" | "desc" }[];
 };
 export const emptyPreviewCriteria: PreviewCriteria = {
   filters: [],
-  sort: null,
+  sorts: [],
 };
 
 /** Use the exact wire scalar, never its decorated or rounded display text. */
@@ -115,9 +115,90 @@ export function previewQuery(
   });
   let sql = "SELECT * FROM dataset";
   if (predicates.length) sql += ` WHERE ${predicates.join(" AND ")}`;
-  if (criteria.sort) {
-    field(criteria.sort.column);
-    sql += ` ORDER BY ${identifier(criteria.sort.column)} ${criteria.sort.direction === "asc" ? "ASC" : "DESC"} NULLS LAST`;
+  if (criteria.sorts.length) {
+    sql += ` ORDER BY ${criteria.sorts
+      .map((sort) => {
+        field(sort.column);
+        return `${identifier(sort.column)} ${sort.direction === "asc" ? "ASC" : "DESC"} NULLS LAST`;
+      })
+      .join(", ")}`;
   }
   return { sql, parameters };
+}
+
+/** Strip a terminal statement separator without touching quoted SQL or comments.
+ * This is presentation composition of an already accepted query, not validation;
+ * the coordinator still validates the complete composed SQL with its AST policy.
+ */
+function withoutTerminalSeparator(sql: string): string {
+  let last = -1;
+  for (let i = 0; i < sql.length;) {
+    const char = sql[i];
+    if (/\s/u.test(char ?? "")) {
+      i++;
+      continue;
+    }
+    if (sql.startsWith("--", i)) {
+      const end = sql.indexOf("\n", i + 2);
+      i = end < 0 ? sql.length : end + 1;
+      continue;
+    }
+    if (sql.startsWith("/*", i)) {
+      let depth = 1;
+      i += 2;
+      while (i < sql.length && depth) {
+        if (sql.startsWith("/*", i)) {
+          depth++;
+          i += 2;
+        } else if (sql.startsWith("*/", i)) {
+          depth--;
+          i += 2;
+        } else i++;
+      }
+      continue;
+    }
+    last = i;
+    if (char === "'" || char === '"') {
+      const escaped =
+        char === "'" &&
+        /[eE]/u.test(sql[i - 1] ?? "") &&
+        !/[\w$]/u.test(sql[i - 2] ?? "");
+      i++;
+      while (i < sql.length) {
+        if (escaped && sql[i] === "\\") {
+          i += 2;
+          continue;
+        }
+        if (sql[i++] === char) {
+          if (sql[i] === char) i++;
+          else break;
+        }
+      }
+    } else if (
+      char === "$" &&
+      /^\$(?:[A-Za-z_][A-Za-z_0-9]*)?\$/u.test(sql.slice(i))
+    ) {
+      const delimiter =
+        /^\$(?:[A-Za-z_][A-Za-z_0-9]*)?\$/u.exec(sql.slice(i))?.[0] ?? "$$";
+      const end = sql.indexOf(delimiter, i + delimiter.length);
+      i = end < 0 ? sql.length : end + delimiter.length;
+    } else i++;
+  }
+  return sql[last] === ";" ? sql.slice(0, last) + sql.slice(last + 1) : sql;
+}
+
+export function scratchpadPreviewQuery(
+  sql: string,
+  schema: LogicalSchemaV1,
+  criteria: PreviewCriteria,
+) {
+  const query = previewQuery(schema, criteria);
+  return {
+    ...query,
+    sql: query.sql.replace(
+      "SELECT * FROM dataset",
+      () =>
+        `SELECT * FROM (\n${withoutTerminalSeparator(sql)}\n) AS "__transflow_result"`,
+    ),
+  };
 }

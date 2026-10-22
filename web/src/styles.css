@@ -4699,3 +4699,53 @@ revo-grid.preview-grid
 .health-section details {
   margin-top: 12px;
 }
+
+.preview-criteria-pills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.preview-criteria-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 180px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  background: var(--bg);
+  font-size: 12px;
+}
+.preview-criteria-pill > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preview-criteria-pill .icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.scratchpad-preview-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-left: 12px;
+  min-width: 0;
+}
+.scratchpad-preview-controls,
+.scratchpad-preview-controls .preview-criteria-pills {
+  flex-wrap: nowrap;
+}
+.scratchpad-preview-controls .preview-criteria-pills {
+  overflow-x: auto;
+}
+.scratchpad-preview-controls .button,
+.scratchpad-preview-controls .preview-criteria-pill {
+  flex-shrink: 0;
+  white-space: nowrap;
+}

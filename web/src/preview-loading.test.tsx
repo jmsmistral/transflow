@@ -213,6 +213,7 @@ test.each(["sort", "filter"])(
     expect(
       screen.getByRole("status", { name: "Updating preview" }),
     ).toBeTruthy();
+    expect(screen.getByLabelText("Applied filters and sorts")).toBeTruthy();
     expect(grid?.getAttribute("aria-busy")).toBe("true");
     expect(grid?.getAttribute("aria-disabled")).toBe("true");
     expect(
@@ -251,6 +252,7 @@ test.each(["sort", "filter"])(
       expect(originalTable.querySelectorAll("tbody tr")).toHaveLength(2),
     );
     expect(screen.queryByRole("button", { name: "Reset preview" })).toBeNull();
+    expect(screen.queryByLabelText("Applied filters and sorts")).toBeNull();
     f.view.unmount();
     f.workspace.dispose();
   },
@@ -299,6 +301,7 @@ test("changing branch discards the retained table and a late query page cannot r
   await act(async () => {
     await f.workspace.select({ branch: "feature" });
   });
+  expect(screen.queryByLabelText("Applied filters and sorts")).toBeNull();
   expect(f.view.container.querySelector(".preview-grid-wrap")).toBeNull();
   await f.finish();
   expect(f.view.container.querySelector(".preview-grid-wrap")).toBeNull();

@@ -15,6 +15,7 @@ export function PreviewColumnMenu({
   onChange: (criteria: PreviewCriteria) => void;
   onClose: () => void;
 }) {
+  const activeSort = criteria.sorts.find((sort) => sort.column === column);
   const active = criteria.filters.find((f) => f.column === column);
   const [mode, setMode] = useState<"include" | "exclude">(
     active?.kind === "exclude" ? "exclude" : "include",
@@ -85,11 +86,14 @@ export function PreviewColumnMenu({
   function sort(direction: "asc" | "desc") {
     onChange({
       ...criteria,
-      sort:
-        criteria.sort?.column === column &&
-        criteria.sort.direction === direction
-          ? null
-          : { column, direction },
+      sorts:
+        activeSort?.direction === direction
+          ? criteria.sorts.filter((sort) => sort.column !== column)
+          : activeSort
+            ? criteria.sorts.map((sort) =>
+                sort.column === column ? { column, direction } : sort,
+              )
+            : [...criteria.sorts, { column, direction }],
     });
     onClose();
     trigger.focus();
@@ -187,10 +191,7 @@ export function PreviewColumnMenu({
         <button
           type="button"
           className="preview-column-action"
-          aria-pressed={
-            criteria.sort?.column === column &&
-            criteria.sort.direction === "asc"
-          }
+          aria-pressed={activeSort?.direction === "asc"}
           onClick={() => sort("asc")}
           title="Click again to clear this sort"
         >
@@ -200,10 +201,7 @@ export function PreviewColumnMenu({
         <button
           type="button"
           className="preview-column-action"
-          aria-pressed={
-            criteria.sort?.column === column &&
-            criteria.sort.direction === "desc"
-          }
+          aria-pressed={activeSort?.direction === "desc"}
           onClick={() => sort("desc")}
           title="Click again to clear this sort"
         >

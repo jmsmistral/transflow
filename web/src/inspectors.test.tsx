@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { App } from "./App";
-import { PropertiesInspector, versionMetadata } from "./inspectors";
+import { PropertiesInspector, versionMetadata, wire } from "./inspectors";
 import { Client } from "./api/client";
 import { Workspace } from "./workspace";
 import {
@@ -615,4 +615,24 @@ test("dataset ID copies the full value and reports clipboard denial", async () =
     if (previous) Object.defineProperty(navigator, "clipboard", previous);
     else Reflect.deleteProperty(navigator, "clipboard");
   }
+});
+
+test("table scalar text contains exact values without datatype annotations", () => {
+  expect(
+    wire({
+      type: "decimal",
+      value: "123456789012345678.90",
+      precision: 20,
+      scale: 2,
+    }),
+  ).toBe("123456789012345678.90");
+  expect(
+    wire({
+      type: "timestamp",
+      value: "2026-10-22T12:34:56.123456789",
+      unit: "ns",
+      timezone: "UTC",
+    }),
+  ).toBe("2026-10-22T12:34:56.123456789");
+  expect(wire({ type: "binary", value: "AP9h" })).toBe("AP9h");
 });

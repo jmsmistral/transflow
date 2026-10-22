@@ -301,9 +301,10 @@ test("a delayed old result page cannot replace a newly run query", async () => {
     <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
   );
   fireEvent.click(screen.getByRole("button", { name: "Run query" }));
-  fireEvent.click(
-    await screen.findByRole("button", { name: "More result rows" }),
-  );
+  await screen.findByRole("table", { name: "SQL query results data grid" });
+  fireEvent.wheel(screen.getByLabelText("SQL query results preview"), {
+    deltaY: 100,
+  });
   await waitFor(() =>
     expect(
       transport.mock.calls.some(([, init]) =>
@@ -1271,4 +1272,119 @@ test("tooltip separates the latest failed attempt from the retained successful p
   ).toBeTruthy();
   expect(tooltip.textContent).not.toContain("Failed · Published");
   workspace.dispose();
+});
+
+test("scratchpad pills and filters use submitted SQL, retain loading rows and reset with new runs", async () => {
+  const requests: { sql: string; parameters: unknown[] }[] = [];
+  let release: ((response: Response) => void) | undefined;
+  let hold = false;
+  const { workspace, state } = await setup(
+    (path) => {
+      if (path.endsWith("/results") && hold)
+        return new Promise<Response>((resolve) => {
+          release = resolve;
+        });
+      return successful(path);
+    },
+    (url, init) => {
+      if (!url.startsWith("/api/v1/queries?")) return;
+      const request = JSON.parse(String(init?.body));
+      requests.push(request);
+      return Promise.resolve(json({ ...accepted, ...request }, context()));
+    },
+  );
+  render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+  await screen.findByText("9007199254740993");
+  fireEvent.change(screen.getByLabelText("SQL query"), {
+    target: { value: "SELECT 42 FROM dataset" },
+  });
+  hold = true;
+  fireEvent.click(
+    screen.getByRole("button", { name: "Column options for amount" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Sort descending" }));
+  await screen.findByRole("status", { name: "Updating preview" });
+  await waitFor(() => expect(release).toBeTypeOf("function"));
+  expect(screen.getByLabelText("amount: Sort descending")).toBeTruthy();
+  expect(requests[1]?.sql).toContain("SELECT * FROM dataset\n)");
+  expect(requests[1]?.sql).toContain('ORDER BY "amount" DESC');
+  await act(async () =>
+    release?.(
+      json(
+        {
+          id: queryId,
+          schema,
+          rows: [[{ type: "i64", value: "9" }]],
+          next_offset: null,
+          truncated: false,
+        },
+        context(),
+      ),
+    ),
+  );
+  await screen.findByText("9");
+  hold = false;
+  fireEvent.click(screen.getByRole("button", { name: "Reset preview" }));
+  await screen.findByText("9007199254740993");
+  expect(requests[2]?.sql).toBe("SELECT * FROM dataset");
+  expect(screen.queryByLabelText("amount: Sort descending")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+  await waitFor(() => expect(requests[3]?.sql).toBe("SELECT 42 FROM dataset"));
+});
+
+test("scratchpad scroll paging coalesces events and stops after a failed page", async () => {
+  let reads = 0;
+  let fail: ((reason: Error) => void) | undefined;
+  const { workspace, state } = await setup(
+    (path, query) => {
+      if (path.endsWith("/results")) {
+        if (query.offset === "1") {
+          reads++;
+          return new Promise<Response>((_, reject) => {
+            fail = reject;
+          });
+        }
+        expect(query.limit).toBe("500");
+        return Promise.resolve(
+          json(
+            {
+              id: queryId,
+              schema,
+              rows: [[{ type: "i64", value: "17" }]],
+              next_offset: 1,
+              truncated: false,
+            },
+            context(),
+          ),
+        );
+      }
+      return successful(path);
+    },
+    (url) =>
+      url.startsWith("/api/v1/queries?")
+        ? Promise.resolve(json(accepted, context()))
+        : undefined,
+  );
+  render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+  await screen.findByText("17");
+  const grid = screen.getByLabelText("SQL query results preview");
+  fireEvent.wheel(grid, { deltaY: 100 });
+  fireEvent.wheel(grid, { deltaY: 100 });
+  await waitFor(() => expect(reads).toBe(1));
+  await act(async () => fail?.(new Error("network offline")));
+  expect((await screen.findByRole("alert")).textContent).toContain(
+    "The coordinator is disconnected.",
+  );
+  await act(async () => {
+    fireEvent.wheel(grid, { deltaY: 100 });
+  });
+  expect(reads).toBe(1);
+  expect(screen.getByText("17")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "More result rows" })).toBeNull();
 });

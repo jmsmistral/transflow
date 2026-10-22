@@ -32,7 +32,7 @@ test("one column popup contains inline filtering, null choices and exactly two s
   fireEvent.submit(form);
   expect(onChange).toHaveBeenCalledWith({
     filters: [{ column: "region", kind: "exclude", value: "east" }],
-    sort: null,
+    sorts: [],
   });
   expect(onClose).toHaveBeenCalled();
   fireEvent.keyDown(document, { key: "Escape" });
@@ -52,7 +52,7 @@ test("filter changes preserve other columns; clicking the selected sort clears i
           { column: "id", kind: "not_null" },
           { column: "region", kind: "include", value: "east" },
         ],
-        sort: { column: "region", direction: "asc" },
+        sorts: [{ column: "region", direction: "asc" }],
       }}
       onChange={onChange}
       onClose={vi.fn()}
@@ -63,7 +63,7 @@ test("filter changes preserve other columns; clicking the selected sort clears i
     { column: "id", kind: "not_null" },
   ]);
   fireEvent.click(screen.getByRole("button", { name: "Sort ascending" }));
-  expect(onChange.mock.calls[1]?.[0].sort).toBeNull();
+  expect(onChange.mock.calls[1]?.[0].sorts).toEqual([]);
 });
 
 test("copy and context menu in the filter input remain native instead of copying grid cells", () => {
@@ -104,4 +104,33 @@ test("copy and context menu in the filter input remain native instead of copying
   expect(fireEvent.contextMenu(input)).toBe(true);
   expect(writeText).not.toHaveBeenCalled();
   expect(screen.queryByText("Copy with headers")).toBeNull();
+});
+
+test("additional sorts retain priority and changing direction stays in place", () => {
+  const onChange = vi.fn();
+  const props = {
+    column: "region",
+    trigger: document.createElement("button"),
+    onChange,
+    onClose: vi.fn(),
+  };
+  const view = render(
+    <PreviewColumnMenu
+      {...props}
+      criteria={{ filters: [], sorts: [{ column: "id", direction: "desc" }] }}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Sort ascending" }));
+  expect(onChange.mock.calls[0]?.[0].sorts).toEqual([
+    { column: "id", direction: "desc" },
+    { column: "region", direction: "asc" },
+  ]);
+  view.rerender(
+    <PreviewColumnMenu {...props} criteria={onChange.mock.calls[0]?.[0]} />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Sort descending" }));
+  expect(onChange.mock.calls[1]?.[0].sorts).toEqual([
+    { column: "id", direction: "desc" },
+    { column: "region", direction: "desc" },
+  ]);
 });
