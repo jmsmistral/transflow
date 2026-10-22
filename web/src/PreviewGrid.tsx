@@ -1,7 +1,10 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RevoGrid } from "@revolist/react-datagrid";
 import "./revogrid.css";
+import type { ColumnTemplateFunc } from "@revolist/revogrid";
 import { tabSeparatedText } from "./tabular-text";
+import { PreviewColumnMenu } from "./PreviewColumnMenu";
+import type { PreviewCriteria } from "./preview-query";
 import type {
   ApiPreviewV1,
   ApiPreviewCellV1,
@@ -10,6 +13,8 @@ import type {
 
 type Area = { x: number; y: number; x1: number; y1: number };
 export type GridPage = Pick<ApiPreviewV1, "schema" | "rows">;
+const inColumnMenu = (target: EventTarget | null) =>
+  target instanceof Element && !!target.closest(".preview-column-menu");
 
 export function previewSelectionText(
   page: GridPage,
@@ -50,6 +55,8 @@ export function PreviewGrid({
   formatType,
   onError,
   onNearEnd,
+  criteria,
+  onCriteriaChange,
 }: {
   page: GridPage;
   path: string;
@@ -58,12 +65,27 @@ export function PreviewGrid({
   formatType: (index: number) => string;
   onError: (message: string) => void;
   onNearEnd?: () => void;
+  criteria?: PreviewCriteria;
+  onCriteriaChange?: (criteria: PreviewCriteria) => void;
 }) {
   const grid = useRef<HTMLRevoGridElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; area: Area } | null>(
     null,
   );
+  const [columnMenu, setColumnMenu] = useState<{
+    column: string;
+    trigger: HTMLElement;
+  } | null>(null);
+  const previousCriteria = useRef(criteria);
+  useEffect(() => {
+    if (previousCriteria.current === criteria) return;
+    previousCriteria.current = criteria;
+    // A new result ordering starts at its first row; appended pages preserve
+    // the current scroll position and rectangular selection.
+    void grid.current?.scrollToRow?.(0);
+    void grid.current?.clearFocus?.();
+  }, [criteria]);
   const source = useMemo(
     () =>
       page.rows.map((row) =>
@@ -86,6 +108,57 @@ export function PreviewGrid({
         size: Math.max(170, Math.min(310, field.name.length * 9 + 52)),
         sortable: false,
         filter: false,
+        columnProperties: () => ({ "aria-label": field.name }),
+        ...(criteria && onCriteriaChange
+          ? {
+              columnTemplate: ((h) =>
+                h("span", { class: "preview-column-heading" }, [
+                  h(
+                    "span",
+                    { class: "preview-column-name", title: formatType(index) },
+                    field.name,
+                  ),
+                  ...(criteria.sort?.column === field.name
+                    ? [
+                        h(
+                          "span",
+                          {
+                            class: "preview-column-sort",
+                            "aria-label": `Sorted ${criteria.sort.direction === "asc" ? "ascending" : "descending"}`,
+                          },
+                          criteria.sort.direction === "asc" ? "↑" : "↓",
+                        ),
+                      ]
+                    : []),
+                  h(
+                    "button",
+                    {
+                      type: "button",
+                      class: `preview-column-button${criteria.filters.some((f) => f.column === field.name) ? " is-filtered" : ""}`,
+                      "aria-label": `Column options for ${field.name}`,
+                      "aria-haspopup": "dialog",
+                      "aria-expanded": columnMenu?.column === field.name,
+                      title: `Filter or sort ${field.name}`,
+                      onMouseDown: (event: MouseEvent) =>
+                        event.stopPropagation(),
+                      onClick: (event: MouseEvent) => {
+                        event.stopPropagation();
+                        setMenu(null);
+                        if (event.currentTarget instanceof HTMLElement) {
+                          const trigger = event.currentTarget;
+                          setColumnMenu((old) =>
+                            old?.column === field.name
+                              ? null
+                              : { column: field.name, trigger },
+                          );
+                        }
+                      },
+                    },
+                    "▾",
+                  ),
+                ])) satisfies ColumnTemplateFunc,
+            }
+          : {}),
         cellProperties: ({ rowIndex }: { rowIndex: number }) => ({
           class: page.rows[rowIndex]?.[index]?.truncated
             ? "preview-grid-truncated"
@@ -95,7 +168,7 @@ export function PreviewGrid({
           title: formatType(index),
         }),
       })),
-    [page, formatType],
+    [page, formatType, criteria, onCriteriaChange, columnMenu?.column],
   );
 
   async function selectedArea(): Promise<Area | null> {
@@ -124,6 +197,7 @@ export function PreviewGrid({
       className="preview-grid-wrap"
       aria-label={`${path} preview`}
       onWheel={async (event) => {
+        if (inColumnMenu(event.target)) return;
         if (!onNearEnd || event.deltaY <= Math.abs(event.deltaX)) return;
         const providers = await grid.current?.getProviders();
         if (!providers) return;
@@ -134,11 +208,13 @@ export function PreviewGrid({
         if (height > 0 && total <= height) onNearEnd();
       }}
       onMouseDownCapture={(event) => {
+        if (inColumnMenu(event.target)) return;
         // RevoGrid focuses the cell under a right-click on mousedown, which
         // replaces an existing range before the context menu can copy it.
         if (event.button === 2) event.preventDefault();
       }}
       onKeyDownCapture={(event) => {
+        if (inColumnMenu(event.target)) return;
         if (
           (event.metaKey || event.ctrlKey) &&
           event.key.toLowerCase() === "c"
@@ -148,12 +224,14 @@ export function PreviewGrid({
         }
       }}
       onCopyCapture={(event) => {
+        if (inColumnMenu(event.target)) return;
         // Some browsers dispatch their native copy command without exposing the
         // shortcut keydown to the grid. Keep keyboard copy header-inclusive.
         event.preventDefault();
         void copySelection();
       }}
       onContextMenu={(event) => {
+        if (inColumnMenu(event.target)) return;
         event.preventDefault();
         const bounds = container.current?.getBoundingClientRect();
         const cellSelector = '[role="gridcell"][data-rgcol][data-rgrow]';
@@ -200,6 +278,16 @@ export function PreviewGrid({
         });
       }}
     >
+      {columnMenu && criteria && onCriteriaChange && (
+        <PreviewColumnMenu
+          key={columnMenu.column}
+          column={columnMenu.column}
+          trigger={columnMenu.trigger}
+          criteria={criteria}
+          onChange={onCriteriaChange}
+          onClose={() => setColumnMenu(null)}
+        />
+      )}
       {page.rows.length > 0 && (
         <button
           type="button"
@@ -233,6 +321,7 @@ export function PreviewGrid({
         canMoveColumns={false}
         hideAttribution
         onViewportscroll={async ({ detail }) => {
+          setColumnMenu(null);
           if (
             !onNearEnd ||
             detail.dimension !== "rgRow" ||

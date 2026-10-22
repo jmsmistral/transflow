@@ -1,5 +1,47 @@
 # Contributor verification
 
+## Preview column filters and sort (2026-10-22)
+
+Preview headers now expose a compact column-arrow popup. Its inline top section
+contains Include/Exclude exact value, Apply, Exclude nulls and Show only nulls;
+only Sort ascending/descending appear below the divider. Filters combine across
+columns, sorting is typed with nulls last, and Reset preview clears both. Values
+are parameters and schema identifiers are quoted. The existing restricted query
+service applies operations before result caps against the exact displayed version.
+Results scroll in 500-row batches up to the existing 1,000-row display limit.
+Context/criteria changes cancel owned helpers, including late accepted receipts;
+failed page reads retain loaded rows and require explicit restart. New criteria
+reset grid scroll/selection; appending a page preserves them.
+
+The complete final web gate passes 698 tests in 34 files, strict types, lint,
+formatting, worker probes and reproducible production assets. New regressions
+cover bound injection-like values and quoted names, large decimals, null controls,
+combined filters, receipt/page identity, single in-flight paging, page failure,
+late acceptance cancellation, stale-page rejection and native text-copy/context
+handling inside the filter input. Twelve real queries compiled
+by the production TypeScript builder pass against the existing 1,500-row synthetic
+workspace: ascending/descending sort before the cap, equality beyond the loaded
+rows, combined filters, null inclusion/exclusion, exact decimal/date values,
+quoted identifiers, parameter binding and invalid typed-value rejection. Catalogue
+and every dataset head are unchanged. Query helpers use the unchanged reviewed
+policy; no engine allowance or query budget is relaxed for the tests.
+
+The existing `preview-scroll-review-tools/serve-preview.sh` rebuilds and serves
+the matching UI. Internal Browser observes descending ID starting at 1500,
+region=east returning 750 rows after scroll paging, the inline-only popup and
+the bounded result marker. Both themes, null-only empty results with retained
+header controls, Escape focus restoration and reset to physical row 1 pass.
+The final unchanged browser capture is `target/preview-columns-review.jpg`;
+console errors are empty. No source, schedule or saved lineage is replaced.
+Local evidence is retained in `target/preview-columns-web-final.log`,
+`target/preview-columns-native.json` and the corresponding native log.
+The verification coordinator is stopped before handoff. All 27 safety regressions,
+paired privacy/inventory/contract checks, specification/link validation and diff
+checks pass. The public scan covers 911 candidate files and the unchanged
+635-version dependency inventory, with the existing single exception retained.
+Rust/Python production code, API schemas and dependency locks are unchanged;
+their broad suites are not rerun. New CI is owner-monitored after push.
+
 ## Schedule nonmember label and compact checks (2026-10-22)
 
 The Build roles graph and legend distinguish confirmed empty roles (Not built)

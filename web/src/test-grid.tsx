@@ -1,11 +1,63 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
-import type { ViewPortScrollEvent } from "@revolist/revogrid";
+import {
+  createElement,
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  type ReactNode,
+} from "react";
+import type {
+  ViewPortScrollEvent,
+  ColumnTemplateFunc,
+  ColumnTemplateProp,
+  VNode,
+} from "@revolist/revogrid";
+
+// Render our native header template without starting Stencil's component runtime.
+const headerNode: Parameters<ColumnTemplateFunc>[0] = (
+  tag: unknown,
+  attrs?: unknown,
+  children?: unknown,
+): VNode => {
+  if (typeof tag !== "string")
+    throw new Error("Test header requires an HTML tag");
+  return {
+    $flags$: 0,
+    $tag$: tag,
+    $elm$: null,
+    $text$: typeof children === "string" ? children : "",
+    $attrs$: attrs,
+    $children$: Array.isArray(children) ? children : [],
+  };
+};
+function headerContent(node: VNode): ReactNode {
+  if (typeof node.$tag$ !== "string")
+    throw new Error("Unsupported test header");
+  const attrs = node.$attrs$ as Record<string, unknown>;
+  const { class: className, ...props } = attrs ?? {};
+  return createElement(
+    node.$tag$,
+    { ...props, className },
+    node.$text$ ||
+      node.$children$.map((child, index) =>
+        createElement(
+          "span",
+          { key: index, style: { display: "contents" } },
+          headerContent(child),
+        ),
+      ),
+  );
+}
 
 /** Test-only adapter: no custom elements, layout workers or startup timers. */
 export const RevoGrid = forwardRef<
   HTMLTableElement,
   {
-    columns: { prop: string; name: string }[];
+    columns: {
+      prop: string;
+      name: string;
+      columnTemplate?: ColumnTemplateFunc;
+    }[];
     source: Record<string, string>[];
     "aria-label"?: string;
     className?: string;
@@ -41,7 +93,16 @@ export const RevoGrid = forwardRef<
         <tr>
           <th>#</th>
           {columns.map((column) => (
-            <th key={column.prop}>{column.name}</th>
+            <th key={column.prop} aria-label={column.name}>
+              {column.columnTemplate
+                ? headerContent(
+                    column.columnTemplate(
+                      headerNode,
+                      column as ColumnTemplateProp,
+                    ) as VNode,
+                  )
+                : column.name}
+            </th>
           ))}
         </tr>
       </thead>

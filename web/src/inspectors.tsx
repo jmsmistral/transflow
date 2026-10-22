@@ -14,7 +14,13 @@ import type { Workspace, WorkspaceState } from "./workspace";
 import { Button, DatasetHeader, InspectorNotice } from "./components";
 import { decode } from "./api/client";
 import { Icon } from "./Icons";
-import { PreviewGrid } from "./PreviewGrid";
+import { PreviewGrid, type GridPage } from "./PreviewGrid";
+import {
+  emptyPreviewCriteria,
+  previewQuery,
+  type PreviewCriteria,
+} from "./preview-query";
+import { usePreviewQuery } from "./use-preview-query";
 import { HealthInspector } from "./HealthInspector";
 
 function object(value: unknown): Record<string, unknown> | null {
@@ -444,6 +450,58 @@ function PreviewContent({
     () => schema?.fields.map((column) => column.name) ?? [],
     [schema],
   );
+  const [criteria, setCriteria] =
+    useState<PreviewCriteria>(emptyPreviewCriteria);
+  const querying = criteria.filters.length > 0 || criteria.sort !== null;
+  const queryRequest = useMemo(
+    () =>
+      querying &&
+      dataset &&
+      version &&
+      schema &&
+      columns.length <= 128 &&
+      !meta?.expired
+        ? {
+            ...previewQuery(schema, criteria),
+            bindings: [
+              {
+                alias: "dataset",
+                dataset: dataset.dataset_id,
+                origin_workspace: dataset.workspace_id,
+                version,
+              },
+            ],
+            rows: 1000,
+          }
+        : null,
+    [
+      querying,
+      dataset,
+      version,
+      schema,
+      columns.length,
+      meta?.expired,
+      criteria,
+    ],
+  );
+  const query = usePreviewQuery(
+    workspace,
+    ready?.context ?? null,
+    queryRequest,
+  );
+  const queryPage = useMemo<GridPage | null>(
+    () =>
+      !querying || !schema
+        ? null
+        : {
+            schema: query.page?.schema ?? schema,
+            rows:
+              query.page?.rows.map((row) =>
+                row.map((value) => ({ value, truncated: false })),
+              ) ?? [],
+          },
+    [querying, schema, query.page],
+  );
   const [cursor, setCursor] = useState<string | null>(null);
   const [result, setResult] = useState<{
     key: string;
@@ -466,7 +524,8 @@ function PreviewContent({
       !version ||
       !columns.length ||
       columns.length > 128 ||
-      meta?.expired
+      meta?.expired ||
+      querying
     )
       return;
     const request = new AbortController();
@@ -511,8 +570,27 @@ function PreviewContent({
         },
       );
     return () => request.abort();
-  }, [workspace, key, cursor, dataset, version, columns, retry, meta?.expired]);
+  }, [
+    workspace,
+    key,
+    cursor,
+    dataset,
+    version,
+    columns,
+    retry,
+    meta?.expired,
+    querying,
+  ]);
   const page = result?.key === key ? result.page : null;
+  const displayed = querying ? queryPage : page;
+  const failure = (querying ? query.error : "") || message;
+  function changeCriteria(next: PreviewCriteria) {
+    setCursor(null);
+    setResult(null);
+    setLoading(true);
+    setMessage("");
+    setCriteria(next);
+  }
   if (!dataset)
     return (
       <div className="preview-empty">
@@ -548,17 +626,42 @@ function PreviewContent({
               Published <strong>{date(published)}</strong>
             </span>
           )}
-          {page && (
+          {displayed && (
             <span>
-              Showing {page.rows.length}
-              {page.next_cursor && page.rows.length < 1000 ? "+" : ""}
-              {meta?.rows !== undefined ? ` of ${meta.rows}` : ""} rows
-              {page.next_cursor && page.rows.length === 1000
+              Showing {displayed.rows.length}
+              {(querying
+                ? query.page?.next_offset != null
+                : page?.next_cursor) && displayed.rows.length < 1000
+                ? "+"
+                : ""}
+              {!querying && meta?.rows !== undefined ? ` of ${meta.rows}` : ""}{" "}
+              rows
+              {(
+                querying
+                  ? query.page?.truncated
+                  : page?.next_cursor && displayed.rows.length === 1000
+              )
                 ? " (preview limit)"
                 : ""}
             </span>
           )}
           {schema && <span>{schema.fields.length} columns</span>}
+          {querying && (
+            <span>
+              {criteria.filters.length ? "Filtered preview" : "Sorted preview"}
+            </span>
+          )}
+          {querying && query.running && (
+            <Button onClick={query.cancel}>Cancel</Button>
+          )}
+          {querying && (
+            <Button
+              onClick={() => changeCriteria(emptyPreviewCriteria)}
+              title="Clear all filters and sorting"
+            >
+              Reset preview
+            </Button>
+          )}
         </div>
       </DatasetHeader>
       {!version ? (
@@ -582,13 +685,20 @@ function PreviewContent({
           This version has no previewable columns.
         </p>
       ) : (
-        <div className="preview-table-wrap" aria-busy={loading}>
-          {message && (
+        <div
+          className="preview-table-wrap"
+          aria-busy={querying ? query.loading : loading}
+        >
+          {failure && (
             <div role="alert" className="preview-error">
-              {message}{" "}
+              {failure}{" "}
               <Button
                 onClick={() => {
                   setMessage("");
+                  if (querying) {
+                    query.restart();
+                    return;
+                  }
                   setLoading(true);
                   setResult(null);
                   setCursor(null);
@@ -599,27 +709,35 @@ function PreviewContent({
               </Button>
             </div>
           )}
-          {!page && !message && (
-            <p role="status" className="preview-empty">
-              Loading bounded preview…
-            </p>
-          )}
-          {page && (
+          {(!displayed || (querying && query.loading && !query.page)) &&
+            !failure && (
+              <p role="status" className="preview-empty">
+                {querying ? "Updating preview…" : "Loading bounded preview…"}
+              </p>
+            )}
+          {displayed && (
             <>
               <PreviewGrid
-                page={page}
+                page={displayed}
                 path={dataset.path}
                 dark={dark}
                 formatCell={wire}
                 formatType={(index) => {
-                  const column = page.schema.fields[index];
+                  const column = displayed.schema.fields[index];
                   return column
                     ? `${typeName(column.logical_type)}${column.nullable ? " · nullable" : ""}`
                     : "";
                 }}
                 onError={setMessage}
+                criteria={criteria}
+                onCriteriaChange={changeCriteria}
                 onNearEnd={() => {
+                  if (querying) {
+                    if (!failure) query.more();
+                    return;
+                  }
                   if (
+                    page &&
                     !paging.current &&
                     !message &&
                     page.next_cursor &&
@@ -633,9 +751,15 @@ function PreviewContent({
                   }
                 }}
               />
-              {page.rows.length === 0 && (
-                <p className="preview-empty">This version contains no rows.</p>
-              )}
+              {displayed.rows.length === 0 &&
+                !(querying && query.loading) &&
+                !failure && (
+                  <p className="preview-empty">
+                    {querying
+                      ? "No rows match this preview."
+                      : "This version contains no rows."}
+                  </p>
+                )}
             </>
           )}
         </div>

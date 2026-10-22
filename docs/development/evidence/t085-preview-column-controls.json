@@ -1,0 +1,58 @@
+{
+  "format_version": 1,
+  "date": "2026-10-22",
+  "platform": "macOS arm64",
+  "tasks": ["T085", "T099"],
+  "review_workspace": "preview-scroll-review",
+  "safety": {
+    "regressions": 27,
+    "public_candidates": 911,
+    "locked_package_versions": 635,
+    "existing_exceptions": 1,
+    "specification_and_links": "passed"
+  },
+  "web": {
+    "tests": 698,
+    "files": 34,
+    "types_lint_format": "passed",
+    "worker_probes": "passed",
+    "reproducible_assets": 16
+  },
+  "native": {
+    "pinned_version_query_cases": 12,
+    "cases": [
+      "ascending and descending sort before the cap",
+      "exact-value filtering beyond initially loaded rows",
+      "combined column filters",
+      "exclude value retains nulls",
+      "exclude nulls and show only nulls",
+      "decimal precision beyond JavaScript integer precision",
+      "date values",
+      "quoted column names and bound injection-like values",
+      "invalid typed values fail visibly"
+    ],
+    "catalogue_and_dataset_heads": "unchanged"
+  },
+  "browser": {
+    "surface": "Codex Internal Browser",
+    "observed": [
+      "single popup with inline filters and only two sort actions",
+      "descending sort starts at dataset row 1500",
+      "east filter returns 750 rows through scroll paging",
+      "empty null-only results retain column controls",
+      "light and dark themes",
+      "Escape returns focus to the header arrow",
+      "Reset preview returns to physical row 1"
+    ],
+    "console_errors": 0,
+    "capture": "target/preview-columns-review.jpg",
+    "verification_coordinator": "stopped"
+  },
+  "unchanged": ["API schemas", "execution and storage contracts", "dependency locks", "sample sources", "schedules", "saved lineage"],
+  "limits": [
+    "existing 1000-row result/display cap and query resource limits apply",
+    "invalid values and types outside the existing query subset fail explicitly",
+    "Rust and Python production source unchanged; unrelated broad suites not rerun",
+    "remote CI pending owner monitoring"
+  ]
+}

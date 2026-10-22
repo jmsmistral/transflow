@@ -325,9 +325,28 @@ Click selects a cell, drag selects a rectangular range, and the top-left corner
 selects all displayed cells. Right-click offers **Copy with headers** for the
 existing selection, even when the pointer is outside it; Cmd+C on macOS or
 Ctrl+C elsewhere copies the selection with headers too. Copied TSV escapes separators and leading
-spreadsheet formula characters. Clicking a cell never copies it. Sorting, filtering
-and column statistics await dataset-wide query requirements; the grid does not
-sort or filter only the loaded preview rows. Column types remain in tooltips rather
+spreadsheet formula characters. Clicking a cell never copies it.
+
+Each Preview column has a small arrow button opening one popup. Its first section
+contains Include/Exclude, an exact-value input with Apply, Exclude nulls and Show
+only nulls. Its separated lower section contains only Sort ascending and Sort
+descending. Single-column sorting is typed, with nulls last in either direction;
+clicking the selected sort clears it. Each column has one filter, combined with
+other columns by AND. Exclude value retains nulls; Exclude nulls removes them.
+Scalar values use the column's numeric/boolean/date/time type, with string values
+matched case-sensitively and empty strings preserved. Nested values compare their
+DuckDB text representation; invalid values or unsupported input types fail visibly.
+The clear-filter button removes only that column's filter; Reset preview clears all
+filters and sorting and resumes physical preview.
+
+Filtering/sorting runs the existing restricted query service over the whole exact
+version before the 1,000-row result cap. Identifiers come from the schema and are
+quoted, while filter values remain separately bound parameters. Query results page
+in 500-row batches on scroll, with existing time/byte/spill limits and cancellation.
+The header labels filtered/sorted results, and Cancel stops an active query. Failed
+page reads retain earlier results and require Restart preview, without scroll retry
+loops. Context or selection changes cancel owned work and reject late responses.
+Column statistics remain future work. Column types remain in tooltips rather
 than a second header line. Typed null, truncated cells, decimal precision,
 timestamp units and nested values remain distinct. An unavailable version,
 missing schema or failed read produces an explicit state; no page rebinds to a newer
