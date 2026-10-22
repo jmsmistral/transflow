@@ -1,4 +1,3 @@
-import { formatSize } from "./format-size";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   ApiContextV1,
@@ -10,6 +9,7 @@ import { ApiFailure } from "./api/client";
 import type { Workspace } from "./workspace";
 import { type Ready, message } from "./execution-ui";
 import { Button } from "./components";
+import { PlanDetails, PlanResources } from "./PlanDetails";
 import { Icon } from "./Icons";
 import { BuildModal } from "./BuildReport";
 import { useBuildEvidence, useBuildClock } from "./build-evidence";
@@ -36,7 +36,6 @@ export function BuildPlanner({
   selected,
   visible,
   onAdd,
-  onSelect,
   onPlan,
 }: {
   workspace: Workspace;
@@ -44,7 +43,6 @@ export function BuildPlanner({
   selected: readonly ApiLineageNodeV1[];
   visible: readonly string[];
   onAdd: (paths: readonly string[]) => void;
-  onSelect: (paths: readonly string[]) => void;
   onPlan: (plan: PlanResultV1 | null) => void;
 }) {
   const targets = selectedTargets(selected);
@@ -348,23 +346,7 @@ export function BuildPlanner({
               {plan && (
                 <section className="plan-review" aria-label="Plan preview">
                   <h3>Resources to be built</h3>
-                  <div className="planner-resource-list">
-                    {plan.writes.map((w) => (
-                      <div className="planner-resource" key={w.job}>
-                        <Icon name="table" />
-                        <div>
-                          <strong>{w.path}</strong>
-                          <small>
-                            {plan.force
-                              ? "Forced build"
-                              : w.declaration?.cache === "deterministic"
-                                ? "Cache evaluation pending"
-                                : "Planned job"}
-                          </small>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <PlanResources plan={plan} />
                   {!!hidden.length && (
                     <div className="planner-notice">
                       <Icon name="info" />
@@ -382,181 +364,7 @@ export function BuildPlanner({
                       </Button>
                     </div>
                   )}
-                  <div className="planner-select-graph">
-                    <Button
-                      disabled={locked || !!busy || stale}
-                      onClick={() => {
-                        onSelect(plan.writes.slice(0, 100).map((w) => w.path));
-                        cancel();
-                      }}
-                    >
-                      Select nodes on graph
-                      {plan.writes.length > 100 ? " (first 100)" : ""}
-                    </Button>
-                  </div>
-                  <details className="planner-evidence">
-                    <summary>Plan details</summary>
-                    <p>
-                      Branch {plan.branch} · {plan.writes.length} jobs ·{" "}
-                      {plan.reads.length} published inputs
-                    </p>
-                    <p className="muted">
-                      Deterministic jobs check exact inputs and retained
-                      artifact bytes before executing; cache eligibility can
-                      remain pending until parent jobs finish.
-                    </p>
-                    {plan.warnings.map((w, i) => (
-                      <p key={i}>{w}</p>
-                    ))}
-                    <h4>Expected writes</h4>
-                    {plan.writes.map((write) => (
-                      <details className="planner-job" key={write.job}>
-                        <summary>
-                          <strong>{write.path}</strong>
-                          <span className="muted">
-                            {plan.force ||
-                            write.declaration?.cache !== "deterministic"
-                              ? "Planned job"
-                              : "Cache evaluation pending"}
-                          </span>
-                        </summary>
-                        {write.bindings.map((b) => (
-                          <p key={b.alias}>
-                            <strong>{b.alias}</strong>:{" "}
-                            {b.kind === "planned"
-                              ? "Output of a planned job"
-                              : "Published input"}{" "}
-                            ·{" "}
-                            {plan.writes.find((w) => w.dataset === b.dataset)
-                              ?.path ??
-                              plan.reads.find((r) => r.dataset === b.dataset)
-                                ?.path ??
-                              b.dataset}
-                          </p>
-                        ))}
-                        {write.declaration && (
-                          <>
-                            <p>
-                              Cache: {write.declaration.cache ?? "default"} ·{" "}
-                              {write.declaration.engine}
-                            </p>
-                            <h4>Checks</h4>
-                            {[
-                              ...write.declaration.inputs.flatMap((input) =>
-                                input.checks.map((c) => ({
-                                  ...c,
-                                  label: `Input ${input.alias}`,
-                                })),
-                              ),
-                              ...write.declaration.output.checks.map((c) => ({
-                                ...c,
-                                label: "Output",
-                              })),
-                            ].map((c, i) => (
-                              <p key={i}>
-                                {c.label} · {c.name} · {c.on_error}
-                              </p>
-                            ))}
-                            {!write.declaration.output.checks.length &&
-                              !write.declaration.inputs.some(
-                                (i) => i.checks.length,
-                              ) && (
-                                <p className="muted">No declared data checks</p>
-                              )}
-                          </>
-                        )}
-                        {!!Object.keys(write.parameters).length && (
-                          <>
-                            <h4>Parameters</h4>
-                            <pre>
-                              {JSON.stringify(write.parameters, null, 2)}
-                            </pre>
-                          </>
-                        )}
-                        <h4>Resources</h4>
-                        <p>
-                          Execution limit: {write.resources.timeout_seconds}s ·
-                          Validation limit:{" "}
-                          {write.resources.validation_timeout_seconds}s
-                        </p>
-                        <p>
-                          {write.resources.worker_threads} worker threads ·{" "}
-                          {write.resources.memory_budget_mib
-                            ? `${formatSize((BigInt(write.resources.memory_budget_mib) * 1048576n).toString())} reservation`
-                            : "No Transflow memory cap"}
-                        </p>
-                      </details>
-                    ))}
-                    {!!plan.reads.length && (
-                      <>
-                        <h4>Published inputs</h4>
-                        {plan.reads.map((r) => (
-                          <div
-                            className="planner-job"
-                            key={`${r.consumer}:${r.alias}`}
-                          >
-                            <strong>{r.path}</strong>
-                            <p>
-                              {r.consumer_path} · {r.alias}
-                            </p>
-                            <p>
-                              {r.origin_workspace &&
-                              r.origin_workspace !== plan.workspace
-                                ? "External provider · "
-                                : ""}
-                              {r.resolved_branch} · {r.resolution}
-                            </p>
-                            <p className="muted">Version {r.version}</p>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                    {!!plan.pending_registrations.length && (
-                      <>
-                        <h4>Pending registrations</h4>
-                        <p className="muted">
-                          Added only when this plan is accepted.
-                        </p>
-                        {plan.pending_registrations.map((r) => (
-                          <p key={r.dataset}>{r.path}</p>
-                        ))}
-                      </>
-                    )}
-                    {!!Object.keys(plan.source_decisions ?? {}).length && (
-                      <>
-                        <h4>Source refresh</h4>
-                        {Object.entries(plan.source_decisions ?? {}).map(
-                          ([path, d]) => (
-                            <p key={path}>
-                              {plan.writes.find((w) => w.dataset === path)
-                                ?.path ??
-                                plan.reads.find((r) => r.dataset === path)
-                                  ?.path ??
-                                path}
-                              : {d.reason} · {d.executes ? "refresh" : "reuse"}
-                            </p>
-                          ),
-                        )}
-                      </>
-                    )}
-                    {!!plan.freshness.length && (
-                      <details>
-                        <summary>Freshness and reasons</summary>
-                        {plan.freshness.map((f) => (
-                          <div className="planner-job" key={f.identity}>
-                            <strong>{f.path ?? f.identity}</strong>
-                            <p>
-                              Data: {f.direct_data} · Logic: {f.direct_logic} ·
-                              Ancestors: {f.inherited}
-                            </p>
-                            {f.reasons.map((r, i) => (
-                              <p key={i}>{r.message}</p>
-                            ))}
-                          </div>
-                        ))}
-                      </details>
-                    )}
-                  </details>
+                  <PlanDetails plan={plan} />
                 </section>
               )}
               <footer className="planner-actions">

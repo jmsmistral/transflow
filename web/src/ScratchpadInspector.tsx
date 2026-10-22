@@ -20,6 +20,9 @@ import { tabSeparatedText } from "./tabular-text";
 import { field, typeName, versionMetadata, wire } from "./inspectors";
 import { readableDuration } from "./execution-model";
 import { Empty, Fallback, message, type Ready } from "./execution-ui";
+import { SqlEditor } from "./SqlEditor";
+import { bindCatalogueSql, type BoundSql } from "./scratchpad-bindings";
+import { quoteSqlName } from "./sql-catalogue";
 
 type Owned = {
   closed: boolean;
@@ -90,8 +93,14 @@ function Scratchpad({
   const [criteria, setCriteria] =
     useState<PreviewCriteria>(emptyPreviewCriteria);
   const submittedSql = useRef("");
+  const submittedBindings = useRef<BoundSql | undefined>(undefined);
+  const [catalogueFallbacks, setCatalogueFallbacks] = useState<
+    readonly string[]
+  >([]);
   const [previousRows, setPreviousRows] = useState(false);
-  const [sql, setSql] = useState("SELECT * FROM dataset");
+  const [sql, setSql] = useState(
+    () => `SELECT * FROM ${quoteSqlName(dataset?.path ?? "dataset")}`,
+  );
   const [job, setJob] = useState<ApiQueryV1>();
   const [result, setResult] = useState<ApiQueryResultsV1>();
   const [busy, setBusy] = useState(false);
@@ -234,10 +243,6 @@ function Scratchpad({
     }
     const sourceSql = nextCriteria ? submittedSql.current : sql;
     const next = nextCriteria ?? emptyPreviewCriteria;
-    const composed =
-      nextCriteria && result && (next.filters.length || next.sorts.length)
-        ? scratchpadPreviewQuery(sourceSql, result.schema, next)
-        : { sql: sourceSql, parameters: [] };
     submittedSql.current = sourceSql;
     setCriteria(next);
     setPreviousRows(!!nextCriteria && !!result);
@@ -250,19 +255,11 @@ function Scratchpad({
     setReadFailed(false);
     setMoreBusy(false);
     setJob(undefined);
-    if (!nextCriteria) setResult(undefined);
+    if (!nextCriteria) {
+      setResult(undefined);
+      setCatalogueFallbacks([]);
+    }
     try {
-      const request = decode("ApiQueryRequestV1", {
-        ...composed,
-        bindings: [
-          {
-            alias: "dataset",
-            dataset: dataset.dataset_id,
-            origin_workspace: dataset.workspace_id,
-            version,
-          },
-        ],
-      });
       // Resolve a branch-only command context: the query API binds data versions
       // explicitly in its body, independently of the displayed fallback policy.
       const start = new AbortController();
@@ -280,6 +277,65 @@ function Scratchpad({
         context.branch !== state.selection.branch
       )
         throw new Error("The query workspace or branch changed.");
+      let bound = nextCriteria ? submittedBindings.current : undefined;
+      if (!bound) {
+        const lookup = {
+          branch: state.selection.branch,
+          ...(state.selection.fallback
+            ? { fallback: JSON.stringify(state.selection.fallback) }
+            : {}),
+        };
+        const lookupContext = state.selection.fallback
+          ? (
+              await workspace.client.read(
+                "ApiContextV1",
+                "/api/v1/context",
+                lookup,
+                lifetime.abort.signal,
+              )
+            ).data
+          : context;
+        if (
+          !same(
+            { ...context, fingerprint: "", fallback_policy: [] },
+            { ...lookupContext, fingerprint: "", fallback_policy: [] },
+          )
+        )
+          throw new Error(
+            "The catalogue changed while preparing this query. Run it again.",
+          );
+        bound = await bindCatalogueSql(
+          workspace.client,
+          sourceSql,
+          {
+            alias: "dataset",
+            dataset: dataset.dataset_id,
+            origin_workspace: dataset.workspace_id,
+            version,
+          },
+          lookupContext,
+          lookup,
+          lifetime.abort.signal,
+          dataset.path,
+        );
+        submittedBindings.current = bound;
+      }
+      if (lifetime.closed) return;
+      if (lifetime.cancelRequested) {
+        lifetime.running = false;
+        setBusy(false);
+        setCanceling(false);
+        return;
+      }
+      setCatalogueFallbacks(bound.fallbacks);
+      const composed =
+        nextCriteria && result && (next.filters.length || next.sorts.length)
+          ? scratchpadPreviewQuery(bound.sql, result.schema, next)
+          : { sql: bound.sql, parameters: [] };
+      const request = decode("ApiQueryRequestV1", {
+        ...composed,
+        bindings: bound.bindings,
+      });
       // Keep acceptance observable until its owned ID arrives, even on unmount.
       // Aborting acceptance could lose a successfully created helper's receipt.
       const accepted = await workspace.client.startQuery(
@@ -433,6 +489,11 @@ function Scratchpad({
   return (
     <div className="scratchpad-inspector">
       <Fallback branch={resolved} requested={state.selection.branch} />
+      {!!catalogueFallbacks.length && (
+        <div className="scratchpad-catalogue-fallback" role="status">
+          Using published data: {catalogueFallbacks.join("; ")}.
+        </div>
+      )}
       <DatasetHeader path={dataset?.path} actionsAfterName>
         <Button
           className="button-primary"
@@ -497,13 +558,11 @@ function Scratchpad({
       </DatasetHeader>
       <div className="scratchpad-layout">
         <section className="scratchpad-inputs" aria-label="SQL editor">
-          <textarea
-            className="scratchpad-editor"
-            aria-label="SQL query"
-            spellCheck={false}
-            wrap="off"
+          <SqlEditor
+            workspace={workspace}
+            selectedPath={dataset?.path ?? "dataset"}
             value={sql}
-            onChange={(event) => setSql(event.target.value)}
+            onChange={setSql}
           />
           {!version && (
             <p className="scratchpad-unavailable">

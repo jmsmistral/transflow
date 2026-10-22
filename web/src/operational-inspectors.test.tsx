@@ -70,7 +70,7 @@ const accepted: ApiQueryV1 = {
       version: versionId,
     },
   ],
-  sql: "SELECT * FROM dataset",
+  sql: 'SELECT * FROM "dataset"',
   parameters: [],
   elapsed_ms: "0",
   error: null,
@@ -1309,7 +1309,7 @@ test("scratchpad pills and filters use submitted SQL, retain loading rows and re
   await screen.findByRole("status", { name: "Updating preview" });
   await waitFor(() => expect(release).toBeTypeOf("function"));
   expect(screen.getByLabelText("amount: Sort descending")).toBeTruthy();
-  expect(requests[1]?.sql).toContain("SELECT * FROM dataset\n)");
+  expect(requests[1]?.sql).toContain('SELECT * FROM "dataset"\n)');
   expect(requests[1]?.sql).toContain('ORDER BY "amount" DESC');
   await act(async () =>
     release?.(
@@ -1329,7 +1329,7 @@ test("scratchpad pills and filters use submitted SQL, retain loading rows and re
   hold = false;
   fireEvent.click(screen.getByRole("button", { name: "Reset preview" }));
   await screen.findByText("9007199254740993");
-  expect(requests[2]?.sql).toBe("SELECT * FROM dataset");
+  expect(requests[2]?.sql).toBe('SELECT * FROM "dataset"');
   expect(screen.queryByLabelText("amount: Sort descending")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Run query" }));
   await waitFor(() => expect(requests[3]?.sql).toBe("SELECT 42 FROM dataset"));
@@ -1387,4 +1387,230 @@ test("scratchpad scroll paging coalesces events and stops after a failed page", 
   expect(reads).toBe(1);
   expect(screen.getByText("17")).toBeTruthy();
   expect(screen.queryByRole("button", { name: "More result rows" })).toBeNull();
+});
+
+test("scratchpad autocompletes catalogue paths with keyboard selection and keeps joined bindings through sorting", async () => {
+  let currentVersion = versionId;
+  let lookups = 0;
+  const requests: { sql: string; bindings: ApiQueryV1["bindings"] }[] = [];
+  const { workspace, state } = await setup(
+    (path, query) => {
+      if (
+        path === "/api/v1/datasets" &&
+        (query.fuzzy !== undefined || query.filter)
+      ) {
+        if (query.filter) lookups++;
+        return Promise.resolve(
+          json(
+            {
+              entries: [
+                {
+                  ...dataset,
+                  path: "curated/east",
+                  head: { version: currentVersion, resolved_branch: "public" },
+                },
+              ],
+              total: "1",
+              next_cursor: null,
+              schema: null,
+              freshness: "unknown",
+            },
+            context(),
+          ),
+        );
+      }
+      return successful(path);
+    },
+    (url, init) => {
+      if (!url.startsWith("/api/v1/queries?")) return;
+      const request = JSON.parse(String(init?.body));
+      requests.push(request);
+      return Promise.resolve(json({ ...accepted, ...request }, context()));
+    },
+  );
+  render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  const editor = screen.getByRole("textbox", { name: "SQL query" });
+  fireEvent.change(editor, {
+    target: { value: "SELECT * FROM dataset JOIN cu" },
+  });
+  const option = await screen.findByRole("option", {
+    name: "curated/east, Dataset",
+  });
+  expect(option.getAttribute("aria-selected")).toBe("true");
+  fireEvent.keyDown(editor, { key: "Enter" });
+  expect((editor as HTMLTextAreaElement).value).toBe(
+    'SELECT * FROM dataset JOIN "curated/east" ',
+  );
+  expect(screen.queryByRole("listbox")).toBeNull();
+  fireEvent.change(editor, {
+    target: {
+      value:
+        'SELECT d.amount FROM dataset d JOIN "curated/east" e ON d.amount = e.amount',
+    },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+  await screen.findByText("9007199254740993");
+  expect(requests[0]?.sql).toContain('JOIN "__tf_catalogue_1" e');
+  expect(requests[0]?.bindings).toHaveLength(2);
+  expect(
+    screen.getByText(/Using published data: curated\/east from branch public/),
+  ).toBeTruthy();
+  currentVersion = queryId;
+  fireEvent.click(
+    screen.getByRole("button", { name: "Column options for amount" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Sort descending" }));
+  await waitFor(() => expect(requests).toHaveLength(2));
+  expect(requests[1]?.bindings).toEqual(requests[0]?.bindings);
+  expect(lookups).toBe(1);
+  await screen.findByRole("button", { name: "Download TSV" });
+  await waitFor(() =>
+    expect(
+      screen
+        .getByRole("button", { name: "Run query" })
+        .hasAttribute("disabled"),
+    ).toBe(false),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+  await waitFor(() => expect(requests).toHaveLength(3));
+  expect(requests[2]?.bindings[1]?.version).toBe(queryId);
+  expect(requests[2]?.bindings[0]?.version).toBe(versionId);
+  expect(lookups).toBe(2);
+  workspace.dispose();
+});
+
+test("scratchpad starts with and completes the selected quoted catalogue name", async () => {
+  const { workspace, state } = await setup((path) => {
+    if (path === "/api/v1/datasets")
+      return Promise.resolve(
+        json(
+          {
+            entries: [dataset],
+            total: "1",
+            next_cursor: null,
+            schema: null,
+            freshness: "unknown",
+          },
+          context(),
+        ),
+      );
+    return successful(path);
+  });
+  render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  const editor = screen.getByRole("textbox", { name: "SQL query" });
+  expect((editor as HTMLTextAreaElement).value).toBe(
+    'SELECT * FROM "raw/example"',
+  );
+  fireEvent.change(editor, { target: { value: 'SELECT * FROM "raw/' } });
+  const selected = await screen.findByRole("option", {
+    name: "raw/example, Selected dataset",
+  });
+  expect(screen.getAllByRole("option")).toHaveLength(1);
+  fireEvent.click(selected);
+  expect((editor as HTMLTextAreaElement).value).toBe(
+    'SELECT * FROM "raw/example" ',
+  );
+  workspace.dispose();
+});
+
+test("scratchpad catalogue failures do not accept a query", async () => {
+  const { workspace, state, transport } = await setup((path, query) => {
+    if (path === "/api/v1/datasets" && query.filter)
+      return Promise.resolve(
+        json(
+          {
+            entries: [],
+            total: "0",
+            next_cursor: null,
+            schema: null,
+            freshness: "unknown",
+          },
+          context(),
+        ),
+      );
+  });
+  render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  fireEvent.change(screen.getByLabelText("SQL query"), {
+    target: { value: 'SELECT * FROM "missing/dataset"' },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+  expect((await screen.findByRole("alert")).textContent).toContain(
+    "not found in this catalogue",
+  );
+  expect(
+    transport.mock.calls.some(([url]) =>
+      String(url).startsWith("/api/v1/queries?"),
+    ),
+  ).toBe(false);
+  workspace.dispose();
+});
+
+test("catalogue completion ignores old searches and supports escape, arrow keys and tab", async () => {
+  let release: ((response: Response) => void) | undefined;
+  const { workspace, state } = await setup((path, query) => {
+    if (path !== "/api/v1/datasets" || query.fuzzy === undefined) return;
+    if (query.fuzzy === "old")
+      return new Promise<Response>((resolve) => {
+        release = resolve;
+      });
+    return Promise.resolve(
+      json(
+        {
+          entries: [
+            { ...dataset, path: "curated/east" },
+            { ...dataset, path: "curated/west" },
+          ],
+          total: "2",
+          next_cursor: null,
+          schema: null,
+          freshness: "unknown",
+        },
+        context(),
+      ),
+    );
+  });
+  render(
+    <ScratchpadInspector workspace={workspace} state={state} dark={false} />,
+  );
+  const editor = screen.getByLabelText("SQL query");
+  fireEvent.change(editor, { target: { value: "SELECT * FROM old" } });
+  await waitFor(() => expect(release).toBeTypeOf("function"));
+  fireEvent.change(editor, { target: { value: "SELECT * FROM cu" } });
+  await screen.findByRole("option", { name: "curated/east, Dataset" });
+  await act(async () =>
+    release?.(
+      json(
+        {
+          entries: [{ ...dataset, path: "old/result" }],
+          total: "1",
+          next_cursor: null,
+          schema: null,
+          freshness: "unknown",
+        },
+        context(),
+      ),
+    ),
+  );
+  expect(screen.queryByRole("option", { name: /old\/result/ })).toBeNull();
+  fireEvent.keyDown(editor, { key: "ArrowDown" });
+  expect(
+    screen
+      .getByRole("option", { name: "curated/west, Dataset" })
+      .getAttribute("aria-selected"),
+  ).toBe("true");
+  fireEvent.keyDown(editor, { key: "Tab" });
+  expect((editor as HTMLTextAreaElement).value).toBe(
+    'SELECT * FROM "curated/west" ',
+  );
+  fireEvent.change(editor, { target: { value: "SELECT * FROM cu" } });
+  await screen.findByRole("listbox");
+  fireEvent.keyDown(editor, { key: "Escape" });
+  expect(screen.queryByRole("listbox")).toBeNull();
+  workspace.dispose();
 });

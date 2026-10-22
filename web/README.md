@@ -2,12 +2,45 @@
 
 ## Operational-alpha inspectors (T099)
 
-SQL scratchpad queries the displayed immutable version as `dataset`. Run query
+SQL scratchpad starts with the selected dataset's quoted catalogue name, such as
+`SELECT * FROM "curated/delivery"`, bound to the displayed immutable version.
+The legacy `dataset` alias also continues to work. Run query
 retains its exact bindings and query receipt; changing selection or
 leaving the pane cancels owned active work. Results use the same typed read-only
 grid and safe clipboard format as Preview. Truncation, failure and cancellation
 states remain visible. Result expiry does not publish
 data or substitute a moving head. Fallback data has Preview's branch warning.
+Type `FROM` or `JOIN` to autocomplete catalogue paths, or press Ctrl+Space at a
+table name. Arrow keys select a suggestion; Enter/Tab inserts its quoted path;
+Escape closes the menu. The menu appears below the cursor when there is room,
+or above it near the bottom of the window, with a scrollable height that fits
+the available space. Suggestions are bounded and ask for a narrower search
+when more matches exist. The selected dataset is labelled in the suggestions:
+
+```sql
+SELECT d.id, d.region, s.order_count
+FROM "curated/delivery" d
+JOIN "analytics/region_summary" s ON d.region = s.region
+```
+
+Run query resolves exact quoted catalogue paths on the selected branch and its
+fallback policy, then binds immutable versions through the existing query API.
+The editor keeps the authored SQL; a token-aware name adapter translates table
+references to private simple aliases for the worker. Quoted columns, literals,
+comments and local CTE names remain intact. This adapter grants no SQL permissions:
+the existing DuckDB AST policy still validates the resulting query. Schema-qualified
+names and file/table functions retain their existing restrictions. Use SQL aliases
+such as `s` to qualify joined columns. `dataset` is reserved for the selected node.
+
+Missing/unpublished paths and changed catalogue contexts fail visibly. Additional
+fallback inputs are named above the pane. Registered external datasets use retained
+publication metadata and the existing provider lease checks; no provider code is
+executed. Lookup is bounded to ten 200-entry pages per path, with an explicit error
+at the bound. A query can bind `dataset` plus up to 31 distinct catalogue paths.
+Filter/sort/Reset reuse captured bindings; Run query resolves catalogue paths again
+while the selected dataset's quoted name (and `dataset`) stays bound to the version
+displayed by the selection. No datasets are
+published or registered by queries.
 
 All five bottom tabs share a full-width, 44-pixel dataset header with a 13-pixel
 name. The name stays on the left; controls and metadata keep their context without
@@ -20,12 +53,13 @@ Copy and downloads preserve exact values.
 
 Scratchpad results support the same column and clicked-cell filters and sorting
 as Preview. Reset preview and criterion pills share the existing top toolbar.
-Controls rerun the last submitted SQL over its pinned dataset version, filtering
+Controls rerun the last submitted SQL over its pinned dataset versions, filtering
 its output before the result cap. Editor edits apply only on Run query; Reset
 reruns the original SQL. Nondeterministic SQL can produce different values on a
 rerun. Results load in 500-row batches as you scroll, up to the existing 1,000-row
 limit. A page failure retains rows and requires Run query or Reset to retry.
-Download TSV includes all available rows from the displayed query.
+Download TSV includes all available rows from the displayed query. The grid fits
+compact panes and reserves space for overlay scrollbars so the final row stays visible.
 
 The scratchpad uses an editor on the left and an always-present Results pane on
 the right. Run query (play icon) and Cancel query sit beside the dataset name,
@@ -432,14 +466,20 @@ Force, selection/context changes and
 expiry automatically prepare a new guarded preview; transient conflicts refresh context
 and retry up to three times with backoff. Preparation errors remain visible with an
 explicit retry; builds always require a separate Run build click.
-Deterministic jobs show **Cache evaluation pending** until execution resolves actual
-inputs and verifies retained bytes, so counts describe jobs in scope, not a speculative
-number of materializations. The graph temporarily highlights writes and fades other
-nodes. **Add to graph** adds hidden registered resources in batches of up to 100 without
-moving existing nodes. **Select nodes on graph** adds/selects up to 100 planned resources
-and returns to strategy selection. Pending registrations become browsable on acceptance.
-Collapsed **Plan details** retains checks, exact reads, symbolic inputs, parameters,
-source decisions and freshness reasons. Empty/invalid/expired/conflicting plans cannot run.
+Each planned dataset opens a compact animated details card with input paths and
+branches, check policies, parameters and labelled execution limits. Input aliases
+and version hashes remain in the accepted plan but are omitted from these cards. Required and Warning are policies, not
+check outcomes. Cache labels distinguish checking when the build starts from
+checking after upstream jobs finish; forced builds, source refreshes and disabled
+caching explicitly say they will run. Unknown policies stay unavailable. Counts
+remain jobs in scope, not predicted materializations.
+The graph temporarily highlights writes and fades other nodes. **Add to graph**
+adds hidden registered resources in batches of up to 100 without moving existing
+nodes. Pending registrations become browsable on acceptance.
+**Plan details** opens with the same animation and shows branch/counts, published
+input paths and fallback branches, new datasets, source decisions and freshness
+reasons. Warnings remain visible before expansion. No Select nodes on graph row or
+native disclosure arrows are shown. Empty/invalid/expired/conflicting plans cannot run.
 
 **Run build** sends only the reviewed plan ID, matching context and durable idempotency
 receipt. Interrupted acceptance retries that receipt rather than creating another build.

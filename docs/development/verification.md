@@ -1,5 +1,101 @@
 # Contributor verification
 
+## Catalogue SQL completion and compact build cards (2026-10-22)
+
+The scratchpad suggests catalogue datasets at FROM/JOIN table positions and with
+Ctrl+Space. Arrow keys, Enter/Tab, Escape and pointer selection keep editing in the
+same textarea. The menu anchors to the cursor, opens below when there is room or
+above near the window bottom, and caps its scrollable height to the available space.
+Selected `dataset` keeps its displayed immutable version. Each fresh Run resolves
+exact quoted catalogue paths under the selected branch/fallback policy and binds
+their immutable versions through the existing query API. Filter/sort/Reset reuse
+the captured bindings. Missing/unpublished paths and changed lookup contexts fail
+visibly; external lookup uses retained publication metadata and provider leases.
+No query permissions, dependencies, wire contracts or worker limits change.
+
+The selected dataset uses its actual quoted catalogue name in the initial SQL
+and completion list; that name and the legacy `dataset` alias bind the displayed
+version without a fresh head lookup.
+
+The name adapter preserves strings/comments, quoted columns and scoped CTE names;
+it handles nested/comma-separated relations and qualified catalogue references.
+This is editing/name assistance, not a replacement for the worker's SQL AST policy.
+Resolution is bounded to 31 extra datasets and ten 200-entry pages per exact path.
+Compact plan cards omit alias/version rows while retaining paths and branches;
+accepted plans still contain the complete exact binding metadata.
+
+Verification:
+
+- `bash tools/check-web.sh`: 734 tests in 37 files, strict type/lint/format checks,
+  production worker probes and 16 reproducible assets.
+- Four focused files pass 56 tests covering exact/fallback/external resolution,
+  missing/unpublished/tombstoned paths, cursor/context failure, scoped SQL names,
+  keyboard/pointer completion, stale responses, pinned reruns and fresh Run binding.
+- The selected-path binding and popup placement/height refinements pass 33
+  operational-inspector tests within the final full gate. A catalogue paging test
+  now waits for its page-notification effect, fixing an observed assertion race.
+- Safety: 27 regressions, 920 public candidates, 635 locked versions and one
+  existing exception; specification/link checks and all 44 checker regressions pass.
+- Internal Browser against the actual coordinator and production UI in the existing
+  transform-factories-review workspace: a two-dataset aggregate join returns east
+  (60 orders, 31950 total) and west (60 orders, 31270 total). Column sorting reruns
+  successfully. Missing catalogue paths report an explicit error. Completion inserts
+  quoted paths and appears both above and below the current line in light/dark
+  themes. The final default `SELECT * FROM "curated/delivery"` returns 120 rows;
+  a join using both actual quoted paths returns the same two regional aggregates. Compact selected-only delivery cards retain both master input
+  paths without alias/version rows. No browser console errors were observed.
+  No build or dataset publication is performed.
+
+Local evidence is in `target/catalogue-*` and `target/planner-*`. The owner's
+preview-scroll-review coordinator remains untouched. The separate verification
+coordinator is stopped before handoff; new CI remains owner-monitored.
+
+## Build-plan readability and table sizing (2026-10-22)
+
+Build preview now uses one expandable card per planned dataset, with separate
+input bindings, check policies, parameters and labelled execution limits. Required
+and Warning describe policies, not outcomes. Supporting plan evidence uses the
+same animated expansion as Data Health, with aria controls, inert closed content
+and reduced-motion handling. Known freshness codes have short labels; original
+diagnostics remain in tooltips, and unfamiliar codes preserve their message.
+The Select nodes on graph row and duplicate expected-write list are removed.
+
+Cache text distinguishes execution forced by policy from checks deferred until
+build start or until planned parents finish. No lookup, cache decision, plan
+acceptance or publication behavior changes. The lineage pencil has a circular
+hover/focus background and muted default colour; Run build has a centered icon
+with a seven-pixel text gap. Shared tables override the library's 300-pixel minimum
+and reserve twenty pixels for its horizontal overlay track.
+
+Verification:
+
+- Full web gate: 717 tests in 35 files, strict types/lint/format, production worker
+  probes and 16 reproducible assets. Final reason labels and compact fact spacing
+  passed ten focused planner tests, strict types/lint, formatting and a rebuilt UI.
+- Safety: 27 regressions, 915 candidate files, 635 locked package versions and one
+  existing exception. Specification/link checks pass; these are documentation checks.
+- Internal Browser, actual coordinator and production bundle in existing
+  `~/dev/transflow-workspace/transform-factories-review`: a four-job full plan shows
+  the root cache check at build start and dependent checks after upstream jobs;
+  force regenerates four explicit forced labels. Cards open/close by keyboard,
+  hidden content is inert, no native disclosures or Select nodes row remain.
+  Selected-only delivery resolves both master inputs; compact cards show their
+  paths and branch, omitting alias/version rows. Exact bindings remain in the plan.
+  The raw/orders check is presented as Required; both themes and Run build spacing
+  were inspected. Pencil focus is circular (24 by 24 pixels), changes from muted
+  to dark, and editing still cancels with Escape.
+- A real scratchpad self-join produces the capped 1,000-row result and pages on
+  scroll. At a 205-pixel result-pane height, all 27 pixels of the final row fit
+  above the native horizontal track (subpixel rounding below one pixel). The
+  initial reproduction rendered a 300-pixel grid outside that pane. The separate
+  overlay-track gutter is covered by CSS/source inspection; this Browser used
+  classic scrollbars. No console errors were observed.
+
+Local captures/logs are under `target/planner-*`; these are untracked review
+artifacts. The owner's running preview-scroll-review coordinator was preserved.
+The verification coordinator is stopped before handoff. No new workspace, dependency,
+API contract, dataset publication or CI result is claimed.
+
 ## Preview criteria pills and scratchpad table controls (2026-10-22)
 
 Cell values omit datatype annotations, including decimal precision/scale, timestamp

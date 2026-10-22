@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { BuildPlanner } from "./BuildPlanner";
+import { PlanResources, PlanDetails, cacheReadiness } from "./PlanDetails";
 import { selection, resources, type Options } from "./planning";
 import { Client } from "./api/client";
 import { Workspace } from "./workspace";
@@ -15,6 +16,7 @@ import type {
   PlanResultV1,
   ApiContextV1,
   ApiLineageNodeV1,
+  PolarsDeclarationV1,
 } from "./generated/contracts";
 
 const options: Options = {
@@ -104,6 +106,198 @@ const planContext: ApiContextV1 = {
   selection: { kind: "plan", id: planId, digest: plan.digest },
   fingerprint: "f".repeat(64),
 };
+const declaration: PolarsDeclarationV1 = {
+  module: "example",
+  function: "example",
+  path: "src/example.py",
+  line: 1,
+  source: false,
+  engine: "polars",
+  inputs: [],
+  output: {
+    ref: { form: "string", value: "raw/example" },
+    schema: null,
+    checks: [
+      {
+        id: "id-present",
+        name: "IDs are present",
+        expectation: { kind: "non_null", columns: ["id"] },
+        on_error: "FAIL",
+        null_policy: null,
+        sample_rows: null,
+        description: null,
+      },
+    ],
+  },
+  parameters: [],
+  wall_timeout_seconds: null,
+  cache: "deterministic",
+  refresh: null,
+  secret_refs: [],
+  lineage_json: null,
+};
+
+describe("readable build evidence", () => {
+  const base = plan.writes[0];
+  if (!base) throw new Error("Missing planned write fixture");
+  const write = { ...base, declaration };
+  it("describes cache prerequisites without predicting hits or missing policies", () => {
+    expect(cacheReadiness(plan, write)).toBe(
+      "Cache checked when the build starts",
+    );
+    const child = {
+      ...write,
+      bindings: [
+        { alias: "input", dataset: workspaceId, kind: "planned" as const },
+      ],
+    };
+    expect(cacheReadiness(plan, child)).toBe(
+      "Cache checked after upstream jobs finish",
+    );
+    expect(cacheReadiness({ ...plan, force: true }, child)).toBe(
+      "Will run · forced build",
+    );
+    expect(
+      cacheReadiness(plan, {
+        ...write,
+        declaration: { ...declaration, cache: "never" },
+      }),
+    ).toBe("Will run · caching disabled");
+    expect(cacheReadiness(plan, base)).toBe("Cache policy unavailable");
+    expect(
+      cacheReadiness(plan, {
+        ...write,
+        declaration: { ...declaration, cache: null },
+      }),
+    ).toBe("Cache policy unavailable");
+    expect(
+      cacheReadiness(
+        {
+          ...plan,
+          source_decisions: {
+            [datasetId]: {
+              reason: "refresh",
+              executes: true,
+              evaluated_us: "1",
+              published_us: null,
+            },
+          },
+        },
+        write,
+      ),
+    ).toBe("Will run · source refresh");
+  });
+  it("expands checks and exact input facts without duplicate resource lists", () => {
+    const evidence: PlanResultV1 = {
+      ...plan,
+      writes: [
+        {
+          ...write,
+          bindings: [
+            { alias: "input", dataset: workspaceId, kind: "boundary" },
+          ],
+          parameters: { limit: { type: "i64", value: "5" } },
+        },
+      ],
+      reads: [
+        {
+          consumer: datasetId,
+          consumer_path: "raw/example",
+          alias: "input",
+          dataset: workspaceId,
+          path: "raw/input",
+          version: planId,
+          artifact: "a".repeat(64),
+          starting_branch: "review",
+          resolved_branch: "master",
+          resolution: "fallback",
+          currentness: "unknown",
+        },
+      ],
+      warnings: ["This input uses fallback data."],
+      freshness: [
+        {
+          identity: datasetId,
+          path: "raw/example",
+          version: planId,
+          materialization: "Available",
+          direct_data: "Unknown",
+          direct_logic: "Current",
+          inherited: "Unknown",
+          latest_attempt: null,
+          output_quality: "Passed",
+          input_quality: [],
+          reasons: [
+            {
+              code: "METADATA_UNKNOWN",
+              message: "Original diagnostic with before and after hashes",
+              path: ["raw/input", "raw/example"],
+              aliases: ["input"],
+              subject: "comparison",
+              before: "hash",
+              after: null,
+              policy: null,
+            },
+            {
+              code: "FUTURE_REASON",
+              message: "An unfamiliar backend reason remains visible",
+              path: ["raw/example"],
+              aliases: [],
+              subject: "new reason",
+              before: null,
+              after: null,
+              policy: null,
+            },
+          ],
+        },
+      ],
+    };
+    const { container } = render(
+      <>
+        <PlanResources plan={evidence} />
+        <PlanDetails plan={evidence} />
+      </>,
+    );
+    expect(container.querySelector("details")).toBeNull();
+    const toggle = screen.getByRole("button", {
+      name: "Details for raw/example",
+    });
+    const content = document.getElementById(
+      toggle.getAttribute("aria-controls") ?? "",
+    );
+    if (!content) throw new Error("Missing controlled plan details");
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(content.hasAttribute("inert")).toBe(true);
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(content.hasAttribute("inert")).toBe(false);
+    expect(screen.getByText("Required").title).toBe(
+      "A failed check blocks publication",
+    );
+    expect(content.textContent).toContain("Published · master");
+    expect(content.textContent).not.toContain(planId);
+    expect(content.querySelectorAll("dt")).not.toContainEqual(
+      expect.objectContaining({ textContent: "Alias" }),
+    );
+    expect(content.textContent).toContain("master");
+    expect(content.textContent).toContain("1 h");
+    expect(screen.getByText("This input uses fallback data.")).toBeTruthy();
+    fireEvent.click(toggle);
+    expect(content.getAttribute("aria-hidden")).toBe("true");
+    expect(content.hasAttribute("inert")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Plan details" }));
+    expect(screen.getByText("fallback")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Freshness for raw/example" }),
+    );
+    expect(screen.getByText("Freshness comparison is unavailable").title).toBe(
+      "Original diagnostic with before and after hashes",
+    );
+    expect(
+      screen.getByText("An unfamiliar backend reason remains visible"),
+    ).toBeTruthy();
+  });
+});
 async function setup({
   interrupt = false,
   conflict = false,

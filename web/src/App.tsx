@@ -78,10 +78,6 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
   const [planPreview, setPlanPreview] = useState<
     import("./generated/contracts").PlanResultV1 | null
   >(null);
-  const [selectRequest, setSelectRequest] = useState<{
-    paths: readonly string[];
-    revision: number;
-  } | null>(null);
   const [catalogueFilter, setCatalogueFilter] = useState("");
   const [titleHost, setTitleHost] = useState<HTMLDivElement | null>(null);
   const [actionsHost, setActionsHost] = useState<HTMLDivElement | null>(null);
@@ -303,7 +299,6 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 onSelection={handleSelection}
                 focusRequest={focusRequest}
                 addRequest={addRequest}
-                selectRequest={selectRequest}
                 planPreview={
                   mode === "Build planner" || mode === "Schedules"
                     ? planPreview
@@ -471,16 +466,6 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                     selected={selectedNodes}
                     visible={visible}
                     onPlan={setPlanPreview}
-                    onSelect={(paths) => {
-                      setAddRequest((old) => ({
-                        paths,
-                        revision: (old?.revision ?? 0) + 1,
-                      }));
-                      setSelectRequest((old) => ({
-                        paths,
-                        revision: (old?.revision ?? 0) + 1,
-                      }));
-                    }}
                     onAdd={(paths) =>
                       setAddRequest((old) => ({
                         paths,

@@ -30,7 +30,7 @@ a first dataset build and the lineage workspace.
 ## Explore the workspace
 
 - [Lineage UI reference](../web/README.md) — graph exploration, saved views,
-  scroll-loaded catalogue/preview, SQL scratchpad, authored/generated code,
+  scroll-loaded catalogue/preview, SQL scratchpad with catalogue autocomplete and joins, authored/generated code,
   history and data health.
 - [HTTP API](../crates/tf-api/README.md).
 - [CLI conventions and diagnostics](../crates/transflow/README.md).

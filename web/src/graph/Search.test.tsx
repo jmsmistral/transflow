@@ -104,7 +104,7 @@ test("Catalogue appends bounded cursor pages on scroll and ignores overlapping r
     "next-50",
     "next-100",
   ]);
-  expect(onPage.mock.lastCall?.[0]).toHaveLength(120);
+  await waitFor(() => expect(onPage.mock.lastCall?.[0]).toHaveLength(120));
   fireEvent.click(screen.getByRole("button", { name: /sample\/dataset_000/ }));
   expect(select.mock.lastCall?.[0].path).toBe("sample/dataset_000");
   workspace.dispose();
