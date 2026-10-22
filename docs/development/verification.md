@@ -1,5 +1,39 @@
 # Contributor verification
 
+## Preview cell value filters (2026-10-22)
+
+The cell context menu adds only Include only "value" and Exclude "value" above
+the existing Copy with headers action. Local funnel/check, funnel/exclude and
+copy glyphs, a divider, fixed viewport bounds and keyboard/outside dismissal
+match the existing UI. Filtering uses the clicked cell; copying retains the
+selected range. Exact wire scalars replace only that column's criterion, retaining
+other filters and sorting. SQL null maps to null/non-null filters. Binary bytes
+use lossless BLOB cast text, and numeric/timestamp values retain wire precision.
+Truncated, unavailable and nested cells have disabled actions with a reason;
+they cannot accidentally filter by a shortened or decorated display value.
+
+The full web gate passes 708 tests in 35 files, strict types, lint/format,
+worker probes and reproducible production assets. New cases cover clicked cell
+versus selected range, Include/Exclude replacement, retained filters/sort, partial
+values, menu keys/dismissal, a delayed selection read after busy state, precise
+decimals/u64, binary, timestamps and SQL null. The pinned DuckDB interpreter also
+verifies BLOB byte reconstruction and nanosecond timestamp casts. Logs are in
+`target/preview-cell-web.log` and `target/preview-cell-focused.log`.
+
+The existing `preview-scroll-review` launcher rebuilds the current UI. Real
+Internal Browser checks pass Include east, Exclude east returning west, matching
+column-popup state, the existing loading veil, Escape focus restoration and both
+themes. A selected two-by-two range still copies `id/region` and rows 1/2 when
+right-clicking a different amount cell; the prior Browser clipboard is restored.
+The three-item popup and copy glyph are captured in `target/preview-cell-review.jpg`
+and `target/preview-cell-dark.jpg`; Browser console errors are empty. No workspace
+definitions or saved lineages change. The verification coordinator is stopped
+before handoff. Native API/execution contracts and dependency locks are unchanged.
+All 27 safety regressions, paired privacy/inventory/contract checks and
+specification/link validation pass. The public scan covers 913 candidate files,
+635 locked package versions and one existing exception. New CI remains
+owner-monitored after push.
+
 ## Compact empty Preview (2026-10-22)
 
 Remove Filtered preview and the no-matching-rows message. Empty query results

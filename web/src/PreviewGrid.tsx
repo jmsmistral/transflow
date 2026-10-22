@@ -4,6 +4,7 @@ import "./revogrid.css";
 import type { ColumnTemplateFunc } from "@revolist/revogrid";
 import { tabSeparatedText } from "./tabular-text";
 import { PreviewColumnMenu } from "./PreviewColumnMenu";
+import { PreviewCellMenu } from "./PreviewCellMenu";
 import { Icon } from "./Icons";
 import type { PreviewCriteria } from "./preview-query";
 import type {
@@ -76,9 +77,22 @@ export function PreviewGrid({
   const blocked = busy || disabled;
   const grid = useRef<HTMLRevoGridElement>(null);
   const container = useRef<HTMLDivElement>(null);
-  const [menu, setMenu] = useState<{ x: number; y: number; area: Area } | null>(
-    null,
-  );
+  const [menu, setMenu] = useState<{
+    x: number;
+    y: number;
+    area: Area;
+    page: GridPage;
+    criteria: PreviewCriteria | undefined;
+    trigger: HTMLElement | null;
+    cell: { column: string; value: ApiPreviewCellV1; label: string } | null;
+  } | null>(null);
+  const menuEpoch = useRef(0);
+  useEffect(() => {
+    menuEpoch.current += 1;
+    return () => {
+      menuEpoch.current += 1;
+    };
+  }, [page, criteria, blocked]);
   const [columnMenu, setColumnMenu] = useState<{
     column: string;
     trigger: HTMLElement;
@@ -246,7 +260,8 @@ export function PreviewGrid({
         if (blocked) return;
         if (inColumnMenu(event.target)) return;
         event.preventDefault();
-        const bounds = container.current?.getBoundingClientRect();
+        setColumnMenu(null);
+        const epoch = menuEpoch.current;
         const cellSelector = '[role="gridcell"][data-rgcol][data-rgrow]';
         const target =
           (event.nativeEvent
@@ -264,7 +279,22 @@ export function PreviewGrid({
               y: Number(target.dataset.rgrow),
             }
           : null;
+        const value = clicked ? page.rows[clicked.y]?.[clicked.x] : undefined;
+        const column = clicked
+          ? page.schema.fields[clicked.x]?.name
+          : undefined;
+        const raw = value?.value;
+        const label = value?.truncated
+          ? "Truncated value"
+          : raw == null
+            ? "Unavailable"
+            : raw.type === "null"
+              ? "NULL"
+              : raw.type === "list" || raw.type === "struct"
+                ? JSON.stringify(formatCell(raw))
+                : JSON.stringify(raw.value);
         void selectedArea().then((selection) => {
+          if (epoch !== menuEpoch.current) return;
           const area =
             selection ??
             (clicked ? { ...clicked, x1: clicked.x, y1: clicked.y } : null);
@@ -272,21 +302,14 @@ export function PreviewGrid({
           if (!selection && clicked)
             void grid.current?.setCellsFocus(clicked, clicked);
           setMenu({
-            x: Math.max(
-              0,
-              Math.min(
-                event.clientX - (bounds?.left ?? 0),
-                (bounds?.width ?? 200) - 200,
-              ),
-            ),
-            y: Math.max(
-              0,
-              Math.min(
-                event.clientY - (bounds?.top ?? 0),
-                (bounds?.height ?? 70) - 70,
-              ),
-            ),
+            x: event.clientX,
+            y: event.clientY,
             area,
+            page,
+            criteria,
+            trigger: target ?? null,
+            cell:
+              value && column !== undefined ? { column, value, label } : null,
           });
         });
       }}
@@ -368,20 +391,29 @@ export function PreviewGrid({
         />
       </div>
       {blocked && <div className="preview-grid-shade" aria-hidden="true" />}
-      {!blocked && menu && (
-        <div
-          className="preview-grid-menu"
-          role="menu"
-          style={{ left: menu.x, top: menu.y }}
-        >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => void copySelection(menu.area)}
-          >
-            Copy with headers
-          </button>
-        </div>
+      {!blocked && menu && menu.page === page && menu.criteria === criteria && (
+        <PreviewCellMenu
+          x={menu.x}
+          y={menu.y}
+          cell={menu.cell}
+          trigger={menu.trigger}
+          onFilter={
+            criteria && onCriteriaChange
+              ? (filter) =>
+                  onCriteriaChange({
+                    ...criteria,
+                    filters: [
+                      ...criteria.filters.filter(
+                        (f) => f.column !== filter.column,
+                      ),
+                      filter,
+                    ],
+                  })
+              : undefined
+          }
+          onCopy={() => void copySelection(menu.area)}
+          onClose={() => setMenu(null)}
+        />
       )}
     </div>
   );

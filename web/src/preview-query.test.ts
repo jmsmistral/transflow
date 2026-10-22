@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { previewQuery } from "./preview-query";
+import { previewQuery, previewCellFilter } from "./preview-query";
 import type { LogicalSchemaV1 } from "./generated/contracts";
 
 const schema: LogicalSchemaV1 = {
@@ -52,4 +52,105 @@ test("null-only filters bind no value and missing columns fail explicitly", () =
       sort: { column: "missing", direction: "asc" },
     }),
   ).toThrow("unavailable");
+});
+
+test("cell filters preserve exact scalars, binary bytes and null semantics", () => {
+  expect(
+    previewCellFilter(
+      "amount",
+      {
+        value: {
+          type: "decimal",
+          value: "9007199254740993.01",
+          precision: 24,
+          scale: 2,
+        },
+        truncated: false,
+      },
+      "include",
+    ),
+  ).toEqual({
+    column: "amount",
+    kind: "include",
+    value: "9007199254740993.01",
+  });
+  expect(
+    previewCellFilter(
+      "id",
+      {
+        value: { type: "u64", value: "18446744073709551615" },
+        truncated: false,
+      },
+      "exclude",
+    ),
+  ).toEqual({ column: "id", kind: "exclude", value: "18446744073709551615" });
+  expect(
+    previewCellFilter(
+      "flag",
+      { value: { type: "bool", value: false }, truncated: false },
+      "include",
+    ),
+  ).toEqual({ column: "flag", kind: "include", value: "false" });
+  expect(
+    previewCellFilter(
+      "value",
+      { value: { type: "string", value: "" }, truncated: false },
+      "include",
+    ),
+  ).toEqual({ column: "value", kind: "include", value: "" });
+  expect(
+    previewCellFilter(
+      "time",
+      {
+        value: {
+          type: "timestamp",
+          value: "2026-10-22T12:34:56.123456789",
+          unit: "ns",
+          timezone: null,
+        },
+        truncated: false,
+      },
+      "include",
+    ),
+  ).toEqual({
+    column: "time",
+    kind: "include",
+    value: "2026-10-22T12:34:56.123456789",
+  });
+  expect(
+    previewCellFilter(
+      "bytes",
+      { value: { type: "binary", value: "AP9h" }, truncated: false },
+      "include",
+    ),
+  ).toEqual({ column: "bytes", kind: "include", value: "\\x00\\xff\\x61" });
+  for (const kind of ["include", "exclude"] as const) {
+    expect(
+      previewCellFilter(
+        "value",
+        { value: { type: "null" }, truncated: false },
+        kind,
+      ),
+    ).toEqual({
+      column: "value",
+      kind: kind === "include" ? "null" : "not_null",
+    });
+    expect(
+      previewCellFilter("value", { value: null, truncated: false }, kind),
+    ).toBeNull();
+    expect(
+      previewCellFilter(
+        "value",
+        { value: { type: "string", value: "partial" }, truncated: true },
+        kind,
+      ),
+    ).toBeNull();
+    expect(
+      previewCellFilter(
+        "value",
+        { value: { type: "list", values: [] }, truncated: false },
+        kind,
+      ),
+    ).toBeNull();
+  }
 });

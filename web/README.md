@@ -327,6 +327,17 @@ existing selection, even when the pointer is outside it; Cmd+C on macOS or
 Ctrl+C elsewhere copies the selection with headers too. Copied TSV escapes separators and leading
 spreadsheet formula characters. Clicking a cell never copies it.
 
+Right-clicking a complete scalar cell also offers **Include only "value"** and
+**Exclude "value"**, above a divider and the icon-labelled Copy action. These
+use the clicked cell, while Copy still uses the selected range. They replace
+that column's filter, retain other filters/sorting, and use the same exact-version
+query, loading veil and Reset behaviour as the column popup. Null cells map to
+only-null/non-null filters. Values remain lossless, including large numbers,
+timestamps and binary bytes. Truncated, unavailable and nested cells keep these
+actions disabled; nested values can still be entered through the column popup
+subject to the existing query engine's supported-type limits. Long labels are
+ellipsized, and Escape, arrow keys and outside click operate the compact menu.
+
 Each Preview column has a small arrow button opening one popup. Its first section
 contains Include/Exclude, an exact-value input with Apply, Exclude nulls and Show
 only nulls. Its separated lower section contains only Sort ascending and Sort

@@ -2,6 +2,7 @@ import type {
   ApiQueryRequestV1,
   LogicalSchemaV1,
   LogicalType,
+  ApiPreviewCellV1,
 } from "./generated/contracts";
 
 export type PreviewFilter =
@@ -15,6 +16,27 @@ export const emptyPreviewCriteria: PreviewCriteria = {
   filters: [],
   sort: null,
 };
+
+/** Use the exact wire scalar, never its decorated or rounded display text. */
+export function previewCellFilter(
+  column: string,
+  cell: ApiPreviewCellV1,
+  kind: "include" | "exclude",
+): PreviewFilter | null {
+  const value = cell.value;
+  if (cell.truncated || value === null) return null;
+  if (value.type === "list" || value.type === "struct") return null;
+  if (value.type === "null")
+    return { column, kind: kind === "include" ? "null" : "not_null" };
+  const text =
+    value.type === "binary"
+      ? Array.from(
+          atob(value.value),
+          (byte) => `\\x${byte.charCodeAt(0).toString(16).padStart(2, "0")}`,
+        ).join("")
+      : String(value.value);
+  return { column, kind, value: text };
+}
 
 function identifier(name: string) {
   return `"${name.replaceAll('"', '""')}"`;

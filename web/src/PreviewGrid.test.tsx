@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { forwardRef, useImperativeHandle } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
 import type { ApiPreviewV1, WireValue } from "./generated/contracts";
@@ -6,12 +12,19 @@ import { PreviewGrid, previewSelectionText } from "./PreviewGrid";
 
 const gridState = vi.hoisted(() => ({
   area: null as { x: number; y: number; x1: number; y1: number } | null,
+  areaRead: null as Promise<{
+    x: number;
+    y: number;
+    x1: number;
+    y1: number;
+  } | null> | null,
 }));
 
 vi.mock("@revolist/react-datagrid", () => ({
   RevoGrid: forwardRef(function TestGrid(_props: object, ref) {
     useImperativeHandle(ref, () => ({
-      getSelectedRange: async () => gridState.area,
+      getSelectedRange: async () =>
+        gridState.areaRead ? await gridState.areaRead : gridState.area,
       getFocused: async () => null,
       setCellsFocus: async (
         start: { x: number; y: number },
@@ -53,6 +66,7 @@ vi.mock("@revolist/react-datagrid", () => ({
 
 beforeEach(() => {
   gridState.area = null;
+  gridState.areaRead = null;
 });
 
 const page = {
@@ -229,4 +243,145 @@ test("right-click without a selection copies its cell with its header", async ()
   await waitFor(() =>
     expect(writeText).toHaveBeenCalledWith("date\n2026-10-01"),
   );
+});
+
+test.each(["include", "exclude"] as const)(
+  "cell %s uses the clicked value while preserving other criteria and the selected range",
+  async (kind) => {
+    gridState.area = { x: 1, y: 0, x1: 2, y1: 1 };
+    const onChange = vi.fn();
+    render(
+      <PreviewGrid
+        page={page}
+        path="sample"
+        dark={false}
+        formatCell={(value) =>
+          value?.type === "string" ? value.value : "NULL"
+        }
+        formatType={() => "string"}
+        onError={vi.fn()}
+        criteria={{
+          filters: [
+            { column: "date", kind: "include", value: "old" },
+            { column: "description", kind: "exclude", value: "keep" },
+          ],
+          sort: { column: "value", direction: "desc" },
+        }}
+        onCriteriaChange={onChange}
+      />,
+    );
+    const cell = screen.getByRole("gridcell", { name: "2026-10-01" });
+    fireEvent.mouseDown(cell, { button: 2 });
+    fireEvent.contextMenu(cell, { clientX: 12, clientY: 12 });
+    const action = await screen.findByRole("menuitem", {
+      name: `${kind === "include" ? "Include only" : "Exclude"} "2026-10-01"`,
+    });
+    expect(screen.getAllByRole("menuitem")).toHaveLength(3);
+    fireEvent.click(action);
+    expect(onChange).toHaveBeenCalledWith({
+      filters: [
+        { column: "description", kind: "exclude", value: "keep" },
+        { column: "date", kind, value: "2026-10-01" },
+      ],
+      sort: { column: "value", direction: "desc" },
+    });
+    expect(gridState.area).toEqual({ x: 1, y: 0, x1: 2, y1: 1 });
+    expect(screen.queryByRole("menu")).toBeNull();
+  },
+);
+
+test("partial cells keep Copy available but disable both value filters", async () => {
+  render(
+    <PreviewGrid
+      page={{
+        ...page,
+        rows: [
+          page.rows[0] ?? [],
+          [{ value: { type: "string", value: "partial" }, truncated: true }],
+        ],
+      }}
+      path="sample"
+      dark={false}
+      formatCell={() => "partial"}
+      formatType={() => "string"}
+      onError={vi.fn()}
+      criteria={{ filters: [], sort: null }}
+      onCriteriaChange={vi.fn()}
+    />,
+  );
+  fireEvent.contextMenu(screen.getByRole("gridcell", { name: "2026-10-01" }));
+  const include = await screen.findByRole("menuitem", { name: /Include only/ });
+  expect((include as HTMLButtonElement).disabled).toBe(true);
+  expect(
+    (screen.getByRole("menuitem", { name: /Exclude/ }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(true);
+  expect(
+    (
+      screen.getByRole("menuitem", {
+        name: "Copy with headers",
+      }) as HTMLButtonElement
+    ).disabled,
+  ).toBe(false);
+});
+
+test("cell menu supports keyboard navigation, Escape and outside dismissal", async () => {
+  render(
+    <PreviewGrid
+      page={page}
+      path="sample"
+      dark={false}
+      formatCell={() => "value"}
+      formatType={() => "string"}
+      onError={vi.fn()}
+      criteria={{ filters: [], sort: null }}
+      onCriteriaChange={vi.fn()}
+    />,
+  );
+  const cell = screen.getByRole("gridcell", { name: "2026-10-01" });
+  fireEvent.contextMenu(cell);
+  const menu = await screen.findByRole("menu");
+  expect(document.activeElement).toBe(
+    screen.getByRole("menuitem", { name: /Include only/ }),
+  );
+  fireEvent.keyDown(menu, { key: "End" });
+  expect(document.activeElement).toBe(
+    screen.getByRole("menuitem", { name: "Copy with headers" }),
+  );
+  fireEvent.keyDown(menu, { key: "ArrowUp" });
+  expect(document.activeElement).toBe(
+    screen.getByRole("menuitem", { name: /Exclude/ }),
+  );
+  fireEvent.keyDown(menu, { key: "Escape" });
+  expect(screen.queryByRole("menu")).toBeNull();
+  expect(document.activeElement).toBe(cell);
+  fireEvent.contextMenu(cell);
+  await screen.findByRole("menu");
+  fireEvent.pointerDown(document.body);
+  expect(screen.queryByRole("menu")).toBeNull();
+});
+
+test("a late selection read cannot reopen the cell menu after the grid becomes busy", async () => {
+  let release:
+    | ((area: { x: number; y: number; x1: number; y1: number } | null) => void)
+    | undefined;
+  gridState.areaRead = new Promise((resolve) => {
+    release = resolve;
+  });
+  const props = {
+    page,
+    path: "sample",
+    dark: false,
+    formatCell: () => "value",
+    formatType: () => "string",
+    onError: vi.fn(),
+    criteria: { filters: [], sort: null },
+    onCriteriaChange: vi.fn(),
+  };
+  const view = render(<PreviewGrid {...props} />);
+  fireEvent.contextMenu(screen.getByRole("gridcell", { name: "2026-10-01" }));
+  view.rerender(<PreviewGrid {...props} busy />);
+  await act(async () => release?.({ x: 0, y: 1, x1: 0, y1: 1 }));
+  view.rerender(<PreviewGrid {...props} />);
+  expect(screen.queryByRole("menu")).toBeNull();
 });

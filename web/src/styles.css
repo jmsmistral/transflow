@@ -1458,25 +1458,46 @@ revo-grid.preview-grid
   }
 }
 .preview-grid-menu {
-  position: absolute;
-  z-index: 5;
+  position: fixed;
+  z-index: 100;
   display: flex;
   flex-direction: column;
-  min-width: 190px;
+  min-width: min(230px, calc(100vw - 16px));
+  width: max-content;
+  max-width: min(360px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  padding: 5px;
   border: 1px solid var(--line);
   border-radius: 4px;
   background: var(--surface);
   box-shadow: 0 8px 24px #0003;
+  font-size: 13px;
 }
 .preview-grid-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
   padding: 8px 12px;
   border: 0;
   background: transparent;
   color: var(--ink);
   text-align: left;
   cursor: pointer;
+  border-radius: 3px;
 }
-.preview-grid-menu button:hover {
+.preview-grid-menu button > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preview-cell-filters {
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid var(--line);
+}
+.preview-grid-menu button:hover:not(:disabled) {
   background: var(--soft);
 }
 .preview-column-heading {

@@ -44,6 +44,7 @@ const paths = {
   external: "M8 3h13v13M21 3L3 21",
   table: "M3 3h18v18H3zM3 9h18M9 9v12",
   filter: "M3 4h18l-7 8v7l-4 2v-9z",
+  filterInclude: "M3 4h18l-7 8v7l-4 2v-9zM17 20l2 2 4-5",
   filterExclude: "M3 4h18l-7 8v7l-4 2v-9zM17 17l5 5M22 17l-5 5",
   filterNull: "M3 4h18l-7 8v7l-4 2v-9zM20 16v3M20 22h.01",
   sortAscending: "M12 21V3M5 10l7-7 7 7",
