@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { paint, numeric, roles } from "./overlays";
+import { paint, numeric, roles, schedulePaint } from "./overlays";
 import type {
   ApiLineageNodeV1,
   ApiOverlayFactsV1,
@@ -128,4 +128,55 @@ test("known empty schedule roles are Not built while unavailable roles remain Un
     label: "Unknown",
     detail: "Unknown",
   });
+});
+
+test("schedule colours expose only targets, triggers and opted-in connecting jobs", () => {
+  for (const roles of [
+    ["boundary"],
+    ["cached"],
+    ["excluded"],
+    ["planned"],
+    [],
+  ] as const) {
+    expect(
+      schedulePaint({ ...node, overlay: { ...facts, roles } }, null, false),
+    ).toEqual({
+      key: "not_built",
+      label: "Not built",
+      detail: "Not built",
+      badges: ["Input check failed"],
+    });
+  }
+  const connecting = {
+    ...node,
+    overlay: { ...facts, roles: ["boundary", "planned"] as const },
+  };
+  expect(schedulePaint(connecting, null, true)).toMatchObject({
+    key: "planned",
+    label: "Attempt to build",
+    detail: "Attempt to build",
+  });
+  expect(schedulePaint(node, null, false)).toMatchObject({
+    key: "target",
+    detail: "Target · Trigger",
+  });
+});
+
+test("connecting targets keep their intent label without an intermediate-job label", () => {
+  expect(
+    schedulePaint(
+      {
+        ...node,
+        overlay: { ...facts, roles: ["target", "planned", "boundary"] },
+      },
+      null,
+      true,
+    ),
+  ).toMatchObject({ key: "target", detail: "Target" });
+});
+
+test("schedule facts stay distinct from unavailable role metadata", () => {
+  const pending = { ...node };
+  delete pending.overlay;
+  expect(schedulePaint(pending, null, false).key).toBe("unknown");
 });

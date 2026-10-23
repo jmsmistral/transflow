@@ -87,6 +87,31 @@ export function roles(
     ]),
   ];
 }
+/** Schedule roles describe intent; input/boundary/cache facts remain planning details. */
+export function schedulePaint(
+  node: ApiLineageNodeV1,
+  plan: PlanResultV1 | null,
+  connecting: boolean,
+): Paint {
+  const badges = node.overlay?.input_failed ? ["Input check failed"] : [];
+  if (node.overlay?.roles === undefined && !plan)
+    return { key: "unknown", label: "Unknown", detail: "Unknown", badges };
+  const all = roles(node, plan);
+  const flags: string[] = all.filter(
+    (role) => role === "target" || role === "trigger",
+  );
+  if (!flags.length && connecting && all.includes("planned"))
+    flags.push("planned");
+  const key =
+    ["target", "trigger", "planned"].find((role) => flags.includes(role)) ??
+    "not_built";
+  return {
+    key,
+    label: names[key] ?? "Not built",
+    detail: flags.map((role) => names[role]).join(" · ") || "Not built",
+    badges,
+  };
+}
 function freshness(node: ApiLineageNodeV1, plan: PlanResultV1 | null): string {
   const f = plan?.freshness.find((f) => f.identity === node.identity);
   if (!f) return node.overlay?.freshness ?? "unknown";

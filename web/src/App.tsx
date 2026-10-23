@@ -69,6 +69,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
     revision: number;
   } | null>(null);
   const [scheduleActive, setScheduleActive] = useState(false);
+  const [scheduleConnecting, setScheduleConnecting] = useState(false);
   const [scheduleEdit, setScheduleEdit] = useState<ScheduleEditSession | null>(
     null,
   );
@@ -307,6 +308,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                 scheduleRoles={mode === "Schedules" ? scheduleRoles : null}
                 scheduleEdit={mode === "Schedules" ? scheduleEdit : null}
                 scheduleActive={mode === "Schedules" && scheduleActive}
+                scheduleConnecting={scheduleConnecting}
                 cataloguePaths={cataloguePaths}
                 titleHost={titleHost}
                 actionsHost={actionsHost}
@@ -482,6 +484,7 @@ export function App({ workspace: supplied }: { workspace?: Workspace }) {
                     visible={visible}
                     focusRequest={scheduleRequest}
                     onActive={setScheduleActive}
+                    onConnecting={setScheduleConnecting}
                     onEdit={setScheduleEdit}
                     onRoles={setScheduleRoles}
                     onPlan={setPlanPreview}

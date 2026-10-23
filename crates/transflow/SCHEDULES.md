@@ -112,8 +112,13 @@ only the selected history page and disclose that basis. Build reports automatica
 update while active. Use Run now on the saved schedule to execute its definition.
 The sidebar omits a scope-preview button and loads the shared informational plan
 automatically when a saved schedule is selected. Datasets to build shows the complete
-planned list and count, including connecting jobs outside the visible canvas. Connecting
-nodes say Attempt to build. Exact occurrence pins and cache/refresh decisions may reuse
+planned list and count, including connecting jobs outside the visible canvas.
+The schedule graph and legend use only Trigger, Target, Not built and (with
+Connecting build enabled) Attempt to build. Published inputs and other nonmembers
+are Not built; read boundaries remain execution details. In the editor, toggling
+Connecting build refreshes the shared plan automatically, turning intermediate
+nodes blue as Attempt to build or neutral as Not built. Superseded requests are
+canceled. Exact occurrence pins and cache/refresh decisions may reuse
 inputs; the preview does not accept or execute a build. Unavailable scope is explicit.
 
 ## Dedicated Schedule view

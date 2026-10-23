@@ -1,5 +1,40 @@
 # Contributor verification
 
+## Schedule intent roles and live connecting previews (2026-10-23)
+
+Schedule colours, labels, accessible descriptions, legend counts and legend
+selection now use only Trigger, Target, Not built and connecting Attempt to build.
+Read/exclusion/cache metadata adds no schedule legend item. Attempt to build is
+limited to intermediate jobs when Connecting build is enabled. Other nonmembers
+use Not built, matching the existing product wording.
+
+Connected drafts automatically request the shared backend schedule plan after a
+200 ms debounce. Draft/context changes abort superseded reads, and switching off
+clears connecting colours. Existing bounded context-conflict recovery applies.
+The preview never saves a schedule or accepts/executes a build. General build
+planning metadata and advanced CLI/API execution scope remain unchanged.
+
+Local verification:
+
+- Full web gate: 763 tests in 38 files; types, lint, formatting, production worker
+  probes and 16 reproducible assets. Focused schedule/graph suites cover boundary
+  suppression, simultaneous roles, unavailable metadata and late-response fencing.
+- Safety: 27 tests; 922 public candidate files, 635 locked versions, one exception.
+- Specification checker and 44 checker tests passed; paired diffs are clean.
+- Internal Browser in the existing preview-scroll-review workspace: saved selected
+  schedule shows Target 1, Trigger 1, Not built 3 with no Read boundary item. In an
+  unsaved edit, Connecting on shows two blue Attempt to build nodes; off restores
+  Not built 3. Node style/position records remain identical across that toggle.
+  Cancel exits without Save; the paused target-only schedule is preserved. No
+  warning/error console entries were observed.
+- Existing launcher passes Bash syntax validation and rebuilds this checkout's
+  artifacts before opening the authenticated saved review lineage. Verification
+  coordinator stopped; workspace retained. Restart using:
+  `bash /Users/jms/dev/transflow-workspace/preview-scroll-review-tools/serve-preview.sh`.
+
+Rust/Python execution and API/storage contracts are unchanged. CI remains
+owner-monitored; no remote result is claimed.
+
 ## Schedule target-only scope correction (2026-10-23)
 
 The lineage editor now has one scope control. Connecting build off prepares

@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useCallback,
   useId,
   useMemo,
   useRef,
@@ -38,6 +39,8 @@ import {
   minute,
   duration,
   ratio,
+  usesTriggerConnections,
+  connectionIssue,
 } from "./schedule-model";
 import type { ScheduleEditSession } from "./schedule-model";
 import { ScheduleEditor, Switch } from "./ScheduleEditor";
@@ -627,6 +630,7 @@ export function Schedules({
   focusRequest,
   onEdit,
   onActive,
+  onConnecting,
 }: {
   workspace: Workspace;
   state: Ready;
@@ -638,6 +642,7 @@ export function Schedules({
   focusRequest?: { id: string; revision: number } | null;
   onEdit?: (session: ScheduleEditSession | null) => void;
   onActive?: (active: boolean) => void;
+  onConnecting?: (connecting: boolean) => void;
 }) {
   const [rows, setRows] = useState<readonly ScheduleRecordV1[]>([]),
     [next, setNext] = useState<string | null>(null),
@@ -649,6 +654,15 @@ export function Schedules({
       record: ScheduleRecordV1 | null;
     } | null>(null),
     [roles, setRoles] = useState<ApiScheduleRolesV1 | null>(null);
+  const [editDefinition, setEditDefinition] =
+    useState<ScheduleDefinitionV1 | null>(null);
+  const handleEdit = useCallback(
+    (session: ScheduleEditSession | null) => {
+      setEditDefinition(session?.definition ?? null);
+      onEdit?.(session);
+    },
+    [onEdit],
+  );
   const [roleError, setRoleError] = useState("");
   const [scope, setScope] = useState<{
     basis: string;
@@ -676,6 +690,15 @@ export function Schedules({
     onActive?.(!!chosen || !!draft);
   }, [onActive, chosen, draft]);
   useEffect(() => () => onActive?.(false), [onActive]);
+  const editing = !!draft;
+  const previewDefinition = draft ? editDefinition : definition;
+  const connecting = previewDefinition
+    ? usesTriggerConnections(previewDefinition)
+    : false;
+  useEffect(() => {
+    onConnecting?.(connecting);
+  }, [onConnecting, connecting]);
+  useEffect(() => () => onConnecting?.(false), [onConnecting]);
   const scopeNodes = selected.length
     ? selected.map((n) => n.identity)
     : visible;
@@ -830,11 +853,18 @@ export function Schedules({
     contextKey,
     onRoles,
   ]);
-  const scopeBasis =
-    current && !draft
+  const definitionJson = previewDefinition
+    ? JSON.stringify(previewDefinition)
+    : "";
+  const scopeBasis = draft
+    ? connecting &&
+      editDefinition?.name.trim() &&
+      !connectionIssue(editDefinition)
+      ? JSON.stringify(["draft", definitionJson, contextKey])
+      : ""
+    : current
       ? JSON.stringify([current.id, current.etag, contextKey, revision])
       : "";
-  const definitionJson = definition ? JSON.stringify(definition) : "";
   const scopeContext = useRef(context);
   useEffect(() => {
     scopeContext.current = context;
@@ -890,23 +920,30 @@ export function Schedules({
         }
       }
     };
-    void prepare()
-      .then((plan) => {
-        if (!abort.signal.aborted) {
-          setScope({ basis: scopeBasis, plan, error: "" });
-          onPlan(plan);
-        }
-      })
-      .catch((e) => {
-        if (!abort.signal.aborted)
-          setScope({
-            basis: scopeBasis,
-            plan: null,
-            error: `Schedule build scope unavailable. ${message(e)}`,
-          });
-      });
-    return () => abort.abort();
-  }, [workspace, scopeBasis, definitionJson, contextKey, onPlan]);
+    const publish = () => {
+      void prepare()
+        .then((plan) => {
+          if (!abort.signal.aborted) {
+            setScope({ basis: scopeBasis, plan, error: "" });
+            onPlan(plan);
+          }
+        })
+        .catch((e) => {
+          if (!abort.signal.aborted)
+            setScope({
+              basis: scopeBasis,
+              plan: null,
+              error: `Schedule build scope unavailable. ${message(e)}`,
+            });
+        });
+    };
+    const timer = editing ? setTimeout(publish, 200) : undefined;
+    if (!editing) publish();
+    return () => {
+      clearTimeout(timer);
+      abort.abort();
+    };
+  }, [workspace, scopeBasis, definitionJson, contextKey, onPlan, editing]);
   const scopePlan = scope?.basis === scopeBasis ? scope.plan : null;
   const scopeError = scope?.basis === scopeBasis ? scope.error : "";
   const defaults = async () => {
@@ -1052,7 +1089,11 @@ export function Schedules({
           datasets={datasets}
           schedules={rows}
           selected={selected}
-          {...(onEdit ? { onEdit } : {})}
+          onEdit={handleEdit}
+          connectionStatus={
+            scopeError ||
+            (scopeBasis && !scopePlan ? "Updating connecting datasets…" : "")
+          }
           onReload={async (signal) => {
             if (!draft.record) return;
             const row = (

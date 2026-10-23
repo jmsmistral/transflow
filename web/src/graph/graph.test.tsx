@@ -1308,6 +1308,11 @@ test("an active schedule distinguishes Not built from loading and retains simult
         next_cursor: null,
         nodes: [
           {
+            identity: other.identity,
+            paths: other.paths,
+            roles: ["boundary", "excluded"],
+          },
+          {
             identity: root.identity,
             paths: root.paths,
             roles: ["target", "trigger"],
@@ -1341,6 +1346,9 @@ test("an active schedule distinguishes Not built from loading and retains simult
       n.getAttribute("style"),
     ),
   ).toEqual(geometry);
+  expect(
+    screen.queryByRole("button", { name: "Select Read boundary nodes" }),
+  ).toBeNull();
   view.rerender(<GraphExplorer workspace={workspace} focusRequest={request} />);
   fireEvent.click(screen.getByRole("button", { name: "Node colouring" }));
   for (const name of ["Build roles", "Median duration", "Mean duration"])

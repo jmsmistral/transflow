@@ -32,6 +32,7 @@ import {
 import {
   identity,
   triggerDatasets,
+  usesTriggerConnections,
   type ScheduleEditSession,
 } from "../schedule-model";
 import type {
@@ -54,6 +55,7 @@ import { Menu } from "./Menu";
 import {
   paint,
   basis,
+  schedulePaint,
   colourOptions,
   colourLabel,
   type Paint,
@@ -258,6 +260,7 @@ export function GraphExplorer({
   scheduleRoles,
   scheduleEdit,
   scheduleActive,
+  scheduleConnecting,
   titleHost,
   actionsHost,
 }: {
@@ -271,6 +274,7 @@ export function GraphExplorer({
   scheduleRoles?: import("../generated/contracts").ApiScheduleRolesV1 | null;
   scheduleEdit?: ScheduleEditSession | null;
   scheduleActive?: boolean;
+  scheduleConnecting?: boolean;
   addRequest?: { paths: readonly string[]; revision: number } | null;
   onVisible?: (identities: readonly string[]) => void;
   onSelection?: (nodes: readonly ApiLineageNodeV1[], context: string) => void;
@@ -410,6 +414,7 @@ export function GraphExplorer({
           scheduleRoles={scheduleRoles ?? null}
           scheduleEdit={scheduleEdit ?? null}
           scheduleActive={scheduleActive ?? false}
+          scheduleConnecting={scheduleConnecting ?? false}
           focusRequest={focusRequest ?? null}
           {...(onSelection ? { onSelection } : {})}
         />
@@ -433,6 +438,7 @@ function GraphView({
   scheduleRoles,
   scheduleEdit,
   scheduleActive,
+  scheduleConnecting,
   focusRequest,
   onSelection,
 }: {
@@ -451,6 +457,7 @@ function GraphView({
   scheduleRoles: import("../generated/contracts").ApiScheduleRolesV1 | null;
   scheduleEdit: ScheduleEditSession | null;
   scheduleActive: boolean;
+  scheduleConnecting: boolean;
   focusRequest: { path: string; revision: number } | null;
   onSelection?: (nodes: readonly ApiLineageNodeV1[], context: string) => void;
 }) {
@@ -659,21 +666,43 @@ function GraphView({
   );
   const paintColour =
     scheduleRoles || scheduleEdit || scheduleActive ? "roles" : colour;
+  const nodePaint = useCallback(
+    (node: ApiLineageNodeV1) =>
+      scheduleRoles || scheduleEdit || scheduleActive
+        ? schedulePaint(
+            roleNode(node),
+            planPreview,
+            scheduleEdit
+              ? usesTriggerConnections(scheduleEdit.definition)
+              : scheduleConnecting,
+          )
+        : paint(roleNode(node), paintColour, planPreview),
+    [
+      scheduleRoles,
+      scheduleEdit,
+      scheduleActive,
+      roleNode,
+      planPreview,
+      scheduleConnecting,
+      paintColour,
+    ],
+  );
   const datasetNodes: DatasetNode[] = useMemo(
     () =>
       graph.nodes.map((node, index) => ({
         id: node.identity,
         type: "dataset",
         measured: measurements.get(node.identity) ?? {},
-        className: planPreview
-          ? planPreview.writes.some(
-              (w) =>
-                node.identity ===
-                `dataset:${planPreview.workspace}:${w.dataset}`,
-            )
-            ? "plan-will-build"
-            : "plan-will-not-build"
-          : "",
+        className:
+          planPreview && !scheduleActive && !scheduleEdit && !scheduleRoles
+            ? planPreview.writes.some(
+                (w) =>
+                  node.identity ===
+                  `dataset:${planPreview.workspace}:${w.dataset}`,
+              )
+              ? "plan-will-build"
+              : "plan-will-not-build"
+            : "",
         position: layout.positions[node.identity] ?? {
           x: (index % 4) * 300,
           y: Math.floor(index / 4) * 180,
@@ -683,7 +712,7 @@ function GraphView({
         data: {
           value: node,
           colour: paintColour,
-          paint: paint(roleNode(node), paintColour, planPreview),
+          paint: nodePaint(node),
           hideUnknown: !!scheduleRoles || !!scheduleEdit || scheduleActive,
           workspace,
           busy: graph.busy,
@@ -707,7 +736,7 @@ function GraphView({
       measurements,
       planPreview,
       paintColour,
-      roleNode,
+      nodePaint,
       scheduleRoles,
       scheduleEdit,
       scheduleActive,
@@ -1154,7 +1183,7 @@ function GraphView({
             {[
               ...new Map(
                 graph.nodes.map((n) => {
-                  const p = paint(roleNode(n), paintColour, planPreview);
+                  const p = nodePaint(n);
                   return [p.key, p];
                 }),
               ).values(),
@@ -1165,11 +1194,7 @@ function GraphView({
                   selectNodes(
                     new Set(
                       graph.nodes
-                        .filter(
-                          (n) =>
-                            paint(roleNode(n), paintColour, planPreview).key ===
-                            p.key,
-                        )
+                        .filter((n) => nodePaint(n).key === p.key)
                         .map((n) => n.identity),
                     ),
                   )
@@ -1179,13 +1204,7 @@ function GraphView({
                 <span className={`legend-swatch colour-${p.key}`} />
                 {p.label}
                 <span className="muted">
-                  {
-                    graph.nodes.filter(
-                      (n) =>
-                        paint(roleNode(n), paintColour, planPreview).key ===
-                        p.key,
-                    ).length
-                  }
+                  {graph.nodes.filter((n) => nodePaint(n).key === p.key).length}
                 </span>
               </Button>
             ))}

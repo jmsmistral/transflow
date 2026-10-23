@@ -1385,3 +1385,85 @@ test.each(["full", "between", "connecting"] as const)(
     workspace.dispose();
   },
 );
+
+test("draft connecting previews follow the toggle and reject a late response after switching off", async () => {
+  const { workspace, state } = await setup();
+  let finish: (plan: PlanResultV1) => void = () => {
+    throw Error("missing draft preview");
+  };
+  const preview = vi
+    .spyOn(workspace.client, "schedulePreview")
+    .mockResolvedValue(schedulePlan);
+  const onPlan = vi.fn();
+  const onConnecting = vi.fn();
+  const dataset = state.value.datasets.entries[0];
+  if (!dataset) throw Error("missing catalogue fixture");
+  const withUpstream = {
+    ...state,
+    value: {
+      ...state.value,
+      datasets: {
+        ...state.value.datasets,
+        entries: [
+          ...state.value.datasets.entries,
+          { ...dataset, dataset_id: id, path: "raw/upstream" },
+        ],
+      },
+    },
+  };
+  const view = render(
+    <Schedules
+      workspace={workspace}
+      state={withUpstream}
+      selected={[]}
+      visible={[identity(target)]}
+      onRoles={vi.fn()}
+      onPlan={onPlan}
+      onAdd={vi.fn()}
+      onConnecting={onConnecting}
+    />,
+  );
+  fireEvent.click(await screen.findByText("Daily review"));
+  await screen.findByText("1 dataset");
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  // The fixture initially uses the same trigger and target; choose a distinct trigger.
+  const triggerRegion = screen.getByRole("region", { name: "When to build" });
+  const selects = within(triggerRegion).getAllByRole("combobox");
+
+  const datasetChoice = selects[1];
+  if (!datasetChoice) throw Error("missing dataset choice");
+  fireEvent.change(datasetChoice, {
+    target: { value: identity({ workspace_id: workspaceId, dataset_id: id }) },
+  });
+  preview.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  fireEvent.click(screen.getByRole("switch", { name: "Connecting build" }));
+  await waitFor(() =>
+    expect(preview).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        build: expect.objectContaining({
+          build_mode: "between",
+          boundaries: [{ workspace_id: workspaceId, dataset_id: id }],
+        }),
+      }),
+      expect.anything(),
+      expect.any(AbortSignal),
+    ),
+  );
+  expect(onConnecting).toHaveBeenLastCalledWith(true);
+  fireEvent.click(screen.getByRole("switch", { name: "Connecting build" }));
+  expect(onConnecting).toHaveBeenLastCalledWith(false);
+  onPlan.mockClear();
+  await act(async () => {
+    finish({ ...schedulePlan, mode: "Between" });
+  });
+  expect(onPlan).not.toHaveBeenCalledWith(
+    expect.objectContaining({ mode: "Between" }),
+  );
+  view.unmount();
+  workspace.dispose();
+});

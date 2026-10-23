@@ -608,6 +608,7 @@ export function ScheduleEditor({
   selected = [],
   onEdit,
   onReload,
+  connectionStatus = "",
 }: {
   workspace: Workspace;
   initial: ScheduleDefinitionV1;
@@ -623,6 +624,7 @@ export function ScheduleEditor({
   selected?: readonly ApiLineageNodeV1[];
   onEdit?: (session: ScheduleEditSession | null) => void;
   onReload?: (signal: AbortSignal) => Promise<void>;
+  connectionStatus?: string;
 }) {
   const [draft, setDraft] = useState(() =>
       withTriggerConnections(initial, usesTriggerConnections(initial)),
@@ -936,6 +938,11 @@ export function ScheduleEditor({
         </p>
         {!connecting && connectionIssue(draft) && (
           <p className="muted">{connectionIssue(draft)}</p>
+        )}
+        {connectionStatus && (
+          <p role="status" className="muted">
+            {connectionStatus}
+          </p>
         )}
         {initial.build.build_mode !== "selected" &&
           !usesTriggerConnections(initial) && (
