@@ -1,5 +1,32 @@
 # Contributor verification
 
+## Schedule target-only scope correction (2026-10-23)
+
+The lineage editor now has one scope control. Connecting build off prepares
+Selected scope; on prepares trigger-boundary Between scope. Older advanced scopes
+open with a conversion notice and dirty-exit protection. Saving persists the
+choice; viewing and discarding preserve the saved definition. Removed the
+conflicting Advanced scope selector and explicit read-boundary picker. Backend
+scope algorithms, CLI/API modes, trigger conditions and accepted runs are unchanged.
+
+Local verification:
+
+- Full web gate: 759 tests in 38 files, typecheck, lint, formatting, production
+  worker probes and 16 reproducible assets. Final copy/event-fixture refinement:
+  27 focused schedule tests, strict types/lint/format and production build passed.
+- Safety: 27 tests; 922 public candidate files, 635 locked versions, one exception.
+- Specification checker and all 44 checker tests passed; both diffs are clean.
+- Internal Browser against the rebuilt UI: older full scope opens as a disclosed
+  target-only draft; Connecting on/off works; Discard returns to the saved scope.
+- Corrected the owner's existing Weekday delivery schedule in preview-scroll-review
+  through guarded UI Save. The shared backend plan reports exactly one write,
+  curated/delivery; east/west are published read boundaries. Pause state and AND
+  conditions remain unchanged. This is plan verification, not a newly executed build.
+- Existing preview-scroll-review launcher remains the review entry point. Restart
+  it to load the rebuilt editor; the saved schedule correction is already effective.
+
+Remote CI is owner-monitored; no remote result is claimed.
+
 ## Schedule editor redesign (2026-10-22)
 
 T098 rebuilds the schedule form around editable trigger cards and independently

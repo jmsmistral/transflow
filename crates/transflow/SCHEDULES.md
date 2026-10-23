@@ -21,9 +21,10 @@ separate builds; OR does not combine them into one event.
 
 The data branch and ordered fallbacks are separate from trigger event branches.
 The first row shows the data branch, followed by fallbacks in search order.
-**Connecting build** attempts to build datasets between trigger and target nodes.
+With **Connecting build** off, only selected targets are built; their inputs use
+published data. Turn it on to build datasets between trigger and target nodes.
 
-**Advanced options** groups build scope, failures/retries, overlapping runs,
+**Advanced options** groups build reuse, failures/retries, overlapping runs,
 timing/limits, input datasets and custom input/parameter overrides. Each group
 expands separately. Retry classes appear when more than one attempt is allowed;
 catch-up limits appear with catch-up enabled. Time values accept seconds, minutes
@@ -146,9 +147,11 @@ build** switch requires at least one dataset trigger and a distinct target. It
 reuses published trigger inputs and builds eligible datasets on their paths to
 the targets; other inputs remain read boundaries. Removing a required endpoint
 blocks Save until repaired or the switch is turned off. The shared planner uses
-the complete captured graph and saved input policies. Existing saved advanced
-scopes remain available; this UI option uses Between scope with trigger boundaries
-without changing explicit targets, API defaults or accepted execution settings.
+the complete captured graph and saved input policies. The switch is the editor's only scope control: off uses Selected scope, on uses
+Between scope with trigger boundaries. Editing an older advanced scope prepares
+a target-only draft with a notice; Save applies that choice, while Discard keeps
+the saved definition. Existing advanced scopes remain available through the CLI/API.
+Viewing a schedule never rewrites it; accepted runs retain their captured settings.
 
 Target is green, Trigger amber and Attempt to build blue, matching the legend.
 Hover a role label for simultaneous flags. Extra-info icons do not repeat roles.

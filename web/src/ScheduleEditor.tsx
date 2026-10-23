@@ -624,7 +624,9 @@ export function ScheduleEditor({
   onEdit?: (session: ScheduleEditSession | null) => void;
   onReload?: (signal: AbortSignal) => Promise<void>;
 }) {
-  const [draft, setDraft] = useState(initial),
+  const [draft, setDraft] = useState(() =>
+      withTriggerConnections(initial, usesTriggerConnections(initial)),
+    ),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [clock, setClock] = useState<ApiScheduleClockPreviewV1 | null>(null),
@@ -927,20 +929,22 @@ export function ScheduleEditor({
           }}
         />
         <p className="muted" role={connectionError ? "alert" : undefined}>
-          {connectionIssue(draft) ||
-            "Attempt to build every dataset between Triggers and Targets."}
+          {connecting
+            ? connectionIssue(draft) ||
+              "Attempt to build every dataset between Triggers and Targets."
+            : "Build only selected targets, using published data for other inputs."}
         </p>
-        {!connecting && draft.build.build_mode !== "selected" && (
-          <p className="muted">
-            Saved advanced scope:{" "}
-            {draft.build.build_mode === "full"
-              ? "Targets and required ancestors"
-              : draft.build.build_mode === "between"
-                ? "Between read boundaries and targets"
-                : "Connecting selected target endpoints"}
-            . Configure it under Advanced options.
-          </p>
+        {!connecting && connectionIssue(draft) && (
+          <p className="muted">{connectionIssue(draft)}</p>
         )}
+        {initial.build.build_mode !== "selected" &&
+          !usesTriggerConnections(initial) && (
+            <p className="muted" role="status">
+              This schedule used an advanced build scope. Saving applies the
+              Connecting build choice above; with it off, only targets are
+              built.
+            </p>
+          )}
       </section>
       <ScheduleBranchesEditor
         workspace={workspace}
@@ -955,40 +959,9 @@ export function ScheduleEditor({
         className="schedule-advanced"
       >
         <ScheduleDisclosure
-          title="Build scope"
-          description="Choose which datasets to build and reuse"
+          title="Build reuse"
+          description="Choose whether to reuse up-to-date results"
         >
-          {!connecting && (
-            <Field label="Build scope">
-              <select
-                value={draft.build.build_mode}
-                onChange={(e) => {
-                  const mode = e.target.value;
-                  build({
-                    build_mode:
-                      mode === "selected"
-                        ? "selected"
-                        : mode === "between"
-                          ? "between"
-                          : mode === "connecting"
-                            ? "connecting"
-                            : "full",
-                  });
-                }}
-              >
-                <option value="selected">Selected datasets only</option>
-                <option value="full">Targets and required ancestors</option>
-                <option value="between">
-                  Between explicit read boundaries
-                </option>
-                {draft.build.build_mode === "connecting" && (
-                  <option value="connecting">
-                    Connecting selected target endpoints (saved scope)
-                  </option>
-                )}
-              </select>
-            </Field>
-          )}
           <Switch
             label="Force build on up-to-date datasets"
             value={draft.build.force}
@@ -1198,16 +1171,8 @@ export function ScheduleEditor({
         </ScheduleDisclosure>
         <ScheduleDisclosure
           title="Input datasets"
-          description="Read boundaries, exclusions and refreshed sources"
+          description="Exclusions and refreshed sources"
         >
-          {!connecting && draft.build.build_mode === "between" && (
-            <DatasetChoices
-              label="Read boundaries"
-              value={draft.build.boundaries}
-              datasets={datasets}
-              onChange={(boundaries) => build({ boundaries })}
-            />
-          )}
           <DatasetChoices
             label="Excluded datasets"
             value={draft.build.exclusions}

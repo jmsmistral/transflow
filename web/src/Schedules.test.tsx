@@ -1311,3 +1311,77 @@ test("advanced sections preserve policy values while exposing relevant retry and
   });
   workspace.dispose();
 });
+
+test.each(["full", "between", "connecting"] as const)(
+  "editing a saved %s scope with Connecting build off saves only targets",
+  async (build_mode) => {
+    const { workspace } = await setup();
+    const upstream = { workspace_id: workspaceId, dataset_id: id };
+    const initial: ScheduleDefinitionV1 = {
+      ...definition,
+      trigger: {
+        kind: "dataset_published",
+        id: "upstream",
+        dataset: upstream,
+        branch: "input",
+        payload_mode: "signal_only",
+        include_resets: false,
+      },
+      build: {
+        ...definition.build,
+        build_mode,
+        boundaries: build_mode === "between" ? [target] : [],
+      },
+    };
+    const save = vi.fn(async () => undefined);
+    let session: ScheduleEditSession | null = null;
+    render(
+      <ScheduleEditor
+        workspace={workspace}
+        initial={initial}
+        record={null}
+        datasets={[]}
+        schedules={[]}
+        onSave={save}
+        onCancel={vi.fn()}
+        onEdit={(value) => {
+          session = value;
+        }}
+      />,
+    );
+    expect(
+      screen
+        .getByRole("switch", { name: "Connecting build" })
+        .getAttribute("aria-checked"),
+    ).toBe("false");
+    expect(
+      screen.getByText(/This schedule used an advanced build scope/),
+    ).toBeTruthy();
+    expect(screen.queryByRole("combobox", { name: "Build scope" })).toBeNull();
+    expect(
+      (session as ScheduleEditSession | null)?.definition.build,
+    ).toMatchObject({
+      build_mode: "selected",
+      boundaries: [],
+      targets: [target],
+    });
+    expect(initial.build.build_mode).toBe(build_mode);
+    expect(save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(
+      screen.getByRole("button", { name: "Discard changes" }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save schedule" }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect(save).toHaveBeenCalledWith(
+      {
+        ...initial,
+        build: { ...initial.build, build_mode: "selected", boundaries: [] },
+      },
+      expect.any(AbortSignal),
+      false,
+    );
+    workspace.dispose();
+  },
+);

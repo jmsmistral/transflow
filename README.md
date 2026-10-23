@@ -53,7 +53,7 @@ def order_totals():
 
 ## Features
 
-- **Pipeline development and orchestration** - Review build inputs, checks and execution limits, then run data pipelines or schedule them with combined triggers.
+- **Pipeline development and orchestration** - Review build inputs, checks and execution limits, then run data pipelines or schedule selected targets with combined triggers and optional connecting builds.
 - **Polars and DuckDB first** - Write data transformations in Polars or DuckDB SQL.
 - **Versioned data and provenance** - Track published outputs, captured code and exact input versions.
 - **Data expectations** - Define and validate quality checks on transform inputs and outputs.
