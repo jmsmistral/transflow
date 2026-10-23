@@ -97,7 +97,7 @@ follow its upstream dependencies. Saved lineage views keep the graph you are wor
 - **[Reuse transform factories and dataset handles](python/TRANSFORM_FACTORIES.md)**.
 - **[Build and inspect datasets](crates/transflow/BUILDS.md)** · **[Set up schedules](crates/transflow/SCHEDULES.md)**.
 - **[Browse all guides](docs/README.md)** - authoring, operations, UI and API reference.
-- **[Contribute](docs/development/README.md)** - source layout, setup and verification.
+- **[Contribute](docs/development/README.md)** - source layout, setup, verification and [sample workspace CLI checks](docs/development/sample-workspace-cli.md).
 
 Transflow is under active development. The current preview uses a native Rust CLI,
 a matched Python SDK/worker wheel, and a separately built web UI. See the

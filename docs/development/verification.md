@@ -1,5 +1,22 @@
 # Contributor verification
 
+## Sample workspace CLI guide (2026-10-23)
+
+Added [Sample workspace CLI checks](sample-workspace-cli.md), linked from the
+root introduction, documentation index and contributor guide. It consolidates
+session PATH/current-directory setup without `--workspace`, the existing review
+sample's datasets, inspection/history commands, Selected/Full/Between planning,
+explicit build examples, coordinator/UI use and saved-schedule checks.
+
+Verified discovery from the sample root and its src child; live catalogue,
+branch, build-list and schedule-list reads pass. Three guarded nonexecuting plans
+produce the documented delivery write scopes: Selected 1, Full 4, Between 3.
+All report producer_execution=false. No producer was executed or data published.
+All 13 Bash blocks parse; all six guide links resolve; both launcher scripts
+pass Bash syntax checks. Specification/link checks and the safety baseline pass
+(27 tests, 923 public files, 635 locked versions, one exception). Application
+suites are not repeated for documentation.
+
 ## Schedule intent roles and live connecting previews (2026-10-23)
 
 Schedule colours, labels, accessible descriptions, legend counts and legend

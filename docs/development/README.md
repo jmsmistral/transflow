@@ -24,6 +24,9 @@ actual measurements belong in [verification](verification.md) and its receipts.
 ## Set up and verify
 
 The [source quickstart](../getting-started.md) builds a working local preview.
+For the prepared Operational alpha review sample, use the
+[CLI checks guide](sample-workspace-cli.md), including PATH setup and commands
+without `--workspace`.
 For development, follow the [verification workflow](verification.md#verification-workflow),
 [compatibility guide](compatibility.md) and [safety policy](safety.md). Toolchain and
 runtime dependencies are pinned; dependency installation is an explicit setup step.

@@ -29,6 +29,9 @@ a first dataset build and the lineage workspace.
 
 ## Explore the workspace
 
+- [Sample workspace CLI checks](development/sample-workspace-cli.md) — run the
+  prepared review sample without repeating `--workspace`, inspect plans and test builds.
+
 - [Lineage UI reference](../web/README.md) — graph exploration, saved views,
   scroll-loaded catalogue/preview, SQL scratchpad with catalogue autocomplete and joins, authored/generated code,
   history and data health.
