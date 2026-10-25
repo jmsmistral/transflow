@@ -1,5 +1,34 @@
 # Contributor verification
 
+## Preview paging CI synchronization correction (2026-10-25)
+
+The owner reported a macOS web failure on documentation-only revision `5a65a3f`:
+[run 39940501914, job 120370464458](https://github.com/jmsmistral/transflow/actions/runs/39940501914/job/120370464458).
+The public job API confirms that revision and failed shared web step; full logs
+require sign-in. The supplied excerpt points to the one-second wait for the
+second-page request in the Preview scroll test.
+
+The original isolated test passes locally. A deterministic immediate phase
+assertion exposes that the second-page request is still pending after synchronous
+scroll dispatch. The grid handler awaits provider data before updating React's
+cursor state. The test now flushes that work with asynchronous act, batches the
+two duplicate scrolls together, and flushes the held response inside act. The
+request assertion runs directly after that boundary; no timeout or retry was
+increased. An additional assertion checks there are exactly two requests while
+the second is held, before releasing its response. Pinned version, 500-row page
+size and 1,000-row display-cap assertions remain.
+
+Ten consecutive focused runs and all 62 tests in the three affected Preview/grid
+suites pass on local macOS arm64 with pinned Node/npm. The full web gate passes
+763 tests, strict types/lint/format, worker probes and reproducible builds. All
+16 assets remain byte-identical to the pre-fix production output. Safety (27
+regressions), specification and paired diff checks pass. Results are recorded in the
+[receipt](evidence/preview-paging-ci-sync-macos-arm64.json). Production source,
+dependencies, workflow parallelism, isolation and timeouts are unchanged; no new
+Rust/Python or real-grid Browser behavior qualification is claimed. The exact
+intermittent CI timeout did not reproduce in the isolated baseline. New remote
+CI remains owner-monitored.
+
 ## Sample workspace CLI guide (2026-10-23)
 
 Added [Sample workspace CLI checks](sample-workspace-cli.md), linked from the

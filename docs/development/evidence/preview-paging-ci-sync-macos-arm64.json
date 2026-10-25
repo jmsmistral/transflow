@@ -1,0 +1,38 @@
+{
+  "task": "T006/T085 Preview paging CI synchronization",
+  "date": "2026-10-25",
+  "specification": "1.1.4",
+  "platform": "macOS arm64 / Node 24.22.0 / npm 11.19.1",
+  "implementation_base": "5a65a3ff034ed4a28000f8441222247e192eb4c1",
+  "reported_ci_job": "https://github.com/jmsmistral/transflow/actions/runs/39940501914/job/120370464458",
+  "reported_failure": "macos-15: waitFor complete to be defined at inspectors.test.tsx:425 timed out in Preview paging",
+  "evidence": {
+    "public_job_api": "Confirms reported head, failure and failed shared web step; other steps prepared dependencies and preserved reports successfully.",
+    "full_logs": "Sign-in required; stack location is from the owner-supplied screenshot.",
+    "isolated_baseline": "Original test passed locally; exact intermittent CI timeout not reproduced.",
+    "synchronization_probe": "An immediate request-start assertion failed before async act and passed after it, exposing the pending provider/cursor update."
+  },
+  "changes": [
+    "Await async React act around scroll events, held page completion and final cap check.",
+    "Keep duplicate near-end scrolls in the same burst.",
+    "Assert request start directly after async flush; assert exactly two requests while page two is held.",
+    "Retain 500-row pages, exact version pinning and 1000-row display cap."
+  ],
+  "verification": {
+    "focused_repeats": "10 consecutive CI=true targeted runs passed.",
+    "related": "62 tests passed across inspectors, operational-inspectors and PreviewGrid with maxWorkers=3.",
+    "full_web": "CI=true bash tools/check-web.sh: 763 tests in 38 files; strict types, lint, formatting, worker probes and reproducible builds passed.",
+    "production_assets": 16,
+    "pre_fix_production_bytes_identical": true,
+    "repository_checks": {
+      "safety": "27 regressions passed; 924 public candidate files, 635 locked package versions, one exception and one generated contract.",
+      "specification": "Documentation/link/example checker passed; 123 tasks and 106 Markdown files checked. No application tests are executed by this checker.",
+      "diff": "Both repository diffs pass git diff --check."
+    }
+  },
+  "limits": [
+    "Test-only fix; production source, dependency pins, global timeouts, retries, isolation and CI worker settings unchanged.",
+    "No new Rust/Python execution or real-grid browser qualification; product assets remain byte identical.",
+    "New remote CI remains owner-monitored."
+  ]
+}

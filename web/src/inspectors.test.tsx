@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { App } from "./App";
 import { PropertiesInspector, versionMetadata, wire } from "./inspectors";
@@ -416,29 +422,44 @@ test("scroll paging uses 500-row requests, pins the version and ignores duplicat
   fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
   await waitFor(() => expect(screen.getByText(/Showing 500\+/)).toBeTruthy());
   expect(screen.queryByRole("button", { name: /Load next/ })).toBeNull();
-  scrollPreview(11900, "rgCol");
-  scrollPreview(100);
-  await Promise.resolve();
+  await act(async () => {
+    scrollPreview(11900, "rgCol");
+    scrollPreview(100);
+  });
   expect(complete).toBeUndefined();
-  scrollPreview(11760);
-  scrollPreview(11760);
-  await waitFor(() => expect(complete).toBeDefined());
-  scrollPreview(11760);
-  complete?.(
-    json(
-      {
-        ...preview,
-        rows: Array.from({ length: 500 }, () => preview.rows[1] ?? []),
-        next_cursor: "more-rows",
-      },
-      exact,
+  // The scroll handler awaits grid providers before updating the page cursor.
+  // Flush that async React work before asserting which request has started.
+  await act(async () => {
+    scrollPreview(11760);
+    scrollPreview(11760);
+  });
+  expect(complete).toBeDefined();
+  await act(async () => {
+    scrollPreview(11760);
+  });
+  expect(
+    fetcher.mock.calls.filter(([url]) =>
+      String(url).startsWith("/api/v1/previews?"),
     ),
-  );
+  ).toHaveLength(2);
+  await act(async () => {
+    complete?.(
+      json(
+        {
+          ...preview,
+          rows: Array.from({ length: 500 }, () => preview.rows[1] ?? []),
+          next_cursor: "more-rows",
+        },
+        exact,
+      ),
+    );
+  });
   await waitFor(() =>
     expect(screen.getByText(/Showing 1000.*preview limit/)).toBeTruthy(),
   );
-  scrollPreview(23760);
-  await Promise.resolve();
+  await act(async () => {
+    scrollPreview(23760);
+  });
   const requests = fetcher.mock.calls.filter(([url]) =>
     String(url).startsWith("/api/v1/previews?"),
   );
