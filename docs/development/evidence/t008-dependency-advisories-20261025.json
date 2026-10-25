@@ -1,0 +1,159 @@
+{
+  "date": "2026-10-25",
+  "tasks": [
+    "T003",
+    "T005",
+    "T006",
+    "T008"
+  ],
+  "platform": {
+    "os": "macOS 15.3.1",
+    "architecture": "arm64",
+    "rust": "1.98.1",
+    "python": "3.14.7",
+    "node": "24.22.0",
+    "npm": "11.19.1"
+  },
+  "reported_failure": {
+    "job_url": "https://github.com/jmsmistral/transflow/actions/runs/40201161088/job/121192432432",
+    "revision": "a96b99d3e8aa67d1e5e5d6d270845b2f211e647b",
+    "baseline_query_count": 635,
+    "reproduced_findings": [
+      {
+        "advisory": "GHSA-xmj3-9gf7-h52w",
+        "package": "PyPI:setuptools@84.0.0"
+      },
+      {
+        "advisory": "RUSTSEC-2026-0386",
+        "package": "crates.io:tokio@1.53.1"
+      },
+      {
+        "advisory": "GHSA-mrhx-c7xc-m3w5",
+        "package": "npm:zod@4.6.5"
+      }
+    ],
+    "standalone_check": "failed after all 27 checker regressions passed"
+  },
+  "changes": {
+    "tokio": {
+      "from": "1.53.1",
+      "to": "1.53.3",
+      "scope": "Application and qualification manifests and Cargo locks",
+      "advisory_url": "https://rustsec.org/advisories/RUSTSEC-2026-0386.html"
+    },
+    "setuptools": {
+      "from": "84.0.0",
+      "to": "84.1.0",
+      "scope": "Python build-system requirement, development input/lock and qualification resolver lock",
+      "advisory_url": "https://github.com/advisories/GHSA-xmj3-9gf7-h52w"
+    },
+    "zod": {
+      "from": "4.6.5",
+      "to": "4.6.7",
+      "scope": "Application transitive npm lock within the existing dependency range; absent from qualification web graph",
+      "advisory_url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
+    },
+    "other_locked_versions_changed": false,
+    "new_exceptions": 0,
+    "policy_or_workflow_changed": false
+  },
+  "audit": {
+    "checked_at": "2026-10-25T14:21:42.431026+00:00",
+    "queried": 635,
+    "findings": [],
+    "inventory_sha256": "7e25bac8d5d18fe603f16b11dd5bf1af87de8331282d24501bb820c3778d4bd8",
+    "report_sha256": "793061f109ea3e1a84bba466fc693f4a4ead3ed4ade2a34d81596b194e486bf4",
+    "locks": 7,
+    "retained_exceptions": 1
+  },
+  "verification": {
+    "safety_implementation": {
+      "command": "bash tools/check-safety.sh --implementation-only --advisories security/advisories.json",
+      "result": "passed",
+      "regressions": 27,
+      "log": "target/safety-after-implementation.log"
+    },
+    "safety_paired": {
+      "command": "bash tools/check-safety.sh",
+      "result": "passed",
+      "regressions": 27,
+      "log": "target/safety-after-paired.log"
+    },
+    "python": {
+      "command": "bash tools/check-python.sh",
+      "result": "passed",
+      "tests": 1168,
+      "wheel_build_and_offline_install": true,
+      "log": "target/safety-python-gate.log"
+    },
+    "web": {
+      "command": "bash tools/check-web.sh",
+      "result": "passed",
+      "tests": 763,
+      "reproducible_assets": 16,
+      "log": "target/safety-web-gate.log"
+    },
+    "rust": {
+      "command": "bash tools/check-rust.sh",
+      "result": "passed",
+      "tests": 501,
+      "ignored": 0,
+      "suite_results": 94,
+      "boundary_checker_regressions": 19,
+      "local_process_and_socket_access": true,
+      "log": "target/safety-rust-gate-unrestricted.log"
+    },
+    "cli": {
+      "command": "bash tools/check-cli.sh",
+      "result": "passed",
+      "tests": 70,
+      "local_process_and_socket_access": true,
+      "log": "target/safety-cli-gate.log"
+    },
+    "native_qualification": {
+      "command": "PYTHON=\"$PWD/target/qualification/py314/bin/python\" bash tools/qualification/check.sh",
+      "result": "passed",
+      "local_process_and_socket_access": true,
+      "reports": "target/qualification/runs/native.5DiqUp",
+      "completed_reports": [
+        "api.json",
+        "build-dispatch.json",
+        "declaration-returns.json",
+        "developer-core.json",
+        "duckdb-capabilities.json",
+        "expectation-evaluation.json",
+        "expectation-lifecycle.json",
+        "foreign-data.json",
+        "g3-expectations.json",
+        "normalization.json",
+        "polars-execution.json",
+        "python.json",
+        "queries.json",
+        "resource-capabilities.json",
+        "rust.json",
+        "scratchpad.json",
+        "sql-checks-lifecycle.json",
+        "sql-cross-engine.json",
+        "transform-factories.json"
+      ],
+      "log": "target/safety-qualification-gate-unrestricted.log"
+    },
+    "specification": {
+      "result": "passed",
+      "command": "python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "checker_tests": 44,
+      "log": "target/safety-spec-check.log",
+      "regression_log": "target/safety-spec-regressions.log"
+    }
+  },
+  "environment_notes": [
+    "Initial native qualification stopped in the Polars runtime ownership fixture because the sandbox blocked a process check; rerun with local process and socket access.",
+    "After explicit npm ci, the documented prepare:types step was run before the successful full web gate.",
+    "The restricted Rust gate passed compilation and linting but stopped at four process-identity tests with Operation not permitted; the full gate was rerun with the required access."
+  ],
+  "limits": [
+    "Linux and updated remote CI remain pending owner monitoring.",
+    "No new Browser journey or release/platform conformance is claimed.",
+    "Existing user review workspaces and their installed environments were preserved."
+  ]
+}

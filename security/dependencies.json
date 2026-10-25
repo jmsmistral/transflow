@@ -1,12 +1,12 @@
 {
   "locks": {
-    "Cargo.lock": "306eadd5d746d5a4e00b29be1fdba9da7136318ddb765c710526766014925ed2",
-    "python/dev-py314.lock": "70e9c67f810e843334c39b4d47c1a23c30e7a982a1da144b87fc86c844227ddc",
+    "Cargo.lock": "46c3dcddbcde2208a20539b9f7ddca1590a93485ef8717d4e5a6d78043f147b0",
+    "python/dev-py314.lock": "49b30200646418db7ef08b59508e04ea83b54801c3f574806e9bef44400e5910",
     "tools/qualification/python/py314.lock": "368680daa726b6b16dac4fe9f924ace236f800f4c4e054d0254a029e99897101",
-    "tools/qualification/python/resolver.lock": "423f4d9b8bbf92c0e33af969f5154f92f781d13dc393850ee4b2b72be2e72108",
-    "tools/qualification/rust/Cargo.lock": "1ef271b4144b8a3e8d397eb6e040b883e52d91d51e3da1625f14112a7cb537fa",
+    "tools/qualification/python/resolver.lock": "09b3c79261526ce0873cee7da839aa1b9bf319217a7920f60a34ba6fdb69f233",
+    "tools/qualification/rust/Cargo.lock": "2908dd56eac55e199435dc9b7119ad8d0b9d3de660ddf3e9462fa85537a38422",
     "tools/qualification/web/package-lock.json": "907b0fd8905e7f1bd629859575997304f128800550fb8d290411792d93523756",
-    "web/package-lock.json": "ed0d6dd09a94fa6e79c58fe774f6c7d01261b54ea4feacd3d3e8dd846bd1bc42"
+    "web/package-lock.json": "913744c5a02cee803916c175122f5fbd904a46752fe378ef524f93813b4190ab"
   },
   "packages": [
     {
@@ -278,7 +278,7 @@
     {
       "deprecations": [],
       "ecosystem": "PyPI",
-      "id": "PyPI:setuptools@84.0.0",
+      "id": "PyPI:setuptools@84.1.0",
       "licenses": [
         "MIT"
       ],
@@ -287,7 +287,7 @@
         "tools/qualification/python/resolver.lock"
       ],
       "name": "setuptools",
-      "version": "84.0.0"
+      "version": "84.1.0"
     },
     {
       "deprecations": [],
@@ -2753,7 +2753,7 @@
     {
       "deprecations": [],
       "ecosystem": "crates.io",
-      "id": "crates.io:tokio@1.53.1",
+      "id": "crates.io:tokio@1.53.3",
       "licenses": [
         "MIT"
       ],
@@ -2762,7 +2762,7 @@
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "tokio",
-      "version": "1.53.1"
+      "version": "1.53.3"
     },
     {
       "deprecations": [],
@@ -8524,7 +8524,7 @@
     {
       "deprecations": [],
       "ecosystem": "npm",
-      "id": "npm:zod@4.6.5",
+      "id": "npm:zod@4.6.7",
       "licenses": [
         "MIT"
       ],
@@ -8532,7 +8532,7 @@
         "web/package-lock.json"
       ],
       "name": "zod",
-      "version": "4.6.5"
+      "version": "4.6.7"
     },
     {
       "deprecations": [],

@@ -58,7 +58,7 @@ publication eligibility. Nothing has been published. The future public install
 command is `pip install transflow`; use the local wheel until a release exists.
 The Rust executable is still a separate native artifact.
 
-The build backend is setuptools 84.0.0 with build 1.6.1, already present in T003's
+The build backend is setuptools 84.1.0 with build 1.6.1, shared with the qualified
 resolver baseline. Development pins add Ruff 0.16.8, mypy 2.3.1 and pytest 9.1.1.
 The Python 3.14 tooling lock includes transitive hashes. Engines are not
 dependencies of the wheel; declare qualified engines in workspace requirements

@@ -18,7 +18,7 @@ pythonpath = ["sdk/src", "worker/src", "tools", "tests"]
 addopts = "--strict-config --strict-markers -ra"
 filterwarnings = ["error"]
 [build-system]
-requires = ["setuptools==84.0.0"]
+requires = ["setuptools==84.1.0"]
 build-backend = "setuptools.build_meta"
 
 [project]

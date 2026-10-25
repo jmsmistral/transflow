@@ -1,5 +1,42 @@
 # Contributor verification
 
+## Dependency advisory CI correction (2026-10-25)
+
+The [owner-reported safety job](https://github.com/jmsmistral/transflow/actions/runs/40201161088/job/121192432432)
+on `a96b99d` passes its 27 checker regressions, then rejects three dependency
+advisories. A fresh local OSV query reproduces the same three findings and the
+standalone safety command fails against that report. This is separate from the
+earlier paging-test correction.
+The saved offline report on the failed revision was dated 2026-10-21. CI queries
+current advisory data on every run rather than relying on that saved result.
+
+Only the affected dependency versions change: Tokio 1.53.1 to 1.53.3 in both
+Rust manifests/locks, setuptools 84.0.0 to 84.1.0 in the Python build requirement
+and both tooling locks, and transitive Zod 4.6.5 to 4.6.7 in the application web
+lock. Hashes and license inventory were regenerated using the existing package
+managers. No other locked package version changed. Engine, toolchain, workflow
+and security-policy settings are unchanged.
+
+Fresh OSV queries after the updates cover all 635 locked package versions with
+zero matches. Standalone and paired safety gates pass all 27 regressions; the
+existing single ESLint deprecation exception is unchanged. The full web gate
+passes 763 component tests, types/lint/format, worker probes and 16 reproducible
+assets. The Python gate passes 1,168 tests, strict lint/types, wheel builds and
+isolated offline installs using the updated backend.
+
+All 70 CLI integration tests and the complete native qualification runner pass.
+The latter retains 19 reports covering engines, process/resource boundaries,
+build dispatch, restart/replay, foreign data, API and interactive queries.
+The full Rust gate passes formatting, compilation, Clippy and workspace tests.
+Detailed results are recorded in the
+[receipt](evidence/t008-dependency-advisories-20261025.json). Verification uses
+macOS 15.3.1 arm64, Rust 1.98.1, Python 3.14.7 and Node 24.22.0/npm 11.19.1.
+Linux and new remote CI results remain pending owner monitoring. No new Browser
+journey or release/platform support claim is made for this dependency correction.
+Restricted runs initially blocked native process-identity checks; those checks
+use an explicitly permitted rerun with local process and socket access. No test
+code, assertions or timeouts were changed.
+
 ## Preview paging CI synchronization correction (2026-10-25)
 
 The owner reported a macOS web failure on documentation-only revision `5a65a3f`:

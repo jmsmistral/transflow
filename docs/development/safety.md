@@ -90,6 +90,24 @@ stated UTC date. Wildcards, duplicate/unused exceptions and missing ownership or
 rationale fail. All reported advisories block by default, without a severity
 threshold; secret findings cannot be suppressed through this policy.
 
+### Dependency advisory correction (2026-10-25)
+
+The [reported safety job](https://github.com/jmsmistral/transflow/actions/runs/40201161088/job/121192432432)
+failed independently of the earlier web paging test. A fresh local audit
+reproduced all three findings. The application and qualification Rust locks now
+pin Tokio 1.53.3; the Python build backend and both tooling locks use setuptools
+84.1.0; the application web lock resolves Zod 4.6.7 within its existing dependency
+range. The qualification web project does not depend on Zod.
+
+Upstream fixes cover [Zod collection validation](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5),
+[setuptools legacy wheel path handling](https://github.com/advisories/GHSA-xmj3-9gf7-h52w)
+and [Tokio I/O safety](https://rustsec.org/advisories/RUSTSEC-2026-0386.html).
+The regenerated inventory retains 635 package versions across seven locks. Fresh
+OSV queries report zero matches; no vulnerability exception was added. Live CI
+queries and strict failure handling remain in place. See
+[verification](verification.md#dependency-advisory-ci-correction-2026-10-25)
+for measured checks and platform limits.
+
 ### Vitest advisory correction (2026-10-22)
 
 The subsequent safety failure reports two advisories in `@vitest/mocker` 5.0.1,

@@ -3,7 +3,7 @@
 pip==26.2.1
 pip-tools==7.6.1
 build==1.6.1
-setuptools==84.0.0
+setuptools==84.1.0
 wheel==0.48.0
 ruff==0.16.8
 mypy==2.3.1

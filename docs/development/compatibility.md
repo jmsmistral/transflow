@@ -25,11 +25,13 @@ pins are unchanged. See the [receipt](evidence/t008-toolchain-review.json).
 | Rust toolchain | 1.98.1; edition 2024; initial MSRV 1.98.1 (older compilers unqualified) |
 | Python | 3.14 only; CI and local qualification pin 3.14.7 |
 | Resolver | pip 26.2.1 + pip-tools 7.6.1, with their transitive hash lock |
+| Python build backend | setuptools 84.1.0, shared by the resolver and development locks |
 | Polars | 1.44.2, including matching polars-runtime-32 |
 | DuckDB | 1.5.5 |
 | PyArrow | 25.0.1 |
 | Rust Arrow / Parquet | 60.0.0 |
 | SQLx / libsqlite3-sys | 0.9.0 / 0.37.0, bundled SQLite enabled |
+| Tokio | 1.53.3 in application and standalone qualification locks |
 | Chrono / Chrono-TZ | 0.4.45 / 0.10.4; T093 runtime resolver uses bundled IANA 2025b |
 | Observed Rust SQLite | 3.51.3; source ID below |
 | Node / npm | 24.22.0 / 11.19.1; macOS arm64 web qualification on 2026-10-19, updated Linux CI pending |
@@ -37,6 +39,11 @@ pins are unchanged. See the [receipt](evidence/t008-toolchain-review.json).
 | React Flow / ELK | @xyflow/react 12.11.6 / elkjs 0.12.0, with the declaration fix below |
 | TypeScript / Vite | 6.0.3 / 8.3.3 |
 | Vitest | 5.0.3, including matching mocker/spy security patches |
+| Zod | 4.6.7 in the application development dependency graph |
+
+The 2026-10-25 security refresh updates Tokio, setuptools and Zod without changing
+engine pins. See the [safety correction](safety.md#dependency-advisory-correction-2026-10-25)
+and its local verification limits; updated remote matrix results remain pending.
 
 The complete direct Rust pins and transitive resolution live in
 [Cargo.toml](../../tools/qualification/rust/Cargo.toml) and
