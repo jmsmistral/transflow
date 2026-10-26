@@ -43,8 +43,8 @@ mypy_path = $MYPY_CONFIG_FILE_DIR/.transflow/runtime/generated/current
 python_executable = /absolute/path/to/workspace/environment/bin/python
 ```
 
-For Pyright-backed VS Code and Emacs integrations, the candidate project recipe
-is a `pyrightconfig.json` in each workspace:
+For standalone static overlays, a candidate Pyright project recipe is a
+`pyrightconfig.json` in each workspace:
 
 ```json
 {
@@ -58,13 +58,16 @@ its language server after catalogue refresh if it retains old completion data.
 Do not configure a shared environment-wide stub path. Pyright's documented
 [stub path](https://github.com/microsoft/pyright/blob/main/docs/type-stubs.md) and
 Python's [typing distribution rules](https://typing.python.org/en/latest/spec/distributing.html)
-explain the intended resolution. **This Pyright/editor recipe is not yet qualified
-in native VS Code or Emacs.** Those observations remain on the
+explain the intended resolution. **This static Pyright/editor recipe is not yet
+qualified in native VS Code or Emacs.** The qualified additive VSCodium setup uses
+Transflow's live service alongside BasedPyright without this competing catalogue
+stub path; a Python server can otherwise retain old catalogue suggestions. See
+the [editor guide](../../docs/editors.md). Standalone overlay observations remain on the
 [manual checklist](../../docs/development/manual-acceptance.md). No installation
 or native-editor pass is claimed by the mypy tests.
 
-Production generation is a Rust service for the upcoming preparation/catalogue
-command; this task does not expose a public `catalog sync` command. The developer
+Production generation is a Rust service invoked by explicit `catalog sync`.
+The developer
 fixture renderer `cargo run -p tf-catalog --example render-editor --locked --offline`
 reads a snapshot on stdin and prints the exact typing files as JSON. Shared fixtures
 are checked byte-for-byte against this renderer and exercised by real isolated

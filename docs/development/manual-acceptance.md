@@ -12,9 +12,16 @@ clients are described in the [editor guide](../editors.md). Emacs 30.1 batch che
 now exercise independent catalogue completion, diagnostics/refresh, navigation,
 UTF-16 and installed-SDK/submodule completion alongside Python CAPF. Its optional
 Python 3.14 comint compatibility setup is tested without warning suppression.
-Interactive session review and native VS Code qualification remain open; a Node
-transport test is not evidence of a VS Code UI pass. Use the synthetic contexts
-and stub setup in the [overlay report](catalog-overlay.md).
+Native VSCodium 1.140.06880 extension-host checks now cover two simultaneous
+workspaces, live refresh, diagnostics, producer navigation and installed-SDK
+completion alongside Python 2026.4.0/BasedPyright 1.40.2. SDK bytes and isolated
+runtime imports are checked in both workspaces. See the
+[receipt](evidence/t108-vscodium-macos-arm64.json) and the additive setup in the
+[editor guide](../editors.md#python-tooling-alongside-transflow). That setup uses
+Transflow's live catalogue provider without a competing static Python stub path.
+These are native editor API checks, not observed manual gestures or a Microsoft
+VS Code/Pylance qualification. Interactive visual/keyboard review in both editors
+and standalone Python-server overlay refresh remain open.
 
 - Open two independent workspaces simultaneously: `raw/orders` in one and
   `raw/invoices` in the other. Each `C.raw.` completion must show its own names.

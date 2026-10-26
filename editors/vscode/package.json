@@ -9,6 +9,7 @@
   "engines": { "vscode": "^1.100.0" },
   "categories": ["Programming Languages"],
   "main": "./extension.cjs",
+  "extensionKind": ["workspace"],
   "activationEvents": ["onLanguage:python"],
   "capabilities": {"untrustedWorkspaces": {"supported": false}},
   "contributes": {

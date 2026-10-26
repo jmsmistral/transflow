@@ -77,7 +77,15 @@ function activate(context) {
     vscode.workspace.onDidChangeConfiguration(event => { if (event.affectsConfiguration('transflow')) void stop(); }),
     vscode.workspace.onDidChangeWorkspaceFolders(() => { void stop(); }),
     vscode.commands.registerCommand('transflow.restart', async () => { await stop(); const editor = vscode.window.activeTextEditor; if (editor) await client(editor.document); }),
-    vscode.commands.registerCommand('transflow.openProducer', async () => { const editor = vscode.window.activeTextEditor; if (editor) await vscode.commands.executeCommand('editor.action.revealDefinition'); }),
+    vscode.commands.registerCommand('transflow.openProducer', async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) return;
+      const version = editor.document.version;
+      const position = editor.selection.active;
+      const value = await request(editor.document, position, 'textDocument/definition');
+      if (!value || vscode.window.activeTextEditor !== editor || editor.document.version !== version || !editor.selection.active.isEqual(position)) return;
+      await vscode.window.showTextDocument(vscode.Uri.parse(value.uri), { selection: asRange(value.range) });
+    }),
     { dispose: () => { void stop(); } },
   );
   const watcher = vscode.workspace.createFileSystemWatcher('**/{catalog.toml,workspace.toml,transflow.local.toml,current}');

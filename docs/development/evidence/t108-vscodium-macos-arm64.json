@@ -1,0 +1,174 @@
+{
+  "date": "2026-10-26",
+  "specification": "1.1.4",
+  "tasks": [
+    "T031",
+    "T107",
+    "T108"
+  ],
+  "implementation_base": "ef4ba353ea0644377020b60008055d1d5f936e17",
+  "platform": {
+    "os": "15.3.1",
+    "architecture": "arm64",
+    "python": "3.14.7"
+  },
+  "editor": {
+    "product": "VSCodium",
+    "version": "1.140.06880",
+    "api_version": "1.140.0",
+    "commit": "807ba2d6075c29587f884698cd7370c81ab0724c",
+    "profile": "isolated fresh test profiles; normal user profile unchanged"
+  },
+  "coexistence_setup": {
+    "python": "2026.4.0",
+    "basedpyright": "1.40.2",
+    "ruff": "2026.90.0",
+    "other_extensions": [
+      "charliermarsh.ruff-2026.90.0-darwin-arm64",
+      "detachhead.basedpyright-1.40.2",
+      "ms-python.debugpy-2026.6.0-darwin-arm64",
+      "ms-python.python-2026.4.0-universal",
+      "ms-python.vscode-python-envs-1.40.0-universal"
+    ],
+    "basedpyright_artifact": {
+      "version": "1.40.2",
+      "sha256": "9c87b0b992714ca2f9298cb7e98bda621612f0ee96121a8e77ee7fcccce2f351",
+      "source": "https://open-vsx.org/api/detachhead/basedpyright/1.40.2/file/detachhead.basedpyright-1.40.2.vsix"
+    },
+    "static_catalogue_stub_path": false,
+    "python_languageServer": "None",
+    "basedpyright_importStrategy": "useBundled",
+    "ruff_importStrategy": "useBundled"
+  },
+  "source_sha256": {
+    "editors/vscode/extension.cjs": "bb17f76e076cae6f8055f40a1020f95cf31370a4b9683d1e6d092f984fd5001a",
+    "editors/vscode/transport.cjs": "421bf80da90b9b63d1788f3950c4c5a924c57a04d733ac5bbc45cf7ba1db40ac",
+    "editors/vscode/package.json": "8c9cdb83ac3df7f8aa6a5c603af3d8dc75bdcc3b6e08b5bdfd8f420c4eda4971",
+    "editors/vscode/README.md": "5303840a05eca68f70677ee0107a73648a11dc7f7e687b56b4b7f79097b60d0e",
+    "editors/vscode/host.test.cjs": "224ba7590682ff90bb994f55a02eb79475c65c050c33b7d23f5bc52d5e3e41b4",
+    "python/tools/package_vscode.py": "f16637a9821a42c2f269f1eadd60fb9e2e4c5fd0b89ef268ec2d029058e6b95a",
+    "python/integration/test_editor_clients.py": "64f7b9f442cd68b5f0cc8328fae5edd96150e666d3f27b069d909772c2850657"
+  },
+  "vsix": {
+    "sha256": "b57a610487fc23930cb2deeefb64f4c78bb2415ac023d114a3a1edea211eedf5",
+    "local_development_only": true,
+    "payload": [
+      "README.md",
+      "extension.cjs",
+      "package.json",
+      "transport.cjs"
+    ],
+    "reproducible": true
+  },
+  "native_baseline": {
+    "editor": "1.140.0",
+    "checks": [
+      "installed VSIX activates in the native trusted desktop host",
+      "simultaneous workspace catalogue completions remain isolated",
+      "typo diagnostics appear and clear through real document edits",
+      "hover, definition provider and producer command use retained metadata",
+      "catalogue changes refresh diagnostics and keep other workspaces isolated",
+      "editing and inspecting source never executes the draft",
+      "dataset service restarts and resumes completion"
+    ],
+    "outcome": "passed"
+  },
+  "native_python_coexistence": {
+    "editor": "1.140.0",
+    "checks": [
+      "installed VSIX activates in the native trusted desktop host",
+      "simultaneous workspace catalogue completions remain isolated",
+      "typo diagnostics appear and clear through real document edits",
+      "hover, definition provider and producer command use retained metadata",
+      "catalogue changes refresh diagnostics and keep other workspaces isolated",
+      "editing and inspecting source never executes the draft",
+      "ordinary Python and installed SDK completion coexist with Transflow",
+      "dataset service restarts and resumes completion"
+    ],
+    "outcome": "passed",
+    "pythonExtension": {
+      "id": "detachhead.basedpyright",
+      "version": "1.40.2"
+    }
+  },
+  "python_wrapper_assertions": [
+    "Both installed SDK source/type file byte sets are unchanged",
+    "Isolated Python runtime imports resolve the installed SDK and catalogue submodule in both workspaces",
+    "Neither runtime sys.path includes generated stubs",
+    "No draft sentinel file is created"
+  ],
+  "commands": [
+    {
+      "command": "bash tools/check-python.sh",
+      "result": "passed: 1171 tests, lint, formatting, strict mypy, wheel and isolated offline installs"
+    },
+    {
+      "command": "bash tools/check-cli.sh",
+      "result": "passed: 70 tests; native desktop opt-in skipped once, separately executed below"
+    },
+    {
+      "command": "TRANSFLOW_VSCODE=... TRANSFLOW_VSCODE_CLI=... pytest ...::test_native_vscode_extension_host",
+      "result": "passed: 1 pytest wrapper, seven native checks, 6.80 seconds"
+    },
+    {
+      "command": "TRANSFLOW_VSCODE=... TRANSFLOW_VSCODE_CLI=... TRANSFLOW_VSCODE_TEST_EXTENSIONS=... TRANSFLOW_PYTHON_EXTENSION=detachhead.basedpyright pytest ...::test_native_vscode_extension_host",
+      "result": "passed: 1 pytest wrapper, eight native checks, 8.89 seconds"
+    },
+    {
+      "command": "cargo build --locked --offline -p transflow",
+      "result": "passed"
+    },
+    {
+      "command": "npm --prefix web run prepare:types; npm --prefix web run build",
+      "result": "passed"
+    },
+    {
+      "command": "node --check editors/vscode/extension.cjs; node --check editors/vscode/host.test.cjs",
+      "result": "passed"
+    },
+    {
+      "command": "bash -n <review-tools>/open-vscodium.sh <review-tools>/serve-preview.sh",
+      "result": "passed"
+    },
+    {
+      "command": "python -B ../transflow-spec/tools/check_spec.py --root ../transflow-spec --implementation-root .",
+      "result": "passed: 1128 local links; application tests not executed by this checker"
+    },
+    {
+      "command": "python -B -m unittest discover -s ../transflow-spec/tools/tests",
+      "result": "passed: 44 checker regressions"
+    },
+    {
+      "command": "PYTHON=target/python/py314/bin/python bash tools/check-safety.sh",
+      "result": "passed: 27 regressions; 930 public files, 635 locked package versions, one existing exception, one generated contract"
+    },
+    {
+      "command": "git diff --check in both repositories",
+      "result": "passed"
+    }
+  ],
+  "reproduced_and_fixed": "With Python tooling active, generic editor.action.revealDefinition does not open the producer; the dedicated command now uses Transflow definition results with editor-state guards.",
+  "setup_observations": [
+    "Use short macOS IPC profile paths",
+    "Complete offline package fixture includes managed duckdb wheel",
+    "Hover API contains safe Markdown spacing; assert decoded text",
+    "Request SDK catalogue submodule completion in Python import context",
+    "Do not combine live Transflow completion with a stale generated catalogue stubPath"
+  ],
+  "review": {
+    "primary_workspace": "~/dev/transflow-workspace/t108-vscodium-review",
+    "secondary_workspace": "~/dev/transflow-workspace/t108-vscodium-invoices",
+    "tools": "~/dev/transflow-workspace/t108-vscodium-review-tools",
+    "browser": "Internal Browser: launcher connects; saved Operational alpha review opens with five Succeeded nodes on master",
+    "coordinator": "stopped; listener closure verified",
+    "prior_workspaces": "preserved"
+  },
+  "limits": [
+    "Native API checks in a trusted synthetic multi-root window, not manual visual/keyboard gestures",
+    "Microsoft VS Code and Pylance not installed or qualified",
+    "Emacs interactive review remains open; four native batch checks pass through CLI suite",
+    "Standalone Python-server generated-overlay refresh remains unqualified",
+    "No Marketplace/Open VSX publication, PyPI account configuration or package upload",
+    "T031/T107/T108 remain open for remaining acceptance; CI left to owner"
+  ]
+}

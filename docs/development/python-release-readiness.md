@@ -50,6 +50,36 @@ version must not be removed merely to make an upload command succeed.
 4. Publish the reviewed production version only after the rehearsal and owner
    approval. Verify the installed version and record its artifacts and provenance.
 
+## PyPI and GitHub administration follow-up
+
+Requested by the owner on 2026-10-26. Track this setup alongside T116 before the
+first release; account administration and the publishing workflow remain pending.
+
+- Confirm the owning PyPI account, verified email, two-factor authentication and
+  access to the intended `transflow` project name. Check TestPyPI separately.
+- Review the release workflow before registering its Trusted Publisher. The
+  proposed identity is GitHub owner `jmsmistral`, repository `transflow`, workflow
+  `publish-python.yml`, production environment `pypi` and test environment
+  `testpypi`. These are proposed settings, not existing configured publishers.
+- In PyPI account settings, add a pending GitHub Actions publisher for `transflow`
+  if the project does not exist; otherwise configure its project publisher. The
+  workflow filename and environment must match the eventual GitHub job exactly.
+  A pending publisher does not reserve the project name.
+- Configure the corresponding GitHub environments, release restrictions and
+  required approvals where available. Set up a separate TestPyPI publisher.
+- Implement the reviewed workflow with build/test jobs separated from publishing.
+  Give only the publishing job `id-token: write` for OIDC Trusted Publishing,
+  using short-lived credentials rather than a stored PyPI upload token. Ordinary
+  pushes must not publish a package.
+- Rehearse the approved artifacts on TestPyPI before the first approved production
+  upload. Record account setup, workflow identity and installation evidence here.
+
+Administrative setup does not close the release-readiness checks above. The
+development version and private upload classifier remain until release approval.
+See PyPI's [publisher setup](https://docs.pypi.org/trusted-publishers/adding-a-publisher/)
+and [pending project publisher](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
+instructions.
+
 This is a readiness checklist, not an enabled publishing pipeline or authorization
 to upload. Official references: [PyPA packaging tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/),
 [TestPyPI guide](https://packaging.python.org/en/latest/guides/using-testpypi/) and

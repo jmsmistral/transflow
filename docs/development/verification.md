@@ -1,5 +1,61 @@
 # Contributor verification
 
+## VSCodium native qualification and PyPI admin follow-up (2026-10-26)
+
+The owner selected VS Code first, then identified VSCodium as the installed
+editor. VSCodium 1.140.06880 (extension API 1.140.0) is qualified using actual
+installed VSIX packages in fresh profiles. A standard-library packager creates
+reproducible local VSIX files from four explicitly allowed client files; it does
+not include tests, workspace data, the CLI or Python. Three package tests cover
+reproducibility, omitted private files, symlinks and unsupported dependencies.
+
+Native extension-host journeys pass both alone (seven checks) and alongside
+Python 2026.4.0/BasedPyright 1.40.2 with Ruff 2026.90.0 present (eight checks).
+They exercise two independent workspace roots in one multi-root window,
+completion isolation, cross-workspace typo diagnostics, metadata hover,
+producer navigation, catalogue refresh without typing, Python/SDK completions,
+no draft execution and service restart. Both installed SDKs remain byte-identical;
+isolated runtime imports still resolve those SDKs without generated stub paths.
+
+The coexistence run exposed that the producer command delegated to generic Go to
+Definition, allowing Python destinations to interfere. It now requests Transflow's
+definition directly and fences document/focus/selection changes before navigation.
+An attempted Python `stubPath` setup retained old catalogue suggestions, so the
+qualified additive recipe uses live Transflow completion without that competing
+static overlay. Ordinary Python/SDK features continue through BasedPyright.
+
+Final local gates: 1,171 Python tests plus lint/format/strict types and isolated
+package installation; 70 CLI integration tests (the opt-in desktop case is skipped
+there and passes separately); real-service Node transport and four native Emacs
+batch checks remain passing. Both native VSCodium runs pass. CLI and production
+UI artifacts are rebuilt. Specification/link checks, 44 checker regressions,
+27 safety regressions and paired diff checks pass. Full Rust/web application gates
+are not repeated: their source and locks are unchanged. Exact results and source
+hashes are in the [receipt](evidence/t108-vscodium-macos-arm64.json).
+
+Initial desktop harness setup needed a short macOS IPC profile path and the
+complete offline fixture wheel set. The hover assertion decodes the editor API's
+safe Markdown spacing; SDK submodule completion is requested in import context.
+Native process/socket checks use permitted local access. These setup corrections
+are distinct from the reproduced producer-navigation defect.
+
+The prepared owner review bundle is
+`~/dev/transflow-workspace/t108-vscodium-review-tools`, with separate Orders and
+Invoices workspaces and an isolated VSCodium profile. Both Bash launchers parse;
+the coordinator launcher and saved five-node Operational alpha review lineage are
+verified in Internal Browser. Its verification coordinator is stopped. Earlier
+workspaces and normal editor settings/extensions are preserved. Microsoft VS Code,
+Pylance, manual keyboard/visual review, Emacs interactive review and standalone
+Python-server overlay refresh remain unqualified; T031/T107/T108 stay open for
+those remaining acceptance items. New remote CI remains owner-monitored.
+
+The [Python release checklist](python-release-readiness.md#pypi-and-github-administration-follow-up)
+now records the requested PyPI/TestPyPI administration and GitHub Actions OIDC
+setup under T116, with proposed exact publisher/workflow/environment identities.
+The package upload guard remains. No account configuration, release workflow or
+publication was performed. Dependency locks and runtime execution contracts are
+unchanged; the Python package retains its development upload guard.
+
 ## Dependency advisory CI correction (2026-10-25)
 
 The [owner-reported safety job](https://github.com/jmsmistral/transflow/actions/runs/40201161088/job/121192432432)

@@ -62,7 +62,7 @@ def order_totals():
 - **Interactive exploration** - Preview, filter and sort dataset rows, join catalog datasets with SQL autocomplete and inspect authored/generated code and execution history.
 - **Branch fallbacks** - Resolve inputs through an ordered set of data branches for builds and scheduled runs.
 - **Data health** - Review recent builds and open individual input and output check results.
-- **Editor assistance** - Complete dataset references, inspect catalogue metadata and navigate to producers from your editor.
+- **Editor assistance** - Install the local VS Code/VSCodium extension to complete dataset references, inspect metadata and navigate to producers.
 - **Build caching** - Reuse eligible results to avoid unnecessary computation.
 - **Local ownership** - Keep pipeline code, data and execution on your machine.
 
