@@ -1,0 +1,63 @@
+{
+  "task": "T006/T085 Preview validation and macOS CI correction",
+  "date": "2026-10-29",
+  "specification": "1.1.4",
+  "platform": "macOS 15.3.1 arm64 / Node 24.22.0 / npm 11.19.1",
+  "implementation_base": "e34383ee616475f96181b3ef8f4f7f713fa49ab2",
+  "reported_ci_job": "https://github.com/jmsmistral/transflow/actions/runs/40745122927/job/123016737932",
+  "reported_failure": "Three inspector failures; screenshot shows catalogue selection timeout and 5000ms deadline for the 1000-row cap test.",
+  "evidence": {
+    "public_job_api": "Confirms failed shared web check at implementation_base.",
+    "full_logs": "Sign-in required; test failures taken from the supplied screenshot.",
+    "baseline": "14 isolated inspector tests and full 763-test suite pass locally; exact intermittent CI timeout not reproduced.",
+    "cpu_profile": "530ms sampled in ContractFailure construction in the 1000-row test before validator optimization."
+  },
+  "validation_benchmark": {
+    "node": "v24.22.0",
+    "rows": 1000,
+    "cells": 2000,
+    "milliseconds": {
+      "before": [
+        675.32,
+        645.82,
+        653.1,
+        649.66,
+        641.76
+      ],
+      "after": [
+        12.02,
+        9.94,
+        9.8,
+        9.79,
+        9.9
+      ]
+    }
+  },
+  "changes": [
+    "Prefilter impossible oneOf types and constant tags; fully validate every remaining candidate and require exactly one match.",
+    "Four union regressions preserve field validation, bounds, ambiguity rejection, optional properties and reference precedence.",
+    "Exercise paging directly through real inspector/workspace/client with full 500/1000-row payloads, deterministic async boundaries, append-order checks and failure cleanup."
+  ],
+  "verification": {
+    "focused": "425 tests pass across contracts and inspectors.",
+    "isolated_paging_ms": {
+      "baseline_scroll": 889,
+      "baseline_cap": 1115,
+      "optimized_scroll": 135,
+      "optimized_cap": 96
+    },
+    "full_web": "CI=true bash tools/check-web.sh: 767 tests in 38 files; types, lint, format, worker probes and reproducible production builds pass.",
+    "production_assets": 16,
+    "repository_checks": {
+      "safety": "27 regressions passed; 941 public candidate files, 636 locked package versions, 2 existing exceptions and 1 generated contract.",
+      "specification": "Documentation/link/syntax check passed; 123 tasks and 110 Markdown files. It executes no application tests.",
+      "diff": "Both repositories pass git diff --check."
+    }
+  },
+  "limits": [
+    "New CI remains owner-monitored.",
+    "No new Browser or native Rust/Python runtime qualification.",
+    "Local synthetic timings are not cross-platform performance guarantees.",
+    "No schema, protocol, dependency, timeout, retry or workflow changes."
+  ]
+}

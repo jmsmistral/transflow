@@ -5,9 +5,14 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { expect, test, vi } from "vitest";
+import { expect, onTestFinished, test, vi } from "vitest";
 import { App } from "./App";
-import { PropertiesInspector, versionMetadata, wire } from "./inspectors";
+import {
+  PreviewInspector,
+  PropertiesInspector,
+  versionMetadata,
+  wire,
+} from "./inspectors";
 import { Client } from "./api/client";
 import { Workspace } from "./workspace";
 import {
@@ -372,9 +377,39 @@ test("foreign manifest contributes exact physical counts without asserting byte 
   ).toBeUndefined();
 });
 
-function scrollPreview(coordinate: number, dimension = "rgRow") {
+// Paging exercises the real inspector/client without repeating graph layout and
+// catalogue navigation. The App journeys above cover selection and tab wiring.
+async function renderPreview(fetcher: typeof fetch) {
+  const workspace = new Workspace(new Client(fetcher));
+  onTestFinished(() => workspace.dispose());
+  await workspace.connect("launch");
+  await workspace.select({
+    branch: "master",
+    dataset: datasetId,
+    origin: workspaceId,
+  });
+  await act(async () => {
+    render(
+      <PreviewInspector
+        workspace={workspace}
+        state={workspace.snapshot()}
+        dark={false}
+      />,
+    );
+  });
+  const table = screen.getByRole("table");
+  if (!(table instanceof HTMLTableElement))
+    throw new Error("Missing preview test table");
+  return table;
+}
+
+function scrollPreview(
+  table: HTMLTableElement,
+  coordinate: number,
+  dimension = "rgRow",
+) {
   fireEvent(
-    screen.getByRole("table"),
+    table,
     new CustomEvent("viewportscroll", {
       detail: { dimension, coordinate },
     }),
@@ -410,32 +445,24 @@ test("scroll paging uses 500-row requests, pins the version and ignores duplicat
     }
     return base(url, init);
   });
-  const workspace = new Workspace(new Client(fetcher));
-  await workspace.connect("launch");
-  await workspace.select({
-    branch: "master",
-    dataset: datasetId,
-    origin: workspaceId,
-  });
-  render(<App workspace={workspace} />);
-  await selectGraphDataset();
-  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
-  await waitFor(() => expect(screen.getByText(/Showing 500\+/)).toBeTruthy());
+  const table = await renderPreview(fetcher);
+  expect(screen.getByText(/Showing 500\+/)).toBeTruthy();
+  expect(table.tBodies[0]?.rows).toHaveLength(500);
   expect(screen.queryByRole("button", { name: /Load next/ })).toBeNull();
   await act(async () => {
-    scrollPreview(11900, "rgCol");
-    scrollPreview(100);
+    scrollPreview(table, 11900, "rgCol");
+    scrollPreview(table, 100);
   });
   expect(complete).toBeUndefined();
   // The scroll handler awaits grid providers before updating the page cursor.
   // Flush that async React work before asserting which request has started.
   await act(async () => {
-    scrollPreview(11760);
-    scrollPreview(11760);
+    scrollPreview(table, 11760);
+    scrollPreview(table, 11760);
   });
   expect(complete).toBeDefined();
   await act(async () => {
-    scrollPreview(11760);
+    scrollPreview(table, 11760);
   });
   expect(
     fetcher.mock.calls.filter(([url]) =>
@@ -454,11 +481,14 @@ test("scroll paging uses 500-row requests, pins the version and ignores duplicat
       ),
     );
   });
-  await waitFor(() =>
-    expect(screen.getByText(/Showing 1000.*preview limit/)).toBeTruthy(),
+  expect(screen.getByText(/Showing 1000.*preview limit/)).toBeTruthy();
+  expect(table.tBodies[0]?.rows).toHaveLength(1000);
+  expect(table.tBodies[0]?.rows[499]?.cells[1]?.textContent).toBe(
+    "123456789012345678.90",
   );
+  expect(table.tBodies[0]?.rows[500]?.cells[1]?.textContent).toBe("0.00");
   await act(async () => {
-    scrollPreview(23760);
+    scrollPreview(table, 23760);
   });
   const requests = fetcher.mock.calls.filter(([url]) =>
     String(url).startsWith("/api/v1/previews?"),
@@ -468,7 +498,6 @@ test("scroll paging uses 500-row requests, pins the version and ignores duplicat
     cursor: "opaque-next",
     version: versionId,
   });
-  workspace.dispose();
 });
 
 test("a short byte-limited page loads on wheel, preserves rows on failure and restarts explicitly", async () => {
@@ -484,31 +513,29 @@ test("a short byte-limited page loads on wheel, preserves rows on failure and re
       json({ ...preview, next_cursor: "byte-limited-next" }, exact),
     );
   });
-  const workspace = new Workspace(new Client(fetcher));
-  await workspace.connect("launch");
-  await workspace.select({
-    branch: "master",
-    dataset: datasetId,
-    origin: workspaceId,
+  const table = await renderPreview(fetcher);
+  expect(screen.getByText(/Showing 2\+/)).toBeTruthy();
+  await act(async () => {
+    fireEvent.wheel(table, { deltaX: 100, deltaY: 0 });
   });
-  render(<App workspace={workspace} />);
-  await selectGraphDataset();
-  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
-  await waitFor(() => expect(screen.getByText(/Showing 2\+/)).toBeTruthy());
-  fireEvent.wheel(screen.getByRole("table"), { deltaX: 100, deltaY: 0 });
-  await Promise.resolve();
   expect(requests).toBe(1);
-  fireEvent.wheel(screen.getByRole("table"), { deltaY: 100 });
-  expect(await screen.findByRole("alert")).toBeTruthy();
-  expect(screen.getAllByRole("row")).toHaveLength(3);
-  fireEvent.wheel(screen.getByRole("table"), { deltaY: 100 });
-  await Promise.resolve();
+  await act(async () => {
+    fireEvent.wheel(table, { deltaY: 100 });
+  });
+  expect(screen.getByRole("alert").textContent).toContain(
+    "The coordinator is disconnected",
+  );
+  expect(table.rows).toHaveLength(3);
+  await act(async () => {
+    fireEvent.wheel(table, { deltaY: 100 });
+  });
   expect(requests).toBe(2);
-  fireEvent.click(screen.getByRole("button", { name: "Restart preview" }));
-  await waitFor(() => expect(screen.getByText(/Showing 2\+/)).toBeTruthy());
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Restart preview" }));
+  });
+  expect(screen.getByText(/Showing 2\+/)).toBeTruthy();
   expect(requests).toBe(3);
   expect(screen.queryByRole("alert")).toBeNull();
-  workspace.dispose();
 });
 
 test("preview does not request more rows at the 1000-row display limit", async () => {
@@ -519,29 +546,21 @@ test("preview does not request more rows at the 1000-row display limit", async (
       next_cursor: "more-rows",
     }),
   );
-  const workspace = new Workspace(new Client(fetcher));
-  await workspace.connect("launch");
-  await workspace.select({
-    branch: "master",
-    dataset: datasetId,
-    origin: workspaceId,
-  });
-  render(<App workspace={workspace} />);
-  await selectGraphDataset();
-  fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
-  await waitFor(() =>
-    expect(screen.getByText(/Showing 1000.*preview limit/)).toBeTruthy(),
-  );
+  const table = await renderPreview(fetcher);
+  expect(screen.getByText(/Showing 1000.*preview limit/)).toBeTruthy();
   expect(screen.queryByRole("button", { name: /Load next/ })).toBeNull();
-  scrollPreview(23760);
-  await Promise.resolve();
+  await act(async () => {
+    scrollPreview(table, 23760);
+    fireEvent.wheel(table, { deltaY: 100 });
+  });
   expect(
     fetcher.mock.calls.filter(([url]) =>
       String(url).startsWith("/api/v1/previews?"),
     ),
   ).toHaveLength(1);
-  expect(screen.getAllByRole("row")).toHaveLength(1001);
-  workspace.dispose();
+  // Native row counts avoid 1,001 jsdom visibility walks; the real grid is
+  // virtualized, and this test is asserting retained data rather than layout.
+  expect(table.rows).toHaveLength(1001);
 });
 
 test("late preview response cannot cross a workspace context change", async () => {

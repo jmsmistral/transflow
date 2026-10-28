@@ -311,6 +311,46 @@ const keywords = new Set([
   "format",
   "x-transflow-invariant",
 ]);
+
+/** Reject impossible union branches cheaply; every candidate still validates fully. */
+function couldMatch(schema: Record<string, unknown>, value: unknown): boolean {
+  // validate resolves references before considering sibling rules.
+  if ("$ref" in schema) return true;
+  if ("const" in schema && !same(value, schema.const)) return false;
+  switch (schema.type) {
+    case "null":
+      return value === null;
+    case "string":
+    case "boolean":
+      return typeof value === schema.type;
+    case "number":
+    case "integer":
+      return typeof value === "number";
+    case "array":
+      return Array.isArray(value);
+    case "object": {
+      if (typeof value !== "object" || value === null || Array.isArray(value))
+        return false;
+      const object = obj(value);
+      // Typed cell unions have constant tags. Trying every unrelated tag by
+      // throwing/catching an Error builds thousands of stacks for one page.
+      return Object.entries(obj(schema.properties ?? {})).every(
+        ([key, raw]) => {
+          if (!Object.hasOwn(object, key)) return true;
+          const rule = obj(raw);
+          return (
+            "$ref" in rule ||
+            !("const" in rule) ||
+            same(object[key], rule.const)
+          );
+        },
+      );
+    }
+    default:
+      return true;
+  }
+}
+
 export function validate(
   schema: Record<string, unknown>,
   value: unknown,
@@ -339,7 +379,9 @@ export function validate(
     let count = 0;
     for (const branch of list(schema.oneOf)) {
       try {
-        validate(obj(branch), value, defs, depth + 1);
+        const candidate = obj(branch);
+        if (!couldMatch(candidate, value)) continue;
+        validate(candidate, value, defs, depth + 1);
         count++;
       } catch (error) {
         if (!(error instanceof ContractFailure)) throw error;

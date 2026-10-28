@@ -1,5 +1,47 @@
 # Contributor verification
 
+## Preview validation and macOS CI correction (2026-10-29)
+
+The owner reported [web job 123016737932](https://github.com/jmsmistral/transflow/actions/runs/40745122927/job/123016737932)
+on `e34383e`. The public API confirms failure in the shared web check; the supplied
+screenshot shows three inspector failures, including catalogue selection timing
+and the 5-second 1,000-row paging test deadline. Full logs require sign-in. Both
+the isolated file and complete baseline suite pass locally, so the exact CI
+intermittency was not reproduced.
+
+A CPU profile of the 1,000-row case exposes excessive `ContractFailure` construction:
+the validator tried every alternative scalar tag through thrown/caught errors.
+Union validation now rejects impossible JSON types and constant properties before
+fully validating remaining candidates. It still counts every match and rejects
+zero or multiple matches. Reference precedence, optional properties, unknown
+fields, numeric bounds and the canonical value invariants remain enforced.
+Four additional regressions cover these boundaries alongside the shared fixtures.
+
+The three paging tests mount the real PreviewInspector/Workspace/Client directly;
+existing App journeys retain graph-selection/tab coverage. Async act now completes
+all wheel/scroll/restart work before assertions, including negative assertions.
+The tests retain full 500/1,000-row payloads, reuse the table handle, count native
+rows instead of repeated visibility walks, check append order and register
+workspace disposal even on failure. No validation mocks, timeout increases,
+retries or CI parallelism changes are introduced.
+
+Local macOS arm64 with Node 24.22.0/npm 11.19.1:
+
+- Five warm measurements of 1,000 two-cell decimal/null rows reduce median
+  validation time from 649.66 ms to 9.90 ms. These are local synthetic measurements,
+  not a cross-platform performance guarantee.
+- The isolated scroll/cap tests reduce from 889/1,115 ms to 135/96 ms; all 425
+  targeted inspector/contract tests pass.
+- `CI=true bash tools/check-web.sh` passes all 767 tests in 38 files, strict
+  types/lint/formatting, worker probes and two matching builds of 16 assets.
+- Paired safety, specification/link and whitespace results are retained in the
+  [receipt](evidence/preview-validation-ci-macos-arm64.json).
+
+Production schemas, protocol versions, dependencies and preview limits are
+unchanged. Only browser validation implementation and the test harness change;
+no new real-grid Browser, Rust or Python runtime qualification is claimed.
+Updated remote CI remains owner-monitored.
+
 ## Rich CLI presentation (2026-10-28)
 
 T016/T067 add a shared human terminal renderer, catalogue/branch/build/schedule

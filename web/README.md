@@ -206,7 +206,10 @@ contributor tooling, not part of the eventual native runtime.
 ## Context and event boundaries
 
 `src/api/client.ts` validates unknown responses against the authored schema and
-uses the Origin/CSRF-protected read facade. `src/workspace.ts` owns one visible
+uses the Origin/CSRF-protected read facade. Union validation eliminates impossible
+types and constant tags before checking candidates, avoiding exception stacks for
+every unrelated cell type. Each candidate still receives full validation and
+exactly one branch must match. `src/workspace.ts` owns one visible
 selection epoch. It aborts superseded requests, compares the complete context and
 rejects late replies even when a transport ignores cancellation. Inspector reads
 use the same guard. No previous content is painted beneath a new selection label.
