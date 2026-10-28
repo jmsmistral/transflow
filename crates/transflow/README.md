@@ -7,6 +7,11 @@ Help/version do not discover/open a workspace, run Python or start a coordinator
 Unavailable commands and invalid options return usage status 2 with an explanation.
 The common argument definitions generate the displayed help.
 
+Successful human `init` output starts with the ASCII Transflow logo, the installed
+CLI version, workspace status and a compact getting-started/command reference.
+The banner is plain text, including when redirected; JSON results, help/version
+and failure diagnostics retain their existing formats.
+
 `transflow completions bash` prints a shell script from those same definitions.
 Enable it with `source <(transflow completions bash)` in Bash. Generation and
 completion need no workspace, Python or coordinator; dataset/branch/ID suggestions

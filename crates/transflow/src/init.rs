@@ -36,6 +36,42 @@ pub(crate) enum InitError {
     Registry,
 }
 const IGNORE: &str = "# Transflow: keep durable identity; ignore machine-local state\n!/.transflow/\n!/.transflow/catalog.toml\n/.transflow/runtime/\n/transflow.local.toml\n";
+
+/// Welcome text belongs only to successful human output, never the JSON envelope.
+pub(crate) fn welcome(version: &str, status: &str) -> String {
+    format!(
+        r"  _                       __ _
+ | |_ _ __ __ _ _ __  ___ / _| | _____      __
+ | __| '__/ _` | '_ \/ __| |_| |/ _ \ \ /\ / /
+ | |_| | | (_| | | | \__ \  _| | (_) \ V  V /
+  \__|_|  \__,_|_| |_|___/_| |_|\___/ \_/\_/
+
+ transflow {version}
+ Local data workflows with Python and SQL
+
+{status}
+
+Get started (from your workspace directory)
+  transflow env --help                  Prepare the Python environment
+  transflow validate                    Check your transform declarations
+  transflow plan <dataset>              Preview a build
+  transflow build <dataset> --mode full  Build a target and its ancestors
+  transflow serve                       Start the local UI
+
+CLI reference
+  transflow --help                      All commands and options
+  transflow <command> --help            Help for a specific command
+  transflow --version                   Installed CLI version
+  transflow --workspace <dir> <command>  Work from another directory
+  --json                               Machine-readable output
+  --verbose                            Detailed diagnostics
+
+Bash completion
+  source <(transflow completions bash)
+"
+    )
+}
+
 fn regular(path: &Path) -> Result<bool, InitError> {
     match fs::symlink_metadata(path) {
         Ok(m) if m.is_file() && !m.file_type().is_symlink() => Ok(true),

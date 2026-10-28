@@ -75,6 +75,7 @@ code stays in the provider's workspace.
 **Developer preview · Python 3.14.** Start with the
 [source quickstart](docs/getting-started.md) to build the CLI, prepare the Python
 environment and create a runnable example. The public PyPI release is still ahead.
+`transflow init` welcomes you with an ASCII logo, CLI version and getting-started commands.
 
 With the quickstart's customer-orders workspace prepared:
 

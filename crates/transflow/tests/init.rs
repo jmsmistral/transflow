@@ -46,10 +46,25 @@ fn creates_and_repeats_without_changing_identity_or_user_files() {
     assert!(first.stderr.is_empty());
     let json: serde_json::Value = serde_json::from_slice(&first.stdout).unwrap();
     assert_eq!(json["result"]["kind"], "workspace_init");
+    assert!(!String::from_utf8_lossy(&first.stdout).contains("Get started"));
     let config = fs::read(t.0.join("workspace.toml")).unwrap();
     let registry = fs::read(t.0.join(".transflow/catalog.toml")).unwrap();
     let ignore = fs::read(t.0.join(".gitignore")).unwrap();
-    assert!(init(&t.0).status.success());
+    let repeated = Command::new(env!("CARGO_BIN_EXE_transflow"))
+        .arg("init")
+        .arg(&t.0)
+        .env("PATH", "")
+        .output()
+        .unwrap();
+    assert!(repeated.status.success());
+    assert!(repeated.stderr.is_empty());
+    let welcome = String::from_utf8(repeated.stdout).unwrap();
+    assert!(welcome.starts_with("  _                       __ _\n"));
+    assert!(welcome.contains(&format!("transflow {}\n", env!("CARGO_PKG_VERSION"))));
+    assert!(welcome.contains("already initialized; identity and configuration preserved"));
+    assert!(welcome.contains("transflow --help"));
+    assert!(welcome.contains("source <(transflow completions bash)"));
+    assert!(!welcome.contains('\u{1b}'));
     assert_eq!(fs::read(t.0.join("workspace.toml")).unwrap(), config);
     assert_eq!(
         fs::read(t.0.join(".transflow/catalog.toml")).unwrap(),

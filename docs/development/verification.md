@@ -1,5 +1,25 @@
 # Contributor verification
 
+## CLI initialization welcome (2026-10-28)
+
+T021 adds an ASCII Transflow wordmark, the actual package version, workspace
+status and compact setup/command guidance to successful human `init` output.
+JSON, help/version, failure output and workspace creation semantics are unchanged.
+No dependencies or generated contracts change.
+
+On macOS arm64, `cargo test --locked --offline -p transflow --test init` passes
+all seven tests, including human repeat-init preservation and clean JSON output.
+The initial sandboxed run could not establish coordinator ownership; the same
+tests pass with local process access. `cargo build --locked --offline -p transflow`
+passes, and the rebuilt executable is exercised as bare `transflow init` in a
+disposable empty directory with no Python or Git on PATH. Its captured output
+shows version `0.0.0-dev` and the complete welcome screen.
+
+Formatting, strict library Clippy (`cargo clippy --locked --offline -p transflow
+--lib -- -D warnings`), specification/link validation and safety checks
+(27 regressions) pass. Verification is focused on this presentation change; full workspace and
+cross-platform suites are left to owner-monitored CI.
+
 ## Bash completion and dependency review (2026-10-28)
 
 T016 adds `transflow completions bash` using the shared Clap argument tree and

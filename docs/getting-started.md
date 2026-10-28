@@ -47,6 +47,9 @@ export PATH="$transflow_repo/target/debug:$PATH"
 
 Choose a new directory. Initialization preserves existing files and refuses
 conflicting state. The catalogue can be committed; runtime data stays ignored.
+`transflow init` shows the ASCII Transflow logo, installed CLI version, workspace
+status and a short command reference, including help and Bash completion. Its
+`--json` output remains a single result envelope for scripts.
 
 ```bash
 demo_workspace="$HOME/transflow-demo"

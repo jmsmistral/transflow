@@ -910,7 +910,9 @@ pub fn run(
                                 )
                                 .map_err(CliError::Stdout)?;
                         } else {
-                            writeln!(stdout, "{text}").map_err(CliError::Stdout)?;
+                            stdout
+                                .write_all(init::welcome(version.as_str(), &text).as_bytes())
+                                .map_err(CliError::Stdout)?;
                         }
                         Ok(ExitCode::SUCCESS)
                     }
