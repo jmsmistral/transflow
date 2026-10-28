@@ -1,10 +1,10 @@
 {
   "locks": {
-    "Cargo.lock": "46c3dcddbcde2208a20539b9f7ddca1590a93485ef8717d4e5a6d78043f147b0",
+    "Cargo.lock": "fe9a3cd9950e4ee4bd4c3483efdc6cf7e99825e94845ba5f372bdafe69c8dda4",
     "python/dev-py314.lock": "49b30200646418db7ef08b59508e04ea83b54801c3f574806e9bef44400e5910",
     "tools/qualification/python/py314.lock": "368680daa726b6b16dac4fe9f924ace236f800f4c4e054d0254a029e99897101",
     "tools/qualification/python/resolver.lock": "09b3c79261526ce0873cee7da839aa1b9bf319217a7920f60a34ba6fdb69f233",
-    "tools/qualification/rust/Cargo.lock": "2908dd56eac55e199435dc9b7119ad8d0b9d3de660ddf3e9462fa85537a38422",
+    "tools/qualification/rust/Cargo.lock": "33d71f6fe9c6e43f69655db103b991bca661246cbe636172b12504e261986ea8",
     "tools/qualification/web/package-lock.json": "907b0fd8905e7f1bd629859575997304f128800550fb8d290411792d93523756",
     "web/package-lock.json": "913744c5a02cee803916c175122f5fbd904a46752fe378ef524f93813b4190ab"
   },
@@ -759,6 +759,20 @@
       ],
       "name": "clap_builder",
       "version": "4.6.7"
+    },
+    {
+      "deprecations": [],
+      "ecosystem": "crates.io",
+      "id": "crates.io:clap_complete@4.6.11",
+      "licenses": [
+        "MIT OR Apache-2.0"
+      ],
+      "locks": [
+        "Cargo.lock",
+        "tools/qualification/rust/Cargo.lock"
+      ],
+      "name": "clap_complete",
+      "version": "4.6.11"
     },
     {
       "deprecations": [],
@@ -3382,7 +3396,7 @@
     {
       "deprecations": [],
       "ecosystem": "crates.io",
-      "id": "crates.io:zstd-safe@8.0.0",
+      "id": "crates.io:zstd-safe@8.2.0",
       "licenses": [
         "BSD-3-Clause"
       ],
@@ -3391,12 +3405,12 @@
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "zstd-safe",
-      "version": "8.0.0"
+      "version": "8.2.0"
     },
     {
       "deprecations": [],
       "ecosystem": "crates.io",
-      "id": "crates.io:zstd-sys@2.1.0+zstd.1.5.7",
+      "id": "crates.io:zstd-sys@2.1.2+zstd.1.5.7",
       "licenses": [
         "BSD-3-Clause"
       ],
@@ -3405,12 +3419,12 @@
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "zstd-sys",
-      "version": "2.1.0+zstd.1.5.7"
+      "version": "2.1.2+zstd.1.5.7"
     },
     {
       "deprecations": [],
       "ecosystem": "crates.io",
-      "id": "crates.io:zstd@0.14.0",
+      "id": "crates.io:zstd@0.14.3",
       "licenses": [
         "BSD-3-Clause"
       ],
@@ -3419,7 +3433,7 @@
         "tools/qualification/rust/Cargo.lock"
       ],
       "name": "zstd",
-      "version": "0.14.0"
+      "version": "0.14.3"
     },
     {
       "deprecations": [],

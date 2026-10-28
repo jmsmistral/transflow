@@ -96,6 +96,7 @@ follow its upstream dependencies. Saved lineage views keep the graph you are wor
 - **[Write Python transforms](python/DECLARATIONS.md)** · **[Write SQL transforms](python/SQL_TRANSFORMS.md)** · **[Add quality checks](python/EXPECTATIONS.md)**.
 - **[Reuse transform factories and dataset handles](python/TRANSFORM_FACTORIES.md)**.
 - **[Build and inspect datasets](crates/transflow/BUILDS.md)** · **[Set up schedules](crates/transflow/SCHEDULES.md)**.
+- **[Enable Bash completion](docs/bash-completion.md)** for commands, options and file paths.
 - **[Browse all guides](docs/README.md)** - authoring, operations, UI and API reference.
 - **[Contribute](docs/development/README.md)** - source layout, setup, verification and [sample workspace CLI checks](docs/development/sample-workspace-cli.md).
 

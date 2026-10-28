@@ -36,7 +36,7 @@ EXTERNAL = {
     "tf-schedule": {"chrono", "chrono-tz", "serde", "thiserror"},
     "tf-api": {"axum", "tower", "tokio-stream", "serde", "serde_json", "tokio", "tracing", "thiserror"},
     "tf-lsp": {"serde", "serde_json", "tokio", "tracing", "thiserror"},
-    "transflow": {"rustix", "clap", "thiserror", "tokio", "tracing", "serde", "serde_json"},
+    "transflow": {"rustix", "clap", "clap_complete", "thiserror", "tokio", "tracing", "serde", "serde_json"},
 }
 
 # Real SQLite scheduling/execution fixtures use these dependencies only in tests.

@@ -6,9 +6,14 @@ use arrow_array::{Int64Array, RecordBatch, StringArray};
 use arrow_schema::{DataType, Field, Schema};
 use axum::{Router, body::Body, http::Request, routing::get};
 use chrono::TimeZone;
-use clap::Parser;
+use clap::{CommandFactory, Parser};
+use clap_complete::aot::{Bash, Generator};
 use fs4::FileExt;
-use parquet::arrow::{ArrowWriter, arrow_reader::ParquetRecordBatchReaderBuilder};
+use parquet::{
+    arrow::{ArrowWriter, arrow_reader::ParquetRecordBatchReaderBuilder},
+    basic::Compression,
+    file::properties::WriterProperties,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -47,6 +52,34 @@ struct Report {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    // The maintainer advisory affects inline positions in 0.11.0..0.12.1.
+    // Version 0.10.4 stores pos separately; exercise its adapted panic example.
+    let mut buffer =
+        block_buffer::EagerBuffer::<block_buffer::generic_array::typenum::U4>::new(&[1, 2]);
+    let failed = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        buffer.digest_blocks(&[3, 0xff], |_| {
+            std::panic::resume_unwind(Box::new("synthetic compression panic"));
+        });
+    }));
+    require(
+        failed.is_err() && buffer.get_pos() == 2 && buffer.get_data() == [1, 2],
+        "Hash buffer panic corrupted the separate position field",
+    )?;
+    buffer.reset();
+    buffer.digest_blocks(&[5, 6], |_| {});
+    require(
+        buffer.get_pos() == 2 && buffer.get_data() == [5, 6],
+        "Hash buffer could not be reused after reset",
+    )?;
+
+    let mut completion_command = Arguments::command().bin_name("transflow-probe");
+    completion_command.build();
+    let mut completion = Vec::new();
+    Bash.try_generate(&completion_command, &mut completion)?;
+    require(
+        String::from_utf8(completion)?.contains("--output-dir"),
+        "Bash completion omitted the declared option",
+    )?;
     let wide = num_bigint::BigInt::from(1) << 1074usize;
     require(wide.bits() == 1075, "Exact rational exponent range failed")?;
     require(
@@ -152,7 +185,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         ],
     )?;
     let parquet_path = args.output_dir.join("rust.parquet");
-    let mut writer = ArrowWriter::try_new(File::create(&parquet_path)?, schema, None)?;
+    let properties = WriterProperties::builder()
+        .set_compression(Compression::ZSTD(Default::default()))
+        .build();
+    let mut writer = ArrowWriter::try_new(File::create(&parquet_path)?, schema, Some(properties))?;
     writer.write(&batch)?;
     writer.close()?;
     let batches = ParquetRecordBatchReaderBuilder::try_new(File::open(&parquet_path)?)?
@@ -204,11 +240,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
             "wal_full_foreign_keys",
             "rollback",
             "parquet_roundtrip",
+            "zstd_roundtrip",
             "advisory_lock",
             "http_router",
             "dst_gap",
             "json_schema",
             "sha256",
+            "hash_buffer_panic_position",
+            "bash_completion",
         ]
         .map(str::to_owned)
         .to_vec(),

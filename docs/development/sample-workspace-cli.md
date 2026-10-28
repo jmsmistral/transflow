@@ -26,6 +26,16 @@ selects the sample: Transflow finds the nearest ancestor containing
 The sample's existing configuration selects its prepared Python environment;
 there is no need to activate the implementation's Python tooling environment.
 
+For Tab completion of commands, options and fixed option values, enable this in
+the same Bash terminal:
+
+```bash
+source <(transflow completions bash)
+```
+
+See [Bash completion](../bash-completion.md) to keep it enabled in new terminals.
+Dataset and branch names are still entered explicitly.
+
 If the CLI binary is missing or needs rebuilding:
 
 ```bash

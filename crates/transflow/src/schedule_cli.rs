@@ -27,7 +27,12 @@ pub(crate) fn command() -> Command {
             );
         }
         if matches!(name, "create" | "update") {
-            command = command.arg(Arg::new("file").long("file").required(true));
+            command = command.arg(
+                Arg::new("file")
+                    .long("file")
+                    .value_hint(clap::ValueHint::FilePath)
+                    .required(true),
+            );
         }
         if name == "create" {
             command = command.arg(Arg::new("paused").long("paused").action(ArgAction::SetTrue));

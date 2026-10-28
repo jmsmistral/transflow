@@ -2,6 +2,12 @@
   "schema": 1,
   "exceptions": [
     {
+      "finding": "advisory:GHSA-qwgh-2vcv-g2f7:crates.io:block-buffer@0.10.4",
+      "owner": "Transflow maintainers",
+      "reason": "Reviewed 2026-10-28: OSV/GitHub's database range is broader than the maintainer advisory, which affects >=0.11.0,<0.12.1 (https://github.com/RustCrypto/utils/security/advisories/GHSA-qwgh-2vcv-g2f7). Locked 0.10.4 has a separate pos field, no ReadBuffer, and passes the adapted panic-position probe. See docs/development/hash-buffer-advisory.md. This exact false-positive exception does not cover affected 0.11/0.12 releases or other advisories; review upstream metadata by expiry.",
+      "expires": "2026-11-18"
+    },
+    {
       "finding": "deprecated:npm:eslint@9.39.5",
       "owner": "Transflow maintainers",
       "reason": "Reviewed 2026-10-19 against npm metadata: eslint-plugin-jsx-a11y 6.10.2 is still the latest release and its peer range ends at ESLint 9. Retain exact ESLint 9.39.5 for development linting to preserve accessibility checks; review migration again by expiry. No vulnerability advisory is excepted.",

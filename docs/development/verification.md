@@ -1,5 +1,72 @@
 # Contributor verification
 
+## Bash completion and dependency review (2026-10-28)
+
+T016 adds `transflow completions bash` using the shared Clap argument tree and
+pinned `clap_complete` 4.6.11. File/directory hints remain attached to the argument
+definitions. Generation needs no workspace, Python, Git or coordinator. JSON
+script mixing and unsupported shells use status 2; failed output stays a typed
+I/O error. The [guide](../bash-completion.md) covers current/persistent Bash setup,
+macOS login shells, sample usage without `--workspace`, upgrades and removal.
+
+Five real-executable/shell tests cover deterministic output with missing/invalid
+workspace context and an empty PATH, nested commands/global flags/fixed values,
+file values containing spaces and literal shell syntax, valid JSON usage errors,
+help and broken stdout. Tests exercise macOS Bash 3.2.57 and Homebrew Bash 5.3.15.
+Interactive PTY Tab checks in both shells cover commands, `--mode selected`,
+workspace directories and schedule filenames containing spaces. They exposed and
+verified the Bash 3.2 `filenames` registration fix; each path remains one argument.
+No user shell startup files were edited.
+
+The required audit found 15 matches in existing dependencies. The owner approved
+including the fixes. Both Rust locks update `zstd`/`zstd-safe`/`zstd-sys` to
+0.14.3/8.2.0/2.1.2+zstd.1.5.7. Fresh OSV evidence now retains one exact hash-buffer
+false positive, with the maintainer-range/source review and expiring exception
+recorded in [the assessment](hash-buffer-advisory.md). No wildcard suppression
+or audit filtering is introduced. Inventory: 636 locked versions and two active
+exceptions including the existing ESLint deprecation exception.
+
+The native Rust probe passes strict Clippy, a Zstandard Parquet round trip,
+SHA-256 known-answer check, the 0.10.4 caught-panic cursor regression, completion
+generation and existing SQLite/WAL/rollback checks. The Python 3.14.7 probe reads
+the new Rust Parquet through the pinned Python engines. The isolated probe is
+smaller than the full native qualification matrix; Linux remains CI work.
+
+Local verification uses macOS 15.3.1 arm64, Rust 1.98.1, Python 3.14.7 and
+Node 24.22.0. The following gates pass:
+
+- `bash tools/check-cli.sh`: 70 integration tests; the separate opt-in desktop
+  case is skipped. The CLI is rebuilt with the changed dependency locks.
+- `cargo test --locked --offline -p transflow --test completions`: five tests in
+  each Bash version, selected with `TRANSFLOW_TEST_BASH` for Homebrew Bash.
+- The isolated Rust qualification manifest passes strict Clippy and its native
+  probe; the Python qualifier passes all five checks against the new Rust Parquet.
+- `npm --prefix web run build` and `npm --prefix web run build:verify`: production
+  UI rebuilt, with all 16 assets reproducible. UI source and web locks are unchanged.
+- Specification/link validation, 44 specification-checker regressions and 27
+  safety regressions pass. The refreshed audit retains the reviewed false positive.
+
+No new UI behavior, Linux qualification or remote CI result is claimed. CI remains
+owner-monitored after the paired repository pushes.
+
+The first Rust test run encountered eight supervision startup failures with no
+worker output before their existing deadlines. An isolated shebang-launch probe
+through the ambient `transflow` Python virtual environment exceeded 20 seconds;
+the underlying interpreter started successfully. Putting the prepared
+`target/python/py314/bin` directory first on PATH makes all 11 supervision tests
+pass in 3.49 seconds. Test assertions and deadlines are unchanged. The `PYTHON`
+variable alone selects the tooling interpreter; native fixtures also resolve
+`python` from PATH.
+
+Rust boundary checks, 19 tooling tests, formatting, workspace and standalone
+storage compilation, and strict Clippy passed before the workspace test run.
+The full workspace test rerun with the prepared Python on PATH was interrupted
+at the owner's request (exit 130), with no failures observed before interruption.
+The full Rust test gate is therefore incomplete. The additional Bash 5 test rerun
+and CLI build chained after it were not reached; the earlier successful results
+above remain the evidence. No further checks were run after the stop request;
+the owner will review CI after the paired commits and pushes.
+
 ## VSCodium native qualification and PyPI admin follow-up (2026-10-26)
 
 The owner selected VS Code first, then identified VSCodium as the installed

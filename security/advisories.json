@@ -1,7 +1,12 @@
 {
-  "checked_at": "2026-10-25T14:21:42.431026+00:00",
-  "findings": [],
-  "inventory_sha256": "7e25bac8d5d18fe603f16b11dd5bf1af87de8331282d24501bb820c3778d4bd8",
+  "checked_at": "2026-10-28T15:23:56.606279+00:00",
+  "findings": [
+    {
+      "advisory": "GHSA-qwgh-2vcv-g2f7",
+      "package": "crates.io:block-buffer@0.10.4"
+    }
+  ],
+  "inventory_sha256": "32f96f3e552bb493385958379c1578baca75617735d711123a4598d9fdf4276f",
   "provider": "https://api.osv.dev/v1/querybatch",
   "queried": [
     "PyPI:ast-serialize@0.11.2",
@@ -59,6 +64,7 @@
     "crates.io:chrono@0.4.45",
     "crates.io:clap@4.6.7",
     "crates.io:clap_builder@4.6.7",
+    "crates.io:clap_complete@4.6.11",
     "crates.io:clap_derive@4.6.7",
     "crates.io:clap_lex@1.1.1",
     "crates.io:colorchoice@1.0.5",
@@ -247,9 +253,9 @@
     "crates.io:zerovec-derive@0.11.6",
     "crates.io:zerovec@0.11.8",
     "crates.io:zmij@1.0.23",
-    "crates.io:zstd-safe@8.0.0",
-    "crates.io:zstd-sys@2.1.0+zstd.1.5.7",
-    "crates.io:zstd@0.14.0",
+    "crates.io:zstd-safe@8.2.0",
+    "crates.io:zstd-sys@2.1.2+zstd.1.5.7",
+    "crates.io:zstd@0.14.3",
     "npm:@asamuzakjp/css-color@7.1.7",
     "npm:@asamuzakjp/dom-selector@10.0.4",
     "npm:@babel/code-frame@7.29.7",

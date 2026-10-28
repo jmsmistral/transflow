@@ -19,6 +19,7 @@ tf-schedule = { path = "../tf-schedule" }
 tf-store = { path = "../tf-store" }
 tokio = { workspace = true, features = ["signal"] }
 clap.workspace = true
+clap_complete.workspace = true
 serde_json.workspace = true
 serde = { workspace = true, features = ["derive"] }
 thiserror.workspace = true

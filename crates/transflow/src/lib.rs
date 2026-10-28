@@ -1,5 +1,5 @@
 //! CLI argument handling, human diagnostics and versioned JSON results.
-//! Help/version require no workspace I/O. Application services remain later work.
+//! Help, version and completion generation require no workspace I/O.
 mod api;
 mod api_history;
 mod api_logs;
@@ -20,6 +20,7 @@ mod build_transport;
 /// Accepted-job cache key finalization.
 pub mod cache;
 mod catalog;
+mod completions;
 mod env;
 mod external;
 mod external_reads;
@@ -74,12 +75,13 @@ fn command() -> clap::Command {
         .about("A local build system for dataframe datasets (development scaffold)")
         .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Plan, why, graph traversal, dataset builds, execution history and retained replay are available. Serve runs an authenticated loopback API and CLI coordinator. Scheduling commands manage saved definitions and guarded actions; serve activates automatic dispatch.")
         .subcommands(inspection_cli::commands())
+        .subcommand(completions::command())
         .subcommand(lsp::command())
         .subcommand(gc::command())
         .subcommand(external::command())
         .subcommand(build_cli::command())
         .subcommand(schedule_cli::command())
-        .subcommand(clap::Command::new("serve").disable_help_flag(true).about("Run the authenticated loopback coordinator").arg(Arg::new("port").long("port").default_value("0").value_parser(clap::value_parser!(u16))).arg(Arg::new("open").long("open").action(ArgAction::SetTrue)).arg(Arg::new("ui-dir").long("ui-dir").help("Serve an explicitly built contributor UI directory")))
+        .subcommand(clap::Command::new("serve").disable_help_flag(true).about("Run the authenticated loopback coordinator").arg(Arg::new("port").long("port").default_value("0").value_parser(clap::value_parser!(u16))).arg(Arg::new("open").long("open").action(ArgAction::SetTrue)).arg(Arg::new("ui-dir").long("ui-dir").value_hint(clap::ValueHint::DirPath).help("Serve an explicitly built contributor UI directory")))
         .disable_help_subcommand(true).disable_help_flag(true).disable_version_flag(true)
         .subcommand(clap::Command::new("branch").disable_help_flag(true).subcommand_required(true).about("List and manage data branches independently of Git")
             .subcommand(clap::Command::new("list").disable_help_flag(true)
@@ -93,9 +95,9 @@ fn command() -> clap::Command {
                 .arg(Arg::new("yes").long("yes").action(ArgAction::SetTrue))
                 .arg(Arg::new("dry-run").long("dry-run").action(ArgAction::SetTrue))))
         .subcommand(clap::Command::new("env").disable_help_flag(true).about("Explicit environment lock, sync and drift verification")
-            .arg(Arg::new("python").long("python").global(true).value_name("EXECUTABLE"))
-            .arg(Arg::new("runtime-wheel").long("runtime-wheel").global(true).value_name("WHEEL"))
-            .arg(Arg::new("wheelhouse").long("wheelhouse").global(true).value_name("DIRECTORY"))
+            .arg(Arg::new("python").long("python").global(true).value_name("EXECUTABLE").value_hint(clap::ValueHint::ExecutablePath))
+            .arg(Arg::new("runtime-wheel").long("runtime-wheel").global(true).value_name("WHEEL").value_hint(clap::ValueHint::FilePath))
+            .arg(Arg::new("wheelhouse").long("wheelhouse").global(true).value_name("DIRECTORY").value_hint(clap::ValueHint::DirPath))
             .arg(Arg::new("no-index").long("no-index").global(true).action(ArgAction::SetTrue))
             .subcommand(clap::Command::new("lock").disable_help_flag(true).about("Resolve exact hashed dependencies using qualified tooling"))
             .subcommand(clap::Command::new("sync").disable_help_flag(true).about("Install locked wheels and the explicit matched Transflow wheel"))
@@ -103,11 +105,11 @@ fn command() -> clap::Command {
         .subcommand(clap::Command::new("dataset").disable_help_flag(true).subcommand_required(true).about("Dataset operations")
             .subcommand(clap::Command::new("import").disable_help_flag(true).about("Publish an immutable copy of local Parquet files")
                 .arg(Arg::new("reference").required(true))
-                .arg(Arg::new("path").long("path").required(true).value_name("FILE_OR_GLOB"))
+                .arg(Arg::new("path").long("path").required(true).value_name("FILE_OR_GLOB").value_hint(clap::ValueHint::FilePath))
                 .arg(Arg::new("branch").long("branch"))
                 .arg(Arg::new("python").long("python"))
                 .arg(Arg::new("prepare-only").long("prepare-only").action(ArgAction::SetTrue))))
-        .subcommand(clap::Command::new("validate").disable_help_flag(true).about("Validate all captured declarations without persistent changes").arg(Arg::new("python").long("python").value_name("EXECUTABLE")))
+        .subcommand(clap::Command::new("validate").disable_help_flag(true).about("Validate all captured declarations without persistent changes").arg(Arg::new("python").long("python").value_name("EXECUTABLE").value_hint(clap::ValueHint::ExecutablePath)))
         .subcommand(clap::Command::new("catalog").disable_help_flag(true).subcommand_required(true).about("Manage durable catalogue identities")
             .subcommand(clap::Command::new("list").disable_help_flag(true).about("Browse exact identities with revision-bound pagination")
                 .arg(Arg::new("limit").long("limit").value_parser(clap::value_parser!(u16).range(1..=100)).default_value("50"))
@@ -125,12 +127,12 @@ fn command() -> clap::Command {
                 .arg(Arg::new("python").long("python")))
             .subcommand(clap::Command::new("sync").disable_help_flag(true).about("Validate and register additive producer identities")
                 .arg(Arg::new("check").long("check").action(ArgAction::SetTrue).help("Report additions without changing workspace files"))
-                .arg(Arg::new("python").long("python").value_name("EXECUTABLE"))))
-        .subcommand(clap::Command::new("init").disable_help_flag(true).about("Initialize a workspace without Git, Python or package installation").arg(Arg::new("directory").value_name("DIRECTORY")))
+                .arg(Arg::new("python").long("python").value_name("EXECUTABLE").value_hint(clap::ValueHint::ExecutablePath))))
+        .subcommand(clap::Command::new("init").disable_help_flag(true).about("Initialize a workspace without Git, Python or package installation").arg(Arg::new("directory").value_name("DIRECTORY").value_hint(clap::ValueHint::DirPath)))
         .arg(Arg::new("help").global(true).long("help").short('h').action(ArgAction::SetTrue).help("Show implemented commands and options"))
         .arg(Arg::new("version").long("version").short('V').action(ArgAction::SetTrue).help("Show product version"))
         .arg(Arg::new("json").long("json").global(true).action(ArgAction::SetTrue).help("Emit one versioned result envelope on stdout"))
-        .arg(Arg::new("workspace").long("workspace").value_name("DIRECTORY").help("Select root workspace context before a command (no discovery for help/version)"))
+        .arg(Arg::new("workspace").long("workspace").value_name("DIRECTORY").value_hint(clap::ValueHint::DirPath).help("Select root workspace context before a command (no discovery for help/version)"))
         .arg(Arg::new("verbose").long("verbose").global(true).action(ArgAction::SetTrue).help("Include stable codes in human diagnostics"))
         .arg(Arg::new("color").long("color").global(true).value_parser(["auto","always","never"]).default_value("auto").help("Human diagnostic colour; JSON always disables it"))
 }
@@ -257,6 +259,10 @@ pub fn run(
     match command().try_get_matches_from(args) {
         Ok(matches) => {
             if !matches.get_flag("help") && !matches.get_flag("version") {
+                if let Some(("completions", _)) = matches.subcommand() {
+                    completions::write_bash(stdout).map_err(CliError::Stdout)?;
+                    return Ok(ExitCode::SUCCESS);
+                }
                 if let Some(("lsp", args)) = matches.subcommand() {
                     return match lsp::execute(
                         args,

@@ -7,6 +7,13 @@ Help/version do not discover/open a workspace, run Python or start a coordinator
 Unavailable commands and invalid options return usage status 2 with an explanation.
 The common argument definitions generate the displayed help.
 
+`transflow completions bash` prints a shell script from those same definitions.
+Enable it with `source <(transflow completions bash)` in Bash. Generation and
+completion need no workspace, Python or coordinator; dataset/branch/ID suggestions
+are not queried. Script generation rejects `--json` with usage status 2 and the
+normal error envelope. See [Bash completion](../../docs/bash-completion.md) for
+persistent setup, sample workspace usage and troubleshooting.
+
 ```bash
 cargo run --locked --offline -- --help
 cargo run --locked --offline -- --version --json

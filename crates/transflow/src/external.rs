@@ -25,7 +25,12 @@ pub(crate) fn command() -> clap::Command {
         .subcommand(
             Command::new("add")
                 .disable_help_flag(true)
-                .arg(Arg::new("workspace").long("workspace").required(true))
+                .arg(
+                    Arg::new("workspace")
+                        .long("workspace")
+                        .value_hint(clap::ValueHint::DirPath)
+                        .required(true),
+                )
                 .arg(Arg::new("dataset").long("dataset").required(true))
                 .arg(Arg::new("as").long("as").required(true))
                 .arg(Arg::new("branch").long("branch"))

@@ -69,8 +69,8 @@ Review the resulting inventory and exception changes together with the locks.
 
 ## Inventory and exceptions
 
-[dependencies.json](../../security/dependencies.json) records 635 distinct package
-versions: 223 crates.io, 389 npm and 23 PyPI. Every entry includes its contributing
+[dependencies.json](../../security/dependencies.json) records 636 distinct package
+versions: 224 crates.io, 389 npm and 23 PyPI. Every entry includes its contributing
 lockfiles and declared license text/expression. The seven locks cover application,
 package/web tooling and isolated T003 qualification dependencies, including
 platform-specific transitive packages. They are not all shipped runtime dependencies.
@@ -89,6 +89,23 @@ with an owner, rationale and expiry. An exception expires at the start of its
 stated UTC date. Wildcards, duplicate/unused exceptions and missing ownership or
 rationale fail. All reported advisories block by default, without a severity
 threshold; secret findings cannot be suppressed through this policy.
+
+### Completion dependency review and compression fixes (2026-10-28)
+
+Adding the exact `clap_complete` 4.6.11 dependency prompted a fresh audit. It
+reported 14 compression findings and one hashing finding in existing locks.
+Both Rust locks now use `zstd` 0.14.3, `zstd-safe` 8.2.0 and `zstd-sys`
+2.1.2+zstd.1.5.7. The native probe now explicitly writes and reads Zstandard
+Parquet. See the upstream [stream-context fix](https://rustsec.org/advisories/RUSTSEC-2026-0391.html),
+[safe-buffer fixes](https://rustsec.org/advisories/RUSTSEC-2026-0395.html) and
+[allocator fix](https://rustsec.org/advisories/RUSTSEC-2026-0410.html).
+
+The remaining exact hash-buffer finding is a reviewed false positive: the
+maintainer's affected range starts at 0.11.0, whereas both locks use 0.10.4.
+[The applicability review](hash-buffer-advisory.md) records the upstream range
+conflict, separate cursor layout, native panic regression and an exact exception
+expiring 2026-11-18. The audit retains that finding. The existing ESLint exception
+also remains; no wildcard exception or advisory filtering is introduced.
 
 ### Dependency advisory correction (2026-10-25)
 
