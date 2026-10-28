@@ -48,6 +48,7 @@ cargo build --locked --offline -p tf-exec --example lifecycle_probe
 "$python_bin" -I -B python/tools/check_lifecycle.py "$CARGO_TARGET_DIR/debug/examples/lifecycle_probe" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" > "$run_dir/expectation-lifecycle.json"
 cargo build --locked --offline -p transflow --bin transflow --example dispatch_probe
 "$python_bin" -I -B python/tools/check_dispatch.py "$CARGO_TARGET_DIR/debug/examples/dispatch_probe" "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" > "$run_dir/build-dispatch.json"
+"$python_bin" -I -B python/tools/check_terminal.py "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" > "$run_dir/cli-terminal.json"
 "$python_bin" -I -B python/tools/check_developer_core.py "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" --output "$run_dir/developer-core.json"
 "$python_bin" -I -B python/tools/check_sql_checks_demo.py "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" --output "$run_dir/sql-checks-lifecycle.json"
 "$python_bin" -I -B python/tools/check_transform_factories.py "$CARGO_TARGET_DIR/debug/transflow" "$run_dir/wheels/transflow-0.0.0.dev0-py3-none-any.whl" "$repo_root/target/qualification/wheelhouse" --output "$run_dir/transform-factories.json"

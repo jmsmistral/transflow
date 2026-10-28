@@ -89,3 +89,37 @@ fn inspection_help_and_invalid_options_need_no_workspace() -> Result<(), Box<dyn
     }
     Ok(())
 }
+
+#[test]
+fn colour_settings_never_pollute_json_or_generated_completion_scripts() -> Result<(), Box<dyn Error>>
+{
+    let execute = |args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_transflow"))
+            .args(args)
+            .env("NO_COLOR", "1")
+            .env("TERM", "xterm-256color")
+            .output()
+    };
+    let plain = execute(&["--version"])?;
+    assert!(!plain.stdout.contains(&0x1b));
+    let forced = execute(&["--color", "always", "--version"])?;
+    assert!(forced.status.success());
+    assert!(forced.stdout.contains(&0x1b));
+    let never = execute(&["--color", "never", "--version"])?;
+    assert_eq!(plain.stdout, never.stdout);
+    for args in [
+        vec!["--json", "--color", "always", "--help"],
+        vec!["--json", "--color", "always", "invalid-command"],
+    ] {
+        let result = execute(&args)?;
+        assert!(!result.stdout.contains(&0x1b));
+        assert!(result.stderr.is_empty());
+        let value = serde_json::from_slice(&result.stdout)?;
+        tf_protocol::validate_document("CliEnvelopeV1", &value)?;
+    }
+    let completion = execute(&["--color", "always", "completions", "bash"])?;
+    assert!(completion.status.success());
+    assert!(!completion.stdout.contains(&0x1b));
+    assert!(completion.stderr.is_empty());
+    Ok(())
+}

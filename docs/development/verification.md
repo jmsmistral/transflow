@@ -1,5 +1,41 @@
 # Contributor verification
 
+## Rich CLI presentation (2026-10-28)
+
+T016/T067 add a shared human terminal renderer, catalogue/branch/build/schedule
+list tables, labeled structured reports and live per-dataset build activity.
+Standalone and persistent-coordinator clients use the same phase/state display;
+server logs remain append-only. Job activity is indeterminate; only the count of
+terminal jobs determines aggregate progress. JSON envelopes, raw scripts/LSP,
+plain redirected defaults and execution policy remain unchanged. The terminal
+size query uses the existing rustix package's `termios` feature in both manifests.
+See the [user guide](../cli-output.md) and [receipt](evidence/t016-t067-cli-terminal.json).
+
+Measured locally on macOS arm64:
+
+- `cargo test --locked --offline -p transflow`: 77 tests passed. Renderer
+  regressions cover dropped-event recovery, terminal-state stability, retry/failure
+  colours, clipping, small terminal overflow, output failure, cursor restoration,
+  literal logs, unsafe text, warnings, and JSON/completion stream separation.
+- `cargo clippy --locked --offline -p transflow --all-targets -- -D warnings` and
+  `cargo build --locked --offline -p transflow` passed. The rebuilt executable is
+  used in the real terminal journey.
+- `python/tools/check_terminal.py` passed 12 cases in an actual PTY against an
+  offline managed Polars workspace: parallel running jobs, green completion,
+  caching, failed producers, Ctrl-C/exit 130, resizing, NO_COLOR, explicit colour
+  disable/ASCII, CI, dumb terminals, JSON/pipes, human list tables and an attached
+  coordinator. It is part of the existing native qualification runner. The probe
+  synchronizes cancellation/resizing on observed running phases and has bounded
+  output/deadlines. Its deliberately slow synthetic jobs expose parallel activity.
+- Ruff formatting/lint and mypy for the new probe passed. Safety passed with
+  27 regressions, 636 locked versions and two existing exceptions. Specification
+  links and whitespace are validated before delivery.
+
+The initial probe fixture omitted its multiple-producer export list and prepared
+Python selection; both were corrected before the passing journey. Verification
+stays focused on CLI presentation and execution adapters; full workspace,
+engine and cross-platform qualification remain with owner-monitored CI.
+
 ## CLI initialization welcome (2026-10-28)
 
 T021 adds an ASCII Transflow wordmark, the actual package version, workspace

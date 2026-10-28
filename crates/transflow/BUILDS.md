@@ -1,5 +1,8 @@
 # Building, inspecting and replaying datasets
 
+For live job bars, status colours and plain/JSON behaviour, see
+[Terminal output](../../docs/cli-output.md).
+
 After explicit environment lock/sync, `transflow build curated/orders` captures and
 validates the complete graph, reconciles new output declarations, plans the selected
 scope, executes required checks and waits for publication. No separate trust,

@@ -16,6 +16,7 @@ mod build_cli;
 mod build_logs;
 /// Shared guarded local draft and acceptance pipeline.
 pub mod build_plan;
+mod build_progress;
 mod build_transport;
 /// Accepted-job cache key finalization.
 pub mod cache;
@@ -26,6 +27,7 @@ mod external;
 mod external_reads;
 mod foreign_lineage;
 mod gc;
+mod human_reports;
 mod import;
 mod import_publish;
 mod init;
@@ -43,11 +45,8 @@ mod replay;
 mod schedule_cli;
 mod schedule_dispatch;
 mod serve;
-use std::{
-    ffi::OsString,
-    io::{self, IsTerminal},
-    process::ExitCode,
-};
+mod terminal;
+use std::{ffi::OsString, io, process::ExitCode};
 use tf_domain::diagnostic::{
     Diagnostic, DiagnosticCode, DiagnosticError, ExitStatus, Redactor, RequestContext,
 };
@@ -72,7 +71,7 @@ pub enum CliError {
 fn command() -> clap::Command {
     use clap::{Arg, ArgAction};
     clap::Command::new("transflow")
-        .about("A local build system for dataframe datasets (development scaffold)")
+        .about("A local build system for dataframe datasets")
         .after_help("Help, version, workspace initialization, environment, validate and catalog sync commands are available. Plan, why, graph traversal, dataset builds, execution history and retained replay are available. Serve runs an authenticated loopback API and CLI coordinator. Scheduling commands manage saved definitions and guarded actions; serve activates automatic dispatch.")
         .subcommands(inspection_cli::commands())
         .subcommand(completions::command())
@@ -134,7 +133,7 @@ fn command() -> clap::Command {
         .arg(Arg::new("json").long("json").global(true).action(ArgAction::SetTrue).help("Emit one versioned result envelope on stdout"))
         .arg(Arg::new("workspace").long("workspace").value_name("DIRECTORY").value_hint(clap::ValueHint::DirPath).help("Select root workspace context before a command (no discovery for help/version)"))
         .arg(Arg::new("verbose").long("verbose").global(true).action(ArgAction::SetTrue).help("Include stable codes in human diagnostics"))
-        .arg(Arg::new("color").long("color").global(true).value_parser(["auto","always","never"]).default_value("auto").help("Human diagnostic colour; JSON always disables it"))
+        .arg(Arg::new("color").long("color").global(true).value_parser(["auto","always","never"]).default_value("auto").help("Human output colour: auto, always or never; JSON stays plain"))
 }
 /// Render sanitized domain diagnostics. Colour wraps only the heading with fixed escapes.
 pub fn render_diagnostic(
@@ -242,6 +241,8 @@ pub fn run(
     let args: Vec<_> = args.into_iter().collect();
     let intent = intent(&args);
     let redactor = Redactor::default();
+    let style = terminal::Style::stdout(intent.color.as_deref());
+    let diagnostic_style = terminal::Style::stderr(intent.color.as_deref());
     let context = RequestContext {
         workspace: intent
             .workspace
@@ -291,7 +292,9 @@ pub fn run(
                                     )
                                     .map_err(CliError::Stdout)?;
                             } else {
-                                writeln!(stdout, "{}", report.human()).map_err(CliError::Stdout)?;
+                                style
+                                    .write(stdout, &report.human())
+                                    .map_err(CliError::Stdout)?;
                             }
                             return Ok(ExitCode::SUCCESS);
                         }
@@ -312,8 +315,13 @@ pub fn run(
                             } else {
                                 stderr
                                     .write_all(
-                                        render_diagnostic(&d, &context, intent.verbose, false)
-                                            .as_bytes(),
+                                        render_diagnostic(
+                                            &d,
+                                            &context,
+                                            intent.verbose,
+                                            diagnostic_style.color,
+                                        )
+                                        .as_bytes(),
                                     )
                                     .map_err(CliError::Stderr)?;
                             }
@@ -340,7 +348,7 @@ pub fn run(
                         build_cli::execute(
                             args,
                             matches.get_one::<String>("workspace"),
-                            intent.json,
+                            build_progress::Options::cli(intent.json, intent.color.as_deref()),
                         )
                     };
                     let mut errors = vec![];
@@ -379,13 +387,25 @@ pub fn run(
                             .map_err(CliError::Stdout)?;
                     } else {
                         if !human.is_empty() {
-                            writeln!(stdout, "{human}").map_err(CliError::Stdout)?;
+                            if style.rich
+                                && let Some(value) = value.as_ref()
+                            {
+                                human_reports::write(stdout, style, name, value, &human)
+                                    .map_err(CliError::Stdout)?;
+                            } else {
+                                writeln!(stdout, "{human}").map_err(CliError::Stdout)?;
+                            }
                         }
                         for error in &errors {
                             stderr
                                 .write_all(
-                                    render_diagnostic(error, &context, intent.verbose, false)
-                                        .as_bytes(),
+                                    render_diagnostic(
+                                        error,
+                                        &context,
+                                        intent.verbose,
+                                        diagnostic_style.color,
+                                    )
+                                    .as_bytes(),
                                 )
                                 .map_err(CliError::Stderr)?;
                         }
@@ -446,7 +466,9 @@ pub fn run(
                                     )
                                     .map_err(CliError::Stdout)?;
                             } else {
-                                writeln!(stdout, "{}", report.human).map_err(CliError::Stdout)?;
+                                style
+                                    .write(stdout, &report.human)
+                                    .map_err(CliError::Stdout)?;
                             }
                             return Ok(ExitCode::SUCCESS);
                         }
@@ -480,7 +502,7 @@ pub fn run(
                                             &diagnostic,
                                             &selected_context,
                                             intent.verbose,
-                                            false,
+                                            diagnostic_style.color,
                                         )
                                         .as_bytes(),
                                     )
@@ -505,9 +527,9 @@ pub fn run(
                                     .map_err(CliError::Stdout)?;
                             } else {
                                 if value["published"] == true {
-                                    writeln!(
+                                    style.write(
                                         stdout,
-                                        "Published {} row(s) as version {} for {} on branch {}.",
+                                        &format!("Published {} row(s) as version {} for {} on branch {}.",
                                         value["row_count"].as_str().unwrap_or(""),
                                         value["version_id"].as_str().unwrap_or(""),
                                         redactor
@@ -515,11 +537,11 @@ pub fn run(
                                             .as_str(),
                                         redactor
                                             .text(value["branch"].as_str().unwrap_or("unknown"))?
-                                            .as_str()
+                                            .as_str())
                                     )
                                     .map_err(CliError::Stdout)?;
                                 } else {
-                                    writeln!(stdout,"Prepared {} file(s), {} rows, {} bytes for {} on branch {}.\nStaging: {}\nNo data version or branch head was published. Logical schema is normalized; data checks remain pending. Use a producer-provided atomic snapshot for strong consistency against concurrent external writers.",value["file_count"].as_str().unwrap_or(""),value["row_count"].as_str().unwrap_or(""),value["byte_count"].as_str().unwrap_or(""),redactor.text(value["path"].as_str().unwrap_or("unknown"))?.as_str(),redactor.text(value["branch"].as_str().unwrap_or("unknown"))?.as_str(),value["staging_path"].as_str().unwrap_or("")).map_err(CliError::Stdout)?;
+                                    style.write(stdout,&format!("Prepared {} file(s), {} rows, {} bytes for {} on branch {}.\nStaging: {}\nNo data version or branch head was published. Logical schema is normalized; data checks remain pending. Use a producer-provided atomic snapshot for strong consistency against concurrent external writers.",value["file_count"].as_str().unwrap_or(""),value["row_count"].as_str().unwrap_or(""),value["byte_count"].as_str().unwrap_or(""),redactor.text(value["path"].as_str().unwrap_or("unknown"))?.as_str(),redactor.text(value["branch"].as_str().unwrap_or("unknown"))?.as_str(),value["staging_path"].as_str().unwrap_or(""))).map_err(CliError::Stdout)?;
                                 }
                             }
                             return Ok(ExitCode::SUCCESS);
@@ -552,7 +574,7 @@ pub fn run(
                                             &diagnostic,
                                             &context,
                                             intent.verbose,
-                                            false,
+                                            diagnostic_style.color,
                                         )
                                         .as_bytes(),
                                     )
@@ -578,8 +600,14 @@ pub fn run(
                                 vec![]
                             };
                             if !intent.json {
-                                writeln!(stdout, "{}", report.human()?)
-                                    .map_err(CliError::Stdout)?;
+                                human_reports::registry(
+                                    stdout,
+                                    style,
+                                    "branch",
+                                    &report.value,
+                                    &report.human()?,
+                                )
+                                .map_err(CliError::Stdout)?;
                             }
                             (
                                 CliEnvelope::branch(&version, &context, report.value, &errors)?,
@@ -595,8 +623,13 @@ pub fn run(
                             if !intent.json {
                                 stderr
                                     .write_all(
-                                        render_diagnostic(&d, &context, intent.verbose, false)
-                                            .as_bytes(),
+                                        render_diagnostic(
+                                            &d,
+                                            &context,
+                                            intent.verbose,
+                                            diagnostic_style.color,
+                                        )
+                                        .as_bytes(),
                                     )
                                     .map_err(CliError::Stderr)?;
                             }
@@ -639,7 +672,9 @@ pub fn run(
                                     )
                                     .map_err(CliError::Stdout)?;
                             } else {
-                                writeln!(stdout, "{}", report.human()).map_err(CliError::Stdout)?;
+                                style
+                                    .write(stdout, &report.human())
+                                    .map_err(CliError::Stdout)?;
                             }
                             return Ok(if report.blocked {
                                 ExitCode::FAILURE
@@ -672,7 +707,7 @@ pub fn run(
                                             &diagnostic,
                                             &context,
                                             intent.verbose,
-                                            false,
+                                            diagnostic_style.color,
                                         )
                                         .as_bytes(),
                                     )
@@ -705,8 +740,14 @@ pub fn run(
                                     )
                                     .map_err(CliError::Stdout)?;
                             } else {
-                                writeln!(stdout, "{}", report.human()?)
-                                    .map_err(CliError::Stdout)?;
+                                human_reports::registry(
+                                    stdout,
+                                    style,
+                                    "catalog",
+                                    &report.value,
+                                    &report.human()?,
+                                )
+                                .map_err(CliError::Stdout)?;
                             }
                             return Ok(if report.blocked {
                                 ExitCode::FAILURE
@@ -739,7 +780,7 @@ pub fn run(
                                             &diagnostic,
                                             &context,
                                             intent.verbose,
-                                            false,
+                                            diagnostic_style.color,
                                         )
                                         .as_bytes(),
                                     )
@@ -788,7 +829,8 @@ pub fn run(
                                     )
                                     .map_err(CliError::Stdout)?;
                             } else {
-                                writeln!(stdout, "{}", report.human()?)
+                                style
+                                    .write(stdout, &report.human()?)
                                     .map_err(CliError::Stdout)?;
                             }
                             return Ok(if report.changes_required {
@@ -822,7 +864,7 @@ pub fn run(
                                             &diagnostic,
                                             &context,
                                             intent.verbose,
-                                            false,
+                                            diagnostic_style.color,
                                         )
                                         .as_bytes(),
                                     )
@@ -852,7 +894,7 @@ pub fn run(
                                 )
                                 .map_err(CliError::Stdout)?;
                         } else {
-                            writeln!(stdout, "{text}").map_err(CliError::Stdout)?;
+                            style.write(stdout, &text).map_err(CliError::Stdout)?;
                         }
                         Ok(ExitCode::SUCCESS)
                     }
@@ -873,8 +915,13 @@ pub fn run(
                         } else {
                             stderr
                                 .write_all(
-                                    render_diagnostic(&d, &context, intent.verbose, false)
-                                        .as_bytes(),
+                                    render_diagnostic(
+                                        &d,
+                                        &context,
+                                        intent.verbose,
+                                        diagnostic_style.color,
+                                    )
+                                    .as_bytes(),
                                 )
                                 .map_err(CliError::Stderr)?;
                         }
@@ -910,8 +957,8 @@ pub fn run(
                                 )
                                 .map_err(CliError::Stdout)?;
                         } else {
-                            stdout
-                                .write_all(init::welcome(version.as_str(), &text).as_bytes())
+                            style
+                                .write(stdout, init::welcome(version.as_str(), &text).trim_end())
                                 .map_err(CliError::Stdout)?;
                         }
                         Ok(ExitCode::SUCCESS)
@@ -933,8 +980,13 @@ pub fn run(
                         } else {
                             stderr
                                 .write_all(
-                                    render_diagnostic(&d, &context, intent.verbose, false)
-                                        .as_bytes(),
+                                    render_diagnostic(
+                                        &d,
+                                        &context,
+                                        intent.verbose,
+                                        diagnostic_style.color,
+                                    )
+                                    .as_bytes(),
                                 )
                                 .map_err(CliError::Stderr)?;
                         }
@@ -971,7 +1023,7 @@ pub fn run(
                     .write_all(envelope.as_bytes())
                     .map_err(CliError::Stdout)?;
             } else {
-                writeln!(stdout, "{text}").map_err(CliError::Stdout)?;
+                style.write(stdout, &text).map_err(CliError::Stdout)?;
             }
             Ok(ExitCode::SUCCESS)
         }
@@ -986,13 +1038,11 @@ pub fn run(
                     .write_all(envelope.as_bytes())
                     .map_err(CliError::Stdout)?;
             } else {
-                let color = match intent.color.as_deref() {
-                    Some("always") => true,
-                    Some("never") => false,
-                    _ => io::stderr().is_terminal(),
-                };
                 stderr
-                    .write_all(render_diagnostic(&d, &context, intent.verbose, color).as_bytes())
+                    .write_all(
+                        render_diagnostic(&d, &context, intent.verbose, diagnostic_style.color)
+                            .as_bytes(),
+                    )
                     .map_err(CliError::Stderr)?;
             }
             Ok(ExitCode::from(ExitStatus::Usage.code()))

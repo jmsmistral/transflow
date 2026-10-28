@@ -316,7 +316,7 @@ pub(crate) fn submit(
     workspace: WorkspaceId,
     args: &ArgMatches,
     wait: bool,
-    json_mode: bool,
+    progress_options: crate::build_progress::Options,
 ) -> Result<build_cli::Report, Error> {
     let mut raw = vec![];
     for key in [
@@ -371,13 +371,13 @@ pub(crate) fn submit(
             false,
         ));
     }
-    wait_for(root, workspace, build, json_mode)
+    wait_for(root, workspace, build, progress_options)
 }
 fn wait_for(
     root: &Path,
     workspace: WorkspaceId,
     build: BuildId,
-    json_mode: bool,
+    progress_options: crate::build_progress::Options,
 ) -> Result<build_cli::Report, Error> {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -392,27 +392,21 @@ fn wait_for(
             }
         });
         let mut sent = false;
-        let mut states = std::collections::BTreeMap::new();
+        let initial = build_cli::snapshot(root, workspace, build).await?;
+        let mut display =
+            crate::build_progress::Display::new(std::io::stderr(), progress_options, &initial)
+                .map_err(failure)?;
         loop {
             if canceled.load(Ordering::Acquire) && !sent {
                 cancel(root, workspace, build)?;
                 sent = true;
             }
             let value = build_cli::snapshot(root, workspace, build).await?;
-            if !json_mode {
-                for j in value["jobs"]
-                    .as_array()
-                    .ok_or_else(|| failure("missing jobs"))?
-                {
-                    let id = j["id"].to_string();
-                    let state = j["state"].to_string();
-                    if states.insert(id.clone(), state.clone()).as_ref() != Some(&state) {
-                        eprintln!("{id} {state}");
-                    }
-                }
-            }
+            display.update(&value).map_err(failure)?;
+            display.draw().map_err(failure)?;
             if !matches!(value["state"].as_str(), Some("QUEUED" | "RUNNING")) {
                 listener.abort();
+                display.finish().map_err(failure)?;
                 return Ok(build_cli::report("run", value, true));
             }
             if ownership::discover(root, workspace)
@@ -433,7 +427,7 @@ pub(crate) fn replay(
     workspace: WorkspaceId,
     original: BuildId,
     destination: &tf_domain::BranchName,
-    json_mode: bool,
+    progress_options: crate::build_progress::Options,
 ) -> Result<build_cli::Report, Error> {
     let accepted = call(
         root,
@@ -446,7 +440,7 @@ pub(crate) fn replay(
         .ok_or_else(|| failure("coordinator omitted replay identity"))?
         .parse()
         .map_err(failure)?;
-    let mut report = wait_for(root, workspace, build, json_mode)?;
+    let mut report = wait_for(root, workspace, build, progress_options)?;
     report.value["operation"] = json!("replay");
     Ok(report)
 }

@@ -116,13 +116,19 @@ pub(crate) fn execute(
     workspace: WorkspaceId,
     original: BuildId,
     destination: BranchName,
-    json_mode: bool,
+    progress_options: crate::build_progress::Options,
 ) -> Result<crate::build_cli::Report, Error> {
     if tf_exec::ownership::discover(root, workspace)
         .map_err(failure)?
         .is_some()
     {
-        return crate::build_transport::replay(root, workspace, original, &destination, json_mode);
+        return crate::build_transport::replay(
+            root,
+            workspace,
+            original,
+            &destination,
+            progress_options,
+        );
     }
     let owner =
         RuntimeOwner::acquire(root, workspace, CoordinatorMode::Temporary).map_err(failure)?;
@@ -135,7 +141,7 @@ pub(crate) fn execute(
     let c = rt.block_on(crate::build_cli::execute_build(
         c.owner,
         accepted.build,
-        json_mode,
+        progress_options,
     ))?;
     c.result.map_err(failure)?;
     Ok(crate::build_cli::report(

@@ -18,6 +18,7 @@ a first dataset build and the lineage workspace.
 
 ## Build and operate
 
+- [Terminal output](cli-output.md) — live jobs, readable reports and script-friendly output.
 - [Bash completion](bash-completion.md) — Tab completion and terminal setup.
 - [Builds, plans, history, cancellation and replay](../crates/transflow/BUILDS.md).
 - [Workspaces and configuration](../crates/tf-catalog/WORKSPACE.md).

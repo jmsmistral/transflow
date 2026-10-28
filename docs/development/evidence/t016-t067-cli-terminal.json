@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-28",
+  "tasks": [
+    "T016",
+    "T067"
+  ],
+  "platform": "macOS-15.3.1-arm64-arm-64bit",
+  "base_implementation": "ba9bc38c69152ed05ccc87e2ab76d135b732f09d",
+  "scope": "Human terminal presentation across implemented CLI commands; live local and attached build jobs",
+  "checks": {
+    "cargo_test_package": {
+      "command": "cargo test --locked --offline -p transflow",
+      "passed": 77
+    },
+    "terminal_journey": {
+      "command": "target/python/py314/bin/python -I -B python/tools/check_terminal.py target/debug/transflow target/cli-rich-wheels/transflow-0.0.0.dev0-py3-none-any.whl target/qualification/wheelhouse",
+      "cases": [
+        "parallel live phases and green completion",
+        "cache hits",
+        "failed producer and cursor restoration",
+        "Ctrl-C and cursor restoration",
+        "terminal resize",
+        "NO_COLOR retains text status",
+        "explicit colour disable and ASCII indicators",
+        "CI avoids cursor redraw",
+        "dumb terminal append-only progress",
+        "JSON and redirected output",
+        "human command tables",
+        "persistent coordinator client"
+      ]
+    },
+    "clippy": "cargo clippy --locked --offline -p transflow --all-targets -- -D warnings",
+    "build": "cargo build --locked --offline -p transflow",
+    "python": "Ruff check/format and mypy on python/tools/check_terminal.py",
+    "safety": {
+      "regressions": 27,
+      "locked_packages": 636,
+      "active_exceptions": 2
+    }
+  },
+  "notes": [
+    "No new package versions; rustix termios enabled in application and native qualification manifests.",
+    "PTY journey is wired into existing native qualification on supported platforms.",
+    "Progress is phase based and observational; no inferred phase percentages.",
+    "Initial test fixture setup needed an explicit prepared Python interpreter and TRANSFORMS export list; corrected before successful runs.",
+    "No user workspace or shell profile changed.",
+    "Cross-platform CI is owner monitored; no CI result claimed."
+  ]
+}

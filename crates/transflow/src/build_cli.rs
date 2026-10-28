@@ -1,5 +1,6 @@
 //! Public execution adapters over the shared planning, dispatch and history services.
 use crate::build_plan::{self, Error, failure};
+use crate::build_progress::{Display, Options as ProgressOptions};
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use serde_json::{Value, json};
 use std::path::Path;
@@ -224,13 +225,13 @@ pub(crate) async fn submit(
 pub(crate) async fn execute_build(
     mut owner: RuntimeOwner,
     build: BuildId,
-    json_mode: bool,
+    progress_options: ProgressOptions,
 ) -> Result<crate::dispatch::Completion, Error> {
     let endpoint = crate::build_transport::endpoint(&mut owner, false)?;
     execute_commands(
         owner,
         build,
-        json_mode,
+        progress_options,
         endpoint.commands.clone(),
         endpoint.providers.clone(),
         None,
@@ -240,7 +241,7 @@ pub(crate) async fn execute_build(
 pub(crate) async fn execute_commands(
     owner: RuntimeOwner,
     build: BuildId,
-    json_mode: bool,
+    progress_options: ProgressOptions,
     commands: crate::build_transport::Mailbox,
     providers: crate::provider::Mailbox,
     admission: Option<tf_exec::admission::Admission>,
@@ -248,7 +249,7 @@ pub(crate) async fn execute_commands(
     execute_with_cancellation(
         owner,
         build,
-        json_mode,
+        progress_options,
         commands,
         providers,
         admission,
@@ -260,7 +261,7 @@ pub(crate) async fn execute_commands(
 pub(crate) async fn execute_with_cancellation(
     mut owner: RuntimeOwner,
     build: BuildId,
-    json_mode: bool,
+    progress_options: ProgressOptions,
     commands: crate::build_transport::Mailbox,
     providers: crate::provider::Mailbox,
     admission: Option<tf_exec::admission::Admission>,
@@ -298,17 +299,26 @@ pub(crate) async fn execute_with_cancellation(
             signal.cancel();
         }
     });
+    let root = owner.workspace_root().to_owned();
+    let workspace = owner.workspace_id().map_err(failure)?;
+    let initial = if progress_options.enabled {
+        snapshot(&root, workspace, build).await?
+    } else {
+        Value::Null
+    };
     let (tx, rx) = std::sync::mpsc::sync_channel::<Value>(64);
-    let progress = std::thread::spawn(move || {
-        while let Ok(v) = rx.recv() {
-            if !json_mode {
-                eprintln!(
-                    "{} {}",
-                    v["job"].as_str().unwrap_or(""),
-                    v["state"].as_str().unwrap_or("")
-                );
+    let final_update = tx.clone();
+    let progress = std::thread::spawn(move || -> std::io::Result<()> {
+        let mut display = Display::new(std::io::stderr(), progress_options, &initial)?;
+        loop {
+            match rx.recv_timeout(std::time::Duration::from_millis(100)) {
+                Ok(event) => display.update(&event)?,
+                Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {}
+                Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
             }
+            display.draw()?;
         }
+        display.finish()
     });
     let result = crate::dispatch::run_with_options(
         owner,
@@ -325,15 +335,22 @@ pub(crate) async fn execute_with_cancellation(
     .await
     .map_err(failure);
     listener.abort();
+    if progress_options.enabled
+        && let Ok(final_snapshot) = snapshot(&root, workspace, build).await
+    {
+        let _ = final_update.send(final_snapshot);
+    }
+    drop(final_update);
     progress
         .join()
-        .map_err(|_| failure("progress reporting failed"))?;
+        .map_err(|_| failure("progress reporting failed"))?
+        .map_err(failure)?;
     result
 }
 pub(crate) fn execute(
     args: &ArgMatches,
     explicit: Option<&String>,
-    json_mode: bool,
+    progress_options: ProgressOptions,
 ) -> Result<Report, Error> {
     let current = std::env::current_dir().map_err(failure)?;
     let workspace = tf_catalog::workspace::Workspace::load(&current, explicit.map(Path::new))
@@ -371,7 +388,13 @@ pub(crate) fn execute(
             ));
         }
         if name == "logs" {
-            return crate::build_logs::execute(root, wid, build, sub.get_flag("follow"), json_mode);
+            return crate::build_logs::execute(
+                root,
+                wid,
+                build,
+                sub.get_flag("follow"),
+                !progress_options.enabled,
+            );
         }
         if name == "cancel" {
             return crate::build_transport::cancel(root, wid, build);
@@ -384,18 +407,18 @@ pub(crate) fn execute(
                 sub.get_one::<BranchName>("branch")
                     .ok_or_else(|| failure("missing destination"))?
                     .clone(),
-                json_mode,
+                progress_options,
             );
         }
     }
     if args.get_flag("no-wait") {
-        return crate::build_transport::submit(root, wid, args, false, json_mode);
+        return crate::build_transport::submit(root, wid, args, false, progress_options);
     }
     if tf_exec::ownership::discover(root, wid)
         .map_err(failure)?
         .is_some()
     {
-        return crate::build_transport::submit(root, wid, args, true, json_mode);
+        return crate::build_transport::submit(root, wid, args, true, progress_options);
     }
     let mut owner =
         RuntimeOwner::acquire(root, wid, CoordinatorMode::Temporary).map_err(failure)?;
@@ -416,13 +439,13 @@ pub(crate) fn execute(
         let Some(queued) = queued else {
             break;
         };
-        let c = rt.block_on(execute_build(owner, queued, json_mode))?;
+        let c = rt.block_on(execute_build(owner, queued, progress_options))?;
         owner = c.owner;
         c.result.map_err(failure)?;
     }
     let c = rt.block_on(submit(owner, args))?;
     let accepted = c.result?;
-    let c = rt.block_on(execute_build(c.owner, accepted.build, json_mode))?;
+    let c = rt.block_on(execute_build(c.owner, accepted.build, progress_options))?;
     c.result.map_err(failure)?;
     Ok(report(
         "run",

@@ -9,8 +9,10 @@ The common argument definitions generate the displayed help.
 
 Successful human `init` output starts with the ASCII Transflow logo, the installed
 CLI version, workspace status and a compact getting-started/command reference.
-The banner is plain text, including when redirected; JSON results, help/version
-and failure diagnostics retain their existing formats.
+The banner remains plain text when redirected. Interactive terminals add colour
+and spacing; JSON results retain their existing envelope. See
+[Terminal output](../../docs/cli-output.md) for live build progress, report tables,
+`NO_COLOR`, ASCII indicators and automation settings.
 
 `transflow completions bash` prints a shell script from those same definitions.
 Enable it with `source <(transflow completions bash)` in Bash. Generation and
@@ -48,7 +50,7 @@ waiting builds, persistent acceptance, retries, recovery and replay.
 Human failures go to stderr with heading, reason, affected references, locations,
 remediation and safe causes. Stable codes are included by `--verbose`. Fixed ANSI
 heading styling is used only in human mode when requested, or on a terminal in
-auto mode. I/O errors retain their typed source internally but do not echo its raw
+auto mode (unless `NO_COLOR` or `TERM=dumb` disables it). I/O errors retain their typed source internally but do not echo its raw
 message; an unwritable stdout cannot be promised a complete JSON envelope.
 
 ## Domain and safety boundaries

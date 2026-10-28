@@ -53,7 +53,7 @@ impl ActiveBuilds {
                 rt.block_on(build_cli::execute_with_cancellation(
                     delegate,
                     build,
-                    json_mode,
+                    crate::build_progress::Options::server(json_mode),
                     commands,
                     providers,
                     Some(admission),
@@ -189,10 +189,12 @@ pub(crate) fn execute(
         }
     }
     if !json_mode && !stopped.load(Ordering::Acquire) {
-        eprintln!(
-            "Coordinator ready. Builds continue after clients disconnect. Press Ctrl-C to stop."
-        );
-        eprintln!("HTTP API: http://{}", http.address());
+        crate::terminal::Style::stderr(args.get_one::<String>("color").map(String::as_str))
+            .write(&mut std::io::stderr(), &format!(
+                "Coordinator ready. Builds continue after clients disconnect. Press Ctrl-C to stop.\nHTTP API: http://{}",
+                http.address()
+            ))
+            .map_err(failure)?;
     }
     let mut active = ActiveBuilds::default();
     let mut schedule_after = String::new();
